@@ -34,6 +34,18 @@ namespace TEN::Scripting::Sound
 		PlaySoundTrack(trackName, SoundTrackType::BGM, pos, pos.has_value() ? SOUND_XFADETIME_ONESHOT : SOUND_XFADETIME_BGM);
 	}
 
+	/// Set the volume factor for a specific audio channel
+	//@function SetAudioChannelVolume
+	//@tparam Sound.SoundTrackType type The type of the audio track (OneShot, BGM, Voice) to adjust the volume for
+	//@tparam number factor The volume factor (0.0 to 1.0) to apply
+	static void SetChannelVolume(TypeOrNil<SoundTrackType> mode, float factor)
+	{
+		auto playMode = USE_IF_HAVE(SoundTrackType, mode, SoundTrackType::OneShot);
+
+		// Validate and set the volume factor
+		SetChannelVolumeFactor(playMode, factor);
+	}
+
 	///Stop any audio tracks currently playing
 	//@function StopAudioTracks
 	static void StopAudioTracks()

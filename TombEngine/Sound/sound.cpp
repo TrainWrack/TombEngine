@@ -61,6 +61,9 @@ static int SecretSoundIndex = 5;
 static int GlobalMusicVolume;
 static int GlobalFXVolume;
 
+// Array to store volume factors for each SoundTrackType
+float ChannelVolumeFactors[(int)SoundTrackType::Count] = { 1.0f, 1.0f, 1.0f, 0.0f }; // Initialize all to 1.0f except battle that starts at 0
+
 void SetVolumeTracks(int vol) 
 {
 	GlobalMusicVolume = vol;
@@ -69,7 +72,31 @@ void SetVolumeTracks(int vol)
 	for (int i = 0; i < (int)SoundTrackType::Count; i++)
 	{
 		if (BASS_ChannelIsActive(SoundtrackSlot[i].Channel))
-			BASS_ChannelSetAttribute(SoundtrackSlot[i].Channel, BASS_ATTRIB_VOL, fVol);
+		{
+			float finalVolume = fVol * ChannelVolumeFactors[i];
+			BASS_ChannelSetAttribute(SoundtrackSlot[i].Channel, BASS_ATTRIB_VOL, finalVolume);
+		}
+	}
+}
+
+// Function to update the volume factor for a specific SoundTrackType
+void SetChannelVolumeFactor(SoundTrackType type, float factor)
+{
+	int index = static_cast<int>(type);
+	if (index < 0 || index >= (int)SoundTrackType::Count)
+		return; // Invalid SoundTrackType
+
+	// Clamp the factor to the range [0.0, 1.0]
+	factor = std::clamp(factor, 0.0f, 1.0f);
+
+	ChannelVolumeFactors[index] = factor;
+
+	// Update the actual volume for this channel
+	if (BASS_ChannelIsActive(SoundtrackSlot[index].Channel))
+	{
+		float fGlobalVol = static_cast<float>(GlobalMusicVolume) / 100.0f;
+		float finalVolume = fGlobalVol * factor;
+		BASS_ChannelSetAttribute(SoundtrackSlot[index].Channel, BASS_ATTRIB_VOL, finalVolume);
 	}
 }
 
@@ -519,7 +546,11 @@ void PlaySoundTrack(const std::string& track, SoundTrackType mode, std::optional
 	case SoundTrackType::Voice:
 		crossfadeTime = SOUND_XFADETIME_ONESHOT;
 		break;
-
+	case SoundTrackType::Battle:
+		crossfade = true;
+		crossfadeTime = channelActive ? SOUND_XFADETIME_BGM : SOUND_XFADETIME_BGM_START;
+		flags |= BASS_SAMPLE_LOOP;
+		break;
 	case SoundTrackType::BGM:
 		crossfade = true;
 		crossfadeTime = channelActive ? SOUND_XFADETIME_BGM : SOUND_XFADETIME_BGM_START;
@@ -552,7 +583,9 @@ void PlaySoundTrack(const std::string& track, SoundTrackType mode, std::optional
 	if (Sound_CheckBASSError("Opening soundtrack '%s'", false, fullTrackName.filename().string().c_str()))
 		return;
 
-	float masterVolume = (float)GlobalMusicVolume / 100.0f;
+	float globalVolume = static_cast<float>(GlobalMusicVolume) / 100.0f;
+	float channelFactor = ChannelVolumeFactors[static_cast<int>(mode)];
+	float masterVolume = globalVolume * channelFactor;
 
 	// Damp BGM track in case one-shot track is about to play.
 

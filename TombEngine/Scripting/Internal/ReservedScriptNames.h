@@ -284,6 +284,7 @@ static constexpr char ScriptReserved_GetAudioTrackLoudness[]		= "GetAudioTrackLo
 static constexpr char ScriptReserved_GetCurrentSubtitle[]			= "GetCurrentSubtitle";
 static constexpr char ScriptReserved_PlaySound[]					= "PlaySound";
 static constexpr char ScriptReserved_StopSound[]					= "StopSound";
+static constexpr char ScriptReserved_SetChannelVolume[]				= "SetChannelVolume";
 static constexpr char ScriptReserved_IsSoundPlaying[]				= "IsSoundPlaying";
 static constexpr char ScriptReserved_IsAudioTrackPlaying[]			= "IsAudioTrackPlaying";
 static constexpr char ScriptReserved_GiveInvItem[]					= "GiveItem";

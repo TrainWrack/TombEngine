@@ -124,6 +124,10 @@
 	<td class="summary">Set and play an ambient track</td>
 	</tr>
 	<tr>
+	<td class="name" ><a href="#SetAudioChannelVolume">SetAudioChannelVolume(type, factor)</a></td>
+	<td class="summary">Set the volume factor for a specific audio channel</td>
+	</tr>
+	<tr>
 	<td class="name" ><a href="#StopAudioTracks">StopAudioTracks()</a></td>
 	<td class="summary">Stop any audio tracks currently playing</td>
 	</tr>
@@ -208,6 +212,32 @@
         <li><span class="parameter">fromStart</span>
             <span class="types"><span class="type">bool</span></span>
          specifies whether ambient track should play from the start, or crossfade at a random position
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "SetAudioChannelVolume"></a>
+    <strong>SetAudioChannelVolume(type, factor)</strong>
+    </dt>
+    <dd>
+    Set the volume factor for a specific audio channel
+
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">type</span>
+            <span class="types"><a class="type" href="../4 enums/Sound.SoundTrackType.html#">SoundTrackType</a></span>
+         The type of the audio track (OneShot, BGM, Voice) to adjust the volume for
+        </li>
+        <li><span class="parameter">factor</span>
+            <span class="types"><span class="type">number</span></span>
+         The volume factor (0.0 to 1.0) to apply
         </li>
     </ul>
 
