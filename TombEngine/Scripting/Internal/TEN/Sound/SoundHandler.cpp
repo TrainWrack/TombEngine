@@ -35,7 +35,7 @@ namespace TEN::Scripting::Sound
 	}
 
 	/// Set the volume factor for a specific audio channel
-	//@function SetAudioChannelVolume
+	//@function SetChannelVolume
 	//@tparam Sound.SoundTrackType type The type of the audio track (OneShot, BGM, Voice) to adjust the volume for
 	//@tparam number factor The volume factor (0.0 to 1.0) to apply
 	static void SetChannelVolume(TypeOrNil<SoundTrackType> mode, float factor)
@@ -131,6 +131,7 @@ namespace TEN::Scripting::Sound
 
 		tableSound.set_function(ScriptReserved_PlayAudioTrack, &PlayAudioTrack);
 		tableSound.set_function(ScriptReserved_SetAmbientTrack, &SetAmbientTrack);
+		tableSound.set_function(ScriptReserved_SetChannelVolume, &SetChannelVolume);
 		tableSound.set_function(ScriptReserved_StopAudioTracks, &StopAudioTracks);
 		tableSound.set_function(ScriptReserved_StopAudioTrack, &StopAudioTrack);
 		tableSound.set_function(ScriptReserved_GetAudioTrackLoudness, &GetAudioTrackLoudness);

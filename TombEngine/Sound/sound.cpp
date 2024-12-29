@@ -86,8 +86,8 @@ void SetChannelVolumeFactor(SoundTrackType type, float factor)
 	if (index < 0 || index >= (int)SoundTrackType::Count)
 		return; // Invalid SoundTrackType
 
-	// Clamp the factor to the range [0.0, 1.0]
-	factor = std::clamp(factor, 0.0f, 1.0f);
+	// Clamp the factor to the range [0.00, 1.00]
+	factor = std::clamp(factor, 0.00f, 1.00f);
 
 	ChannelVolumeFactors[index] = factor;
 
