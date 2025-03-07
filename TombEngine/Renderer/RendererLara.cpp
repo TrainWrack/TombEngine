@@ -15,6 +15,7 @@
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
 #include "Scripting/Include/ScriptInterfaceLevel.h"
 #include "Specific/level.h"
+#include <stack>
 
 using namespace TEN::Effects::Hair;
 using namespace TEN::Math;
@@ -420,4 +421,123 @@ void Renderer::DrawLaraHolsters(RendererItem* itemToDraw, RendererRoom* room, Re
 		RendererMesh* mesh = holsterSkin.ObjectMeshes[LM_TORSO];
 		DrawMoveableMesh(itemToDraw, mesh, room, LM_TORSO, view, rendererPass);
 	}
+}
+
+void Renderer::SwapLaraSkin()
+{
+
+	// Find the new skin joint object
+	ObjectInfo* newSkinJoint = &Objects[Lara.Skin.SkinJoints];
+	if (!newSkinJoint || newSkinJoint->nmeshes <= 0)
+	{
+		TENLog("Invalid skin joint ID provided.", LogLevel::Error);
+		return;
+	}
+
+	// Create and attach the new skin joints
+	_moveableObjects[Lara.Skin.SkinJoints] = RendererObject();
+	RendererObject& moveable = *_moveableObjects[Lara.Skin.SkinJoints];
+	moveable.Id = Lara.Skin.SkinJoints;
+	moveable.DoNotDraw = (newSkinJoint->drawRoutine == nullptr);
+	moveable.ShadowType = newSkinJoint->shadowType;
+
+	int lastVertex = 0;
+	int lastIndex = 0;
+
+	for (int j = 0; j < newSkinJoint->nmeshes; j++)
+	{
+		RendererMesh* mesh = GetRendererMeshFromTrMesh(
+			&moveable,
+			&g_Level.Meshes[newSkinJoint->meshIndex + j],
+			j, true, // This is a skin joint, so we override bone index
+			false,
+			&lastVertex, &lastIndex);
+
+		moveable.ObjectMeshes.push_back(mesh);
+		_meshes.push_back(mesh);
+	}
+
+	// Rebuild bone hierarchy
+	for (int j = 0; j < newSkinJoint->nmeshes; j++)
+	{
+		moveable.LinearizedBones.push_back(new RendererBone(j));
+		moveable.AnimationTransforms.push_back(Matrix::Identity);
+		moveable.BindPoseTransforms.push_back(Matrix::Identity);
+	}
+
+	if (newSkinJoint->nmeshes > 1)
+	{
+		int* bone = &g_Level.Bones[newSkinJoint->boneIndex];
+		std::stack<RendererBone*> stack;
+		RendererBone* currentBone = moveable.LinearizedBones[0];
+
+		for (int mi = 0; mi < newSkinJoint->nmeshes - 1; mi++)
+		{
+			int j = mi + 1;
+			int opcode = *(bone++);
+			int linkX = *(bone++);
+			int linkY = *(bone++);
+			int linkZ = *(bone++);
+			byte flags = opcode & 0x1C;
+
+			moveable.LinearizedBones[j]->ExtraRotationFlags = flags;
+
+			switch (opcode & 0x03)
+			{
+			case 0:
+				moveable.LinearizedBones[j]->Parent = currentBone;
+				moveable.LinearizedBones[j]->Translation = Vector3(linkX, linkY, linkZ);
+				currentBone->Children.push_back(moveable.LinearizedBones[j]);
+				currentBone = moveable.LinearizedBones[j];
+				break;
+
+			case 1:
+				if (!stack.empty())
+				{
+					currentBone = stack.top();
+					stack.pop();
+				}
+				moveable.LinearizedBones[j]->Parent = currentBone;
+				moveable.LinearizedBones[j]->Translation = Vector3(linkX, linkY, linkZ);
+				currentBone->Children.push_back(moveable.LinearizedBones[j]);
+				currentBone = moveable.LinearizedBones[j];
+				break;
+
+			case 2:
+				stack.push(currentBone);
+				moveable.LinearizedBones[j]->Translation = Vector3(linkX, linkY, linkZ);
+				moveable.LinearizedBones[j]->Parent = currentBone;
+				currentBone->Children.push_back(moveable.LinearizedBones[j]);
+				currentBone = moveable.LinearizedBones[j];
+				break;
+
+			case 3:
+				if (!stack.empty())
+				{
+					RendererBone* theBone = stack.top();
+					stack.pop();
+					moveable.LinearizedBones[j]->Translation = Vector3(linkX, linkY, linkZ);
+					moveable.LinearizedBones[j]->Parent = theBone;
+					theBone->Children.push_back(moveable.LinearizedBones[j]);
+					currentBone = moveable.LinearizedBones[j];
+					stack.push(theBone);
+			}
+				break;
+		}
+	}
+}
+
+	// Finalize the transformation matrices
+	for (int n = 0; n < newSkinJoint->nmeshes; n++)
+	{
+		moveable.LinearizedBones[n]->Transform = Matrix::CreateTranslation(
+			moveable.LinearizedBones[n]->Translation.x,
+			moveable.LinearizedBones[n]->Translation.y,
+			moveable.LinearizedBones[n]->Translation.z);
+	}
+
+	moveable.Skeleton = moveable.LinearizedBones[0];
+	BuildHierarchy(&moveable);
+
+	TENLog("Skin joints swapped successfully.", LogLevel::Info);
 }

@@ -110,8 +110,6 @@ void InitializeLaraMeshes(ItemInfo* item)
 	Lara.Skin.HairPrimary = ID_HAIR_PRIMARY;
 	Lara.Skin.HairSecondary = ID_HAIR_SECONDARY;
 
-	TENLog("Failed to create Lara Skin."+ Lara.Skin.Skin, LogLevel::Warning);
-
 	// Override base mesh and mesh indices to player skin if it exists.
 	item->Model.BaseMesh = Objects[(Objects[player.Skin.Skin].loaded ? player.Skin.Skin : ID_LARA)].meshIndex;
 
