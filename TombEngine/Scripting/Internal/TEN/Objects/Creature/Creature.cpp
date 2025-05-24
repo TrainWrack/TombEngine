@@ -48,9 +48,13 @@ namespace TEN::Scripting::Objects
 	LuaCreatureInfo::LuaCreatureInfo(const Moveable& mov)
 	{
 			auto* item = &g_Level.Items[mov.GetIndex()];
-			
-			if (!CreatureActive(mov.GetIndex()))
+
+			if (!item->Active)
+			{
+				TENLog("Specified creature is not active in function TEN.Objects.CreatureInfo", LogLevel::Warning);
+				m_Creature = nullptr;
 				return;
+			}
 
 			if (item->IsCreature())
 			m_Creature = GetCreatureInfo(item);
@@ -58,10 +62,13 @@ namespace TEN::Scripting::Objects
 
 	/// Gets the current mood of the creature.
 	// @function GetMood
-	// @treturn Objects.CreatureMood The current mood of the creature.
+	// @treturn Objects.CreatureMood The current mood of the creature. If creature is not active, it returns Bored status.
 	MoodType LuaCreatureInfo::GetMood()
 	{
-		return m_Creature->Mood;
+		if (m_Creature != nullptr)
+			return m_Creature->Mood;
+		else
+			return MoodType::Bored;
 	}
 
 	/// Gets the current target of the creature.
@@ -69,8 +76,13 @@ namespace TEN::Scripting::Objects
 	// @treturn moveable The moveable object representing the target, or null if no target is set.
 	std::optional<Moveable> LuaCreatureInfo::GetTarget()
 	{
-		auto enemy = m_Creature->Enemy;
-		return Moveable(enemy->Index);
+		if (m_Creature != nullptr)
+		{
+			auto enemy = m_Creature->Enemy;
+			return Moveable(enemy->Index);
+		}
+		else 
+			return std::nullopt;
 	}
 
 	/// Gets the current target position of the creature.
@@ -78,17 +90,22 @@ namespace TEN::Scripting::Objects
 	// @treturn Vec3 The position of the creature's target.
 	Vec3 LuaCreatureInfo::GetTargetPosition()
 	{
-
-		return m_Creature->Target;
+		if (m_Creature != nullptr)
+			return m_Creature->Target;
+		else
+			return Vec3(0, 0, 0);
 	}
 
 	/// Sets a new target for the creature.
 	// @function SetTarget
 	// @tparam moveable mov The moveable object to set as the target.
 	void LuaCreatureInfo::SetTarget(Moveable& mov)
-	{
-		auto* item = &g_Level.Items[mov.GetIndex()];
-		m_Creature->Enemy = item;
+	{	
+		if (m_Creature != nullptr)
+		{
+			auto* item = &g_Level.Items[mov.GetIndex()];
+			m_Creature->Enemy = item;
+		}
 	}
 
 	/// Sets the position of the creature's target.
@@ -96,14 +113,16 @@ namespace TEN::Scripting::Objects
 	// @tparam Vec3 position The target position to set.
 	void LuaCreatureInfo::SetTargetPosition(Vec3& position)
 	{
-		m_Creature->Target = position.ToVector3i();
+		if (m_Creature != nullptr)
+			m_Creature->Target = position.ToVector3i();
 	}
 
 	/// Clears the current target of the creature.
 	// @function ClearTarget
 	void LuaCreatureInfo::ClearTarget()
 	{
-		m_Creature->Enemy = nullptr;
+		if (m_Creature != nullptr)
+			m_Creature->Enemy = nullptr;
 	}
 
 	/// Checks if the creature is in an alerted state.
@@ -111,7 +130,10 @@ namespace TEN::Scripting::Objects
 	// @treturn bool Creature alert state. __true: if the creature is alerted, false: not alerted__
 	bool LuaCreatureInfo::IsAlerted()
 	{
-		return m_Creature->Alerted;
+		if (m_Creature != nullptr)
+			return m_Creature->Alerted;
+		else
+			return false;
 	}
 
 	/// Checks if the creature is friendly. Only returns true for friendly creatures like monks (TR2) or troops (TR4).
@@ -119,7 +141,10 @@ namespace TEN::Scripting::Objects
 	// @treturn Creature friendly status. bool __true: if the creature is friendly, false: not friendly__
 	bool LuaCreatureInfo::IsFriendly()
 	{
-		return m_Creature->Friendly;
+		if (m_Creature != nullptr)
+			return m_Creature->Friendly;
+		else
+			return false;
 	}
 
 	/// Checks if the creature has been hurt by player.
@@ -127,7 +152,10 @@ namespace TEN::Scripting::Objects
 	// @treturn bool Creature hit status. __true: is hit, false: isn't hit__
 	bool LuaCreatureInfo::IsHurtByPlayer()
 	{
-		return m_Creature->HurtByLara;
+		if (m_Creature != nullptr)
+			return m_Creature->HurtByLara;
+		else
+			return false;
 	}
 
 	/// Checks if the creature is poisoned.
@@ -135,7 +163,10 @@ namespace TEN::Scripting::Objects
 	// @treturn bool Creature poison status. __true: is poisoned, false: isn't poisoned__
 	bool LuaCreatureInfo::IsPoisoned()
 	{
-		return m_Creature->Poisoned;
+		if (m_Creature != nullptr)
+			return m_Creature->Poisoned;
+		else
+			return false;
 	}
 
 	/// Checks if the creature has reached its goal.
@@ -143,6 +174,9 @@ namespace TEN::Scripting::Objects
 	// @treturn bool Creature position status. __true: is at its goal, false: isn't at its goal__.
 	bool LuaCreatureInfo::IsAtGoal()
 	{
-		return m_Creature->ReachedGoal;
+		if (m_Creature != nullptr)
+			return m_Creature->ReachedGoal;
+		else
+			return false;
 	}
 }
