@@ -73,6 +73,16 @@ namespace TEN::Scripting::View
 		return TO_DEGREES(GetCurrentFOV());
 	}
 
+	static void SetRoll(float angle)
+	{
+		AlterRoll(angle);
+	}
+
+	static float GetRoll()
+	{
+		return TO_DEGREES(GetCurrentRoll());
+	}
+
 	static ScriptCameraType GetCameraType()
 	{
 		if (UseSpotCam)
@@ -251,6 +261,16 @@ namespace TEN::Scripting::View
 		//@function GetFOV
 		//@treturn float Current FOV angle in degrees.
 		tableView.set_function(ScriptReserved_GetFOV, &GetFOV);
+
+		///Set field of view.
+		//@function SetFOV
+		//@tparam float angle Angle in degrees (clamped to [10, 170]).
+		tableView.set_function("SetRoll", &SetRoll);
+
+		///Get field of view.
+		//@function GetFOV
+		//@treturn float Current FOV angle in degrees.
+		tableView.set_function("GetRoll", &GetRoll);
 
 		///Shows the mode of the game camera.
 		//@function GetCameraType
