@@ -433,21 +433,13 @@ void ObjCamera(ItemInfo* camSlotId, int camMeshId, ItemInfo* targetItem, int tar
 	UpdateCameraElevation();
 
 	//get mesh 0 coordinates.	
-	auto pos1 = GetJointPosition(camSlotId, 0, Vector3i::Zero);
-	auto dest = Vector3(pos1.x, pos1.y, pos1.z);
-	
-	auto pos2 = GetJointPosition(camSlotId, 0, Vector3::Forward * BLOCK(1));
-	
-	auto normal = (pos1 - pos2).ToVector3();
-	normal.Normalize();
-
-	auto eulers = EulerAngles(normal);
+	auto pos = GetJointPosition(camSlotId, 0, Vector3i::Zero);
+	auto dest = Vector3(pos.x, pos.y, pos.z);
 
 	GameVector from = GameVector(dest, camSlotId->RoomNumber);
 	Camera.fixedCamera = true;
 
 	MoveObjCamera(&from, camSlotId, camMeshId, targetItem, targetMeshId);
-	Camera.Roll = eulers.z;
 	Camera.timer = -1;
 }
 
