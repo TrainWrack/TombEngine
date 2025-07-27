@@ -80,7 +80,7 @@ namespace TEN::Scripting::View
 
 	static float GetRoll()
 	{
-		return TO_DEGREES(GetCurrentRoll());
+		return (GetCurrentRoll());
 	}
 
 	static ScriptCameraType GetCameraType()

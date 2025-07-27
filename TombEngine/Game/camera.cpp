@@ -188,7 +188,7 @@ void LookCamera(ItemInfo& item, const CollisionInfo& coll)
 	MoveCamera(&target, Camera.speed);
 	Camera.target = GameVector(Camera.target.ToVector3i() + (lookAtPos - Camera.target.ToVector3i()) * POS_LERP_ALPHA, item.RoomNumber);
 
-	LookAt(&Camera, 0);
+	LookAt(&Camera, GetCurrentRoll());
 	UpdateMikePos(item);
 	Camera.oldType = Camera.type;
 }
@@ -212,12 +212,12 @@ short GetCurrentFOV()
 	return CurrentFOV;
 }
 
-void AlterRoll(short value)
+void AlterRoll(float value)
 {
-	Camera.Roll = TO_RAD(value);
+	Camera.Roll = value;
 }
 
-short GetCurrentRoll()
+float GetCurrentRoll()
 {
 	return Camera.Roll;
 }
@@ -419,7 +419,7 @@ void MoveCamera(GameVector* ideal, int speed)
 	ItemsCollideCamera();
 
 	Camera.pos.RoomNumber = GetPointCollision(Camera.pos.ToVector3i(), Camera.pos.RoomNumber).GetRoomNumber();
-	LookAt(&Camera, 0);
+	LookAt(&Camera, GetCurrentRoll());
 	UpdateMikePos(*LaraItem);
 	Camera.oldType = Camera.type;
 }
@@ -486,7 +486,7 @@ void MoveObjCamera(GameVector* ideal, ItemInfo* camSlotId, int camMeshId, ItemIn
 
 	Camera.pos += (ideal->ToVector3i() - Camera.pos.ToVector3i()) / speed;
 	Camera.pos.RoomNumber = GetPointCollision(Camera.pos.ToVector3i(), Camera.pos.RoomNumber).GetRoomNumber();
-	LookAt(&Camera, 0);
+	LookAt(&Camera, GetCurrentRoll());
 
 	auto angle = Camera.target.ToVector3i() - Camera.pos.ToVector3i();
 	auto position = Vector3i(Camera.target.ToVector3i() - Camera.pos.ToVector3i());
@@ -994,7 +994,7 @@ void BinocularCamera(ItemInfo* item)
 		CalculateBounce(true);
 
 	Camera.target.RoomNumber = GetPointCollision(Camera.pos.ToVector3i(), Camera.target.RoomNumber).GetRoomNumber();
-	LookAt(&Camera, 0);
+	LookAt(&Camera, GetCurrentRoll());
 	UpdateMikePos(*item);
 	Camera.oldType = Camera.type;
 
