@@ -87,7 +87,7 @@ void LookCamera(ItemInfo& item, const CollisionInfo& coll);
 void LookAt(CAMERA_INFO* cam, short roll);
 void AlterFOV(short value, bool store = true);
 short GetCurrentFOV();
-void AlterRoll(float value);
+void AlterRoll(short value);
 float GetCurrentRoll();
 void InitializeCamera();
 void MoveCamera(GameVector* ideal, int speed);
