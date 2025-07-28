@@ -86,11 +86,11 @@ namespace TEN::Scripting
 		// @tfield bool crawlspaceSwandive When enabled, player will be able to swandive into crawlspaces.
 		"crawlspaceSwandive", &AnimSettings::CrawlspaceDive,
 
-		// Overhang climbing.
+		/// Overhang climbing.
 		// @tfield bool overhangClimb Enables overhang climbing feature. Currently does not work.
 		"overhangClimb", &AnimSettings::OverhangClimb,
 
-		// Extended slide mechanics.
+		/// Extended slide mechanics.
 		// @tfield bool slideExtended If enabled, player will be able to change slide direction with controls. Currently does not work.
 		"slideExtended", &AnimSettings::SlideExtended,
 
@@ -172,6 +172,10 @@ namespace TEN::Scripting
 		// @tfield bool smoke Smoke effect. Determines whether flare generates smoke when burning.
 		"smoke", &FlareSettings::Smoke,
 
+		/// Toggle muzzle glow effect.
+		// @tfield bool muzzleGlow Glow effect. Determines whether flare generates glow when burning.
+		"muzzleGlow", &FlareSettings::MuzzleGlow,
+
 		/// Toggle flicker effect.
 		// @tfield bool flicker Light and lensflare flickering. When turned off, flare light will be constant.
 		"flicker", &FlareSettings::Flicker);
@@ -188,10 +192,11 @@ namespace TEN::Scripting
 			sol::meta_function::new_index, NewIndexErrorMaker(GraphicsSettings, ScriptReserved_GraphicsSettings),
 
 			/// Enable skinning.
-			// @tfield bool skinning If enabled, skinning will be used for animated objects with skin. Disable to force classic TR workflow.
+			// @tfield bool skinning If enabled, skinning will be used for animated objects with skinned mesh. Disable to force classic TR workflow.
 			"skinning", &GraphicsSettings::Skinning);
 	}
 
+	/* @fieldtype HairSettings[] */
 	/// Hair
 	// @section Hair
 	// This is a table of braid object settings. <br>
@@ -205,7 +210,7 @@ namespace TEN::Scripting
 			sol::meta_function::new_index, NewIndexErrorMaker(HairSettings, ScriptReserved_HairSettings),
 
 		/// Root mesh to which hair object will attach to.
-		// @tfield int mesh Index of a root mesh to which hair will attach. Root mesh may be different for each hair object.
+		// @tfield int rootMesh Index of a root mesh to which hair will attach. Root mesh may be different for each hair object.
 		"rootMesh", &HairSettings::RootMesh,
 
 		/// Relative braid offset to a headmesh. Not used with skinned hair mesh.
@@ -263,6 +268,7 @@ namespace TEN::Scripting
 		"swimVelocity", &PhysicsSettings::SwimVelocity);
 	}
 
+	/* @fieldtype { [WeaponType]: WeaponSettings } */
 	/// Weapons
 	// @section Weapons
 	// This is a table of weapon settings, with several parameters available for every weapon.
@@ -291,7 +297,7 @@ namespace TEN::Scripting
 		"damage", &WeaponSettings::Damage,
 
 		/// Alternate damage.
-		// @tfield int alternateDamage For Revolver and HK, specifies damage in lasersight mode. For crossbow, specifies damage for explosive ammo.
+		// @tfield int alternateDamage For crossbow, specifies damage for explosive ammo.
 		"alternateDamage", &WeaponSettings::AlternateDamage,
 
 		/// Water level.
@@ -307,7 +313,7 @@ namespace TEN::Scripting
 		"flashColor", &WeaponSettings::FlashColor,
 
 		/// Gunflash range.
-		// @tfield Color flashRange specifies the range of the gunflash.
+		// @tfield int flashRange specifies the range of the gunflash.
 		"flashRange", &WeaponSettings::FlashRange,
 
 		/// Gunflash duration.

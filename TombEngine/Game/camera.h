@@ -90,7 +90,7 @@ short GetCurrentFOV();
 void AlterRoll(short value);
 float GetCurrentRoll();
 void InitializeCamera();
-void MoveCamera(GameVector* ideal, int speed);
+void MoveCamera(GameVector* ideal, int speed, bool force = false);
 void ChaseCamera(ItemInfo* item);
 void UpdateCameraElevation();
 void CombatCamera(ItemInfo* item);

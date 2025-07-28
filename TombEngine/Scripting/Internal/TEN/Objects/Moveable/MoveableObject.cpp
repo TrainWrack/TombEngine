@@ -62,6 +62,25 @@ most can just be ignored (see usage).
 static std::unique_ptr<Moveable> Create(GAME_OBJECT_ID objID, const std::string& name, const Vec3& pos, const TypeOrNil<Rotation>& rot, TypeOrNil<int> room,
 										TypeOrNil<int> animNumber, TypeOrNil<int> frameNumber, TypeOrNil<int> hp, TypeOrNil<int> ocb, const TypeOrNil<aiBitsType>& aiBits)
 {
+	if (objID < 0 || objID >= GAME_OBJECT_ID::ID_NUMBER_OBJECTS || !Objects[objID].loaded)
+	{
+		TENLog("Can't create moveable " + GetObjectName(objID) + ": object not loaded or ID is invalid.", LogLevel::Error);
+		return nullptr;
+	}
+
+	int roomNumber = ValueOr<int>(room, FindRoomNumber(pos.ToVector3i()));
+	if (roomNumber == NO_VALUE || !IsPointInRoom(pos.ToVector3i(), roomNumber))
+	{
+		TENLog("Can't create moveable " + GetObjectName(objID) + ": position is not in a valid room.", LogLevel::Error);
+		return nullptr;
+	}
+
+	if (g_GameScriptEntities->GetIndexByName(name) != NO_VALUE)
+	{
+		TENLog("Can't create moveable with name '" + name + "': name is already in use.", LogLevel::Error);
+		return nullptr;
+	}
+
 	int movID = CreateItem();
 	auto scriptMov = std::make_unique<Moveable>(movID, false);
 
@@ -70,16 +89,8 @@ static std::unique_ptr<Moveable> Create(GAME_OBJECT_ID objID, const std::string&
 		auto& mov = g_Level.Items[movID];
 
 		scriptMov->SetObjectID(objID);
-
-		if (std::holds_alternative<int>(room))
-		{
-			scriptMov->SetPosition(pos, false);
-			scriptMov->SetRoomNumber(std::get<int>(room));
-		}
-		else
-		{
-			scriptMov->SetPosition(pos, true);
-		}
+		scriptMov->SetPosition(pos, false);
+		scriptMov->SetRoomNumber(roomNumber);
 
 		scriptMov->SetRotation(ValueOr<Rotation>(rot, Rotation()));
 		scriptMov->Initialize();
@@ -659,7 +670,7 @@ short Moveable::GetLocationAI() const
 		return creature->LocationAI;
 	}
 
-	TENLog("Trying to get LocationAI value from non-creature moveable. Value does not exist so it's returning 0.", LogLevel::Error);
+	TENLog("Trying to get LocationAI value from a non-creature moveable but the value does not exist. Returning 0.", LogLevel::Error);
 	return 0;
 }
 
@@ -675,7 +686,7 @@ void Moveable::SetLocationAI(short value)
 	}
 	else
 	{
-		TENLog("Trying to set a value in nonexisting variable. Non creature moveable hasn't got LocationAI.", LogLevel::Error);
+		TENLog("Trying to set a value in non-existing variable but Non-creature moveable does not have LocationAI!", LogLevel::Error);
 	}
 }
 
@@ -830,7 +841,7 @@ Vec3 Moveable::GetVelocity() const
 void Moveable::SetVelocity(Vec3 velocity)
 {
 	if (_moveable->IsCreature())
-		ScriptWarn("Attempt to set velocity to a creature. In may not work, as velocity is overridden by AI.");
+		ScriptWarn("Attempt to set velocity to a creature. It may not work, as velocity is overridden by AI.");
 
 	_moveable->Animation.Velocity = Vector3(velocity.x, velocity.y, velocity.z);
 }
@@ -1020,7 +1031,7 @@ bool Moveable::GetMeshSwapped(int meshId) const
 	if (!MeshExists(meshId))
 		return false;
 
-	return _moveable->Model.MeshIndex[meshId] == _moveable->Model.BaseMesh + meshId;
+	return _moveable->Model.MeshIndex[meshId] != _moveable->Model.BaseMesh + meshId;
 }
 
 /// Set state of specified mesh swap of a moveable. Use this to swap specified mesh of a moveable.
@@ -1278,7 +1289,7 @@ bool Moveable::MeshExists(int index) const
 // @function Moveable:AttachObjCamera
 // @tparam int mesh Mesh of a moveable to use as a camera position.
 // @tparam Objects.Moveable target Target moveable to attach camera to.
-// @tparam int mesh Mesh of a target moveable to use as a camera target.
+// @tparam int targetMesh Mesh of a target moveable to use as a camera target.
 void Moveable::AttachObjCamera(short camMeshId, Moveable& mov, short targetMeshId)
 {
 	ObjCamera(_moveable, camMeshId, mov._moveable, targetMeshId, true);

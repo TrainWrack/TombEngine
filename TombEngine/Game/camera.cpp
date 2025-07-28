@@ -92,7 +92,7 @@ void DoThumbstickCamera()
 	if (!g_Configuration.EnableThumbstickCamera)
 		return;
 
-	if (Camera.laraNode == -1 && Camera.target.ToVector3i() == OldCam.target)
+	if (Camera.laraNode == NO_VALUE && Camera.target.ToVector3i() == OldCam.target)
 	{
 		const auto& axisCoeff = AxisMap[AxisID::Camera];
 
@@ -288,7 +288,7 @@ void InitializeCamera()
 	Camera.speed = 1;
 	Camera.flags = CF_NONE;
 	Camera.bounce = 0;
-	Camera.number = -1;
+	Camera.number = NO_VALUE;
 	Camera.fixedCamera = false;
 	Camera.DisableInterpolation = true;
 
@@ -301,7 +301,7 @@ void InitializeCamera()
 	SetScreenFadeIn(FADE_SCREEN_SPEED);
 }
 
-void MoveCamera(GameVector* ideal, int speed)
+void MoveCamera(GameVector* ideal, int speed, bool force)
 {
 	if (Lara.Control.Look.IsUsingBinoculars)
 		speed = 1;
@@ -322,7 +322,8 @@ void MoveCamera(GameVector* ideal, int speed)
 		OldCam.target.y != Camera.target.y ||
 		OldCam.target.z != Camera.target.z ||
 		Camera.oldType != Camera.type ||
-		Lara.Control.Look.IsUsingBinoculars)
+		Lara.Control.Look.IsUsingBinoculars ||
+		force)
 	{
 		OldCam.pos.Orientation = LaraItem->Pose.Orientation;
 		OldCam.pos2.Orientation.x = Lara.ExtraHeadRot.x;
@@ -426,6 +427,9 @@ void MoveCamera(GameVector* ideal, int speed)
 
 void ObjCamera(ItemInfo* camSlotId, int camMeshId, ItemInfo* targetItem, int targetMeshId, bool cond)
 {
+	if (ItemCameraOn != cond)
+		Camera.DisableInterpolation = true;
+
 	//camSlotId and targetItem stay the same object until I know how to expand targetItem to another object.
 	//activates code below ->  void CalculateCamera().
 	ItemCameraOn = cond;
@@ -440,7 +444,8 @@ void ObjCamera(ItemInfo* camSlotId, int camMeshId, ItemInfo* targetItem, int tar
 	Camera.fixedCamera = true;
 
 	MoveObjCamera(&from, camSlotId, camMeshId, targetItem, targetMeshId);
-	Camera.timer = -1;
+	Camera.timer = NO_VALUE;
+	Camera.speed = 1;
 }
 
 void ClearObjCamera()
@@ -516,12 +521,18 @@ void MoveObjCamera(GameVector* ideal, ItemInfo* camSlotId, int camMeshId, ItemIn
 
 void RefreshFixedCamera(short camNumber)
 {
+	if (Camera.type != CameraType::Fixed && Camera.type != CameraType::Heavy)
+		return;
+
 	auto& camera = g_Level.Cameras[camNumber];
 
 	auto origin = GameVector(camera.Position, camera.RoomNumber);
 	int moveSpeed = camera.Speed * 8 + 1;
 
-	MoveCamera(&origin, moveSpeed);
+	if (moveSpeed == 1)
+		Camera.DisableInterpolation = true;
+
+	MoveCamera(&origin, moveSpeed, true);
 }
 
 void ChaseCamera(ItemInfo* item)
@@ -635,7 +646,7 @@ void UpdateCameraElevation()
 {
 	DoThumbstickCamera();
 
-	if (Camera.laraNode != -1)
+	if (Camera.laraNode != NO_VALUE)
 	{
 		auto pos = GetJointPosition(LaraItem, Camera.laraNode, Vector3i::Zero);
 		auto pos1 = GetJointPosition(LaraItem, Camera.laraNode, Vector3i(0, -CLICK(1), BLOCK(2)));
@@ -932,10 +943,10 @@ void FixedCamera(ItemInfo* item)
 
 	MoveCamera(&origin, moveSpeed);
 
-	if (Camera.timer)
+	if (Camera.timer > 0)
 	{
 		if (!--Camera.timer)
-			Camera.timer = -1;
+			Camera.timer = NO_VALUE;
 	}
 }
 
@@ -944,12 +955,12 @@ void BounceCamera(ItemInfo* item, short bounce, short maxDistance)
 	float distance = Vector3i::Distance(item->Pose.Position, Camera.pos.ToVector3i());
 	if (distance < maxDistance)
 	{
-		if (maxDistance == -1)
+		if (maxDistance == NO_VALUE)
 			Camera.bounce = bounce;
 		else
 			Camera.bounce = -(bounce * (maxDistance - distance) / maxDistance);
 	}
-	else if (maxDistance == -1)
+	else if (maxDistance == NO_VALUE)
 		Camera.bounce = bounce;
 }
 
@@ -997,8 +1008,6 @@ void BinocularCamera(ItemInfo* item)
 	LookAt(&Camera, 0);
 	UpdateMikePos(*item);
 	Camera.oldType = Camera.type;
-
-	GetTargetOnLOS(&Camera.pos, &Camera.target, false, false);
 }
 
 void ConfirmCameraTargetPos()
@@ -1008,7 +1017,7 @@ void ConfirmCameraTargetPos()
 		LaraItem->Pose.Position.y - (LaraCollision.Setup.Height / 2),
 		LaraItem->Pose.Position.z);
 
-	if (Camera.laraNode != -1)
+	if (Camera.laraNode != NO_VALUE)
 	{
 		Camera.target.x = pos.x;
 		Camera.target.y = pos.y;
@@ -1292,18 +1301,18 @@ void CalculateCamera(const CollisionInfo& coll)
 	if (CalculateDeathCamera(*LaraItem))
 		return;
 
-	if (Camera.type != CameraType::Heavy || Camera.timer == -1)
+	if (Camera.type != CameraType::Heavy || Camera.timer == NO_VALUE)
 	{
 		Camera.type = CameraType::Chase;
 		Camera.speed = 10;
-		Camera.number = -1;
+		Camera.number = NO_VALUE;
 		Camera.lastItem = Camera.item;
 		Camera.item = nullptr;
 		Camera.targetElevation = 0;
 		Camera.targetAngle = 0;
 		Camera.targetDistance = BLOCK(1.5f);
 		Camera.flags = 0;
-		Camera.laraNode = -1;
+		Camera.laraNode = NO_VALUE;
 	}
 }
 

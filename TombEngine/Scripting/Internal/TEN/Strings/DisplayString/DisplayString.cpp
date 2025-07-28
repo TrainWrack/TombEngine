@@ -10,6 +10,8 @@
 
 using namespace TEN::Scripting::Types;
 
+static DisplayStringID _nextID = 0;
+
 /*** A string appearing on the screen.
 Can be used for subtitles and "2001, somewhere in Egypt"-style messages.
 
@@ -38,10 +40,7 @@ UserDisplayString::UserDisplayString(const std::string& key, const Vec2& pos, co
 
 DisplayString::DisplayString()
 {
-	// We don't ever dereference this pointer; it's just
-	// a handy way to get a unique key for a hash map.
-
-	_id = reinterpret_cast<DisplayStringID>(this);
+	_id = ++_nextID;
 }
 
 /*** Create a DisplayString.
@@ -181,13 +180,13 @@ void DisplayString::Register(sol::table& parent)
 		// Screen-space coordinates are returned. If `Vec2(0, 0)` is returned, it means there is no word wrapping for this string.
 		// @function DisplayString:GetArea
 		// @treturn Vec2 area Word-wrapping area in pixel coordinates.
-		ScriptReserved_GetPosition, &DisplayString::GetArea,
+		ScriptReserved_GetArea, &DisplayString::GetArea,
 
 		/// Set the word-wrapping area of the string.
 		// Screen-space coordinates are expected. If set to `Vec2(0, 0)`, no word wrapping will occur.
 		// @function DisplayString:SetArea
 		// @tparam Vec2 pos New word-wrapping area in pixel coordinates.
-		ScriptReserved_SetPosition, &DisplayString::SetArea,
+		ScriptReserved_SetArea, &DisplayString::SetArea,
 
 		/// Set the display string's flags.
 		// @function DisplayString:SetFlags
