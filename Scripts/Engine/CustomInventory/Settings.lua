@@ -24,4 +24,20 @@ Settings.COLOR_MAP =
     ITEM_COLOR = Color(64,64,64,0)
 }
 
+Settings.BACKGROUND = 
+{
+    ENABLE = false,
+    OBJECTID = TEN.Objects.ObjID.DIARY_SPRITES,
+    SPRITEID = 1,
+    COLOR = TEN.Color(255, 255, 255),
+    POSITION = TEN.Vec2(TEN.Util.PercentToScreen(50,50)),
+    ROTATION = 0,
+    SCALE = TEN.Vec2(100,100),
+    ALIGN_MODE = TEN.View.AlignMode.CENTER,
+    SCALE_MODE = TEN.View.ScaleMode.STRETCH,
+    BLEND_MODE = TEN.Effects.BlendID.ALPHABLEND,
+    ALPHA = 255
+}
+
+
 return Settings

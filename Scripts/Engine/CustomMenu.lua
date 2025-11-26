@@ -108,6 +108,14 @@ Menu.Delete = function (menuName)
 
 end
 
+Menu.DeleteAll = function()
+    if LevelVars.Engine and LevelVars.Engine.Menus then
+        for name, _ in pairs(LevelVars.Engine.Menus) do
+            LevelVars.Engine.Menus[name] = nil
+        end
+    end
+end
+
 Menu.Status = function(value)
 
     if LevelVars.Engine.Menus then
