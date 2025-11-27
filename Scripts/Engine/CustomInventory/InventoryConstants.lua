@@ -13,7 +13,7 @@ local COL = {
     ORIENTATION = 8,
 	TYPE = 9,
 	COMBINE = 10,
-	RING = 11
+	RING = 11,
 }
 
 local TYPE = {

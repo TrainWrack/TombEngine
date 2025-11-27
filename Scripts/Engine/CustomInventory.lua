@@ -22,6 +22,7 @@ local INVENTORY_ANIM_TIME = 0.5
 local RING_RADIUS = -512
 local ITEM_START = Vec3(0,200,512)
 local ITEM_END = Vec3(0,0,400)
+local AMMO_LOCATION = Vec3(0,200,512)
 local RING_POSITION_OFFSET = 1000
 local PROGRESS_COMPLETE = 1
 local EXAMINE_DEFAULT_SCALE = 1
@@ -46,7 +47,7 @@ local RING = {
     MAIN = 2,
 	OPTIONS = 3,
 	COMBINE = 4,
-	AMMO = 5,
+	AMMO = 5
 }
 
 local RING_CENTER = {
@@ -90,7 +91,10 @@ local INVENTORY_MODE =
     COMBINE_COMPLETE = 28,
     SEPARATE = 29,
     SEPARATE_COMPLETE = 30,
-    EXAMINE_RESET = 31
+    EXAMINE_RESET = 31,
+    WEAPON_MODE_SETUP = 32,
+    WEAPON_MODE = 33,
+    WEAPON_MODE_CLOSE = 34
 }
 
 local SOUND_MAP = Settings.SOUND_MAP
@@ -128,6 +132,12 @@ local WEAPON_AMMO_LOOKUP = {
     [TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM] = {TEN.Objects.ObjID.ROCKET_LAUNCHER_AMMO_ITEM}
 }
 
+local WEAPON_MODE_LOOKUP = {
+    {weapon = TEN.Objects.ObjID.HK_ITEM, string = "hk_rapid_mode"},
+    {weapon = TEN.Objects.ObjID.HK_ITEM, string = "hk_burst_mode"},
+    {weapon = TEN.Objects.ObjID.HK_ITEM, string = "hk_sniper_mode"},
+    }
+
 local AMMO_SET = {
     [TEN.Objects.ObjID.PISTOLS_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.PISTOLS, weapon = TEN.Objects.ObjID.PISTOLS_ITEM}, 
     [TEN.Objects.ObjID.UZI_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.UZI, weapon = TEN.Objects.ObjID.UZI_ITEM}, 
@@ -143,7 +153,6 @@ local AMMO_SET = {
     [TEN.Objects.ObjID.GRENADE_AMMO3_ITEM] = {slot = TEN.Objects.AmmoType.GRENADE_FLASH, weapon = TEN.Objects.ObjID.GRENADE_GUN_ITEM},
     [TEN.Objects.ObjID.HARPOON_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.HARPOON, weapon = TEN.Objects.ObjID.HARPOON_ITEM},
     [TEN.Objects.ObjID.ROCKET_LAUNCHER_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.ROCKET, weapon = TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM}
-
 }
 
 local HEALTH_SET = {
@@ -152,8 +161,8 @@ local HEALTH_SET = {
 }
 
 local ItemActionFlags = {
-    {bit = ItemAction.EQUIP, string = "equip", action = "Action"},
-    {bit = ItemAction.USE, string = "use", action = "Action"},
+    {bit = ItemAction.EQUIP, string = "equip"},
+    {bit = ItemAction.USE, string = "use"},
     {bit = ItemAction.EXAMINE, string = "examine"},
     {bit = ItemAction.CHOOSE_AMMO_SHOTGUN, string = "choose_ammo"},
     {bit = ItemAction.CHOOSE_AMMO_CROSSBOW, string = "choose_ammo"},
@@ -167,7 +176,7 @@ local ItemActionFlags = {
     {bit = ItemAction.STATISTICS , string = "statistics"},
     {bit = ItemAction.CHOOSE_AMMO_HARPOON, string = "choose_ammo"},
     {bit = ItemAction.CHOOSE_AMMO_ROCKET, string = "choose_ammo"},
-    {bit = ItemAction.COMBINE, string = "combine", action = "Action"},
+    {bit = ItemAction.COMBINE, string = "combine"},
     {bit = ItemAction.SEPARATE, string = "separate"},
 }
 
@@ -178,9 +187,9 @@ local CHOOSE_AMMO_FLAGS = {
     ItemAction.CHOOSE_AMMO_UZI,
     ItemAction.CHOOSE_AMMO_PISTOLS,
     ItemAction.CHOOSE_AMMO_REVOLVER,
-    ItemAction.CHOOSE_AMMO_HK,
     ItemAction.CHOOSE_AMMO_HARPOON,
-    ItemAction.CHOOSE_AMMO_ROCKET
+    ItemAction.CHOOSE_AMMO_ROCKET,
+     --ItemAction.CHOOSE_AMMO_HK
 }
 
 --variables
@@ -194,7 +203,7 @@ local examineScaler = EXAMINE_DEFAULT_SCALE
 local examineScalerOld = EXAMINE_DEFAULT_SCALE
 local examineShowString = false
 
-local satisticsType = false
+local statisticsType = false
 
 local combineItem1 = nil
 local combineItem2 = nil
@@ -221,12 +230,9 @@ local direction = 1
 local saveList = false
 local saveSelected = false
 
-local selectedAmmo = nil
-
 LevelFuncs.Engine.CustomInventory = {}
 
 --functions
-
 local colorCombine = function(color, transparency)
     return Color(color.r, color.g, color.b, transparency)
 end
@@ -258,11 +264,11 @@ local calculateCompassAngle = function()
     return needleOrient
 end
 
-local calculateStopWatchRotation = function()
+local calculateStopWatchRotation = function(type)
 
     local angles = {}
 
-    local level_time = Flow.GetStatistics().timeTaken
+    local level_time = Flow.GetStatistics(type).timeTaken
 
     angles.hour_hand_angle = Rotation(0,0,-(level_time.h / 12) * 360)
     angles.minute_hand_angle = Rotation(0,0,-(level_time.m / 60) * 360)
@@ -291,7 +297,7 @@ end
 
 local SetRotationInventoryItems = function()
 
-    local angles = calculateStopWatchRotation()
+    local angles = calculateStopWatchRotation(statisticsType)
 
     --Stopwatch hands
 
@@ -327,6 +333,7 @@ end
 
 local BuildInventoryItem = function(data)
 
+    gameflowOverrides = LevelFuncs.Engine.CustomInventory.ReadGameflow() or {}
     data.count = TEN.Inventory.GetItemCount(data.objectID)
 
     local override = gameflowOverrides[data.objectID] or {}
@@ -693,10 +700,8 @@ end
 
 local CreateStatisticsMenu = function()
 
-    --add new strings to systems strings 	satistics_level = {"Level Satistics"},	satistics_game = {"Game Satistics"},
-
     local statItems = {}
-    local items = {"satistics_level", "satistics_game"}
+    local items = {"statistics_level", "statistics_game"}
 
     if items then
         for _, itemData in ipairs(items) do
@@ -723,7 +728,8 @@ local CreateStatisticsMenu = function()
     statisticsMenu:SetVisibility(true)
     statisticsMenu:SetLineSpacing(5.3)
     statisticsMenu:SetOptionsFont(COLOR_MAP.NORMAL_FONT, 0.9)
-    statisticsMenu:SetOnItemChangeFunction("Engine.CustomInventory.ChangeStatistics")
+    statisticsMenu:SetOnOptionChangeFunction("Blank", "Engine.CustomInventory.ChangeStatistics")
+    statisticsMenu:SetWrapAroundOptions(true)
     statisticsMenu:EnableInputs(true)
     statisticsMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, nil, nil, true)
 
@@ -731,7 +737,7 @@ end
 
 LevelFuncs.Engine.CustomInventory.ChangeStatistics = function()
 
-    satisticsType = not satisticsType
+    statisticsType = not statisticsType
 
 end
 
@@ -742,6 +748,48 @@ local RunStatisticsMenu = function()
 
 end
 
+local CreateWeaponModeMenu = function(item)
+
+    local weaponModes = {}
+    local itemData = GetInventoryItem(item)
+
+    for _, entry in ipairs(WEAPON_MODE_LOOKUP) do
+        if entry.weapon == item then
+            table.insert(weaponModes, {
+                itemName = entry.string,
+                actionBit = entry.bit,
+                options = nil,
+                currentOption = 1
+            })
+        end
+    end
+
+    local itemMenu = Menu.Create("WeaponModeMenu", itemData.name, weaponModes, "Engine.CustomInventory.ChangeWeaponMode", nil, Menu.Type.ITEMS_ONLY)
+
+    itemMenu:SetItemsPosition(Vec2(50, 35))
+    itemMenu:SetVisibility(true)
+    itemMenu:SetLineSpacing(5.3)
+    itemMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9)
+    itemMenu:SetItemsTranslate(true)
+    itemMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, nil, nil, true)
+
+end
+
+LevelFuncs.Engine.CustomInventory.ChangeWeaponMode = function()
+
+    local index = Menu.Get("WeaponModeMenu"):getCurrentItemIndex()
+
+    Lara:SetWeaponMode(index)
+    inventoryMode = INVENTORY_MODE.WEAPON_MODE_CLOSE
+
+end
+
+local RunWeaponModeMenu = function()
+
+    local weaponModeMenu = Menu.Get("WeaponModeMenu")
+    weaponModeMenu:Draw()
+
+end
 
 local ParseMenuAction = function(menuActions)
 
@@ -761,6 +809,8 @@ local ParseMenuAction = function(menuActions)
         inventoryMode = INVENTORY_MODE.SAVE_SETUP
     elseif hasItemAction(menuActions, ItemAction.SEPARATE) then
         inventoryMode = INVENTORY_MODE.SEPARATE
+    elseif hasItemAction(menuActions, ItemAction.CHOOSE_AMMO_HK) then
+        inventoryMode = INVENTORY_MODE.WEAPON_MODE_SETUP
     elseif hasChooseAmmo(menuActions) then
         inventoryMode = INVENTORY_MODE.AMMO_SELECT_SETUP
     end
@@ -976,6 +1026,12 @@ local Input = function(mode)
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             inventoryMode = INVENTORY_MODE.STATISTICS_CLOSE
         end
+    elseif mode == INVENTORY_MODE.WEAPON_MODE then
+
+        if (guiIsPulsed(TEN.Input.ActionID.INVENTORY) or guiIsPulsed(TEN.Input.ActionID.DESELECT)) then
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            inventoryMode = INVENTORY_MODE.WEAPON_MODE_CLOSE
+        end
     elseif mode == INVENTORY_MODE.SAVE_MENU then
 
         if (guiIsPulsed(TEN.Input.ActionID.INVENTORY) or guiIsPulsed(TEN.Input.ActionID.DESELECT)) then
@@ -1043,7 +1099,6 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
 
     addedItems = 0
     local items  = PICKUP_DATA.constants
-    gameflowOverrides = LevelFuncs.Engine.CustomInventory.ReadGameflow() or {}
 
     if ringType == RING.AMMO or ringType == RING.COMBINE then
         ClearInventory(ringType, true)
@@ -1112,14 +1167,10 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
                 data.ringName = RING.AMMO
                 ammoRing = true
                 shouldInsert = true
-                
-                --ADD function for checking ammo type by weapon then save it in selectedAmmo
-
             else
                 --skip adding this item to table if the item is not an ammo type 
                 goto continue
             end
-
         else
             -- Dump all inventory, skip only if count is 0
             shouldInsert = (data.count ~= 0)
@@ -1300,6 +1351,37 @@ local SetupSecondaryRing = function(ringName, item)
     selectedRing = ringName
     CreateRingMenu(ringName)
     inventory.ringPosition[ringName] = RING_CENTER[RING.MAIN]
+
+end
+
+local ShowChosenAmmo = function(item)
+    
+    local inventoryItem = GetInventoryItem(item)
+
+    if inventoryItem.type == TYPE.WEAPON then
+        
+        local ammoType = Lara:GetAmmoType(WEAPON_SET[item].slot)
+
+        local objectID
+
+        for itemObjID, data in pairs(AMMO_SET) do
+            if data.slot == ammoType then
+                objectID = itemObjID
+            end
+        end
+
+        local data = BuildInventoryItem(PICKUP_DATA.ConvertRowData(PICKUP_DATA.GetRow(objectID)))
+        data.rotation = copyRotation(data.rotation)
+
+        local ammoItem = TEN.View.DisplayItem("ChosenAmmo", data.objectID, AMMO_LOCATION, data.rotation, data.scale, data.meshBits)
+        ammoItem:SetColor(COLOR_MAP.ITEM_COLOR_VISIBLE)
+    end
+
+end
+
+local DeleteChosenAmmo = function()
+
+    TEN.View.DisplayItem.RemoveItem("ChosenAmmo")
 
 end
 
@@ -1789,9 +1871,12 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
     elseif mode == INVENTORY_MODE.ITEM_SELECTED then
 
         ShowItemMenu()
+        ShowChosenAmmo(combineItem1)
 
     elseif mode == INVENTORY_MODE.ITEM_DESELECT then
         
+        DeleteChosenAmmo()
+
         if AnimateInventory(mode) then
             combineItem1 = nil
             currentRingAngle = previousRingAngle
@@ -1799,6 +1884,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         end
     elseif mode == INVENTORY_MODE.STATISTICS_OPEN then
         
+        DeleteChosenAmmo()
         SaveItemData(selectedItem)
         CreateStatisticsMenu()
 
@@ -1809,7 +1895,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
     elseif mode == INVENTORY_MODE.STATISTICS then
         
         RunStatisticsMenu()
-        Statistics.ShowLevelStats(satisticsType)
+        Statistics.ShowLevelStats(statisticsType)
 
     elseif mode == INVENTORY_MODE.STATISTICS_CLOSE then
 
@@ -1819,6 +1905,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.SAVE_SETUP then
 
+        DeleteChosenAmmo()
         SaveItemData(selectedItem)
 
         if combineItem1 or  AnimateInventory(mode) then
@@ -1844,6 +1931,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         end
     elseif mode == INVENTORY_MODE.COMBINE_SETUP then
         
+        DeleteChosenAmmo()
         SaveItemData(selectedItem)
 
         if  combineItem1 or AnimateInventory(mode) then
@@ -1911,6 +1999,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
     elseif mode == INVENTORY_MODE.AMMO_SELECT_SETUP then
         
         SaveItemData(selectedItem)
+        DeleteChosenAmmo()
 
         SetupSecondaryRing(RING.AMMO, combineItem1)
         inventoryMode = INVENTORY_MODE.AMMO_SELECT_OPEN
@@ -1941,6 +2030,8 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         end
     elseif mode == INVENTORY_MODE.SEPARATE then
         
+        DeleteChosenAmmo()
+
         if AnimateInventory(mode) then
             SeparateItems(selectedItem.objectID)
             inventoryOpenItem = combineItem1
@@ -1953,6 +2044,19 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         if AnimateInventory(mode) then
             inventoryMode = INVENTORY_MODE.INVENTORY
         end
+    elseif mode == INVENTORY_MODE.WEAPON_MODE_SETUP then
+
+        CreateWeaponModeMenu(combineItem1)
+        inventoryMode = INVENTORY_MODE.WEAPON_MODE
+
+    elseif mode == INVENTORY_MODE.WEAPON_MODE then
+         
+        RunWeaponModeMenu()
+
+    elseif mode == INVENTORY_MODE.WEAPON_MODE_CLOSE then
+        
+        inventoryMode = INVENTORY_MODE.ITEM_SELECTED
+
     end
 end
 
@@ -2168,15 +2272,16 @@ LevelFuncs.Engine.CustomInventory.DrawInventoryText = function()
 
     for _, entry in ipairs(stringTable) do
 
-    local string = GetString(entry[1])
-    local position = entry[2]
-    local scale = entry[3]
-    local color = colorCombine(entry[4], fadeInterpolate.output)
+        local string = Flow.GetString(entry[1])
+        local position = entry[2]
+        local scale = entry[3]
+        local color = colorCombine(entry[4], fadeInterpolate.output)
 
-    local entryPosInPixel = percentPos(position.x, position.y)
+        local entryPosInPixel = percentPos(position.x, position.y)
 
-    local entryText = TEN.Strings.DisplayString(string, entryPosInPixel, scale, color, false, {Strings.DisplayStringOption.CENTER, Strings.DisplayStringOption.SHADOW})
-    ShowString(entryText, 1 / 30)
+        local entryText = TEN.Strings.DisplayString(string, entryPosInPixel, scale, color, false, {Strings.DisplayStringOption.CENTER, Strings.DisplayStringOption.SHADOW})
+        ShowString(entryText, 1 / 30)
+
     end
 
 end
@@ -2196,7 +2301,7 @@ LevelFuncs.Engine.CustomInventory.ReadGameflow = function()
                     menuActions = itemID.action,
                     name = itemID.nameKey,
                     meshBits = itemID.meshBits,
-                    orientation = itemID.axis  
+                    orientation = itemID.axis
             }
         end
     end

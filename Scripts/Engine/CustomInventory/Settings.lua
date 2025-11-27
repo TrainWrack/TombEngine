@@ -21,7 +21,8 @@ Settings.COLOR_MAP =
     BLACK = Color(0,0,0,255),
     BACKGROUND = Color(128,128,128,255),
     INVENTORY_AMBIENT = Color(255,0,0),
-    ITEM_COLOR = Color(64,64,64,0)
+    ITEM_COLOR = Color(64,64,64,0),
+    ITEM_COLOR_VISIBLE = Color(64,64,64,255)
 }
 
 Settings.BACKGROUND = 
