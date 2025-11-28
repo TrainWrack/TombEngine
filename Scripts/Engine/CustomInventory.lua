@@ -203,6 +203,7 @@ local examineScaler = EXAMINE_DEFAULT_SCALE
 local examineScalerOld = EXAMINE_DEFAULT_SCALE
 local examineShowString = false
 
+local ammoAdded = true
 local statisticsType = false
 
 local combineItem1 = nil
@@ -764,6 +765,8 @@ local CreateWeaponModeMenu = function(item)
         end
     end
 
+    local modeIndex = Lara:GetWeaponMode()
+
     local itemMenu = Menu.Create("WeaponModeMenu", itemData.name, weaponModes, "Engine.CustomInventory.ChangeWeaponMode", nil, Menu.Type.ITEMS_ONLY)
 
     itemMenu:SetItemsPosition(Vec2(50, 35))
@@ -771,6 +774,7 @@ local CreateWeaponModeMenu = function(item)
     itemMenu:SetLineSpacing(5.3)
     itemMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9)
     itemMenu:SetItemsTranslate(true)
+    itemMenu:setCurrentItem(modeIndex)
     itemMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, nil, nil, true)
 
 end
@@ -1295,9 +1299,9 @@ local FadeRings = function(visible, omitSelectedRing)
 
 end
 
-local RotateItem = function(item)
+local RotateItem = function(itemName)
 
-    local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(tostring(item))
+    local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(itemName)
     local itemRotations  = currentDisplayItem:GetRotation()
     currentDisplayItem:SetRotation(Rotation(itemRotations.x, (itemRotations.y + ROTATION_SPEED) % 360, itemRotations.z))
 end
@@ -1340,6 +1344,30 @@ local OpenInventoryAtItem = function(itemID)
 
 end
 
+local OpenAmmoRingAtSelectedAmmo = function(itemID)
+
+    if itemID == NO_VALUE then
+		return
+	end
+
+    local ringIndex, itemIndex = FindItemInInventory(itemID)
+
+    if not (ringIndex and itemIndex) then
+		return
+	end
+
+    print("function running")
+    inventory.selectedItem[ringIndex] = itemIndex
+    local slice = inventory.slice[ringIndex]
+	local angle = -slice * (itemIndex - 1) --this has to be a negative angle cause reasons.
+    print("RingAngle: "..angle)
+    currentRingAngle = angle
+    targetRingAngle = angle
+    
+    --Set index of the item
+    changeOptionsforMenu()
+end
+
 local SetupSecondaryRing = function(ringName, item)
     --used for combine and ammo rings
 
@@ -1352,13 +1380,28 @@ local SetupSecondaryRing = function(ringName, item)
     CreateRingMenu(ringName)
     inventory.ringPosition[ringName] = RING_CENTER[RING.MAIN]
 
+    --to set the ring angle at the selected ammo
+    if ringName == RING.AMMO then
+        
+        local objectID
+        local ammoType = Lara:GetAmmoType(WEAPON_SET[combineItem1].slot)
+        for itemObjID, data in pairs(AMMO_SET) do
+            if data.slot == ammoType then
+                objectID = itemObjID
+            end
+        end
+        
+        OpenAmmoRingAtSelectedAmmo(objectID)
+        
+    end
+
 end
 
 local ShowChosenAmmo = function(item)
     
     local inventoryItem = GetInventoryItem(item)
 
-    if inventoryItem.type == TYPE.WEAPON then
+    if inventoryItem.type == TYPE.WEAPON and ammoAdded then
         
         local ammoType = Lara:GetAmmoType(WEAPON_SET[item].slot)
 
@@ -1375,13 +1418,17 @@ local ShowChosenAmmo = function(item)
 
         local ammoItem = TEN.View.DisplayItem("ChosenAmmo", data.objectID, AMMO_LOCATION, data.rotation, data.scale, data.meshBits)
         ammoItem:SetColor(COLOR_MAP.ITEM_COLOR_VISIBLE)
+        ammoAdded = false
     end
+
+    RotateItem("ChosenAmmo")
 
 end
 
 local DeleteChosenAmmo = function()
 
     TEN.View.DisplayItem.RemoveItem("ChosenAmmo")
+    ammoAdded = true
 
 end
 
@@ -1777,7 +1824,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
     if mode == INVENTORY_MODE.INVENTORY then
         
-        RotateItem(selectedItem.objectID)
+        RotateItem(tostring(selectedItem.objectID))
         LevelFuncs.Engine.CustomInventory.DrawItemLabel(selectedItem.objectID)
 
     elseif mode == INVENTORY_MODE.RING_OPENING then
@@ -1948,7 +1995,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         end
 
     elseif mode == INVENTORY_MODE.COMBINE then
-        RotateItem(selectedItem.objectID)
+        RotateItem(tostring(selectedItem.objectID))
         LevelFuncs.Engine.CustomInventory.DrawItemLabel(selectedItem.objectID)
 
         ShowRingMenu()
@@ -1990,6 +2037,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
     elseif mode == INVENTORY_MODE.ITEM_USE then
         
         SaveItemData(selectedItem)
+        DeleteChosenAmmo()
 
         if AnimateInventory(mode) then
             
@@ -2012,7 +2060,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.AMMO_SELECT then
         
-        RotateItem(selectedItem.objectID)
+        RotateItem(tostring(selectedItem.objectID))
         ShowRingMenu()
 
         if performCombine then

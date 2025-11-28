@@ -436,6 +436,25 @@ function Menu:setOptionIndexForItem(itemIndex, optionIndex)
 
 end
 
+function Menu:setCurrentItem(itemIndex)
+    local menu = LevelVars.Engine.Menus[self.name]
+
+    if debug and not menu.items then
+        error("Menu '" .. tostring(self.name) .. "' has no items table.")
+    end
+
+    local itemCount = #menu.items
+    if itemCount < 1 then
+        error("Menu '" .. tostring(self.name) .. "' contains no items.")
+    end
+
+    -- Clamp to valid range
+    itemIndex = math.max(1, math.min(itemIndex, itemCount))
+
+    -- Set
+    menu.currentItem = itemIndex
+end
+
 local PerformFunction = function(functionString)
     local parts = {}
 	for part in string.gmatch(functionString, "[^%.]+") do
