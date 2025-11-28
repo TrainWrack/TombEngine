@@ -12,8 +12,7 @@ local debug = false
 
 --CONSTANTS
 local NO_VALUE = -1
-local HEALTH_MAX = 1000
-local ROTATION_SPEED = 4 --rotation speed of Inventory Item
+local ROTATION_SPEED = 4
 local CAMERA_START = Vec3(0,-2500, 200)
 local CAMERA_END = Vec3(0,-36,-1151)
 local TARGET_START = Vec3(0,0, 1000)
@@ -32,165 +31,13 @@ local EXAMINE_TEXT_POS = Vec2(50, 80)
 local ALPHA_MAX = 255
 local ALPHA_MIN = 0
 
-local TYPE = {
-    WEAPON = 1,
-    AMMO = 2,
-    MEDIPACK = 3,
-    TOOL = 4,
-    PUZZLE = 5,
-    WATERSKIN = 6,
-    SAVE = 7
-}
-
-local RING = {
-	PUZZLE = 1,
-    MAIN = 2,
-	OPTIONS = 3,
-	COMBINE = 4,
-	AMMO = 5
-}
-
-local RING_CENTER = {
-    [RING.PUZZLE] = Vec3(0,-800,1024),
-    [RING.MAIN] = Vec3(0,200,1024),
-    [RING.OPTIONS] = Vec3(0,1200,1024),
-    [RING.COMBINE] = Vec3(0,200,1024),
-    [RING.AMMO] = Vec3(0,200,1024)
-}
-
---Inventory types
-local INVENTORY_MODE = 
-{
-    INVENTORY = 1,
-    EXAMINE = 2,
-    STATISTICS = 3,
-    RING_OPENING = 4,
-    RING_CLOSING = 5,
-    STATISTICS_OPEN = 6,
-    STATISTICS_CLOSE = 7,
-    EXAMINE_OPEN = 8,
-    EXAMINE_CLOSE = 9,
-    ITEM_USE = 10,
-    ITEM_SELECT = 11,
-    ITEM_DESELECT = 12,
-    ITEM_SELECTED = 13,
-    RING_CHANGE = 14,
-    RING_ROTATE = 15,
-    COMBINE = 16,
-    COMBINE_SETUP = 17,
-    COMBINE_CLOSE = 18,
-    COMBINE_RING_OPENING = 19,
-    COMBINE_SUCCESS = 20,
-    AMMO_SELECT_SETUP = 21,
-    AMMO_SELECT_OPEN = 22,
-    AMMO_SELECT = 23,
-    AMMO_SELECT_CLOSE = 24,
-    SAVE_SETUP = 25,
-    SAVE_MENU = 26,
-    SAVE_CLOSE = 27,
-    COMBINE_COMPLETE = 28,
-    SEPARATE = 29,
-    SEPARATE_COMPLETE = 30,
-    EXAMINE_RESET = 31,
-    WEAPON_MODE_SETUP = 32,
-    WEAPON_MODE = 33,
-    WEAPON_MODE_CLOSE = 34
-}
-
+--Pointers to tables
+local TYPE = PICKUP_DATA.TYPE
+local RING = PICKUP_DATA.RING
+local RING_CENTER = PICKUP_DATA.RING_CENTER
+local INVENTORY_MODE = PICKUP_DATA.INVENTORY_MODE
 local SOUND_MAP = Settings.SOUND_MAP
 local COLOR_MAP = Settings.COLOR_MAP
-
---Structure for weapon data. TEN Weapon type constant, underwater equip allowed, equip while crawling allowed
-local WEAPON_SET = {
-    [TEN.Objects.ObjID.PISTOLS_ITEM] = {slot = TEN.Objects.WeaponType.PISTOLS, underwater = false, crawl = true}, 
-    [TEN.Objects.ObjID.UZI_ITEM] = {slot = TEN.Objects.WeaponType.UZIS, underwater = false, crawl = true}, 
-    [TEN.Objects.ObjID.SHOTGUN_ITEM] = {slot = TEN.Objects.WeaponType.SHOTGUN, underwater = false, crawl = false},
-    [TEN.Objects.ObjID.REVOLVER_ITEM] = {slot = TEN.Objects.WeaponType.REVOLVER, underwater = false, crawl = true},
-    [TEN.Objects.ObjID.CROSSBOW_ITEM] = {slot = TEN.Objects.WeaponType.CROSSBOW, underwater = false, crawl = false},
-    [TEN.Objects.ObjID.HK_ITEM] = {slot = TEN.Objects.WeaponType.HK, underwater = false, crawl = false},
-    [TEN.Objects.ObjID.GRENADE_GUN_ITEM] = {slot = TEN.Objects.WeaponType.GRENADE_LAUNCHER, underwater = false, crawl = false},
-    [TEN.Objects.ObjID.HARPOON_ITEM] = {slot = TEN.Objects.WeaponType.HARPOON_GUN, underwater = true, crawl = false},
-    [TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM] = {slot = TEN.Objects.WeaponType.ROCKET_LAUNCHER, underwater = false, crawl = false},
-    [TEN.Objects.ObjID.FLARE_INV_ITEM] = {slot = TEN.Objects.WeaponType.FLARE, underwater = true, crawl = true}
-}
-
-local WEAPON_LASERSIGHT_DATA = {
-    [TEN.Objects.ObjID.REVOLVER_ITEM] = {MESHBITS = 0x0B, NAME = "revolver_lasersight", FLAGS = ItemAction.EQUIP | ItemAction.SEPARATE | ItemAction.CHOOSE_AMMO_REVOLVER},                            
-    [TEN.Objects.ObjID.CROSSBOW_ITEM] = {MESHBITS = 0x03, NAME = "crossbow_lasersight", FLAGS = ItemAction.EQUIP | ItemAction.SEPARATE | ItemAction.CHOOSE_AMMO_CROSSBOW},                          
-    [TEN.Objects.ObjID.HK_ITEM]       = {MESHBITS = 0, NAME = "hk_lasersight", FLAGS = ItemAction.EQUIP | ItemAction.SEPARATE | ItemAction.CHOOSE_AMMO_HK},
-    }
-
-local WEAPON_AMMO_LOOKUP = {
-    [TEN.Objects.ObjID.PISTOLS_ITEM] = {TEN.Objects.ObjID.PISTOLS_AMMO_ITEM},
-    [TEN.Objects.ObjID.UZI_ITEM] = {TEN.Objects.ObjID.UZI_AMMO_ITEM},
-    [TEN.Objects.ObjID.SHOTGUN_ITEM] = {TEN.Objects.ObjID.SHOTGUN_AMMO1_ITEM, TEN.Objects.ObjID.SHOTGUN_AMMO2_ITEM},
-    [TEN.Objects.ObjID.REVOLVER_ITEM] = {TEN.Objects.ObjID.REVOLVER_AMMO_ITEM},
-    [TEN.Objects.ObjID.CROSSBOW_ITEM] = {TEN.Objects.ObjID.CROSSBOW_AMMO1_ITEM, TEN.Objects.ObjID.CROSSBOW_AMMO2_ITEM, TEN.Objects.ObjID.CROSSBOW_AMMO3_ITEM},
-    [TEN.Objects.ObjID.HK_ITEM] = {TEN.Objects.ObjID.HK_AMMO_ITEM},
-    [TEN.Objects.ObjID.GRENADE_GUN_ITEM] = {TEN.Objects.ObjID.GRENADE_AMMO1_ITEM, TEN.Objects.ObjID.GRENADE_AMMO2_ITEM, TEN.Objects.ObjID.GRENADE_AMMO3_ITEM},
-    [TEN.Objects.ObjID.HARPOON_ITEM] = {TEN.Objects.ObjID.HARPOON_AMMO_ITEM},
-    [TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM] = {TEN.Objects.ObjID.ROCKET_LAUNCHER_AMMO_ITEM}
-}
-
-local WEAPON_MODE_LOOKUP = {
-    {weapon = TEN.Objects.ObjID.HK_ITEM, string = "hk_rapid_mode"},
-    {weapon = TEN.Objects.ObjID.HK_ITEM, string = "hk_burst_mode"},
-    {weapon = TEN.Objects.ObjID.HK_ITEM, string = "hk_sniper_mode"},
-    }
-
-local AMMO_SET = {
-    [TEN.Objects.ObjID.PISTOLS_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.PISTOLS, weapon = TEN.Objects.ObjID.PISTOLS_ITEM}, 
-    [TEN.Objects.ObjID.UZI_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.UZI, weapon = TEN.Objects.ObjID.UZI_ITEM}, 
-    [TEN.Objects.ObjID.SHOTGUN_AMMO1_ITEM] = {slot = TEN.Objects.AmmoType.SHOTGUN_NORMAL, weapon = TEN.Objects.ObjID.SHOTGUN_ITEM},
-    [TEN.Objects.ObjID.SHOTGUN_AMMO2_ITEM] = {slot = TEN.Objects.AmmoType.SHOTGUN_WIDE, weapon = TEN.Objects.ObjID.SHOTGUN_ITEM},
-    [TEN.Objects.ObjID.REVOLVER_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.REVOLVER, weapon = TEN.Objects.ObjID.REVOLVER_ITEM}, 
-    [TEN.Objects.ObjID.CROSSBOW_AMMO1_ITEM] = {slot = TEN.Objects.AmmoType.CROSSBOW_BOLT_NORMAL, weapon = TEN.Objects.ObjID.CROSSBOW_ITEM},
-    [TEN.Objects.ObjID.CROSSBOW_AMMO2_ITEM] = {slot = TEN.Objects.AmmoType.CROSSBOW_BOLT_POISON, weapon = TEN.Objects.ObjID.CROSSBOW_ITEM},
-    [TEN.Objects.ObjID.CROSSBOW_AMMO3_ITEM] = {slot = TEN.Objects.AmmoType.CROSSBOW_BOLT_EXPLOSIVE, weapon = TEN.Objects.ObjID.CROSSBOW_ITEM},
-    [TEN.Objects.ObjID.HK_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.HK, weapon = TEN.Objects.ObjID.HK_ITEM},
-    [TEN.Objects.ObjID.GRENADE_AMMO1_ITEM] = {slot = TEN.Objects.AmmoType.GRENADE_NORMAL, weapon = TEN.Objects.ObjID.GRENADE_GUN_ITEM},
-    [TEN.Objects.ObjID.GRENADE_AMMO2_ITEM] = {slot = TEN.Objects.AmmoType.GRENADE_FRAG, weapon = TEN.Objects.ObjID.GRENADE_GUN_ITEM},
-    [TEN.Objects.ObjID.GRENADE_AMMO3_ITEM] = {slot = TEN.Objects.AmmoType.GRENADE_FLASH, weapon = TEN.Objects.ObjID.GRENADE_GUN_ITEM},
-    [TEN.Objects.ObjID.HARPOON_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.HARPOON, weapon = TEN.Objects.ObjID.HARPOON_ITEM},
-    [TEN.Objects.ObjID.ROCKET_LAUNCHER_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.ROCKET, weapon = TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM}
-}
-
-local HEALTH_SET = {
-    [TEN.Objects.ObjID.BIGMEDI_ITEM] = HEALTH_MAX,
-    [TEN.Objects.ObjID.SMALLMEDI_ITEM] = HEALTH_MAX / 2
-}
-
-local ItemActionFlags = {
-    {bit = ItemAction.EQUIP, string = "equip"},
-    {bit = ItemAction.USE, string = "use"},
-    {bit = ItemAction.EXAMINE, string = "examine"},
-    {bit = ItemAction.CHOOSE_AMMO_SHOTGUN, string = "choose_ammo"},
-    {bit = ItemAction.CHOOSE_AMMO_CROSSBOW, string = "choose_ammo"},
-    {bit = ItemAction.CHOOSE_AMMO_GRENADEGUN, string = "choose_ammo"},
-    {bit = ItemAction.CHOOSE_AMMO_UZI, string = "choose_ammo"},
-    {bit = ItemAction.CHOOSE_AMMO_PISTOLS, string = "choose_ammo"},
-    {bit = ItemAction.CHOOSE_AMMO_REVOLVER, string = "choose_ammo"},
-    {bit = ItemAction.LOAD, string = "load_game"},
-    {bit = ItemAction.SAVE, string = "save_game"},
-    {bit = ItemAction.CHOOSE_AMMO_HK, string = "choose_ammo"},
-    {bit = ItemAction.STATISTICS , string = "statistics"},
-    {bit = ItemAction.CHOOSE_AMMO_HARPOON, string = "choose_ammo"},
-    {bit = ItemAction.CHOOSE_AMMO_ROCKET, string = "choose_ammo"},
-    {bit = ItemAction.COMBINE, string = "combine"},
-    {bit = ItemAction.SEPARATE, string = "separate"},
-}
-
-local CHOOSE_AMMO_FLAGS = {
-    ItemAction.CHOOSE_AMMO_SHOTGUN,
-    ItemAction.CHOOSE_AMMO_CROSSBOW,
-    ItemAction.CHOOSE_AMMO_GRENADEGUN,
-    ItemAction.CHOOSE_AMMO_UZI,
-    ItemAction.CHOOSE_AMMO_PISTOLS,
-    ItemAction.CHOOSE_AMMO_REVOLVER,
-    ItemAction.CHOOSE_AMMO_HARPOON,
-    ItemAction.CHOOSE_AMMO_ROCKET,
-     --ItemAction.CHOOSE_AMMO_HK
-}
 
 --variables
 local useBinoculars = false
@@ -284,7 +131,7 @@ local hasItemAction = function(packedFlags, flag)
 end
 
 local function hasChooseAmmo(menuActions)
-    for _, flag in ipairs(CHOOSE_AMMO_FLAGS) do
+    for _, flag in ipairs(PICKUP_DATA.CHOOSE_AMMO_FLAGS) do
         if hasItemAction(menuActions, flag) then
             return true
         end
@@ -438,10 +285,10 @@ local CombineItems = function(item1, item2)
             end
 
             -- If the combined result is a weapon that supports lasersight, enable it
-            if WEAPON_LASERSIGHT_DATA[result]
-                and WEAPON_SET[result]
-                and WEAPON_SET[result].slot then
-                Lara:SetLaserSight(WEAPON_SET[result].slot, true)
+            if PICKUP_DATA.WEAPON_LASERSIGHT_DATA[result]
+                and PICKUP_DATA.WEAPON_SET[result]
+                and PICKUP_DATA.WEAPON_SET[result].slot then
+                Lara:SetLaserSight(PICKUP_DATA.WEAPON_SET[result].slot, true)
             end
 
             -- Remove the original items
@@ -478,10 +325,10 @@ local SeparateItems = function(item3)
             end
 
             -- If the separate result is a weapon that supports lasersight, disable it
-            if WEAPON_LASERSIGHT_DATA[result]
-                and WEAPON_SET[result]
-                and WEAPON_SET[result].slot then
-                Lara:SetLaserSight(WEAPON_SET[result].slot, false)
+            if PICKUP_DATA.WEAPON_LASERSIGHT_DATA[result]
+                and PICKUP_DATA.WEAPON_SET[result]
+                and PICKUP_DATA.WEAPON_SET[result].slot then
+                Lara:SetLaserSight(PICKUP_DATA.WEAPON_SET[result].slot, false)
             end
 
             -- Remove the original items
@@ -754,7 +601,7 @@ local CreateWeaponModeMenu = function(item)
     local weaponModes = {}
     local itemData = GetInventoryItem(item)
 
-    for _, entry in ipairs(WEAPON_MODE_LOOKUP) do
+    for _, entry in ipairs(PICKUP_DATA.WEAPON_MODE_LOOKUP) do
         if entry.weapon == item then
             table.insert(weaponModes, {
                 itemName = entry.string,
@@ -839,7 +686,7 @@ local CreateItemMenu = function(item)
     local itemData = GetInventoryItem(item)
     local itemMenuActions = itemData.menuActions
 
-    for _, entry in ipairs(ItemActionFlags) do
+    for _, entry in ipairs(PICKUP_DATA.ItemActionFlags) do
         if hasItemAction(itemMenuActions, entry.bit) then
             table.insert(menuActions, {
                 itemName = entry.string,
@@ -1121,7 +968,7 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
         --Check if weapon is present and skip adding ammo to main inventory ring
         if data.type == TYPE.AMMO and ringType ~= RING.AMMO then
     
-            local weaponPresent = TEN.Inventory.GetItemCount(AMMO_SET[data.objectID].weapon)
+            local weaponPresent = TEN.Inventory.GetItemCount(PICKUP_DATA.AMMO_SET[data.objectID].weapon)
             if weaponPresent ~= 0 then
                 goto continue
             end
@@ -1130,10 +977,10 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
 
         --Check if laseright is connected and adjust the meshbits and name
         if data.type == TYPE.WEAPON then
-            if Lara:GetLaserSight(WEAPON_SET[data.objectID].slot) then
-                data.meshBits = WEAPON_LASERSIGHT_DATA[data.objectID].MESHBITS
-                data.name = WEAPON_LASERSIGHT_DATA[data.objectID].NAME
-                data.menuActions = WEAPON_LASERSIGHT_DATA[data.objectID].FLAGS
+            if Lara:GetLaserSight(PICKUP_DATA.WEAPON_SET[data.objectID].slot) then
+                data.meshBits = PICKUP_DATA.WEAPON_LASERSIGHT_DATA[data.objectID].MESHBITS
+                data.name = PICKUP_DATA.WEAPON_LASERSIGHT_DATA[data.objectID].NAME
+                data.menuActions = PICKUP_DATA.WEAPON_LASERSIGHT_DATA[data.objectID].FLAGS
             end
         end
 
@@ -1153,7 +1000,7 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
                 end
 
                 --Check if lasersight is connected and if it is skip adding to the combine table
-                if data.type == TYPE.WEAPON and Lara:GetLaserSight(WEAPON_SET[data.objectID].slot) then
+                if data.type == TYPE.WEAPON and Lara:GetLaserSight(PICKUP_DATA.WEAPON_SET[data.objectID].slot) then
                     goto continue
                 end
 
@@ -1167,7 +1014,7 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
         elseif ringType == RING.AMMO then
             --if Ammo is present for the weapon add it for the ammo ring being created for the weapon
    
-            if data.type == TYPE.AMMO and WEAPON_AMMO_LOOKUP[selectedWeapon] and contains(WEAPON_AMMO_LOOKUP[selectedWeapon], data.objectID) then
+            if data.type == TYPE.AMMO and PICKUP_DATA.WEAPON_AMMO_LOOKUP[selectedWeapon] and contains(PICKUP_DATA.WEAPON_AMMO_LOOKUP[selectedWeapon], data.objectID) then
                 data.ringName = RING.AMMO
                 ammoRing = true
                 shouldInsert = true
@@ -1214,6 +1061,30 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
             inventory.ringPosition[index] = RING_CENTER[index]
         end
     end
+
+end
+
+LevelFuncs.Engine.CustomInventory.ReadGameflow = function()
+
+    local overrides = {}
+    for _, itemID in ipairs(TEN.Flow.GetCurrentLevel().objects) do
+
+        if itemID.objectID then
+            local id = TEN.Inventory.ConvertInventoryItemToObject(itemID.objectID)
+            overrides[id] = { 
+                    item = id,
+                    yOffset = itemID.yOffset,
+                    scale = itemID.scale,
+                    rotation = itemID.rotation,
+                    menuActions = itemID.action,
+                    name = itemID.nameKey,
+                    meshBits = itemID.meshBits,
+                    orientation = itemID.axis
+            }
+        end
+    end
+
+    return overrides
 
 end
 
@@ -1384,8 +1255,8 @@ local SetupSecondaryRing = function(ringName, item)
     if ringName == RING.AMMO then
         
         local objectID
-        local ammoType = Lara:GetAmmoType(WEAPON_SET[combineItem1].slot)
-        for itemObjID, data in pairs(AMMO_SET) do
+        local ammoType = Lara:GetAmmoType(PICKUP_DATA.WEAPON_SET[combineItem1].slot)
+        for itemObjID, data in pairs(PICKUP_DATA.AMMO_SET) do
             if data.slot == ammoType then
                 objectID = itemObjID
             end
@@ -1401,13 +1272,13 @@ local ShowChosenAmmo = function(item)
     
     local inventoryItem = GetInventoryItem(item)
 
-    if inventoryItem.type == TYPE.WEAPON and ammoAdded then
+    if inventoryItem and inventoryItem.type == TYPE.WEAPON and ammoAdded then
         
-        local ammoType = Lara:GetAmmoType(WEAPON_SET[item].slot)
+        local ammoType = Lara:GetAmmoType(PICKUP_DATA.WEAPON_SET[item].slot)
 
         local objectID
 
-        for itemObjID, data in pairs(AMMO_SET) do
+        for itemObjID, data in pairs(PICKUP_DATA.AMMO_SET) do
             if data.slot == ammoType then
                 objectID = itemObjID
             end
@@ -2064,7 +1935,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         ShowRingMenu()
 
         if performCombine then
-            local ammo = AMMO_SET[selectedItem.objectID]
+            local ammo = PICKUP_DATA.AMMO_SET[selectedItem.objectID]
             Lara:SetAmmoType(ammo.slot)
             inventoryMode = INVENTORY_MODE.AMMO_SELECT_CLOSE
         end
@@ -2171,7 +2042,7 @@ LevelFuncs.Engine.CustomInventory.UseItem = function(item)
         return
     end
 
-    if WEAPON_SET[item] and WaterTest(WEAPON_SET[item]) and CrawlTest(WEAPON_SET[item]) then
+    if PICKUP_DATA.WEAPON_SET[item] and WaterTest(PICKUP_DATA.WEAPON_SET[item]) and CrawlTest(PICKUP_DATA.WEAPON_SET[item]) then
         
         TEN.Inventory.ClearUsedItem()
 
@@ -2183,9 +2054,9 @@ LevelFuncs.Engine.CustomInventory.UseItem = function(item)
             return
         end
         
-        Lara:SetWeaponType(WEAPON_SET[item].slot, true)
+        Lara:SetWeaponType(PICKUP_DATA.WEAPON_SET[item].slot, true)
 
-        if currentWeapon == WEAPON_SET[item].slot and Lara:GetHandStatus() ~= TEN.Objects.HandStatus.WEAPON_READY then
+        if currentWeapon == PICKUP_DATA.WEAPON_SET[item].slot and Lara:GetHandStatus() ~= TEN.Objects.HandStatus.WEAPON_READY then
             Lara:SetHandStatus(TEN.Objects.HandStatus.WEAPON_DRAW)
         end
 
@@ -2195,14 +2066,14 @@ LevelFuncs.Engine.CustomInventory.UseItem = function(item)
         
     end
 
-    if HEALTH_SET[item] then
+    if PICKUP_DATA.HEALTH_SET[item] then
 
         TEN.Inventory.ClearUsedItem()
 
         local hp = Lara:GetHP()
         local poison = Lara:GetPoison()
 
-        if hp <= 0 or hp >= HEALTH_MAX then
+        if hp <= 0 or hp >= PICKUP_DATA.HEALTH_MAX then
             if poison == 0 then
                 TEN.Sound.PlaySound(SOUND_MAP.PLAYER_NO)
                 LevelFuncs.Engine.CustomInventory.ExitInventory()
@@ -2219,7 +2090,7 @@ LevelFuncs.Engine.CustomInventory.UseItem = function(item)
 
             Lara:SetPoison(0)
             
-            local setHP = math.min(1000, (hp + HEALTH_SET[item]))
+            local setHP = math.min(1000, (hp + PICKUP_DATA.HEALTH_SET[item]))
             Lara:SetHP(setHP)
 
             TEN.Sound.PlaySound(SOUND_MAP.TR4_MENU_MEDI)
@@ -2288,7 +2159,7 @@ end
 
 LevelFuncs.Engine.CustomInventory.DrawAmmoLabel = function(item)
 
-    if WEAPON_SET[item] then
+    if PICKUP_DATA.WEAPON_SET[item] then
         
     end
 
@@ -2313,7 +2184,6 @@ LevelFuncs.Engine.CustomInventory.DrawInventoryText = function()
 
     local stringTable = {
     {"actions_inventory", Vec2(50, 4), 1.5, COLOR_MAP.HEADER_FONT},
-    {"choose_ammo", Vec2(78, 70), 0.5, COLOR_MAP.NORMAL_FONT},
     {"equip", Vec2(22, 84), 0.5, COLOR_MAP.NORMAL_FONT},
     {"close", Vec2(78, 84), 0.5, COLOR_MAP.NORMAL_FONT},
     }
@@ -2331,30 +2201,6 @@ LevelFuncs.Engine.CustomInventory.DrawInventoryText = function()
         ShowString(entryText, 1 / 30)
 
     end
-
-end
-
-LevelFuncs.Engine.CustomInventory.ReadGameflow = function()
-
-    local overrides = {}
-    for _, itemID in ipairs(TEN.Flow.GetCurrentLevel().objects) do
-
-        if itemID.objectID then
-            local id = TEN.Inventory.ConvertInventoryItemToObject(itemID.objectID)
-            overrides[id] = { 
-                    item = id,
-                    yOffset = itemID.yOffset,
-                    scale = itemID.scale,
-                    rotation = itemID.rotation,
-                    menuActions = itemID.action,
-                    name = itemID.nameKey,
-                    meshBits = itemID.meshBits,
-                    orientation = itemID.axis
-            }
-        end
-    end
-
-    return overrides
 
 end
 
@@ -2377,7 +2223,7 @@ LevelFuncs.Engine.CustomInventory.ControlTexts = function(inventoryMode)
 
     local stringTable = {}
 
-    for _, entry in ipairs(ItemActionFlags) do
+    for _, entry in ipairs(PICKUP_DATA.ItemActionFlags) do
         
         if hasItemAction(GetSelectedItem(selectedRing).menuActions, entry.bit) then
             table.insert(stringTable, GetString(entry.string))

@@ -16,13 +16,13 @@ Settings.SOUND_MAP =
 
 Settings.COLOR_MAP =
 {
-    NORMAL_FONT = Color(255,255,255,255),
-    HEADER_FONT = Color(216,117,49,255),
-    BLACK = Color(0,0,0,255),
-    BACKGROUND = Color(128,128,128,255),
-    INVENTORY_AMBIENT = Color(255,0,0),
-    ITEM_COLOR = Color(64,64,64,0),
-    ITEM_COLOR_VISIBLE = Color(64,64,64,255)
+    NORMAL_FONT = Color(255, 255, 255, 255),
+    HEADER_FONT = Color(216, 117, 49, 255),
+    BLACK = Color(0, 0 ,0 , 255),
+    BACKGROUND = Color(128, 128, 128, 255),
+    INVENTORY_AMBIENT = Color(255, 255, 128),
+    ITEM_COLOR = Color(128, 128, 128, 0),
+    ITEM_COLOR_VISIBLE = Color(128, 128, 128, 255)
 }
 
 Settings.BACKGROUND = 
@@ -36,7 +36,7 @@ Settings.BACKGROUND =
     SCALE = TEN.Vec2(100,100),
     ALIGN_MODE = TEN.View.AlignMode.CENTER,
     SCALE_MODE = TEN.View.ScaleMode.STRETCH,
-    BLEND_MODE = TEN.Effects.BlendID.ALPHABLEND,
+    BLEND_MODE = TEN.Effects.BlendID.ALPHA_BLEND,
     ALPHA = 255
 }
 
