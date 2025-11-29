@@ -85,6 +85,10 @@ local colorCombine = function(color, transparency)
     return Color(color.r, color.g, color.b, transparency)
 end
 
+local offsetY = function(position, offsetY)
+    return Vec3(position.x, position.y + offsetY, position.z)
+end
+
 local percentPos = function(x, y)
     return TEN.Vec2(TEN.Util.PercentToScreen(x, y))
 end
@@ -1125,7 +1129,7 @@ local TranslateRing = function(ringName, center, radius, rotationOffset)
 
         local itemRotations  = currentDisplayItem:GetRotation()
 
-        currentDisplayItem:SetPosition(position)
+        currentDisplayItem:SetPosition(offsetY(position, ring[i].yOffset))
         currentDisplayItem:SetRotation(Rotation(itemRotations.x, angleDeg, itemRotations.z))
     end
 
@@ -1254,13 +1258,11 @@ local SetupSecondaryRing = function(ringName, item)
     --to set the ring angle at the selected ammo
     if ringName == RING.AMMO then
         
-        local objectID
-        local ammoType = Lara:GetAmmoType(PICKUP_DATA.WEAPON_SET[combineItem1].slot)
-        for itemObjID, data in pairs(PICKUP_DATA.AMMO_SET) do
-            if data.slot == ammoType then
-                objectID = itemObjID
-            end
-        end
+        local weaponSlot = PICKUP_DATA.WEAPON_SET[combineItem1].slot
+        local ammoType   = Lara:GetAmmoType(weaponSlot)
+
+        --SUPER FAST O(1) LOOKUP
+        local objectID = PICKUP_DATA.AMMO_TYPE_TO_OBJECT[ammoType]
         
         OpenAmmoRingAtSelectedAmmo(objectID)
         
@@ -1269,28 +1271,49 @@ local SetupSecondaryRing = function(ringName, item)
 end
 
 local ShowChosenAmmo = function(item)
-    
+
     local inventoryItem = GetInventoryItem(item)
+    if not inventoryItem or inventoryItem.type ~= TYPE.WEAPON then
+        return
+    end
 
-    if inventoryItem and inventoryItem.type == TYPE.WEAPON and ammoAdded then
-        
-        local ammoType = Lara:GetAmmoType(PICKUP_DATA.WEAPON_SET[item].slot)
+    local slot = PICKUP_DATA.WEAPON_SET[item].slot
+    local ammoType = Lara:GetAmmoType(slot)
+    if not ammoType then
+        return
+    end
 
-        local objectID
+    --Optimized reverse lookup: O(1) instead of O(n)
+    local objectID = PICKUP_DATA.AMMO_TYPE_TO_OBJECT[ammoType]
+    if not objectID then
+        return
+    end
 
-        for itemObjID, data in pairs(PICKUP_DATA.AMMO_SET) do
-            if data.slot == ammoType then
-                objectID = itemObjID
-            end
-        end
+    -- Build inventory data once
+    local row  = PICKUP_DATA.GetRow(objectID)
+    local base = PICKUP_DATA.ConvertRowData(row)
 
-        local data = BuildInventoryItem(PICKUP_DATA.ConvertRowData(PICKUP_DATA.GetRow(objectID)))
+    -- Show the chosen ammo if needed
+    if ammoAdded then
+        local data = BuildInventoryItem(base)
         data.rotation = copyRotation(data.rotation)
 
-        local ammoItem = TEN.View.DisplayItem("ChosenAmmo", data.objectID, AMMO_LOCATION, data.rotation, data.scale, data.meshBits)
+        local ammoItem = TEN.View.DisplayItem(
+            "ChosenAmmo",
+            data.objectID,
+            AMMO_LOCATION,
+            data.rotation,
+            data.scale,
+            data.meshBits
+        )
+
         ammoItem:SetColor(COLOR_MAP.ITEM_COLOR_VISIBLE)
         ammoAdded = false
     end
+
+    -- Label drawing (no need to rebuild row twice)
+    local data = BuildInventoryItem(base)
+    LevelFuncs.Engine.CustomInventory.DrawAmmoLabel(data.name, data.count)
 
     RotateItem("ChosenAmmo")
 
@@ -1453,14 +1476,16 @@ local PerformBatchMotion = function(prefix, motionTable, time, clearProgress, ri
         FadeRing(ringName, interpolated.ringFade.output, omitSelectedItem)
     end
 
-    local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(item))
-
     if interpolated.camera then TEN.View.DisplayItem.SetCameraPosition(interpolated.camera.output) end
     if interpolated.target then TEN.View.DisplayItem.SetTargetPosition(interpolated.target.output) end
-    if interpolated.itemColor then displayItem:SetColor(interpolated.itemColor.output) end
-    if interpolated.itemPosition then displayItem:SetPosition(interpolated.itemPosition.output) end
-    if interpolated.itemScale then displayItem:SetScale(interpolated.itemScale.output) end
-    if interpolated.itemRotation then displayItem:SetRotation(interpolated.itemRotation.output) end
+
+    if item then
+        local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(item.objectID))
+        if interpolated.itemColor then displayItem:SetColor(interpolated.itemColor.output) end
+        if interpolated.itemPosition then displayItem:SetPosition(offsetY(interpolated.itemPosition.output, item.yOffset)) end
+        if interpolated.itemScale then displayItem:SetScale(interpolated.itemScale.output) end
+        if interpolated.itemRotation then displayItem:SetRotation(interpolated.itemRotation.output) end
+    end
 
     if allComplete then
         if clearProgress then
@@ -1569,19 +1594,19 @@ local AnimateInventory = function(mode)
         
     elseif mode == INVENTORY_MODE.EXAMINE_OPEN or mode == INVENTORY_MODE.STATISTICS_OPEN or mode == INVENTORY_MODE.SAVE_SETUP or mode == INVENTORY_MODE.COMBINE_SETUP or mode == INVENTORY_MODE.ITEM_SELECT or mode == INVENTORY_MODE.COMBINE_SUCCESS then
 
-        if PerformBatchMotion("ExamineOpen", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.objectID) then
+        if PerformBatchMotion("ExamineOpen", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem) then
             return true
         end
 
     elseif mode == INVENTORY_MODE.EXAMINE_CLOSE or mode == INVENTORY_MODE.STATISTICS_CLOSE or mode == INVENTORY_MODE.SAVE_CLOSE or mode == INVENTORY_MODE.ITEM_DESELECT then
 
-        if PerformBatchMotion("ExamineClose", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem.objectID, true) then
+        if PerformBatchMotion("ExamineClose", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem, true) then
             return true
         end
 
     elseif mode == INVENTORY_MODE.EXAMINE_RESET then
 
-        if PerformBatchMotion("ExamineReset", examineReset, INVENTORY_ANIM_TIME/4, true, selectedRing, selectedItem.objectID, true) then
+        if PerformBatchMotion("ExamineReset", examineReset, INVENTORY_ANIM_TIME/4, true, selectedRing, selectedItem, true) then
             return true
         end
 
@@ -1625,8 +1650,8 @@ local AnimateInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.ITEM_USE then
 
-        if combineItem1 or PerformBatchMotion("ItemSelect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem.objectID) then
-            if PerformBatchMotion("ItemDeselect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem.objectID, true) then
+        if combineItem1 or PerformBatchMotion("ItemSelect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem) then
+            if PerformBatchMotion("ItemDeselect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem, true) then
                 FadeRings(false, true)
                 if PerformBatchMotion("RingClosing", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
                     if not combineItem1 then ClearBatchMotionProgress("ItemSelect", useAnimation) end
@@ -2157,11 +2182,14 @@ LevelFuncs.Engine.CustomInventory.DrawItemLabel = function(item)
     
 end
 
-LevelFuncs.Engine.CustomInventory.DrawAmmoLabel = function(item)
+LevelFuncs.Engine.CustomInventory.DrawAmmoLabel = function(ammoName, count)
+    
+    local number = (count >= 0) and count or (TEN.Flow.GetString("unlimited"):gsub(" ", "")):gsub("%%s", "")
+    local ammoText = number .. " " .. TEN.Flow.GetString(ammoName)
+    local entryPosInPixel = percentPos(50, 84)
 
-    if PICKUP_DATA.WEAPON_SET[item] then
-        
-    end
+    local myText = TEN.Strings.DisplayString(ammoText, entryPosInPixel, 0.5, COLOR_MAP.YELLOW_FONT, false, {Strings.DisplayStringOption.CENTER, Strings.DisplayStringOption.SHADOW})
+    TEN.Strings.ShowString(myText, 1/30)
 
 end
 

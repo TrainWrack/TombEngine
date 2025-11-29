@@ -515,4 +515,10 @@ PICKUP_DATA.ConvertRowData = function(row)
     }
 end
 
+PICKUP_DATA.AMMO_TYPE_TO_OBJECT = {}
+
+for objID, data in pairs(PICKUP_DATA.AMMO_SET) do
+    PICKUP_DATA.AMMO_TYPE_TO_OBJECT[data.slot] = objID
+end
+
 return PICKUP_DATA
