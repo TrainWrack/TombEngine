@@ -20,7 +20,7 @@ Settings.COLOR_MAP =
     HEADER_FONT = Color(216, 117, 49, 255),
     YELLOW_FONT = Color(240, 220, 32, 255),
     BLACK = Color(0, 0 ,0 , 255),
-    BACKGROUND = Color(128, 128, 128, 255),
+    BACKGROUND = Color(64, 64, 64, 128),
     INVENTORY_AMBIENT = Color(255, 255, 128),
     ITEM_COLOR = Color(64, 64, 64, 0),
     ITEM_COLOR_DESELECTED = Color(64, 64, 64, 255),
@@ -29,11 +29,11 @@ Settings.COLOR_MAP =
 
 Settings.BACKGROUND = 
 {
-    ENABLE = false,
-    OBJECTID = TEN.Objects.ObjID.DIARY_SPRITES,
-    SPRITEID = 1,
+    ENABLE = true,
+    OBJECTID = TEN.Objects.ObjID.DIARY_ENTRY_SPRITES,
+    SPRITEID = 2,
     COLOR = TEN.Color(255, 255, 255),
-    POSITION = TEN.Vec2(TEN.Util.PercentToScreen(50,50)),
+    POSITION = TEN.Vec2(50,50),
     ROTATION = 0,
     SCALE = TEN.Vec2(100,100),
     ALIGN_MODE = TEN.View.AlignMode.CENTER,

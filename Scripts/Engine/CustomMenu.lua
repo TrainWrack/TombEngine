@@ -259,7 +259,7 @@ function Menu:SetItemsFont(fontColor, fontScale, flags)
     if fontColor ~= nil then
         menu.itemsTextColor = fontColor
     end
-    if titleScale ~= nil then
+    if fontScale ~= nil then
         menu.itemsTextScale = fontScale
     end
     if flags ~= nil then
@@ -284,7 +284,7 @@ function Menu:SetOptionsFont(fontColor, fontScale, flags)
     if fontColor ~= nil then
         menu.optionsTextColor = fontColor
     end
-    if titleScale ~= nil then
+    if fontScale ~= nil then
         menu.optionsTextScale = fontScale
     end
     if flags ~= nil then
