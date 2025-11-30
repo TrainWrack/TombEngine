@@ -84,19 +84,36 @@ LevelFuncs.Engine.CustomInventory = {}
 
 --functions
 local colorCombine = function(color, transparency)
+
     return Color(color.r, color.g, color.b, transparency)
+
 end
 
 local offsetY = function(position, offsetY)
+
     return Vec3(position.x, position.y + offsetY, position.z)
+
 end
 
 local percentPos = function(x, y)
+
     return TEN.Vec2(TEN.Util.PercentToScreen(x, y))
+
 end
 
 local function copyRotation(r)
+
     return Rotation(r.x, r.y, r.z)
+
+end
+
+local contains = function(tbl, value)
+    for _, v in ipairs(tbl) do
+    if v == value then
+        return true
+    end
+    end
+    return false
 end
 
 local setInventoryHeader = function(string, visible)
@@ -114,12 +131,14 @@ local setInventorySubHeader = function(string, visible)
 end
 
 local function DrawBackground(alpha)
+
     if Settings.BACKGROUND.ENABLE then
         local bgAlpha = math.min(alpha, Settings.BACKGROUND.ALPHA)
         local bgColor = colorCombine(Settings.BACKGROUND.COLOR, bgAlpha)
         local bgSprite = TEN.DisplaySprite(Settings.BACKGROUND.OBJECTID, Settings.BACKGROUND.SPRITEID, Settings.BACKGROUND.POSITION, Settings.BACKGROUND.ROTATION, Settings.BACKGROUND.SCALE, bgColor)
         bgSprite:Draw(0, Settings.BACKGROUND.ALIGN_MODE, Settings.BACKGROUND.SCALE_MODE, Settings.BACKGROUND.BLEND_MODE)
     end
+
 end
 
 local calculateCompassAngle = function()
@@ -130,6 +149,7 @@ local calculateCompassAngle = function()
     needleOrient.y = needleOrient.y + wibble
 
     return needleOrient
+
 end
 
 local calculateStopWatchRotation = function(type)
@@ -147,20 +167,27 @@ local calculateStopWatchRotation = function(type)
 end
 
 local hasItemAction = function(packedFlags, flag)
+
     return (packedFlags & flag) ~= 0
+
 end
 
 local function hasChooseAmmo(menuActions)
+
     for _, flag in ipairs(PICKUP_DATA.CHOOSE_AMMO_FLAGS) do
         if hasItemAction(menuActions, flag) then
             return true
         end
     end
+
     return false
+
 end
 
 local isSingleFlagSet = function(flags)
+
     return flags ~= 0 and (flags & (flags - 1)) == 0
+
 end
 
 local SetRotationInventoryItems = function()
@@ -188,15 +215,17 @@ local FindItemInInventory = function(targetID)
             end
         end
     end
-    return nil, nil -- not found
+    return nil, nil
 end
 
 local GetInventoryItem = function(itemID)
+
 	local ringIndex, itemIndex = FindItemInInventory(itemID)
 	if not ringIndex or not itemIndex then
 		return nil
 	end
 	return inventory.ring[ringIndex][itemIndex]
+
 end
 
 local BuildInventoryItem = function(data)
@@ -217,6 +246,7 @@ local BuildInventoryItem = function(data)
     if override.combine     ~= nil then data.combine     = override.combine end
 
     return data
+
 end
 
 local PerformWaterskinCombine = function(flag)
@@ -262,10 +292,10 @@ local PerformWaterskinCombine = function(flag)
     end
 
     return false
+
 end
 
 local CombineItems = function(item1, item2)
-
 
     local data1 = GetInventoryItem(item1).type
     local data2 = GetInventoryItem(item2).type
@@ -327,6 +357,7 @@ local CombineItems = function(item1, item2)
 
 	-- No valid combination found
 	return false
+
 end
 
 local SeparateItems = function(item3)
@@ -366,49 +397,6 @@ local SeparateItems = function(item3)
 
 	-- No valid combination found
 	return false
-end
-
-local CreateRingMenu = function(ringName)
-    
-    local ringItems = {}
-    local ring = inventory.ring[ringName]
-
-    if ring then
-        for _, itemData in ipairs(ring) do
-
-            local text = "< " .. GetString(itemData.name) .. " >"
-
-            table.insert(ringItems, text)
-        end
-    end
-
-    local ringTable = {
-        {
-            itemName = "Blank",
-            options = ringItems,
-            currentOption = 1
-        }
-    }
-
-    local text = "combine_with"
-
-    if ringName == RING.AMMO then text = "choose_ammo" end
-
-    local combineMenu = Menu.Create("ringMenu", text, ringTable, nil, nil, Menu.Type.OPTIONS_ONLY)
-
-    combineMenu:SetOptionsPosition(Vec2(50, 35))
-    combineMenu:SetVisibility(true)
-    combineMenu:SetLineSpacing(5.3)
-    combineMenu:SetOptionsFont(COLOR_MAP.NORMAL_FONT, 0.9)
-    combineMenu:EnableInputs(false)
-    combineMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, nil, nil, true)
-
-end
-
-local ShowRingMenu = function()
-
-    local ringMenu = Menu.Get("ringMenu")
-    ringMenu:Draw()
 
 end
 
@@ -524,7 +512,7 @@ local CreateSaveMenu = function(save)
         saveMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, 1.5, nil, true)
         saveMenu:SetItemsTranslate(translate)
         saveMenu:SetSoundEffects(soundMap[index].select, soundMap[index].choose)
-    end 
+    end
 
 end
 
@@ -536,6 +524,7 @@ LevelFuncs.Engine.CustomInventory.DoSave = function()
     for index = 1, 4 do
         Interpolate.Clear("SaveMenu"..index)
     end 
+
     inventoryMode = INVENTORY_MODE.SAVE_CLOSE
 
 end
@@ -599,6 +588,7 @@ local CreateStatisticsMenu = function()
     statisticsMenu:EnableInputs(true)
     statisticsMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, nil, nil, true)
     statisticsMenu:SetTitlePosition(Vec2(50,4))
+
 end
 
 LevelFuncs.Engine.CustomInventory.ChangeStatistics = function()
@@ -739,7 +729,7 @@ local guiIsPulsed = function(actionID)
 	local INITIAL_DELAY = 30
 
 	--Action already held prior to entering menu; lock input.
-	if (GetActionTimeActive(actionID) >= timeInMenu) then
+	if (TEN.Input.GetActionTimeActive(actionID) >= timeInMenu) then
 	    return false
     end
 	--Pulse only directional inputs.
@@ -758,7 +748,7 @@ local guiIsPulsed = function(actionID)
 	--Opposite action held; lock input.
     local isActionLocked = false
 	if oppositeAction ~= nil then
-		isActionLocked = IsKeyHeld(oppositeAction)
+		isActionLocked = TEN.Input.IsKeyHeld(oppositeAction)
 	end
 
 	if isActionLocked then
@@ -806,17 +796,6 @@ local ClearInventory = function(ringName, clearDrawItems)
 
 end
 
-local changeOptionsforMenu = function()
-
-    if selectedRing == RING.AMMO or selectedRing == RING.COMBINE then
-        
-        local ringMenu = Menu.Get("ringMenu")
-        ringMenu:setOptionIndexForItem(1, inventory.selectedItem[selectedRing])
-        
-    end
-
-end
-
 local doLeftKey = function()
     local inventoryTable = inventory.ring[selectedRing]
     inventory.selectedItem[selectedRing] = (inventory.selectedItem[selectedRing] % #inventoryTable) + 1
@@ -824,8 +803,6 @@ local doLeftKey = function()
     previousMode = inventoryMode
     inventoryMode = INVENTORY_MODE.RING_ROTATE
     TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
-
-    changeOptionsforMenu()
 end
 
 local doRightKey = function()
@@ -835,8 +812,6 @@ local doRightKey = function()
     previousMode = inventoryMode
     inventoryMode = INVENTORY_MODE.RING_ROTATE
     TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE) 
-
-    changeOptionsforMenu()
 end
 
 local Input = function(mode)
@@ -953,15 +928,6 @@ local Input = function(mode)
     else
         return
     end
-end
-
-local contains = function(tbl, value)
-    for _, v in ipairs(tbl) do
-    if v == value then
-        return true
-    end
-    end
-    return false
 end
 
 --Only uses combine and ammo as an option. Everything else dumps the whole inventory.
@@ -1194,9 +1160,10 @@ local RotateItem = function(itemName)
     local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(itemName)
     local itemRotations  = currentDisplayItem:GetRotation()
     currentDisplayItem:SetRotation(Rotation(itemRotations.x, (itemRotations.y + ROTATION_SPEED) % 360, itemRotations.z))
+
 end
 
-local OpenInventoryAtItem = function(itemID)
+local OpenInventoryAtItem = function(itemID, repositionRings)
 
     if itemID == NO_VALUE then
 		return
@@ -1208,21 +1175,23 @@ local OpenInventoryAtItem = function(itemID)
 		return
 	end
 
-    selectedRing = ringIndex
     inventory.selectedItem[ringIndex] = itemIndex
     local slice = inventory.slice[ringIndex]
 	local angle = -slice * (itemIndex - 1) --this has to be a negative angle cause reasons.
     currentRingAngle = angle
     targetRingAngle = angle
 
-    -- Position the selected ring at RING.MAIN
-	local ringPosition = RING_CENTER[RING.MAIN]
+    if repositionRings then
+         -- Position the selected ring at RING.MAIN
+	    local ringPosition = RING_CENTER[RING.MAIN]
+        selectedRing = ringIndex
 
-	for index in pairs(inventory.ring) do
-		local offset = (index - selectedRing) * RING_POSITION_OFFSET
-		inventory.ringPosition[index] = Vec3(ringPosition.x, ringPosition.y + offset, ringPosition.z)
-        TranslateRing(index, inventory.ringPosition[index], RING_RADIUS, angle)
-	end
+        for index in pairs(inventory.ring) do
+            local offset = (index - selectedRing) * RING_POSITION_OFFSET
+            inventory.ringPosition[index] = Vec3(ringPosition.x, ringPosition.y + offset, ringPosition.z)
+            TranslateRing(index, inventory.ringPosition[index], RING_RADIUS, angle)
+        end
+    end
 
     --Hack for save menu loading
     if itemID == TEN.Objects.ObjID.PC_SAVE_INV_ITEM or itemID == TEN.Objects.ObjID.PC_LOAD_INV_ITEM then
@@ -1234,30 +1203,7 @@ local OpenInventoryAtItem = function(itemID)
 
 end
 
-local OpenAmmoRingAtSelectedAmmo = function(itemID)
-
-    if itemID == NO_VALUE then
-		return
-	end
-
-    local ringIndex, itemIndex = FindItemInInventory(itemID)
-
-    if not (ringIndex and itemIndex) then
-		return
-	end
-
-    inventory.selectedItem[ringIndex] = itemIndex
-    local slice = inventory.slice[ringIndex]
-	local angle = -slice * (itemIndex - 1) --this has to be a negative angle cause reasons.
-    currentRingAngle = angle
-    targetRingAngle = angle
-    
-    --Set index of the item
-    changeOptionsforMenu()
-end
-
-local SetupSecondaryRing = function(ringName, item)
-    --used for combine and ammo rings
+local SetupSecondaryRing = function(ringName, item) --used for combine and ammo rings
 
     previousRing = selectedRing
     combineItem1 = item or GetSelectedItem(selectedRing).objectID
@@ -1265,7 +1211,6 @@ local SetupSecondaryRing = function(ringName, item)
     currentRingAngle = 0
     LevelFuncs.Engine.CustomInventory.ConstructObjectList(ringName, combineItem1)
     selectedRing = ringName
-    CreateRingMenu(ringName)
     inventory.ringPosition[ringName] = RING_CENTER[ringName]
 
     --to set the ring angle at the selected ammo
@@ -1273,11 +1218,9 @@ local SetupSecondaryRing = function(ringName, item)
         
         local weaponSlot = PICKUP_DATA.WEAPON_SET[combineItem1].slot
         local ammoType   = Lara:GetAmmoType(weaponSlot)
-
-        --SUPER FAST O(1) LOOKUP
         local objectID = PICKUP_DATA.AMMO_TYPE_TO_OBJECT[ammoType]
         
-        OpenAmmoRingAtSelectedAmmo(objectID)
+        OpenInventoryAtItem(objectID, false)
         
     end
 
@@ -1369,10 +1312,11 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
         TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_OPEN)
         LevelFuncs.Engine.CustomInventory.ConstructObjectList()
         LevelVars.Engine.CustomInventory.InventoryOpen = false
-        OpenInventoryAtItem(inventoryOpenItem)
+        OpenInventoryAtItem(inventoryOpenItem, true)
     else
         LevelFuncs.Engine.CustomInventory.DrawInventoryHeader(inventoryHeader)
         LevelFuncs.Engine.CustomInventory.DrawInventorySubHeader(inventorySubHeader)
+        LevelFuncs.Engine.CustomInventory.DrawInventorySprites(selectedRing)
         Input(inventoryMode)
         --LevelFuncs.Engine.CustomInventory.ControlTexts(inventoryMode)
         LevelFuncs.Engine.CustomInventory.DrawInventory(inventoryMode)
@@ -1386,7 +1330,6 @@ end
 function CustomInventory.Run()
     
     if inventoryStart then
-        inventoryStart = false
         LevelVars.Engine.CustomInventory = {}
         LevelVars.Engine.CustomInventory.InventoryOpen = false
         LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
@@ -1394,8 +1337,11 @@ function CustomInventory.Run()
         TEN.View.DisplayItem.SetCameraPosition(CAMERA_START)
         TEN.View.DisplayItem.SetTargetPosition(TARGET_START)
         TEN.View.DisplayItem.SetAmbientLight(COLOR_MAP.INVENTORY_AMBIENT)
-
+        TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
+        TEN.View.SetPostProcessStrength(1)
+        TEN.View.SetPostProcessTint(COLOR_MAP.ITEM_COLOR_VISIBLE)
         TEN.Inventory.SetInventoryOverride(true)
+        inventoryStart = false
     end
 
     if useBinoculars then
@@ -1663,16 +1609,24 @@ local AnimateInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.ITEM_USE then
 
-        if combineItem1 or PerformBatchMotion("ItemSelect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem) then
-            if PerformBatchMotion("ItemDeselect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem, true) then
-                FadeRings(false, true)
-                if PerformBatchMotion("RingClosing", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
-                    if not combineItem1 then ClearBatchMotionProgress("ItemSelect", useAnimation) end
-                    ClearBatchMotionProgress("ItemDeselect", useAnimation)
-                    return true
-                end
+        if combineItem1 then
+            if not PerformBatchMotion("ItemDeselect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem, true) then
+                return false
             end
         end
+
+        FadeRings(false, true)
+
+        if PerformBatchMotion("RingClosing", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
+
+            if combineItem1 then
+                ClearBatchMotionProgress("ItemDeselect", useAnimation)
+            end
+
+            return true
+        end
+
+        return false
 
     elseif mode == INVENTORY_MODE.AMMO_SELECT_CLOSE then
 
@@ -2189,7 +2143,7 @@ end
 LevelFuncs.Engine.CustomInventory.DrawItemLabel = function(item, primary)
 
     local entryPosInPixel = primary and percentPos(50, 80) or percentPos(50, 90) 
-    local scale = primary and 1.5 or 1 --Item label
+    local scale = primary and 1.5 or 1
     local label = TEN.Flow.GetString(item.name)
     local count = item.count
     local result
@@ -2224,52 +2178,37 @@ LevelFuncs.Engine.CustomInventory.DrawInventorySubHeader = function(text)
     end
 end
 
-LevelFuncs.Engine.CustomInventory.ControlTexts = function(inventoryMode)
+local function drawArrows(list)
+    for _, entry in ipairs(list) do
+        local entrySprite = DisplaySprite(
+            TEN.Objects.ObjID.DIARY_ENTRY_SPRITES,
+            0, entry[2], entry[1],
+            Vec2(3, 3),
+            COLOR_MAP.NORMAL_FONT
+        )
+        entrySprite:Draw(-8, View.AlignMode.CENTER, View.ScaleMode.FIT, TEN.Effects.BlendID.ALPHA_BLEND)
+    end
+end
 
-    -- local fadeInterpolate = nil
-    -- if inventoryMode == INVENTORY_MODE.RING_OPENING then
-    --     fadeInterpolate = Interpolate.Calculate("FontFade", Interpolate.Type.LINEAR, 0, 255, INVENTORY_ANIM_TIME, true)
-    --     if fadeInterpolate.progress >= PROGRESS_COMPLETE then
-    --         Interpolate.Clear("FontFade")
-    --     end
-    -- elseif inventoryMode == INVENTORY_MODE.RING_CLOSING then
-    --     fadeInterpolate = Interpolate.Calculate("FontFade", Interpolate.Type.LINEAR, 255, 0, INVENTORY_ANIM_TIME, true)
-    --     if fadeInterpolate.progress >= PROGRESS_COMPLETE then
-    --         Interpolate.Clear("FontFade")
-    --     end
-    -- else
-    --     fadeInterpolate = {output = 255, progress = 1}
-    -- end
-  
-    local selectedItem = GetSelectedItem(selectedRing)
-    local actions = selectedItem.menuActions
+LevelFuncs.Engine.CustomInventory.DrawInventorySprites = function(selectedRing)
 
-    local stringTable = {}
+    local arrowsUp = {
+        {0, Vec2(5, 5)},
+        {0, Vec2(95, 5)},
+    }
 
-    for i = 1, #PICKUP_DATA.ItemActionFlags do
-        local entry = PICKUP_DATA.ItemActionFlags[i]
-        if hasItemAction(actions, entry.bit) then
-            stringTable[#stringTable+1] = TEN.Flow.GetString(entry.string)
-        end
+    local arrowsDown = {
+        {180, Vec2(5, 95)},
+        {180, Vec2(95, 95)},
+    }
+
+    if selectedRing ~= PICKUP_DATA.RING.PUZZLE and selectedRing ~= PICKUP_DATA.RING.COMBINE and selectedRing ~= PICKUP_DATA.RING.AMMO  then
+        drawArrows(arrowsUp)
     end
 
-    local finalString
-
-    if #stringTable == 1 then
-        finalString = stringTable[1]
-    else
-        finalString = TEN.Flow.GetString("actions_select")
+    if selectedRing ~= PICKUP_DATA.RING.OPTIONS and selectedRing ~= PICKUP_DATA.RING.COMBINE and selectedRing ~= PICKUP_DATA.RING.AMMO then
+        drawArrows(arrowsDown)
     end
-
-    local scale = 0.5
-    local color = colorCombine(COLOR_MAP.NORMAL_FONT, 255)
-
-    local entryPosInPixel = percentPos(5, 95)
-
-    local entryText = TEN.Strings.DisplayString(finalString, entryPosInPixel, scale, color, false, {Strings.DisplayStringOption.SHADOW})
-    TEN.Strings.ShowString(entryText, 1 / 30)
-
-
 
 end
 
