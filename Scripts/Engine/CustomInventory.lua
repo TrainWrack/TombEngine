@@ -2084,10 +2084,6 @@ LevelFuncs.Engine.CustomInventory.UseItem = function(item)
         
         Lara:SetWeaponType(PICKUP_DATA.WEAPON_SET[item].slot, true)
 
-        if currentWeapon == PICKUP_DATA.WEAPON_SET[item].slot and Lara:GetHandStatus() ~= TEN.Objects.HandStatus.WEAPON_READY then
-            Lara:SetHandStatus(TEN.Objects.HandStatus.WEAPON_DRAW)
-        end
-
         if item == TEN.Objects.ObjID.FLARE_INV_ITEM then
             TEN.Inventory.TakeItem(item, 1)
         end
