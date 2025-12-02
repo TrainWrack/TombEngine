@@ -29,7 +29,7 @@ Settings.COLOR_MAP =
 
 Settings.BACKGROUND = 
 {
-    ENABLE = true,
+    ENABLE = false,
     OBJECTID = TEN.Objects.ObjID.DIARY_ENTRY_SPRITES,
     SPRITEID = 2,
     COLOR = TEN.Color(255, 255, 255),

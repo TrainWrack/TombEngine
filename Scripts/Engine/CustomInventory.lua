@@ -348,8 +348,6 @@ local CombineItems = function(item1, item2)
             -- Add the new combined item
             TEN.Inventory.GiveItem(result, 1)
 
-
-
             combineResult = result
 			return true
 		end
@@ -695,14 +693,30 @@ local CreateItemMenu = function(item)
     local itemMenuActions = itemData.menuActions
 
     for _, entry in ipairs(PICKUP_DATA.ItemActionFlags) do
+
+        if entry.bit == ItemAction.COMBINE then         
+                
+            LevelFuncs.Engine.CustomInventory.ConstructObjectList(RING.COMBINE)
+           
+            if addedItems == 0 then
+                goto continue
+            end
+
+        end
+
         if hasItemAction(itemMenuActions, entry.bit) then
+
             table.insert(menuActions, {
                 itemName = entry.string,
                 actionBit = entry.bit,
                 options = nil,
                 currentOption = 1
             })
+            
         end
+
+        ::continue::
+
     end
 
     local itemMenu = Menu.Create("menuActions", nil, menuActions, "Engine.CustomInventory.DoItemAction", nil, Menu.Type.ITEMS_ONLY)
@@ -1010,6 +1024,16 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
         else
             -- Dump all inventory, skip only if count is 0
             shouldInsert = (data.count ~= 0)
+        end
+
+        --Hack for lasersight item as GetCount returns 1 even when LaserSight is equipped and is missing from the inventory.
+        if (data.objectID == TEN.Objects.ObjID.LASERSIGHT_ITEM) then
+            
+            if Lara:GetLaserSight(TEN.Objects.WeaponType.CROSSBOW) or Lara:GetLaserSight(TEN.Objects.WeaponType.REVOLVER) or Lara:GetLaserSight(TEN.Objects.WeaponType.HK) then
+
+                shouldInsert = false
+
+            end
         end
 
         inventory.ring[data.ringName] = inventory.ring[data.ringName] or {}
