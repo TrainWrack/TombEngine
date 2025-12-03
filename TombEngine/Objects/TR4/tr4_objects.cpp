@@ -44,6 +44,7 @@
 #include "Objects/TR4/Entity/tr4_setha.h"
 
 // Objects
+#include "Objects/TR4/Floor/BurningFloor.h"
 #include "Objects/TR4/Object/FireRope.h"
 #include "Objects/TR4/Object/StatuePlinth.h"
 #include "Objects/TR4/Object/WraithTrap.h"
@@ -576,14 +577,6 @@ namespace TEN::Entities
 			obj->SetHitEffect();
 		}
 
-		obj = &Objects[ID_FIREROPE];
-		if (obj->loaded)
-		{
-			obj->Initialize = InitializeFireRope;
-			obj->control = FireRopeControl;
-			obj->collision = FireRopeCollision;
-		}
-
 		obj = &Objects[ID_LOCUSTS_EMITTER];
 		if (obj->loaded)
 		{
@@ -783,6 +776,21 @@ namespace TEN::Entities
 			obj = &Objects[objectID];
 			if (obj->loaded)
 				obj->control = nullptr;
+		}
+
+		obj = &Objects[ID_FIREROPE];
+		if (obj->loaded)
+		{
+			obj->Initialize = InitializeFireRope;
+			obj->control = FireRopeControl;
+			obj->collision = FireRopeCollision;
+		}
+
+		obj = &Objects[ID_BURNING_FLOOR];
+		if (obj->loaded)
+		{
+			obj->Initialize = InitializeBurningFloor;
+			obj->control = BurningFloorControl;
 		}
 	}
 
