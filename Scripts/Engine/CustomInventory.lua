@@ -1390,9 +1390,6 @@ function CustomInventory.Run()
         LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
         LevelVars.Engine.CustomInventory.InventoryClosed = false
         LevelVars.Engine.CustomInventory.InventoryRunning = false
-        TEN.View.DisplayItem.SetCameraPosition(CAMERA_START)
-        TEN.View.DisplayItem.SetTargetPosition(TARGET_START)
-        TEN.View.DisplayItem.SetAmbientLight(COLOR_MAP.INVENTORY_AMBIENT)
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         TEN.View.SetPostProcessStrength(1)
         TEN.View.SetPostProcessTint(COLOR_MAP.ITEM_COLOR_VISIBLE)
@@ -1433,6 +1430,9 @@ function CustomInventory.Run()
         TEN.View.SetPostProcessStrength(COLOR_MAP.BACKGROUND.a / 255) --use alpha to define the strength of the effect
         TEN.View.SetPostProcessTint(COLOR_MAP.BACKGROUND)
         if inventoryDelay >= 2 then
+            TEN.View.DisplayItem.SetCameraPosition(CAMERA_START)
+            TEN.View.DisplayItem.SetTargetPosition(TARGET_START)
+            TEN.View.DisplayItem.SetAmbientLight(COLOR_MAP.INVENTORY_AMBIENT)
             LevelVars.Engine.CustomInventory.InventoryRunning = true
             Flow.SetFreezeMode(Flow.FreezeMode.FULL)
         end
@@ -2258,8 +2258,8 @@ end
 local function drawArrows(list, alpha)
     for _, entry in ipairs(list) do
         local entrySprite = DisplaySprite(
-            TEN.Objects.ObjID.DIARY_ENTRY_SPRITES,
-            0, entry[2], entry[1],
+            TEN.Objects.ObjID.MISC_SPRITES,
+            3, entry[2], entry[1],
             Vec2(3, 3),
             colorCombine(COLOR_MAP.NORMAL_FONT, alpha)
         )
