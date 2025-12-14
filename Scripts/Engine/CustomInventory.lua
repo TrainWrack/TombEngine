@@ -18,7 +18,7 @@ local CAMERA_END = Vec3(0,-36,-1151)
 local TARGET_START = Vec3(0,0, 1000)
 local TARGET_END = Vec3(0,110,0)
 local INVENTORY_ANIM_TIME = 0.5
-local ITEM_ANIM_TIME = INVENTORY_ANIM_TIME/4
+local ITEM_ANIM_TIME = .125
 local RING_RADIUS = -512
 local ITEM_START = Vec3(0,200,512)
 local ITEM_END = Vec3(0,0,400)
@@ -77,6 +77,7 @@ local targetRingAngle = 0
 local direction = 1
 local inventoryHeader = {"actions_inventory", Vec2(50, 4), 1.5, COLOR_MAP.HEADER_FONT, true}
 local inventorySubHeader = {"actions_inventory", Vec2(50, 40.3), 0.9, COLOR_MAP.HEADER_FONT, false}
+local menuAlpha = nil
 
 local saveList = false
 local saveSelected = false
@@ -1339,7 +1340,6 @@ LevelFuncs.Engine.CustomInventory.ExitInventory = function()
     Menu.DeleteAll()
     View.SetFOV(80)
     Flow.SetFreezeMode(Flow.FreezeMode.NONE)
-    LevelVars.Engine.CustomInventory.InventoryClosed = true
     inventoryMode = INVENTORY_MODE.RING_OPENING
     selectedRing = RING.MAIN
     TEN.View.DisplayItem.SetCameraPosition(CAMERA_START)
@@ -1347,7 +1347,7 @@ LevelFuncs.Engine.CustomInventory.ExitInventory = function()
     timeInMenu = 0
     saveList = false
     combineItem1 = nil
-
+    LevelVars.Engine.CustomInventory.InventoryClosed = true
 end
 
 LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
@@ -1359,8 +1359,13 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
 
     timeInMenu = timeInMenu + 1
 
-    local data = Interpolate.Calculate("InventoryBackground", Interpolate.Type.LINEAR, ALPHA_MIN, ALPHA_MAX, ITEM_ANIM_TIME, true)
-    DrawBackground(data.output)
+    if inventoryMode == INVENTORY_MODE.RING_OPENING then
+        menuAlpha = Interpolate.Calculate("InventoryBackground", Interpolate.Type.LINEAR, ALPHA_MIN, ALPHA_MAX, INVENTORY_ANIM_TIME, true)
+    elseif inventoryMode == INVENTORY_MODE.RING_CLOSING or inventoryMode == INVENTORY_MODE.ITEM_USE then
+        menuAlpha = Interpolate.Calculate("InventoryBackgroundClose", Interpolate.Type.LINEAR, ALPHA_MAX, ALPHA_MIN,  INVENTORY_ANIM_TIME, true)
+    end
+
+    DrawBackground(menuAlpha.output)
 
     if LevelVars.Engine.CustomInventory.InventoryOpen then
         TEN.View.SetFOV(80)
@@ -1372,9 +1377,9 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
         LevelVars.Engine.CustomInventory.InventoryOpen = false
         OpenInventoryAtItem(inventoryOpenItem, true)
     else
-        LevelFuncs.Engine.CustomInventory.DrawInventoryHeader(inventoryHeader)
-        LevelFuncs.Engine.CustomInventory.DrawInventorySubHeader(inventorySubHeader)
-        LevelFuncs.Engine.CustomInventory.DrawInventorySprites(selectedRing, data.output)
+        LevelFuncs.Engine.CustomInventory.DrawInventoryHeader(inventoryHeader, menuAlpha.output)
+        LevelFuncs.Engine.CustomInventory.DrawInventorySubHeader(inventorySubHeader, menuAlpha.output)
+        LevelFuncs.Engine.CustomInventory.DrawInventorySprites(selectedRing, menuAlpha.output)
         Input(inventoryMode)
         --LevelFuncs.Engine.CustomInventory.ControlTexts(inventoryMode)
         LevelFuncs.Engine.CustomInventory.DrawInventory(inventoryMode)
@@ -1756,9 +1761,8 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         LevelFuncs.Engine.CustomInventory.DrawItemLabel(selectedItem, true)
 
     elseif mode == INVENTORY_MODE.RING_OPENING then
-        
-        if AnimateInventory(mode) then
 
+        if AnimateInventory(mode) then
             if saveSelected then
                 itemStoreRotations = true
                 inventoryMode = INVENTORY_MODE.SAVE_SETUP
@@ -1978,11 +1982,10 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         
         SaveItemData(selectedItem)
         DeleteChosenAmmo()
+        setInventoryHeader("actions_inventory", true)
 
         if AnimateInventory(mode) then
-            
             LevelFuncs.Engine.CustomInventory.UseItem(selectedItem.objectID)
-
         end
     elseif mode == INVENTORY_MODE.AMMO_SELECT_SETUP then
         
@@ -2225,20 +2228,19 @@ LevelFuncs.Engine.CustomInventory.DrawItemLabel = function(item, primary)
     
 end
 
-LevelFuncs.Engine.CustomInventory.DrawInventoryHeader = function(text)
+LevelFuncs.Engine.CustomInventory.DrawInventoryHeader = function(text, alpha)
 
     if text[5] then
-        local entryText = TEN.Strings.DisplayString(Flow.GetString(text[1]), percentPos(text[2].x, text[2].y), text[3], colorCombine(text[4], 255), false, {Strings.DisplayStringOption.CENTER, Strings.DisplayStringOption.SHADOW})
+        local entryText = TEN.Strings.DisplayString(Flow.GetString(text[1]), percentPos(text[2].x, text[2].y), text[3], colorCombine(text[4], alpha), false, {Strings.DisplayStringOption.CENTER, Strings.DisplayStringOption.SHADOW})
         TEN.Strings.ShowString(entryText, 1 / 30)
     end
+
 end
 
-LevelFuncs.Engine.CustomInventory.DrawInventorySubHeader = function(text)
+LevelFuncs.Engine.CustomInventory.DrawInventorySubHeader = function(text, alpha)
 
-    if text[5] then
-        local entryText = TEN.Strings.DisplayString(Flow.GetString(text[1]), percentPos(text[2].x, text[2].y), text[3], colorCombine(text[4], 255), false, {Strings.DisplayStringOption.CENTER, Strings.DisplayStringOption.SHADOW})
-        TEN.Strings.ShowString(entryText, 1 / 30)
-    end
+    LevelFuncs.Engine.CustomInventory.DrawInventoryHeader(text, alpha)
+
 end
 
 local function drawArrows(list, alpha)
