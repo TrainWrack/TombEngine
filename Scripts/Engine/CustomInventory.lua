@@ -1359,14 +1359,6 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
 
     timeInMenu = timeInMenu + 1
 
-    if inventoryMode == INVENTORY_MODE.RING_OPENING then
-        menuAlpha = Interpolate.Calculate("InventoryBackground", Interpolate.Type.LINEAR, ALPHA_MIN, ALPHA_MAX, INVENTORY_ANIM_TIME, true)
-    elseif inventoryMode == INVENTORY_MODE.RING_CLOSING or inventoryMode == INVENTORY_MODE.ITEM_USE then
-        menuAlpha = Interpolate.Calculate("InventoryBackgroundClose", Interpolate.Type.LINEAR, ALPHA_MAX, ALPHA_MIN,  INVENTORY_ANIM_TIME, true)
-    end
-
-    DrawBackground(menuAlpha.output)
-
     if LevelVars.Engine.CustomInventory.InventoryOpen then
         TEN.View.SetFOV(80)
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
@@ -1377,13 +1369,13 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
         LevelVars.Engine.CustomInventory.InventoryOpen = false
         OpenInventoryAtItem(inventoryOpenItem, true)
     else
-        LevelFuncs.Engine.CustomInventory.DrawInventoryHeader(inventoryHeader, menuAlpha.output)
-        LevelFuncs.Engine.CustomInventory.DrawInventorySubHeader(inventorySubHeader, menuAlpha.output)
-        LevelFuncs.Engine.CustomInventory.DrawInventorySprites(selectedRing, menuAlpha.output)
         Input(inventoryMode)
         --LevelFuncs.Engine.CustomInventory.ControlTexts(inventoryMode)
         LevelFuncs.Engine.CustomInventory.DrawInventory(inventoryMode)
-
+        DrawBackground(menuAlpha)
+        LevelFuncs.Engine.CustomInventory.DrawInventoryHeader(inventoryHeader, menuAlpha)
+        LevelFuncs.Engine.CustomInventory.DrawInventorySubHeader(inventorySubHeader, menuAlpha)
+        LevelFuncs.Engine.CustomInventory.DrawInventorySprites(selectedRing, menuAlpha)
         --Set rotation of InventoryItems like compass and stopwatch
         SetRotationInventoryItems()
     end
@@ -1502,6 +1494,10 @@ local PerformBatchMotion = function(prefix, motionTable, time, clearProgress, ri
         FadeRing(ringName, interpolated.ringFade.output, omitSelectedItem)
     end
 
+    if interpolated.menuFade then
+        menuAlpha = interpolated.menuFade.output
+    end
+
     if interpolated.camera then TEN.View.DisplayItem.SetCameraPosition(interpolated.camera.output) end
     if interpolated.target then TEN.View.DisplayItem.SetTargetPosition(interpolated.target.output) end
 
@@ -1563,15 +1559,22 @@ local AnimateInventory = function(mode)
         { key = "ringFade", type = Interpolate.Type.LINEAR, start = ALPHA_MAX, finish = ALPHA_MIN}
         }
 
+    local menuFade = {
+        { key = "menuFade", type = Interpolate.Type.LINEAR, start = ALPHA_MIN, finish = ALPHA_MAX}
+    }
+
     if mode == INVENTORY_MODE.RING_OPENING then
 
-        if PerformBatchMotion("RingOpening", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing) then
+        if PerformBatchMotion("MenuFadeIn", menuFade, ITEM_ANIM_TIME, false, nil, nil, false) then
+            if PerformBatchMotion("RingOpening", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing) then
 
-            --set alpha for all rings. This is required to make items in other items visible.
-            FadeRings(true, true)
-            LevelVars.Engine.CustomInventory.InventoryOpenFreeze = true
-            return true
+                --set alpha for all rings. This is required to make items in other items visible.
+                FadeRings(true, true)
+                LevelVars.Engine.CustomInventory.InventoryOpenFreeze = true
+                return true
+            end
         end
+        
 
     elseif mode == INVENTORY_MODE.RING_CLOSING then
 
@@ -1706,17 +1709,17 @@ local AnimateInventory = function(mode)
 
     local allMotionComplete = true
 
-    for index in pairs(inventory.ring) do
+        for index in pairs(inventory.ring) do
 
-        if not PerformBatchMotion("combineCloseSuccess"..index, combineClose, INVENTORY_ANIM_TIME, true, index) then
-            allMotionComplete = false 
+            if not PerformBatchMotion("combineCloseSuccess"..index, combineClose, INVENTORY_ANIM_TIME, true, index) then
+                allMotionComplete = false 
+            end
+
         end
-
-    end
-    
-    if allMotionComplete then
-        return true
-    end
+        
+        if allMotionComplete then
+            return true
+        end
 
     elseif mode == INVENTORY_MODE.SEPARATE_COMPLETE then
 
@@ -1733,6 +1736,12 @@ local AnimateInventory = function(mode)
         if allMotionComplete then
             return true
         end
+    elseif mode == INVENTORY_MODE.INVENTORY_EXIT then
+
+        if PerformBatchMotion("InventoryExit", menuFade, ITEM_ANIM_TIME, false, nil, nil, true) then
+            return true
+        end
+
     end
 
 end
@@ -1775,9 +1784,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
     elseif mode == INVENTORY_MODE.RING_CLOSING then
 
         if AnimateInventory(mode) then
-
-            LevelFuncs.Engine.CustomInventory.ExitInventory()
-
+            inventoryMode = INVENTORY_MODE.INVENTORY_EXIT
         end
 
     elseif mode == INVENTORY_MODE.RING_ROTATE then
@@ -2049,6 +2056,11 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
     elseif mode == INVENTORY_MODE.WEAPON_MODE_CLOSE then
         setInventorySubHeader("choose_ammo", false)
         inventoryMode = INVENTORY_MODE.ITEM_SELECTED
+    elseif mode == INVENTORY_MODE.INVENTORY_EXIT then
+
+        if AnimateInventory(mode) then
+            LevelFuncs.Engine.CustomInventory.ExitInventory()
+        end 
 
     end
 end
@@ -2112,7 +2124,7 @@ LevelFuncs.Engine.CustomInventory.UseItem = function(item)
     
     --Quickly discard further processing if chosen item was reset in script.
     if (TEN.Inventory.GetUsedItem() == NO_VALUE) then
-        LevelFuncs.Engine.CustomInventory.ExitInventory()
+        inventoryMode = INVENTORY_MODE.INVENTORY_EXIT
         return
     end
 
@@ -2124,7 +2136,7 @@ LevelFuncs.Engine.CustomInventory.UseItem = function(item)
 
         --Return if flare is already equipped
         if item == TEN.Objects.ObjID.FLARE_INV_ITEM and currentWeapon == TEN.Objects.WeaponType.FLARE then
-            LevelFuncs.Engine.CustomInventory.ExitInventory()
+            inventoryMode = INVENTORY_MODE.INVENTORY_EXIT
             return
         end
         
@@ -2146,7 +2158,7 @@ LevelFuncs.Engine.CustomInventory.UseItem = function(item)
         if hp <= 0 or hp >= PICKUP_DATA.HEALTH_MAX then
             if poison == 0 then
                 TEN.Sound.PlaySound(SOUND_MAP.PLAYER_NO)
-                LevelFuncs.Engine.CustomInventory.ExitInventory()
+                inventoryMode = INVENTORY_MODE.INVENTORY_EXIT
                 return
             end
         end
@@ -2181,7 +2193,7 @@ LevelFuncs.Engine.CustomInventory.UseItem = function(item)
 
     end
 
-    LevelFuncs.Engine.CustomInventory.ExitInventory()
+    inventoryMode = INVENTORY_MODE.INVENTORY_EXIT
 
 end
 
