@@ -18,6 +18,7 @@ local CAMERA_END = Vec3(0,-36,-1151)
 local TARGET_START = Vec3(0,0, 1000)
 local TARGET_END = Vec3(0,110,0)
 local INVENTORY_ANIM_TIME = 0.5
+local ITEM_ANIM_TIME = INVENTORY_ANIM_TIME/4
 local RING_RADIUS = -512
 local ITEM_START = Vec3(0,200,512)
 local ITEM_END = Vec3(0,0,400)
@@ -1165,6 +1166,31 @@ local FadeRing = function(ringName, fadeValue, omitSelectedItem)
     end
 end
 
+local ColorRing = function(ringName, color, omitSelectedItem)
+    
+    local ring = inventory.ring[ringName]
+
+    if not ring then
+        return
+    end
+
+    local itemCount = #ring
+    local selectedItem = omitSelectedItem and GetSelectedItem(selectedRing).objectID
+
+    for i = 1, itemCount do
+        local currentItem = ring[i].objectID 
+        local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
+        if omitSelectedItem and selectedItem == currentItem then
+            goto continue
+        end
+
+        local itemColor = currentDisplayItem:GetColor()
+        currentDisplayItem:SetColor(colorCombine(color, itemColor.a))
+
+        ::continue::
+    end
+end
+
 local FadeRings = function(visible, omitSelectedRing)
     
     local fadeValue = visible and 255 or 0
@@ -1181,10 +1207,12 @@ end
 
 local RotateItem = function(itemName)
 
+    local data = Interpolate.Calculate("RotateItemColor", Interpolate.Type.COLOR, COLOR_MAP.ITEM_COLOR_DESELECTED, COLOR_MAP.ITEM_COLOR_VISIBLE, ITEM_ANIM_TIME, true)
     local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(itemName)
     local itemRotations  = currentDisplayItem:GetRotation()
     currentDisplayItem:SetRotation(Rotation(itemRotations.x, (itemRotations.y + ROTATION_SPEED) % 360, itemRotations.z))
-
+    currentDisplayItem:SetColor(data.output)
+    
 end
 
 local OpenInventoryAtItem = function(itemID, repositionRings)
@@ -1324,9 +1352,15 @@ end
 
 LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
 
+    --If Inventory is not active skip running the ring inventory in FreezeMode
+    if not LevelVars.Engine.CustomInventory.InventoryRunning then
+        return
+    end
+
     timeInMenu = timeInMenu + 1
 
-    DrawBackground(255)
+    local data = Interpolate.Calculate("InventoryBackground", Interpolate.Type.LINEAR, ALPHA_MIN, ALPHA_MAX, ITEM_ANIM_TIME, true)
+    DrawBackground(data.output)
 
     if LevelVars.Engine.CustomInventory.InventoryOpen then
         TEN.View.SetFOV(80)
@@ -1340,15 +1374,15 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
     else
         LevelFuncs.Engine.CustomInventory.DrawInventoryHeader(inventoryHeader)
         LevelFuncs.Engine.CustomInventory.DrawInventorySubHeader(inventorySubHeader)
-        LevelFuncs.Engine.CustomInventory.DrawInventorySprites(selectedRing)
+        LevelFuncs.Engine.CustomInventory.DrawInventorySprites(selectedRing, data.output)
         Input(inventoryMode)
         --LevelFuncs.Engine.CustomInventory.ControlTexts(inventoryMode)
         LevelFuncs.Engine.CustomInventory.DrawInventory(inventoryMode)
 
         --Set rotation of InventoryItems like compass and stopwatch
         SetRotationInventoryItems()
-
     end
+
 end
 
 function CustomInventory.Run()
@@ -1358,6 +1392,7 @@ function CustomInventory.Run()
         LevelVars.Engine.CustomInventory.InventoryOpen = false
         LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
         LevelVars.Engine.CustomInventory.InventoryClosed = false
+        LevelVars.Engine.CustomInventory.InventoryRunning = false
         TEN.View.DisplayItem.SetCameraPosition(CAMERA_START)
         TEN.View.DisplayItem.SetTargetPosition(TARGET_START)
         TEN.View.DisplayItem.SetAmbientLight(COLOR_MAP.INVENTORY_AMBIENT)
@@ -1398,22 +1433,21 @@ function CustomInventory.Run()
     if LevelVars.Engine.CustomInventory.InventoryOpen == true then
         inventoryDelay = inventoryDelay + 1
         TEN.View.SetPostProcessMode(View.PostProcessMode.MONOCHROME)
-        TEN.View.SetPostProcessStrength(COLOR_MAP.BACKGROUND.a / 255) --use alpha to define the strenght of the effect
+        TEN.View.SetPostProcessStrength(COLOR_MAP.BACKGROUND.a / 255) --use alpha to define the strength of the effect
         TEN.View.SetPostProcessTint(COLOR_MAP.BACKGROUND)
-
         if inventoryDelay >= 2 then
-            TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.CustomInventory.UpdateInventory)
+            LevelVars.Engine.CustomInventory.InventoryRunning = true
             Flow.SetFreezeMode(Flow.FreezeMode.FULL)
         end
     end
 
     
     if LevelVars.Engine.CustomInventory.InventoryClosed then
-        TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.CustomInventory.UpdateInventory)
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         TEN.View.SetPostProcessStrength(1)
         TEN.View.SetPostProcessTint(COLOR_MAP.ITEM_COLOR_VISIBLE)
         LevelVars.Engine.CustomInventory.InventoryClosed = false
+        LevelVars.Engine.CustomInventory.InventoryRunning = false
     end
 end
 
@@ -1453,6 +1487,10 @@ local PerformBatchMotion = function(prefix, motionTable, time, clearProgress, ri
         local radius = interpolated.ringRadius and interpolated.ringRadius.output or RING_RADIUS
         local angle = interpolated.ringAngle and interpolated.ringAngle.output or 0
         TranslateRing(ringName, center, radius, angle)
+    end
+
+    if interpolated.ringColor then
+        ColorRing(ringName, interpolated.ringColor.output, omitSelectedItem)
     end
 
     if interpolated.ringFade then
@@ -1550,6 +1588,7 @@ local AnimateInventory = function(mode)
             local motionSet = {
             { key = "ringAngle", type = Interpolate.Type.LINEAR, start = -360, finish = 0},
             { key = "ringCenter", type = Interpolate.Type.VEC3, start = oldPosition, finish = newPosition},
+            { key = "ringColor", type = Interpolate.Type.COLOR, start = COLOR_MAP.ITEM_COLOR_DESELECTED, finish = COLOR_MAP.ITEM_COLOR_DESELECTED},
             }
 
             if PerformBatchMotion("RingChange"..index, motionSet, INVENTORY_ANIM_TIME, true, index) then
@@ -1568,9 +1607,10 @@ local AnimateInventory = function(mode)
 
         local motionSet = {
             { key = "ringAngle", type = Interpolate.Type.LINEAR, start = currentRingAngle, finish = targetRingAngle},
+            { key = "ringColor", type = Interpolate.Type.COLOR, start = COLOR_MAP.ITEM_COLOR_DESELECTED, finish = COLOR_MAP.ITEM_COLOR_DESELECTED},
             }
 
-            if PerformBatchMotion("RingRotate", motionSet, INVENTORY_ANIM_TIME/4, true, selectedRing) then
+            if PerformBatchMotion("RingRotate", motionSet, ITEM_ANIM_TIME, true, selectedRing) then
                 currentRingAngle = targetRingAngle
                 return true
             end
@@ -1589,7 +1629,7 @@ local AnimateInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.EXAMINE_RESET then
 
-        if PerformBatchMotion("ExamineReset", examineReset, INVENTORY_ANIM_TIME/4, true, selectedRing, selectedItem, true) then
+        if PerformBatchMotion("ExamineReset", examineReset, ITEM_ANIM_TIME, true, selectedRing, selectedItem, true) then
             return true
         end
 
@@ -1741,6 +1781,8 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         if AnimateInventory(mode) then
             currentRingAngle = targetRingAngle
             
+            Interpolate.Clear("RotateItemColor")
+
             if previousMode then
                 inventoryMode = previousMode
             else
@@ -1754,6 +1796,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
         if AnimateInventory(mode) then
             inventoryMode = INVENTORY_MODE.INVENTORY
             
+            Interpolate.Clear("RotateItemColor")
             --reset to first item in ring
             for index, _ in ipairs(inventory.selectedItem) do
                 inventory.selectedItem[index] = 1
@@ -2198,19 +2241,19 @@ LevelFuncs.Engine.CustomInventory.DrawInventorySubHeader = function(text)
     end
 end
 
-local function drawArrows(list)
+local function drawArrows(list, alpha)
     for _, entry in ipairs(list) do
         local entrySprite = DisplaySprite(
             TEN.Objects.ObjID.DIARY_ENTRY_SPRITES,
             0, entry[2], entry[1],
             Vec2(3, 3),
-            COLOR_MAP.NORMAL_FONT
+            colorCombine(COLOR_MAP.NORMAL_FONT, alpha)
         )
         entrySprite:Draw(-8, View.AlignMode.CENTER, View.ScaleMode.FIT, TEN.Effects.BlendID.ALPHA_BLEND)
     end
 end
 
-LevelFuncs.Engine.CustomInventory.DrawInventorySprites = function(selectedRing)
+LevelFuncs.Engine.CustomInventory.DrawInventorySprites = function(selectedRing, alpha)
 
     local arrowsUp = {
         {0, Vec2(5, 5)},
@@ -2223,13 +2266,15 @@ LevelFuncs.Engine.CustomInventory.DrawInventorySprites = function(selectedRing)
     }
 
     if selectedRing ~= PICKUP_DATA.RING.PUZZLE and selectedRing ~= PICKUP_DATA.RING.COMBINE and selectedRing ~= PICKUP_DATA.RING.AMMO  then
-        drawArrows(arrowsUp)
+        drawArrows(arrowsUp, alpha)
     end
 
     if selectedRing ~= PICKUP_DATA.RING.OPTIONS and selectedRing ~= PICKUP_DATA.RING.COMBINE and selectedRing ~= PICKUP_DATA.RING.AMMO then
-        drawArrows(arrowsDown)
+        drawArrows(arrowsDown, alpha)
     end
 
 end
+
+TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.CustomInventory.UpdateInventory)
 
 return CustomInventory

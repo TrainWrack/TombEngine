@@ -23,15 +23,15 @@ Settings.COLOR_MAP =
     BACKGROUND = Color(64, 64, 64, 128),
     INVENTORY_AMBIENT = Color(255, 255, 128),
     ITEM_COLOR = Color(64, 64, 64, 0),
-    ITEM_COLOR_DESELECTED = Color(64, 64, 64, 255),
+    ITEM_COLOR_DESELECTED = Color(32, 32, 32, 255),
     ITEM_COLOR_VISIBLE = Color(128, 128, 128, 255)
 }
 
 Settings.BACKGROUND = 
 {
-    ENABLE = false,
+    ENABLE = true,
     OBJECTID = TEN.Objects.ObjID.DIARY_ENTRY_SPRITES,
-    SPRITEID = 2,
+    SPRITEID = 1,
     COLOR = TEN.Color(255, 255, 255),
     POSITION = TEN.Vec2(50,50),
     ROTATION = 0,
