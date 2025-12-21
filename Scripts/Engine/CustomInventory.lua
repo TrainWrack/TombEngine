@@ -69,7 +69,7 @@ local selectedRing = RING.MAIN
 local previousRing = nil
 local timeInMenu = 0
 local inventoryDelay = 0 --count of actual frames before inventory is opened. Used for setting the grayscale tint.
-local inventoryMode = INVENTORY_MODE.RING_OPENING
+local inventoryMode = INVENTORY_MODE.INVENTORY_OPENING
 local previousMode = nil
 local currentRingAngle = 0
 local previousRingAngle = 0
@@ -77,8 +77,7 @@ local targetRingAngle = 0
 local direction = 1
 local inventoryHeader = {"actions_inventory", Vec2(50, 4), 1.5, COLOR_MAP.HEADER_FONT, true}
 local inventorySubHeader = {"actions_inventory", Vec2(50, 40.3), 0.9, COLOR_MAP.HEADER_FONT, false}
-local menuAlpha = nil
-
+local menuAlpha = 0
 local saveList = false
 local saveSelected = false
 
@@ -696,28 +695,25 @@ local CreateItemMenu = function(item)
 
     for _, entry in ipairs(PICKUP_DATA.ItemActionFlags) do
 
-        if entry.bit == ItemAction.COMBINE then         
-                
-            LevelFuncs.Engine.CustomInventory.ConstructObjectList(RING.COMBINE)
-           
-            if addedItems == 0 then
-                goto continue
+        if hasItemAction(itemMenuActions, entry.bit) then
+
+            local allowInsert = true
+
+            if entry.bit == ItemAction.COMBINE then
+                local itemCount = LevelFuncs.Engine.CustomInventory.GetCombineItemsCount(itemData.objectID)
+                allowInsert = (itemCount ~= 0)
+            end
+
+            if allowInsert then
+                table.insert(menuActions, {
+                    itemName = entry.string,
+                    actionBit = entry.bit,
+                    options = nil,
+                    currentOption = 1
+                })
             end
 
         end
-
-        if hasItemAction(itemMenuActions, entry.bit) then
-
-            table.insert(menuActions, {
-                itemName = entry.string,
-                actionBit = entry.bit,
-                options = nil,
-                currentOption = 1
-            })
-            
-        end
-
-        ::continue::
 
     end
 
@@ -1048,14 +1044,17 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
         end
 
         if shouldInsert or ammoRing then
+            addedItems = addedItems + 1
             table.insert(inventory.ring[data.ringName], data)
             local inventoryItem = TEN.View.DisplayItem(tostring(data.objectID), data.objectID, RING_CENTER[data.ringName], data.rotation, data.scale, data.meshBits)
             inventoryItem:SetColor(COLOR_MAP.ITEM_COLOR)
-            addedItems = addedItems + 1
+            
+
         end
 
         ::continue::
     end
+
 
     --Calculate the slice angle and save it
     if ringType then
@@ -1073,6 +1072,49 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
         end
     end
 
+end
+
+LevelFuncs.Engine.CustomInventory.GetCombineItemsCount = function(selectedItem)
+
+    local itemCount = 0
+    local items  = PICKUP_DATA.constants
+
+    for _, itemRow in ipairs(items) do
+
+        local itemData = PICKUP_DATA.ConvertRowData(itemRow)
+        local data = BuildInventoryItem(itemData)
+
+        --shouldInsert is a bool to make sure the item gets added to the ring being created
+        local shouldInsert = false
+
+        --Check if a combine ring is being created and only proceed if the item is a combine type otherwise skip to continue
+        if data.combine == true then
+            
+            --skip adding the selected item
+            if selectedItem == data.objectID then
+                print("This test passed")
+                goto continue
+            end
+
+            --Check if lasersight is connected and if it is skip adding to the combine table
+            if data.type == TYPE.WEAPON and Lara:GetLaserSight(PICKUP_DATA.WEAPON_SET[data.objectID].slot) then
+                goto continue
+            end
+
+            --should only insert the item if count is not zero
+            shouldInsert = (data.count ~= 0)
+        else
+            --skip adding this item to table if the item is not a combine type
+            goto continue
+        end
+
+        if shouldInsert then
+            itemCount = itemCount + 1
+        end
+
+        ::continue::
+    end
+    return itemCount
 end
 
 LevelFuncs.Engine.CustomInventory.ReadGameflow = function()
@@ -1340,7 +1382,7 @@ LevelFuncs.Engine.CustomInventory.ExitInventory = function()
     Menu.DeleteAll()
     View.SetFOV(80)
     Flow.SetFreezeMode(Flow.FreezeMode.NONE)
-    inventoryMode = INVENTORY_MODE.RING_OPENING
+    inventoryMode = INVENTORY_MODE.INVENTORY_OPENING
     selectedRing = RING.MAIN
     TEN.View.DisplayItem.SetCameraPosition(CAMERA_START)
     TEN.View.DisplayItem.SetTargetPosition(TARGET_START)
@@ -1358,6 +1400,7 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
     end
 
     timeInMenu = timeInMenu + 1
+    DrawBackground(menuAlpha)
 
     if LevelVars.Engine.CustomInventory.InventoryOpen then
         TEN.View.SetFOV(80)
@@ -1372,7 +1415,6 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
         Input(inventoryMode)
         --LevelFuncs.Engine.CustomInventory.ControlTexts(inventoryMode)
         LevelFuncs.Engine.CustomInventory.DrawInventory(inventoryMode)
-        DrawBackground(menuAlpha)
         LevelFuncs.Engine.CustomInventory.DrawInventoryHeader(inventoryHeader, menuAlpha)
         LevelFuncs.Engine.CustomInventory.DrawInventorySubHeader(inventorySubHeader, menuAlpha)
         LevelFuncs.Engine.CustomInventory.DrawInventorySprites(selectedRing, menuAlpha)
@@ -1393,7 +1435,11 @@ function CustomInventory.Run()
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         TEN.View.SetPostProcessStrength(1)
         TEN.View.SetPostProcessTint(COLOR_MAP.ITEM_COLOR_VISIBLE)
-        TEN.Inventory.SetInventoryOverride(true)
+
+        local settings = TEN.Flow.GetSettings()
+        settings.Gameplay.inventoryEnabled = false
+        TEN.Flow.SetSettings(settings)
+
         inventoryStart = false
     end
 
@@ -1563,19 +1609,21 @@ local AnimateInventory = function(mode)
         { key = "menuFade", type = Interpolate.Type.LINEAR, start = ALPHA_MIN, finish = ALPHA_MAX}
     }
 
-    if mode == INVENTORY_MODE.RING_OPENING then
+    if mode == INVENTORY_MODE.INVENTORY_OPENING then
 
         if PerformBatchMotion("MenuFadeIn", menuFade, ITEM_ANIM_TIME, false, nil, nil, false) then
-            if PerformBatchMotion("RingOpening", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing) then
-
-                --set alpha for all rings. This is required to make items in other items visible.
-                FadeRings(true, true)
-                LevelVars.Engine.CustomInventory.InventoryOpenFreeze = true
-                return true
-            end
+            return true
         end
         
-
+    elseif mode == INVENTORY_MODE.RING_OPENING then
+        
+        if PerformBatchMotion("RingOpening", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing) then
+            --set alpha for all rings. This is required to make items in other items visible.
+            FadeRings(true, true)
+            LevelVars.Engine.CustomInventory.InventoryOpenFreeze = true
+            return true
+        end
+        
     elseif mode == INVENTORY_MODE.RING_CLOSING then
 
         --Hide other rings to ensure the closing animation looks clean.
@@ -2040,7 +2088,7 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
             inventoryMode = INVENTORY_MODE.SEPARATE_COMPLETE
         end
     elseif mode == INVENTORY_MODE.SEPARATE_COMPLETE then
-        
+        setInventoryHeader("actions_inventory", true)
         if AnimateInventory(mode) then
             inventoryMode = INVENTORY_MODE.INVENTORY
         end
@@ -2056,6 +2104,11 @@ LevelFuncs.Engine.CustomInventory.DrawInventory = function(mode)
     elseif mode == INVENTORY_MODE.WEAPON_MODE_CLOSE then
         setInventorySubHeader("choose_ammo", false)
         inventoryMode = INVENTORY_MODE.ITEM_SELECTED
+    elseif mode == INVENTORY_MODE.INVENTORY_OPENING then
+
+        if AnimateInventory(mode) then
+            inventoryMode = INVENTORY_MODE.RING_OPENING
+        end 
     elseif mode == INVENTORY_MODE.INVENTORY_EXIT then
 
         if AnimateInventory(mode) then

@@ -31,7 +31,7 @@ Settings.BACKGROUND =
 {
     ENABLE = true,
     OBJECTID = TEN.Objects.ObjID.DIARY_ENTRY_SPRITES,
-    SPRITEID = 1,
+    SPRITEID = 0,
     COLOR = TEN.Color(255, 255, 255),
     POSITION = TEN.Vec2(50,50),
     ROTATION = 0,
