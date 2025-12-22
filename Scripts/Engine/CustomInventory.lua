@@ -1032,10 +1032,8 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
 
         if shouldInsert or ammoRing then
             table.insert(inventory.ring[data.ringName], data)
-            local inventoryItem = TEN.View.DisplayItem(tostring(data.objectID), data.objectID, RING_CENTER[data.ringName], data.rotation, data.scale, data.meshBits)
+            local inventoryItem = TEN.View.DisplayItem(tostring(data.objectID), data.objectID, RING_CENTER[data.ringName], data.rotation, Vec3(data.scale), data.meshBits)
             inventoryItem:SetColor(COLOR_MAP.ITEM_COLOR)
-            
-
         end
 
         ::continue::
@@ -1336,7 +1334,7 @@ local ShowChosenAmmo = function(item, textOnly)
             data.objectID,
             AMMO_LOCATION,
             data.rotation,
-            data.scale,
+            Vec3(data.scale),
             data.meshBits
         )
 
@@ -1536,7 +1534,7 @@ local PerformBatchMotion = function(prefix, motionTable, time, clearProgress, ri
         local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(item.objectID))
         if interpolated.itemColor then displayItem:SetColor(interpolated.itemColor.output) end
         if interpolated.itemPosition then displayItem:SetPosition(offsetY(interpolated.itemPosition.output, item.yOffset)) end
-        if interpolated.itemScale then displayItem:SetScale(interpolated.itemScale.output) end
+        if interpolated.itemScale then displayItem:SetScale(Vec3(interpolated.itemScale.output)) end
         if interpolated.itemRotation then displayItem:SetRotation(interpolated.itemRotation.output) end
     end
 
@@ -2247,7 +2245,7 @@ LevelFuncs.Engine.CustomInventory.ExamineItem = function(item)
     local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(item))
 
     displayItem:SetRotation(examineRotation)
-    displayItem:SetScale(examineScaler)
+    displayItem:SetScale(Vec3(examineScaler))
     
     if localizedString and examineShowString then
         local entryText = TEN.Strings.DisplayString(localizedString, percentPos(EXAMINE_TEXT_POS.x, EXAMINE_TEXT_POS.y), 1, COLOR_MAP.NORMAL_FONT, true, {Strings.DisplayStringOption.VERTICAL_CENTER, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER})
