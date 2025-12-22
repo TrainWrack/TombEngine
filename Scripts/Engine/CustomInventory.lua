@@ -58,7 +58,6 @@ local combineItem1 = nil
 local combineItem2 = nil
 local combineResult = nil
 local performCombine = false
-local addedItems = 0
 
 --Structure for inventory
 local inventory = {ring = {}, slice = {}, selectedItem = {}, ringPosition = {}}
@@ -128,17 +127,6 @@ local setInventorySubHeader = function(string, visible)
 
     inventorySubHeader[1] = string
     inventorySubHeader[5] = visible
-
-end
-
-local function DrawBackground(alpha)
-
-    if Settings.BACKGROUND.ENABLE then
-        local bgAlpha = math.min(alpha, Settings.BACKGROUND.ALPHA)
-        local bgColor = colorCombine(Settings.BACKGROUND.COLOR, bgAlpha)
-        local bgSprite = TEN.DisplaySprite(Settings.BACKGROUND.OBJECTID, Settings.BACKGROUND.SPRITEID, Settings.BACKGROUND.POSITION, Settings.BACKGROUND.ROTATION, Settings.BACKGROUND.SCALE, bgColor)
-        bgSprite:Draw(0, Settings.BACKGROUND.ALIGN_MODE, Settings.BACKGROUND.SCALE_MODE, Settings.BACKGROUND.BLEND_MODE)
-    end
 
 end
 
@@ -945,7 +933,6 @@ end
 --Only uses combine and ammo as an option. Everything else dumps the whole inventory.
 LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selectedWeapon)
 
-    addedItems = 0
     local items  = PICKUP_DATA.constants
 
     if ringType == RING.AMMO or ringType == RING.COMBINE then
@@ -1044,7 +1031,6 @@ LevelFuncs.Engine.CustomInventory.ConstructObjectList = function(ringType, selec
         end
 
         if shouldInsert or ammoRing then
-            addedItems = addedItems + 1
             table.insert(inventory.ring[data.ringName], data)
             local inventoryItem = TEN.View.DisplayItem(tostring(data.objectID), data.objectID, RING_CENTER[data.ringName], data.rotation, data.scale, data.meshBits)
             inventoryItem:SetColor(COLOR_MAP.ITEM_COLOR)
@@ -1092,7 +1078,6 @@ LevelFuncs.Engine.CustomInventory.GetCombineItemsCount = function(selectedItem)
             
             --skip adding the selected item
             if selectedItem == data.objectID then
-                print("This test passed")
                 goto continue
             end
 
@@ -1236,7 +1221,7 @@ end
 
 local FadeRings = function(visible, omitSelectedRing)
     
-    local fadeValue = visible and 255 or 0
+    local fadeValue = visible and ALPHA_MAX or ALPHA_MIN
 
     for index in pairs(inventory.ring) do
         
@@ -1400,7 +1385,7 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
     end
 
     timeInMenu = timeInMenu + 1
-    DrawBackground(menuAlpha)
+    LevelFuncs.Engine.CustomInventory.DrawBackground(menuAlpha)
 
     if LevelVars.Engine.CustomInventory.InventoryOpen then
         TEN.View.SetFOV(80)
@@ -1416,7 +1401,7 @@ LevelFuncs.Engine.CustomInventory.UpdateInventory = function()
         --LevelFuncs.Engine.CustomInventory.ControlTexts(inventoryMode)
         LevelFuncs.Engine.CustomInventory.DrawInventory(inventoryMode)
         LevelFuncs.Engine.CustomInventory.DrawInventoryHeader(inventoryHeader, menuAlpha)
-        LevelFuncs.Engine.CustomInventory.DrawInventorySubHeader(inventorySubHeader, menuAlpha)
+        LevelFuncs.Engine.CustomInventory.DrawInventoryHeader(inventorySubHeader, menuAlpha)
         LevelFuncs.Engine.CustomInventory.DrawInventorySprites(selectedRing, menuAlpha)
         --Set rotation of InventoryItems like compass and stopwatch
         SetRotationInventoryItems()
@@ -1473,7 +1458,7 @@ function CustomInventory.Run()
     if LevelVars.Engine.CustomInventory.InventoryOpen == true then
         inventoryDelay = inventoryDelay + 1
         TEN.View.SetPostProcessMode(View.PostProcessMode.MONOCHROME)
-        TEN.View.SetPostProcessStrength(COLOR_MAP.BACKGROUND.a / 255) --use alpha to define the strength of the effect
+        TEN.View.SetPostProcessStrength(COLOR_MAP.BACKGROUND.a / ALPHA_MAX) --use alpha to define the strength of the effect
         TEN.View.SetPostProcessTint(COLOR_MAP.BACKGROUND)
         if inventoryDelay >= 2 then
             TEN.View.DisplayItem.SetCameraPosition(CAMERA_START)
@@ -1571,7 +1556,7 @@ local AnimateInventory = function(mode)
         { key = "ringRadius", type = Interpolate.Type.LINEAR, start = 0, finish = RING_RADIUS },
         { key = "ringAngle", type = Interpolate.Type.LINEAR, start = -360, finish = currentRingAngle },
         { key = "ringCenter", type = Interpolate.Type.VEC3, start = inventory.ringPosition[selectedRing], finish = inventory.ringPosition[selectedRing] },
-        { key = "ringFade", type = Interpolate.Type.LINEAR, start = 0, finish = 255 },
+        { key = "ringFade", type = Interpolate.Type.LINEAR, start = ALPHA_MIN, finish = ALPHA_MAX },
         { key = "camera", type = Interpolate.Type.VEC3, start = CAMERA_START, finish = CAMERA_END },
         { key = "target", type = Interpolate.Type.VEC3, start = TARGET_START, finish = TARGET_END },
         }
@@ -2302,12 +2287,6 @@ LevelFuncs.Engine.CustomInventory.DrawInventoryHeader = function(text, alpha)
 
 end
 
-LevelFuncs.Engine.CustomInventory.DrawInventorySubHeader = function(text, alpha)
-
-    LevelFuncs.Engine.CustomInventory.DrawInventoryHeader(text, alpha)
-
-end
-
 local function drawArrows(list, alpha)
     for _, entry in ipairs(list) do
         local entrySprite = DisplaySprite(
@@ -2321,6 +2300,19 @@ local function drawArrows(list, alpha)
 end
 
 LevelFuncs.Engine.CustomInventory.DrawInventorySprites = function(selectedRing, alpha)
+
+    local visibleModes = {
+        [INVENTORY_MODE.INVENTORY] = true,
+        [INVENTORY_MODE.INVENTORY_OPENING] = true,
+        [INVENTORY_MODE.INVENTORY_EXIT] = true,
+        [INVENTORY_MODE.RING_OPENING] = true,
+        [INVENTORY_MODE.RING_CLOSING] = true,
+        [INVENTORY_MODE.RING_ROTATE] = true
+    }
+
+    if not visibleModes[inventoryMode] then
+        return
+    end
 
     local arrowsUp = {
         {0, Vec2(5, 5)},
@@ -2338,6 +2330,17 @@ LevelFuncs.Engine.CustomInventory.DrawInventorySprites = function(selectedRing, 
 
     if selectedRing ~= PICKUP_DATA.RING.OPTIONS and selectedRing ~= PICKUP_DATA.RING.COMBINE and selectedRing ~= PICKUP_DATA.RING.AMMO then
         drawArrows(arrowsDown, alpha)
+    end
+
+end
+
+LevelFuncs.Engine.CustomInventory.DrawBackground = function(alpha)
+
+    if Settings.BACKGROUND.ENABLE then
+        local bgAlpha = math.min(alpha, Settings.BACKGROUND.ALPHA)
+        local bgColor = colorCombine(Settings.BACKGROUND.COLOR, bgAlpha)
+        local bgSprite = TEN.DisplaySprite(Settings.BACKGROUND.OBJECTID, Settings.BACKGROUND.SPRITEID, Settings.BACKGROUND.POSITION, Settings.BACKGROUND.ROTATION, Settings.BACKGROUND.SCALE, bgColor)
+        bgSprite:Draw(0, Settings.BACKGROUND.ALIGN_MODE, Settings.BACKGROUND.SCALE_MODE, Settings.BACKGROUND.BLEND_MODE)
     end
 
 end
