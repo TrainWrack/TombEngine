@@ -1420,7 +1420,7 @@ function CustomInventory.Run()
         TEN.View.SetPostProcessTint(COLOR_MAP.ITEM_COLOR_VISIBLE)
 
         local settings = TEN.Flow.GetSettings()
-        settings.Gameplay.inventoryEnabled = false
+        settings.Gameplay.enableInventory = false
         TEN.Flow.SetSettings(settings)
 
         inventoryStart = false
