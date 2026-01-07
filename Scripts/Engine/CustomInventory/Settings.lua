@@ -1,4 +1,3 @@
-
 Settings = {}
 
 Settings.SOUND_MAP =
@@ -16,10 +15,10 @@ Settings.SOUND_MAP =
 
 Settings.COLOR_MAP =
 {
-    NORMAL_FONT = Color(255, 255, 255, 255),
-    HEADER_FONT = Color(216, 117, 49, 255),
-    YELLOW_FONT = Color(240, 220, 32, 255),
-    BLACK = Color(0, 0 ,0 , 255),
+    NORMAL_FONT = Flow.GetSettings().UI.plainTextColor,
+    HEADER_FONT = Flow.GetSettings().UI.optionTextColor,
+    YELLOW_FONT = Flow.GetSettings().UI.headerTextColor,
+    BLACK = Flow.GetSettings().UI.shadowTextColor,
     BACKGROUND = Color(64, 64, 64, 128),
     INVENTORY_AMBIENT = Color(255, 255, 128),
     ITEM_COLOR = Color(64, 64, 64, 0),
