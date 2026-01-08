@@ -2,7 +2,7 @@
 
 local CustomInventory = {}
 
-local PICKUP_DATA = require("Engine.CustomInventory.InventoryConstants")
+local PICKUP_DATA = require("Engine.CustomInventory.PickupData")
 local Statistics = require("Engine.Statistics")
 local Settings = require("Engine.CustomInventory.Settings")
 local Interpolate = require("Engine.InterpolateModule")
@@ -10,16 +10,22 @@ local Menu = require("Engine.CustomMenu")
 
 local debug = false
 
---CONSTANTS
+--Pointers to tables
+local TYPE = PICKUP_DATA.TYPE
+local RING = PICKUP_DATA.RING
+local RING_CENTER = PICKUP_DATA.RING_CENTER
+local INVENTORY_MODE = PICKUP_DATA.INVENTORY_MODE
+local SOUND_MAP = Settings.SOUND_MAP
+local COLOR_MAP = Settings.COLOR_MAP
+local ANIMATION = Settings.ANIMATION
+
+--Constants
 local NO_VALUE = -1
-local ROTATION_SPEED = 4
 local CAMERA_START = Vec3(0,-2500, 200)
 local CAMERA_END = Vec3(0,-36,-1151)
 local TARGET_START = Vec3(0,0, 1000)
 local TARGET_END = Vec3(0,110,0)
-local INVENTORY_ANIM_TIME = 0.5
-local ITEM_ANIM_TIME = .125
-local ITEM_SPINBACK_ALPHA = math.min(1.0, 4 * (1/30) / ITEM_ANIM_TIME)
+local ITEM_SPINBACK_ALPHA = math.min(1.0, 4 * (1/30) / ANIMATION.ITEM_ANIM_TIME)
 local RING_RADIUS = (View.GetAspectRatio()> 1.7 ) and -512 or -450
 local ITEM_START = Vec3(0,200,512)
 local ITEM_END = Vec3(0,0,400)
@@ -33,15 +39,7 @@ local EXAMINE_TEXT_POS = Vec2(50, 80)
 local ALPHA_MAX = 255
 local ALPHA_MIN = 0
 
---Pointers to tables
-local TYPE = PICKUP_DATA.TYPE
-local RING = PICKUP_DATA.RING
-local RING_CENTER = PICKUP_DATA.RING_CENTER
-local INVENTORY_MODE = PICKUP_DATA.INVENTORY_MODE
-local SOUND_MAP = Settings.SOUND_MAP
-local COLOR_MAP = Settings.COLOR_MAP
-
---variables
+--Variables
 local useBinoculars = false
 
 local itemStoreRotations = false
@@ -83,7 +81,7 @@ local saveSelected = false
 
 LevelFuncs.Engine.CustomInventory = {}
 
---functions
+--Functions
 local colorCombine = function(color, transparency)
 
     return Color(color.r, color.g, color.b, transparency)
@@ -1238,9 +1236,7 @@ local ColorRing = function(ringName, color, omitSelectedItem, alpha)
         end
 
         local itemColor = currentDisplayItem:GetColor()
-
         local targetColor = interpolateColor(itemColor, color, alpha)
-
         currentDisplayItem:SetColor(colorCombine(targetColor, itemColor.a))
 
         ::continue::
@@ -1264,10 +1260,10 @@ end
 local RotateItem = function(itemName)
 
     local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(itemName)
-    local itemRotations  = currentDisplayItem:GetRotation()
+    local itemRotations = currentDisplayItem:GetRotation()
     local itemColor = currentDisplayItem:GetColor()
     local targetColor = interpolateColor(itemColor, COLOR_MAP.ITEM_COLOR_VISIBLE, ITEM_SPINBACK_ALPHA)
-    currentDisplayItem:SetRotation(Rotation(itemRotations.x, (itemRotations.y + ROTATION_SPEED) % 360, itemRotations.z))
+    currentDisplayItem:SetRotation(Rotation(itemRotations.x, (itemRotations.y + ANIMATION.ROTATION_SPEED) % 360, itemRotations.z))
     currentDisplayItem:SetColor(targetColor)
     
 end
@@ -1623,13 +1619,13 @@ local AnimateInventory = function(mode)
 
     if mode == INVENTORY_MODE.INVENTORY_OPENING then
 
-        if PerformBatchMotion("MenuFadeIn", menuFade, ITEM_ANIM_TIME, false, nil, nil, false) then
+        if PerformBatchMotion("MenuFadeIn", menuFade, ANIMATION.ITEM_ANIM_TIME, false, nil, nil, false) then
             return true
         end
         
     elseif mode == INVENTORY_MODE.RING_OPENING then
         
-        if PerformBatchMotion("RingOpening", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing) then
+        if PerformBatchMotion("RingOpening", ringAnimation, ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing) then
             --set alpha for all rings. This is required to make items in other items visible.
             FadeRings(true, true)
             LevelVars.Engine.CustomInventory.InventoryOpenFreeze = true
@@ -1641,7 +1637,7 @@ local AnimateInventory = function(mode)
         --Hide other rings to ensure the closing animation looks clean.
         FadeRings(false, true)
 
-        if PerformBatchMotion("RingClosing", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
+        if PerformBatchMotion("RingClosing", ringAnimation, ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
             return true
         end
 
@@ -1659,7 +1655,7 @@ local AnimateInventory = function(mode)
             { key = "ringColor", type = Interpolate.Type.COLOR, start = COLOR_MAP.ITEM_COLOR_DESELECTED, finish = COLOR_MAP.ITEM_COLOR_DESELECTED},
             }
 
-            if PerformBatchMotion("RingChange"..index, motionSet, INVENTORY_ANIM_TIME, true, index) then
+            if PerformBatchMotion("RingChange"..index, motionSet, ANIMATION.INVENTORY_ANIM_TIME, true, index) then
                 inventory.ringPosition[index] = newPosition
             else
                 allMotionComplete = false
@@ -1678,32 +1674,32 @@ local AnimateInventory = function(mode)
             { key = "ringColor", type = Interpolate.Type.COLOR, start = COLOR_MAP.ITEM_COLOR_DESELECTED, finish = COLOR_MAP.ITEM_COLOR_DESELECTED},
             }
 
-            if PerformBatchMotion("RingRotate", motionSet, ITEM_ANIM_TIME, true, selectedRing) then
+            if PerformBatchMotion("RingRotate", motionSet, ANIMATION.ITEM_ANIM_TIME, true, selectedRing) then
                 currentRingAngle = targetRingAngle
                 return true
             end
         
     elseif mode == INVENTORY_MODE.EXAMINE_OPEN or mode == INVENTORY_MODE.STATISTICS_OPEN or mode == INVENTORY_MODE.SAVE_SETUP or mode == INVENTORY_MODE.COMBINE_SETUP or mode == INVENTORY_MODE.ITEM_SELECT or mode == INVENTORY_MODE.COMBINE_SUCCESS then
 
-        if PerformBatchMotion("ExamineOpen", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem) then
+        if PerformBatchMotion("ExamineOpen", examineAnimation, ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing, selectedItem) then
             return true
         end
 
     elseif mode == INVENTORY_MODE.EXAMINE_CLOSE or mode == INVENTORY_MODE.STATISTICS_CLOSE or mode == INVENTORY_MODE.SAVE_CLOSE or mode == INVENTORY_MODE.ITEM_DESELECT then
 
-        if PerformBatchMotion("ExamineClose", examineAnimation, INVENTORY_ANIM_TIME, true, selectedRing, selectedItem, true) then
+        if PerformBatchMotion("ExamineClose", examineAnimation, ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing, selectedItem, true) then
             return true
         end
 
     elseif mode == INVENTORY_MODE.EXAMINE_RESET then
 
-        if PerformBatchMotion("ExamineReset", examineReset, ITEM_ANIM_TIME, true, selectedRing, selectedItem, true) then
+        if PerformBatchMotion("ExamineReset", examineReset, ANIMATION.ITEM_ANIM_TIME, true, selectedRing, selectedItem, true) then
             return true
         end
 
     elseif mode == INVENTORY_MODE.COMBINE_RING_OPENING or mode == INVENTORY_MODE.AMMO_SELECT_OPEN then
 
-        if PerformBatchMotion("CombineRingOpening", combineRingAnimation, INVENTORY_ANIM_TIME, true, selectedRing) then
+        if PerformBatchMotion("CombineRingOpening", combineRingAnimation, ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing) then
             return true
         end
 
@@ -1713,7 +1709,7 @@ local AnimateInventory = function(mode)
 
         for index in pairs(inventory.ring) do
 
-            if not PerformBatchMotion("combineCloseSuccess"..index, combineClose, INVENTORY_ANIM_TIME, true, index) then
+            if not PerformBatchMotion("combineCloseSuccess"..index, combineClose, ANIMATION.INVENTORY_ANIM_TIME, true, index) then
                 allMotionComplete = false 
             end
 
@@ -1729,7 +1725,7 @@ local AnimateInventory = function(mode)
 
         for index in pairs(inventory.ring) do
 
-            if not PerformBatchMotion("combineCloseSuccess"..index, combineClose, INVENTORY_ANIM_TIME, true, index, nil, true) then
+            if not PerformBatchMotion("combineCloseSuccess"..index, combineClose, ANIMATION.INVENTORY_ANIM_TIME, true, index, nil, true) then
                 allMotionComplete = false 
             end
 
@@ -1742,14 +1738,14 @@ local AnimateInventory = function(mode)
     elseif mode == INVENTORY_MODE.ITEM_USE then
 
         if combineItem1 then
-            if not PerformBatchMotion("ItemDeselect", useAnimation, INVENTORY_ANIM_TIME, false, selectedRing, selectedItem, true) then
+            if not PerformBatchMotion("ItemDeselect", useAnimation, ANIMATION.INVENTORY_ANIM_TIME, false, selectedRing, selectedItem, true) then
                 return false
             end
         end
 
         FadeRings(false, true)
 
-        if PerformBatchMotion("RingClosing", ringAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
+        if PerformBatchMotion("RingClosing", ringAnimation, ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
 
             if combineItem1 then
                 ClearBatchMotionProgress("ItemDeselect", useAnimation)
@@ -1762,7 +1758,7 @@ local AnimateInventory = function(mode)
 
     elseif mode == INVENTORY_MODE.AMMO_SELECT_CLOSE then
 
-        if PerformBatchMotion("AmmoRingClosing", combineRingAnimation, INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
+        if PerformBatchMotion("AmmoRingClosing", combineRingAnimation, ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
             return true
         end
     elseif mode == INVENTORY_MODE.SEPARATE then
@@ -1771,7 +1767,7 @@ local AnimateInventory = function(mode)
 
         for index in pairs(inventory.ring) do
 
-            if not PerformBatchMotion("combineCloseSuccess"..index, combineClose, INVENTORY_ANIM_TIME, true, index) then
+            if not PerformBatchMotion("combineCloseSuccess"..index, combineClose, ANIMATION.INVENTORY_ANIM_TIME, true, index) then
                 allMotionComplete = false 
             end
 
@@ -1787,7 +1783,7 @@ local AnimateInventory = function(mode)
 
         for index in pairs(inventory.ring) do
 
-            if not PerformBatchMotion("combineCloseSuccess"..index, combineClose, INVENTORY_ANIM_TIME, true, index, nil, true) then
+            if not PerformBatchMotion("combineCloseSuccess"..index, combineClose, ANIMATION.INVENTORY_ANIM_TIME, true, index, nil, true) then
                 allMotionComplete = false 
             end
 
@@ -1798,7 +1794,7 @@ local AnimateInventory = function(mode)
         end
     elseif mode == INVENTORY_MODE.INVENTORY_EXIT then
 
-        if PerformBatchMotion("InventoryExit", menuFade, ITEM_ANIM_TIME, false, nil, nil, true) then
+        if PerformBatchMotion("InventoryExit", menuFade, ANIMATION.ITEM_ANIM_TIME, false, nil, nil, true) then
             return true
         end
 

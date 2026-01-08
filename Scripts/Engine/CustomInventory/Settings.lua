@@ -16,8 +16,8 @@ Settings.SOUND_MAP =
 Settings.COLOR_MAP =
 {
     NORMAL_FONT = Flow.GetSettings().UI.plainTextColor,
-    HEADER_FONT = Flow.GetSettings().UI.optionTextColor,
-    YELLOW_FONT = Flow.GetSettings().UI.headerTextColor,
+    HEADER_FONT = Flow.GetSettings().UI.headerTextColor,
+    YELLOW_FONT = Flow.GetSettings().UI.optionTextColor,
     BLACK = Flow.GetSettings().UI.shadowTextColor,
     BACKGROUND = Color(64, 64, 64, 128),
     INVENTORY_AMBIENT = Color(255, 255, 128),

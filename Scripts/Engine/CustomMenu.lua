@@ -17,8 +17,8 @@ local SOUND_MAP =
 LevelFuncs.Engine.Menu = {}
 LevelVars.Engine.Menus = {}
 
-local NORMAL_FONT_COLOR = Color(255,255,255,255)
-local HEADER_FONT_COLOR = Color(216,117,49,255)
+local NORMAL_FONT_COLOR = Flow.GetSettings().UI.plainTextColor
+local HEADER_FONT_COLOR = Flow.GetSettings().UI.headerTextColor
 local HEADER_FONT_SCALE = 1.6
 local NORMAL_FONT_SCALE = 1
 local LINE_SPACING = 6

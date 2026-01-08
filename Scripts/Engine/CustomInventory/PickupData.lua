@@ -290,7 +290,7 @@ PICKUP_DATA.constants = {
 	{ TEN.Objects.ObjID.EXAMINE7_COMBO1, 14, 0.5, Rotation(0, 0, 0), ItemAction.COMBINE, STRING_LOAD_GAME, NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.PUZZLE, true, PICKUP_DATA.RING.PUZZLE},
 	{ TEN.Objects.ObjID.EXAMINE7_COMBO2, 14, 0.5, Rotation(0, 0, 0), ItemAction.COMBINE, STRING_LOAD_GAME, NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.PUZZLE, true, PICKUP_DATA.RING.PUZZLE},
 	{ TEN.Objects.ObjID.EXAMINE8_COMBO1, 14, 0.5, Rotation(0, 0, 0), ItemAction.COMBINE, STRING_LOAD_GAME, NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.PUZZLE, true, PICKUP_DATA.RING.PUZZLE},
-	{ TEN.Objects.ObjID.EXAMINE8_COMBO2, 14, 0.5, Rotation(0, 0, 0), ItemAction.COMBINE, STRING_LOAD_GAME, NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.PUZZLE, true, PICKUP_DATA.RING.PUZZLE},
+	{ TEN.Objects.ObjID.EXAMINE8_COMBO2, 14, 0.5, Rotation(0, 0, 0), ItemAction.COMBINE, STRING_LOAD_GAME, NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.PUZZLE, true, PICKUP_DATA.RING.PUZZLE}
 }
 
 PICKUP_DATA.combineTable =
@@ -354,7 +354,7 @@ PICKUP_DATA.combineTable =
 	{ TEN.Objects.ObjID.EXAMINE6_COMBO1, TEN.Objects.ObjID.EXAMINE6_COMBO2, TEN.Objects.ObjID.EXAMINE6 },
 	{ TEN.Objects.ObjID.EXAMINE7_COMBO1, TEN.Objects.ObjID.EXAMINE7_COMBO2, TEN.Objects.ObjID.EXAMINE7 },
 	{ TEN.Objects.ObjID.EXAMINE8_COMBO1, TEN.Objects.ObjID.EXAMINE8_COMBO2, TEN.Objects.ObjID.EXAMINE8 },
-	{ TEN.Objects.ObjID.CLOCKWORK_BEETLE_COMBO1, TEN.Objects.ObjID.CLOCKWORK_BEETLE_COMBO2, TEN.Objects.ObjID.CLOCKWORK_BEETLE },
+	{ TEN.Objects.ObjID.CLOCKWORK_BEETLE_COMBO1, TEN.Objects.ObjID.CLOCKWORK_BEETLE_COMBO2, TEN.Objects.ObjID.CLOCKWORK_BEETLE }
 }
 
 --Structure for weapon data. TEN Weapon type constant, underwater equip allowed, equip while crawling allowed
@@ -375,7 +375,7 @@ PICKUP_DATA.WEAPON_LASERSIGHT_DATA = {
     [TEN.Objects.ObjID.REVOLVER_ITEM] = {MESHBITS = 0x0B, NAME = "revolver_lasersight", FLAGS = ItemAction.EQUIP | ItemAction.SEPARATE | ItemAction.CHOOSE_AMMO_REVOLVER},                            
     [TEN.Objects.ObjID.CROSSBOW_ITEM] = {MESHBITS = 0x03, NAME = "crossbow_lasersight", FLAGS = ItemAction.EQUIP | ItemAction.SEPARATE | ItemAction.CHOOSE_AMMO_CROSSBOW},                          
     [TEN.Objects.ObjID.HK_ITEM]       = {MESHBITS = 0, NAME = "hk_lasersight", FLAGS = ItemAction.EQUIP | ItemAction.SEPARATE | ItemAction.CHOOSE_AMMO_HK},
-    }
+}
 
 PICKUP_DATA.WEAPON_AMMO_LOOKUP = {
     [TEN.Objects.ObjID.PISTOLS_ITEM] = {TEN.Objects.ObjID.PISTOLS_AMMO_ITEM},
@@ -393,7 +393,7 @@ PICKUP_DATA.WEAPON_MODE_LOOKUP = {
     {weapon = TEN.Objects.ObjID.HK_ITEM, string = "hk_rapid_mode"},
     {weapon = TEN.Objects.ObjID.HK_ITEM, string = "hk_burst_mode"},
     {weapon = TEN.Objects.ObjID.HK_ITEM, string = "hk_sniper_mode"},
-    }
+}
 
 PICKUP_DATA.AMMO_SET = {
     [TEN.Objects.ObjID.PISTOLS_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.PISTOLS, weapon = TEN.Objects.ObjID.PISTOLS_ITEM}, 
