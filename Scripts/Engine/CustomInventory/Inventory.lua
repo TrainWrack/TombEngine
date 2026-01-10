@@ -1,16 +1,16 @@
 --RING INVENTORY BY TRAINWRECK
 
 local CustomInventory = {}
+local debug = false
 
-local PICKUP_DATA = require("Engine.CustomInventory.PickupData")
+--External Modules
 local Statistics = require("Engine.Statistics")
 local Settings = require("Engine.CustomInventory.Settings")
 local Interpolate = require("Engine.InterpolateModule")
 local Menu = require("Engine.CustomMenu")
 
-local debug = false
-
 --Pointers to tables
+local PICKUP_DATA = require("Engine.CustomInventory.PickupData")
 local TYPE = PICKUP_DATA.TYPE
 local RING = PICKUP_DATA.RING
 local RING_CENTER = PICKUP_DATA.RING_CENTER
@@ -75,6 +75,7 @@ local inventorySubHeader = {"actions_inventory", Vec2(50, 40.3), 0.9, COLOR_MAP.
 local menuAlpha = 0
 local saveList = false
 local saveSelected = false
+local saveSlotSelected = 1
 
 LevelFuncs.Engine.CustomInventory = {}
 
@@ -165,8 +166,8 @@ local function InterpolateColor(currentColor, targetColor, alpha)
 end
 
 local function GuiIsPulsed(actionID)
-    local DELAY = 120
-    local INITIAL_DELAY = 30
+    local DELAY = 0.25
+    local INITIAL_DELAY = 0.5
     
     if (TEN.Input.GetActionTimeActive(actionID) >= timeInMenu) then
         return false
@@ -425,8 +426,9 @@ end
 -- ============================================================================
 
 local function DoSave()
-    local slot = Menu.Get("SaveMenu2"):getCurrentItemIndex() - 1
-    Flow.SaveGame(slot)
+    local slot = Menu.Get("SaveMenu2"):getCurrentItemIndex()
+    saveSlotSelected = slot
+    Flow.SaveGame(slot - 1)
     saveSelected = true
     for index = 1, 4 do
         Interpolate.Clear("SaveMenu"..index)
@@ -435,10 +437,12 @@ local function DoSave()
 end
 
 local function DoLoad()
-    local slot = Menu.Get("SaveMenu2"):getCurrentItemIndex() - 1
-    
-    if Flow.DoesSaveGameExist(slot) then
-        Flow.LoadGame(slot)
+
+    local slot = Menu.Get("SaveMenu2"):getCurrentItemIndex()
+
+    if Flow.DoesSaveGameExist(slot - 1) then
+        saveSlotSelected = slot
+        Flow.LoadGame(slot - 1)
         saveSelected = true
         for index = 1, 4 do
             Interpolate.Clear("SaveMenu"..index)
@@ -534,6 +538,7 @@ local function CreateSaveMenu(save)
         saveMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, 1.5, nil, true)
         saveMenu:SetItemsTranslate(translate)
         saveMenu:SetSoundEffects(soundMap[index].select, soundMap[index].choose)
+        saveMenu:setCurrentItem(saveSlotSelected)
     end
 end
 
@@ -1108,30 +1113,6 @@ local function DrawBackground(alpha)
     end
 end
 
-local function ExamineItem(item)
-    examineScaler = math.max(EXAMINE_MIN_SCALE, math.min(EXAMINE_MAX_SCALE, examineScaler))
-    
-    local objectName = Util.GetObjectIDString(item)
-    local stringKey = objectName:lower().."_text"
-    local localizedString = Flow.IsStringPresent(stringKey) and Flow.GetString(stringKey) or nil
-    
-    local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(item))
-    displayItem:SetRotation(examineRotation)
-    displayItem:SetScale(Vec3(examineScaler))
-    
-    if localizedString and examineShowString then
-        local entryText = TEN.Strings.DisplayString(
-            localizedString,
-            PercentPos(EXAMINE_TEXT_POS.x, EXAMINE_TEXT_POS.y),
-            1,
-            COLOR_MAP.NORMAL_FONT,
-            true,
-            {Strings.DisplayStringOption.VERTICAL_CENTER, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
-        )
-        Strings.ShowString(entryText, 1 / 30)
-    end
-end
-
 -- ============================================================================
 -- CONSTRUCTION AND SETUP
 -- ============================================================================
@@ -1596,6 +1577,30 @@ local function ExitInventory()
     LevelVars.Engine.CustomInventory.InventoryClosed = true
 end
 
+local function ExamineItem(item)
+    examineScaler = math.max(EXAMINE_MIN_SCALE, math.min(EXAMINE_MAX_SCALE, examineScaler))
+    
+    local objectName = Util.GetObjectIDString(item)
+    local stringKey = objectName:lower().."_text"
+    local localizedString = Flow.IsStringPresent(stringKey) and Flow.GetString(stringKey) or nil
+    
+    local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(item))
+    displayItem:SetRotation(examineRotation)
+    displayItem:SetScale(Vec3(examineScaler))
+    
+    if localizedString and examineShowString then
+        local entryText = TEN.Strings.DisplayString(
+            localizedString,
+            PercentPos(EXAMINE_TEXT_POS.x, EXAMINE_TEXT_POS.y),
+            1,
+            COLOR_MAP.NORMAL_FONT,
+            true,
+            {Strings.DisplayStringOption.VERTICAL_CENTER, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
+        )
+        Strings.ShowString(entryText, 1 / 30)
+    end
+end
+
 local function UseItem(item)
     local levelStatistics = Flow.GetStatistics()
     local gameStatistics = Flow.GetStatistics(true)
@@ -2044,19 +2049,8 @@ LevelFuncs.Engine.CustomInventory.DoLoad = DoLoad
 LevelFuncs.Engine.CustomInventory.ChangeStatistics = ChangeStatistics
 LevelFuncs.Engine.CustomInventory.ChangeWeaponMode = ChangeWeaponMode
 LevelFuncs.Engine.CustomInventory.DoItemAction = DoItemAction
-LevelFuncs.Engine.CustomInventory.ExitInventory = ExitInventory
 LevelFuncs.Engine.CustomInventory.UpdateInventory = UpdateInventory
 LevelFuncs.Engine.CustomInventory.RunInventory = RunInventory
-LevelFuncs.Engine.CustomInventory.ConstructObjectList = ConstructObjectList
-LevelFuncs.Engine.CustomInventory.GetCombineItemsCount = GetCombineItemsCount
-LevelFuncs.Engine.CustomInventory.ReadGameflow = ReadGameflow
-LevelFuncs.Engine.CustomInventory.DrawItemLabel = DrawItemLabel
-LevelFuncs.Engine.CustomInventory.DrawInventoryHeader = DrawInventoryHeader
-LevelFuncs.Engine.CustomInventory.DrawInventory = DrawInventory
-LevelFuncs.Engine.CustomInventory.DrawInventorySprites = DrawInventorySprites
-LevelFuncs.Engine.CustomInventory.DrawBackground = DrawBackground
-LevelFuncs.Engine.CustomInventory.UseItem = UseItem
-LevelFuncs.Engine.CustomInventory.ExamineItem = ExamineItem
 
 -- ============================================================================
 -- CALLBACKS

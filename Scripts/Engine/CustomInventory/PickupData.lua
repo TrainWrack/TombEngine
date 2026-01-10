@@ -47,11 +47,12 @@ PICKUP_DATA.RING_CENTER = {
 PICKUP_DATA.HEALTH_MAX = 1000
 
 PICKUP_DATA.constants = {
+	{ TEN.Objects.ObjID.STOPWATCH_ITEM, 2, 0.8, Rotation(0, 180, 0), ItemAction.STATISTICS, "statistics", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.TOOL, false, PICKUP_DATA.RING.MAIN},
 	-- Weapons
-	{ TEN.Objects.ObjID.PISTOLS_ITEM, 6, 0.5, Rotation(244.0, 90.0, 276.0), ItemAction.EQUIP | ItemAction.CHOOSE_AMMO_PISTOLS, "pistols", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, false, PICKUP_DATA.RING.MAIN },
-	{ TEN.Objects.ObjID.UZI_ITEM, -4, 0.5, Rotation(135.0, -90.0, 90.0), ItemAction.EQUIP | ItemAction.CHOOSE_AMMO_UZI, "uzis" , NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, false, PICKUP_DATA.RING.MAIN },
+	{ TEN.Objects.ObjID.PISTOLS_ITEM, 6, 0.5, Rotation(244.0, 90.0, 276.0), ItemAction.EQUIP, "pistols", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, false, PICKUP_DATA.RING.MAIN },
+	{ TEN.Objects.ObjID.UZI_ITEM, -4, 0.5, Rotation(135.0, -90.0, 90.0), ItemAction.EQUIP, "uzis" , NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, false, PICKUP_DATA.RING.MAIN },
 	{ TEN.Objects.ObjID.SHOTGUN_ITEM, -6, 0.8, Rotation(270.0, -20.0, 45), ItemAction.EQUIP | ItemAction.CHOOSE_AMMO_SHOTGUN, "shotgun", 0x01, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, false, PICKUP_DATA.RING.MAIN },
-	{ TEN.Objects.ObjID.REVOLVER_ITEM, 0, 0.5, Rotation(60.0, -90.0, 85.0), ItemAction.EQUIP | ItemAction.COMBINE | ItemAction.CHOOSE_AMMO_REVOLVER, "revolver" , 0x01, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, true, PICKUP_DATA.RING.MAIN },
+	{ TEN.Objects.ObjID.REVOLVER_ITEM, 0, 0.5, Rotation(60.0, -90.0, 85.0), ItemAction.EQUIP | ItemAction.COMBINE, "revolver" , 0x01, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, true, PICKUP_DATA.RING.MAIN },
 	--{ TEN.Objects.ObjID.REVOLVER_ITEM, 0, 0.5, Rotation(60.0, 90.0, 85.0), ItemAction.EQUIP | ItemAction.SEPARATE | ItemAction.CHOOSE_AMMO_REVOLVER, "revolver_lasersight", 0x0B, INV_ROT_Y },
 	{ TEN.Objects.ObjID.CROSSBOW_ITEM, 0, 0.5, Rotation(33.0, -90.0, 0), ItemAction.EQUIP | ItemAction.COMBINE | ItemAction.CHOOSE_AMMO_CROSSBOW, "crossbow", 0x01, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, true, PICKUP_DATA.RING.MAIN},
 	--{ TEN.Objects.ObjID.CROSSBOW_ITEM, 0, 0.5, Rotation(33.0, -90.0, 0), ItemAction.EQUIP | ItemAction.SEPARATE | ItemAction.CHOOSE_AMMO_CROSSBOW, "crossbow_lasersight", 0x03, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON},
@@ -61,8 +62,8 @@ PICKUP_DATA.constants = {
 	--{ TEN.Objects.ObjID.HK_AMMO_ITEM, 3, 0.5, Rotation(0, 90.0, 0), ItemAction.USE, "hk_burst_mode", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON},
 	--{ TEN.Objects.ObjID.HK_AMMO_ITEM, 3, 0.5, Rotation(0, 90.0, 0), ItemAction.USE, "hk_sniper_mode", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON},
 	{ TEN.Objects.ObjID.GRENADE_GUN_ITEM, 0, 0.5, Rotation(0, 90.0, 65), ItemAction.EQUIP | ItemAction.CHOOSE_AMMO_GRENADEGUN, "grenade_launcher", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, false, PICKUP_DATA.RING.MAIN},
-	{ TEN.Objects.ObjID.HARPOON_ITEM, 0, 0.5, Rotation(-65.0, 0, -20.0), ItemAction.EQUIP | ItemAction.CHOOSE_AMMO_HARPOON, "harpoon_gun", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, false, PICKUP_DATA.RING.MAIN},
-	{ TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM, 0, 0.5, Rotation(80.0, 180.0, 0), ItemAction.EQUIP | ItemAction.CHOOSE_AMMO_ROCKET, "rocket_launcher", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, false, PICKUP_DATA.RING.MAIN},
+	{ TEN.Objects.ObjID.HARPOON_ITEM, 0, 0.5, Rotation(-65.0, 0, -20.0), ItemAction.EQUIP, "harpoon_gun", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, false, PICKUP_DATA.RING.MAIN},
+	{ TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM, 0, 0.5, Rotation(80.0, 180.0, 0), ItemAction.EQUIP, "rocket_launcher", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, false, PICKUP_DATA.RING.MAIN},
 
 	{ TEN.Objects.ObjID.PISTOLS_AMMO_ITEM, 4, 0.5, Rotation(0, 0, 0), ItemAction.USE, "pistol_ammo", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.AMMO, false, PICKUP_DATA.RING.MAIN},
 	{ TEN.Objects.ObjID.UZI_AMMO_ITEM, 5, 0.5, Rotation(29.5, 0, 0), ItemAction.USE, "uzi_ammo", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.AMMO, false, PICKUP_DATA.RING.MAIN},
@@ -86,7 +87,6 @@ PICKUP_DATA.constants = {
 	{ TEN.Objects.ObjID.SMALLMEDI_ITEM, 0, 0.7, Rotation(112.0, 180.0, 0), ItemAction.USE, "small_medipack", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.MEDIPACK, false, PICKUP_DATA.RING.MAIN},
 	{ TEN.Objects.ObjID.BINOCULARS_ITEM, -1, 0.5, Rotation(10.0, 180.0, 0), ItemAction.USE, "binoculars", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.TOOL, false, PICKUP_DATA.RING.MAIN},
 	{ TEN.Objects.ObjID.FLARE_INV_ITEM, 52, 0.8, Rotation(0, 0, 0), ItemAction.USE, "flares", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.TOOL, false, PICKUP_DATA.RING.MAIN},
-	{ TEN.Objects.ObjID.STOPWATCH_ITEM, 2, 0.8, Rotation(0, 180, 0), ItemAction.STATISTICS, "statistics", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.TOOL, false, PICKUP_DATA.RING.PUZZLE},
 	{ TEN.Objects.ObjID.PC_LOAD_INV_ITEM, 52, 0.3, Rotation(0, 180.0, 0), ItemAction.LOAD, "load_game", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.SAVE, false, PICKUP_DATA.RING.OPTIONS},
 	{ TEN.Objects.ObjID.PC_SAVE_INV_ITEM, 52, 0.3, Rotation(0, 180.0, 0), ItemAction.SAVE, "save_game", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.SAVE, false, PICKUP_DATA.RING.OPTIONS},
 	{ TEN.Objects.ObjID.BURNING_TORCH_ITEM, 14, 0.5, Rotation(90.0, 0, 0), ItemAction.USE, "torch", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.TOOL, false, PICKUP_DATA.RING.PUZZLE},
