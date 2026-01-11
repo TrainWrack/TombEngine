@@ -3,6 +3,7 @@
 
 #include "Game/collision/collide_item.h"
 #include "Game/control/control.h"
+#include "Game/Hud/Hud.h"
 #include "Game/items.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_helpers.h"
@@ -12,6 +13,7 @@
 #include "Specific/Input/Input.h"
 #include "Specific/level.h"
 
+using namespace TEN::Hud;
 using namespace TEN::Input;
 
 enum PulleyFlags
@@ -88,6 +90,8 @@ namespace TEN::Entities::Switches
 		auto* laraInfo = GetLaraInfo(laraItem);
 		auto* switchItem = &g_Level.Items[itemNumber];
 
+		g_Hud.InteractionHighlighter.Test(*laraItem, *switchItem);
+
 		bool isUnderwater = (laraInfo->Control.WaterStatus == WaterStatus::Underwater);
 
 		const auto& bounds = isUnderwater ? UnderwaterPulleyBounds : PulleyBounds;
@@ -111,13 +115,7 @@ namespace TEN::Entities::Switches
 				{
 					if (switchItem->ItemFlags[PulleyFlags::NotHidden])
 					{
-						if (OldPickupPos.x != laraItem->Pose.Position.x || OldPickupPos.y != laraItem->Pose.Position.y || OldPickupPos.z != laraItem->Pose.Position.z)
-						{
-							OldPickupPos.x = laraItem->Pose.Position.x;
-							OldPickupPos.y = laraItem->Pose.Position.y;
-							OldPickupPos.z = laraItem->Pose.Position.z;
-							SayNo();
-						}
+						SayNo(laraItem->Pose.Position);
 					}
 					else if (MoveLaraPosition(position, switchItem, laraItem))
 					{
@@ -125,7 +123,8 @@ namespace TEN::Entities::Switches
 						laraItem->Animation.AnimNumber = isUnderwater ? LA_UNDERWATER_PULLEY_GRAB : LA_PULLEY_GRAB;
 						laraItem->Animation.ActiveState = LS_PULLEY;
 						laraItem->Animation.TargetState = LS_PULLEY;
-						laraItem->Animation.FrameNumber = GetAnimData(laraItem).frameBase;
+						laraItem->Animation.Velocity = Vector3::Zero;
+						laraItem->Animation.FrameNumber = 0;
 						laraInfo->Control.IsMoving = false;
 						laraInfo->Control.HandStatus = HandStatus::Busy;
 						laraInfo->Context.InteractedItem = itemNumber;
@@ -166,7 +165,7 @@ namespace TEN::Entities::Switches
 
 		bool isPulling = (LaraItem->Animation.AnimNumber == LA_PULLEY_PULL || LaraItem->Animation.AnimNumber == LA_UNDERWATER_PULLEY_PULL);
 		bool isReleasing = (LaraItem->Animation.AnimNumber == LA_PULLEY_RELEASE || LaraItem->Animation.AnimNumber == LA_UNDERWATER_PULLEY_UNGRAB);
-		bool isBaseFrame = (LaraItem->Animation.FrameNumber == GetAnimData(*LaraItem).frameBase);
+		bool isBaseFrame = (LaraItem->Animation.FrameNumber == 0);
 
 		switch (switchItem->Animation.ActiveState)
 		{

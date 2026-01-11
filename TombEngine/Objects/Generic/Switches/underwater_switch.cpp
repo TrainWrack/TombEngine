@@ -1,9 +1,10 @@
 #include "framework.h"
 #include "Objects/Generic/Switches/underwater_switch.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/camera.h"
 #include "Game/collision/collide_item.h"
+#include "Game/Hud/Hud.h"
 #include "Game/items.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_helpers.h"
@@ -11,18 +12,19 @@
 #include "Specific/Input/Input.h"
 #include "Specific/level.h"
 
+using namespace TEN::Animation;
+using namespace TEN::Hud;
 using namespace TEN::Input;
 
 namespace TEN::Entities::Switches
-{ 
-	const auto GroundSwitchPos = Vector3i(0, 0, 128);
-	const auto UnderwaterSwitchPos = Vector3i(0, -560, 108);
+{
+	const auto UnderwaterSwitchPos = Vector3i(0, 0, 108);
 	const ObjectCollisionBounds UnderwaterSwitchBounds =
 	{
 		GameBoundingBox(
 			-BLOCK(3.0f / 8), BLOCK(3.0f / 8),
-			-BLOCK(1.0f), 0,
-			-BLOCK(1.0f / 4), BLOCK(3 / 4.0f)
+			-BLOCK(3.0f / 8), BLOCK(3.0f / 8),
+			0, BLOCK(3 / 4.0f)
 		),
 		std::pair(
 			EulerAngles(ANGLE(-80.0f), ANGLE(-80.0f), ANGLE(-80.0f)),
@@ -59,6 +61,7 @@ namespace TEN::Entities::Switches
 
 	
 	};
+
 	const auto CeilingSwitchPos = Vector3i(0, BLOCK(1 / 32), 0);
 	const ObjectCollisionBounds CeilingSwitchBounds1 =
 	{
@@ -84,17 +87,16 @@ namespace TEN::Entities::Switches
 			EulerAngles(ANGLE(-80.0f), ANGLE(-80.0f), ANGLE(-80.0f)),
 			EulerAngles(ANGLE(80.0f), ANGLE(80.0f), ANGLE(80.0f))
 		)
-
-
 	};
+
 	void CollideUnderwaterWallSwitch(short itemNumber, ItemInfo* laraItem, CollisionInfo* coll)
 	{
 		auto* player = GetLaraInfo(laraItem);
 		auto* switchItem = &g_Level.Items[itemNumber];
 
-		bool isUnderwater = (player->Control.WaterStatus == WaterStatus::Underwater);
+		g_Hud.InteractionHighlighter.Test(*laraItem, *switchItem, InteractionMode::Activation);
 
-		const auto& position = isUnderwater ? UnderwaterSwitchPos : GroundSwitchPos;
+		bool isUnderwater = (player->Control.WaterStatus == WaterStatus::Underwater);
 
 		bool isActionActive = player->Control.IsMoving && player->Context.InteractedItem == itemNumber;
 		bool isActionReady = IsHeld(In::Action) && !IsHeld(In::Jump);
@@ -105,9 +107,19 @@ namespace TEN::Entities::Switches
 
 		if (isActionActive || (isActionReady && isPlayerAvailable && isPlayerIdle))
 		{
-			if (TestLaraPosition(UnderwaterSwitchBounds, switchItem, laraItem))
+			// HACK: If switch is placed in the dry room, temporarily move switch up to account for different Lara baseline height.
+			if (!TestEnvironment(RoomEnvFlags::ENV_FLAG_WATER, switchItem))
+				switchItem->Pose.Position.y += CLICK(2);
+
+			// Zero out vertical switch bounds for land mode to prevent endless attempts to align to misplaced switch.
+			auto landSwitchBounds = UnderwaterSwitchBounds;
+			landSwitchBounds.BoundingBox.Y1 = landSwitchBounds.BoundingBox.Y2 = 0;
+
+			auto switchBounds = isUnderwater ? UnderwaterSwitchBounds : landSwitchBounds;
+
+			if (TestLaraPosition(switchBounds, switchItem, laraItem))
 			{
-				if (MoveLaraPosition(position, switchItem, laraItem))
+				if (MoveLaraPosition(UnderwaterSwitchPos, switchItem, laraItem))
 				{	
 					if (switchItem->Animation.ActiveState == SWITCH_OFF)
 					{
@@ -121,7 +133,7 @@ namespace TEN::Entities::Switches
 					}
 
 					ResetPlayerFlex(laraItem);
-					laraItem->Animation.FrameNumber = GetAnimData(laraItem).frameBase;
+					laraItem->Animation.FrameNumber = 0;
 					laraItem->Animation.Velocity.y = 0;
 					laraItem->Animation.TargetState = isUnderwater ? LS_UNDERWATER_IDLE : LS_IDLE;
 					player->Control.IsMoving = false;
@@ -140,7 +152,9 @@ namespace TEN::Entities::Switches
 				player->Control.HandStatus = HandStatus::Free;
 			}
 
-			return;	
+			// HACK: Revert switch position back to original, if needed.
+			if (!TestEnvironment(RoomEnvFlags::ENV_FLAG_WATER, switchItem))
+				switchItem->Pose.Position.y -= CLICK(2);
 		}
 	}
 
@@ -150,10 +164,12 @@ namespace TEN::Entities::Switches
 		auto* switchItem = &g_Level.Items[itemNumber];
 		bool doInteraction = false;
 
+		g_Hud.InteractionHighlighter.Test(*laraItem, *switchItem, InteractionMode::Activation);
+
 		bool isUnderwater = (lara->Control.WaterStatus == WaterStatus::Underwater);
+
 		if (isUnderwater)
 		{
-
 			if ((IsHeld(In::Action) &&
 				laraItem->Animation.ActiveState == LS_UNDERWATER_IDLE &&
 				laraItem->Animation.AnimNumber == LA_UNDERWATER_IDLE &&
@@ -205,7 +221,6 @@ namespace TEN::Entities::Switches
 		}
 		else
 		{
-
 			if ((IsHeld(In::Action) &&
 				laraItem->Animation.ActiveState == LS_JUMP_UP &&
 				laraItem->Animation.IsAirborne &&
@@ -241,7 +256,7 @@ namespace TEN::Entities::Switches
 					laraItem->Animation.Velocity.y = 0;
 					laraItem->Animation.IsAirborne = false;
 					laraItem->Animation.AnimNumber = LA_CEILING_LEVER_SWITCH;
-					laraItem->Animation.FrameNumber = GetAnimData(laraItem).frameBase;
+					laraItem->Animation.FrameNumber = 0;
 					laraItem->Animation.ActiveState = LS_FREEFALL_BIS;
 					lara->Control.HandStatus = HandStatus::Busy;
 					AddActiveItem(itemNumber);

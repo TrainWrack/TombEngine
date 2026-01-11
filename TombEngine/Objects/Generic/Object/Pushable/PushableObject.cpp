@@ -1,13 +1,14 @@
 #include "framework.h"
 #include "Objects/Generic/Object/Pushable/PushableObject.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/collision/collide_item.h"
 #include "Game/collision/collide_room.h"
 #include "Game/collision/Point.h"
 #include "Game/collision/floordata.h"
 #include "Game/control/box.h"
 #include "Game/control/flipeffect.h"
+#include "Game/Hud/Hud.h"
 #include "Game/items.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_helpers.h"
@@ -22,8 +23,10 @@
 #include "Specific/Input/Input.h"
 #include "Specific/level.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Collision::Floordata;
 using namespace TEN::Collision::Point;
+using namespace TEN::Hud;
 using namespace TEN::Input;
 
 namespace TEN::Entities::Generic
@@ -53,6 +56,36 @@ namespace TEN::Entities::Generic
 	PushableInfo& GetPushableInfo(const ItemInfo& item)
 	{
 		return (PushableInfo&)item.Data;
+	}
+
+	void UpdatePushableFromOCB(ItemInfo& pushableItem)
+	{
+		auto& pushable = GetPushableInfo(pushableItem);
+
+		bool wasBuoyant = pushable.IsBuoyant;
+
+		// Read OCB flags.
+		int ocb = pushableItem.TriggerFlags;
+
+		pushable.CanFall		= (ocb & (1 << 0)) != 0;			// Bit 0.
+		pushable.DoCenterAlign	= (ocb & (1 << 1)) == 0;			// Bit 1.
+		pushable.IsBuoyant		= (ocb & (1 << 2)) != 0;			// Bit 2.
+		pushable.AnimSetID		= ((ocb & (1 << 3)) != 0) ? 1 : 0;	// Bit 3.
+
+		// Force state transition if buoyancy changed.
+		if (wasBuoyant != pushable.IsBuoyant)
+		{
+			if (pushable.BehaviorState == PushableBehaviorState::WaterSurfaceIdle && !pushable.IsBuoyant)
+			{
+				pushable.BehaviorState = PushableBehaviorState::Sink;
+			}
+			else if (pushable.BehaviorState == PushableBehaviorState::UnderwaterIdle && pushable.IsBuoyant)
+			{
+				pushable.BehaviorState = PushableBehaviorState::Float;
+			}
+		}
+
+		pushable.PreviousTriggerFlags = pushableItem.TriggerFlags;
 	}
 
 	void InitializePushableBlock(int itemNumber)
@@ -91,12 +124,7 @@ namespace TEN::Entities::Generic
 
 		SetPushableStopperFlag(true, pushableItem.Pose.Position, pushableItem.RoomNumber);
 
-		// Read OCB flags.
-		int ocb = pushableItem.TriggerFlags;
-		pushable.CanFall	   = (ocb & (1 << 0)) != 0;			  // Bit 0.
-		pushable.DoCenterAlign = (ocb & (1 << 1)) == 0;			  // Bit 1.
-		pushable.IsBuoyant	   = (ocb & (1 << 2)) != 0;			  // Bit 2.
-		pushable.AnimSetID	   = ((ocb & (1 << 3)) != 0) ? 1 : 0; // Bit 3.
+		UpdatePushableFromOCB(pushableItem);
 
 		pushableItem.Status = ITEM_ACTIVE;
 		AddActiveItem(itemNumber);
@@ -110,6 +138,10 @@ namespace TEN::Entities::Generic
 
 		if (player.Context.InteractedItem == itemNumber && player.Control.IsMoving)
 			return;
+
+		// Check if the OCB has changed or a savegame has been loaded and update characteristics if needed.
+		if (pushableItem.TriggerFlags != pushable.PreviousTriggerFlags || JustLoaded)
+			UpdatePushableFromOCB(pushableItem);
 
 		auto prevPos = pushableItem.Pose.Position;
 
@@ -152,6 +184,8 @@ namespace TEN::Entities::Generic
 
 		int quadrant = GetQuadrant(LaraItem->Pose.Orientation.y);
 		auto& pushableSidesAttributes = pushable.EdgeAttribs[quadrant]; // NOTE: 0 = north, 1 = east, 2 = south, 3 = west.
+
+		g_Hud.InteractionHighlighter.Test(*playerItem, pushableItem);
 
 		// Align player to pushable.
 		if ((IsHeld(In::Action) &&
@@ -210,11 +244,12 @@ namespace TEN::Entities::Generic
 				{
 					SetAnimation(playerItem, LA_PUSHABLE_GRAB);
 					playerItem->Pose.Orientation = pushableItem.Pose.Orientation;
+					ResetPlayerFlex(playerItem);
 					player.Control.IsMoving = false;
+					player.Control.TurnRate = 0;
 					player.Control.HandStatus = HandStatus::Busy;
 					player.Context.NextCornerPos.Position.x = itemNumber; // TODO: Do this differently.
 				}
-
 				player.Context.InteractedItem = itemNumber;
 			}
 			else
@@ -232,7 +267,7 @@ namespace TEN::Entities::Generic
 		{
 			// Not holding Action; do normal collision routine.
 			if (playerItem->Animation.ActiveState != LS_PUSHABLE_GRAB ||
-				!TestLastFrame(playerItem, LA_PUSHABLE_GRAB) ||
+				!TestLastFrame(*playerItem, LA_PUSHABLE_GRAB) ||
 				player.Context.NextCornerPos.Position.x != itemNumber)
 			{
 				// Use soft moveable object collision.
