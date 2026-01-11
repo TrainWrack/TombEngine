@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <chrono>
 #include <deque>
 #include <filesystem>
 #include <fstream>
@@ -18,11 +19,14 @@
 #include <optional>
 #include <regex>
 #include <set>
+#include <stack>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
 #include <queue>
+#include <unordered_set>
 #include <vector>
 
 // DirerctX 11
@@ -46,6 +50,12 @@ using namespace DirectX::SimpleMath;
 // sol
 #include <sol.hpp>
 
+// spdlog
+#include <spdlog.h>
+#include <spdlog/fmt/fmt.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+
 // VLC
 #include <vlc/vlc.h>
 
@@ -54,7 +64,6 @@ using namespace DirectX::SimpleMath;
 // =========
 
 #include "Types.h"
-
 #include "Game/Debug/Debug.h"
 
 using namespace TEN::Debug;

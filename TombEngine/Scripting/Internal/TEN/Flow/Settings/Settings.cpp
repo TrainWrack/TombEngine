@@ -41,10 +41,13 @@ namespace TEN::Scripting
 		AnimSettings::Register(parent);
 		CameraSettings::Register(parent);
 		FlareSettings::Register(parent);
+		GameplaySettings::Register(parent);
+		GraphicsSettings::Register(parent);
 		HairSettings::Register(parent);
 		HudSettings::Register(parent);
 		PhysicsSettings::Register(parent);
 		SystemSettings::Register(parent);
+		UISettings::Register(parent);
 		WeaponSettings::Register(parent);
 
 		parent.new_usertype<Settings>(
@@ -52,12 +55,15 @@ namespace TEN::Scripting
 			sol::constructors<Settings()>(),
 			sol::meta_function::new_index, NewIndexErrorMaker(Settings, ScriptReserved_Settings),
 			ScriptReserved_AnimSettings, &Settings::Animations,
-			ScriptReserved_FlareSettings, &Settings::Flare,
 			ScriptReserved_CameraSettings, &Settings::Camera,
+			ScriptReserved_FlareSettings, &Settings::Flare,
+			ScriptReserved_GameplaySettings, &Settings::Gameplay,
+			ScriptReserved_GraphicsSettings, &Settings::Graphics,
 			ScriptReserved_HairSettings, &Settings::Hair,
 			ScriptReserved_HudSettings, &Settings::Hud,
 			ScriptReserved_PhysicsSettings, &Settings::Physics,
 			ScriptReserved_SystemSettings, &Settings::System,
+			ScriptReserved_UISettings, &Settings::UI,
 			ScriptReserved_WeaponSettings, &Settings::Weapons);
 	}
 
@@ -84,11 +90,11 @@ namespace TEN::Scripting
 		// @tfield bool crawlspaceSwandive When enabled, player will be able to swandive into crawlspaces.
 		"crawlspaceSwandive", &AnimSettings::CrawlspaceDive,
 
-		// Overhang climbing.
+		/// Overhang climbing.
 		// @tfield bool overhangClimb Enables overhang climbing feature. Currently does not work.
 		"overhangClimb", &AnimSettings::OverhangClimb,
 
-		// Extended slide mechanics.
+		/// Extended slide mechanics.
 		// @tfield bool slideExtended If enabled, player will be able to change slide direction with controls. Currently does not work.
 		"slideExtended", &AnimSettings::SlideExtended,
 
@@ -170,11 +176,55 @@ namespace TEN::Scripting
 		// @tfield bool smoke Smoke effect. Determines whether flare generates smoke when burning.
 		"smoke", &FlareSettings::Smoke,
 
+		/// Toggle muzzle glow effect.
+		// @tfield bool muzzleGlow Glow effect. Determines whether flare generates glow when burning.
+		"muzzleGlow", &FlareSettings::MuzzleGlow,
+
 		/// Toggle flicker effect.
 		// @tfield bool flicker Light and lensflare flickering. When turned off, flare light will be constant.
 		"flicker", &FlareSettings::Flicker);
 	}
 
+	/// Gameplay
+	// @section Gameplay
+	// These settings are used to enable or disable certain gameplay features.
+
+	void GameplaySettings::Register(sol::table& parent)
+	{
+		parent.create().new_usertype<GameplaySettings>(ScriptReserved_GameplaySettings, sol::constructors<GameplaySettings()>(),
+			sol::call_constructor, sol::constructors<GameplaySettings()>(),
+			sol::meta_function::new_index, NewIndexErrorMaker(GameplaySettings, ScriptReserved_GameplaySettings),
+
+			/// Enable or disable original linear inventory functionality. Can be used to completely disable inventory handling
+			// or to replace it with custom module, such as ring inventory.
+			// @tfield bool enableInventory If false, inventory will not open.
+			"enableInventory", &GameplaySettings::EnableInventory,
+
+			/// Enable target occlusion by moveables and static meshes.
+			// @tfield bool targetObjectOcclusion If enabled, player won't be able to target enemies through moveables and static meshes.
+			"targetObjectOcclusion", &GameplaySettings::TargetObjectOcclusion);
+	}
+
+	/// Graphics
+	// @section Graphics
+	// These settings are used to enable or disable certain graphics features.
+
+	void GraphicsSettings::Register(sol::table& parent)
+	{
+		parent.create().new_usertype<GraphicsSettings>(ScriptReserved_GraphicsSettings, sol::constructors<GraphicsSettings()>(),
+			sol::call_constructor, sol::constructors<GraphicsSettings()>(),
+			sol::meta_function::new_index, NewIndexErrorMaker(GraphicsSettings, ScriptReserved_GraphicsSettings),
+
+			/// Enable ambient occlusion.
+			// @tfield bool ambientOcclusion If disabled, ambient occlusion setting will be forced to off, and corresponding menu entry in the Display Settings dialog will be grayed out.
+			"ambientOcclusion", &GraphicsSettings::AmbientOcclusion,
+
+			/// Enable skinning.
+			// @tfield bool skinning If enabled, skinning will be used for animated objects with skinned mesh. Disable to force classic TR workflow.
+			"skinning", &GraphicsSettings::Skinning);
+	}
+
+	/* @fieldtype HairSettings[] */
 	/// Hair
 	// @section Hair
 	// This is a table of braid object settings. <br>
@@ -188,14 +238,14 @@ namespace TEN::Scripting
 			sol::meta_function::new_index, NewIndexErrorMaker(HairSettings, ScriptReserved_HairSettings),
 
 		/// Root mesh to which hair object will attach to.
-		// @tfield int mesh Index of a root mesh to which hair will attach. Root mesh may be different for each hair object.
+		// @tfield int rootMesh Index of a root mesh to which hair will attach. Root mesh may be different for each hair object.
 		"rootMesh", &HairSettings::RootMesh,
 
-		/// Relative braid offset to a headmesh.
+		/// Relative braid offset to a headmesh. Not used with skinned hair mesh.
 		// @tfield Vec3 offset Specifies how braid is positioned in relation to a headmesh.
 		"offset", &HairSettings::Offset,
 	
-		/// Braid connection indices.
+		/// Braid connection indices. Not used with skinned hair mesh.
 		// @tfield table indices A list of headmesh's vertex connection indices. Each index corresponds to nearest braid rootmesh vertex. Amount of indices is unlimited.
 		"indices", &HairSettings::Indices);
 	}
@@ -246,6 +296,82 @@ namespace TEN::Scripting
 		"swimVelocity", &PhysicsSettings::SwimVelocity);
 	}
 
+	/// System
+	// @section System
+	// Global system settings that is not directly related to gameplay.
+
+	void SystemSettings::Register(sol::table& parent)
+	{
+		parent.create().new_usertype<SystemSettings>(ScriptReserved_SystemSettings, sol::constructors<SystemSettings()>(),
+			sol::call_constructor, sol::constructors<SystemSettings()>(),
+			sol::meta_function::new_index, NewIndexErrorMaker(SystemSettings, ScriptReserved_SystemSettings),
+
+		/// How should the application respond to script errors?
+		// @tfield Flow.ErrorMode errorMode Error mode to use.
+		"errorMode", &SystemSettings::ErrorMode,
+
+		/// Use multithreading in certain calculations. <br>
+		// When set to `true`, some performance-critical calculations will be performed in parallel, which can give
+		// a significant performance boost. Don't disable unless you have problems with launching or using TombEngine.
+		// @tfield bool multithreaded Determines whether to use multithreading or not.
+		"multithreaded", &SystemSettings::Multithreaded,
+
+		/// Can the game utilize the fast reload feature? <br>
+		// When set to `true`, the game will attempt to perform fast savegame reloading if current level is the same as
+		// the level loaded from the savegame. It will not work if the level timestamp or checksum has changed
+		// (i.e. level was updated). If set to `false`, this functionality is turned off.
+		// @tfield bool fastReload Toggles fast reload on or off.
+		"fastReload", &SystemSettings::FastReload);
+	}
+
+	/// User interface
+	// @section UI
+	// System-wide user interface settings.
+
+	void UISettings::Register(sol::table& parent)
+	{
+		parent.create().new_usertype<UISettings>(ScriptReserved_UISettings, sol::constructors<UISettings()>(),
+			sol::call_constructor, sol::constructors<UISettings()>(),
+			sol::meta_function::new_index, NewIndexErrorMaker(UISettings, ScriptReserved_UISettings),
+
+		/// Header text color.
+		// @tfield Color headerTextColor A color used for displaying header text in system menus.
+		"headerTextColor", &UISettings::HeaderTextColor,
+
+		/// Option text color.
+		// @tfield Color optionTextColor A color used for displaying option text in system menus.
+		"optionTextColor", &UISettings::OptionTextColor,
+
+		/// Plain text color.
+		// @tfield Color plainTextColor A color used for displaying plain text in system menus.
+		"plainTextColor", &UISettings::PlainTextColor,
+
+		/// Disabled text color.
+		// @tfield Color disabledTextColor A color used for displaying any header text in menus.
+		"disabledTextColor", &UISettings::DisabledTextColor,
+
+		/// Shadow text color.
+		// @tfield Color shadowTextColor A color used for drawing a shadow under any rendered text.
+		"shadowTextColor", &UISettings::ShadowTextColor,
+			
+		/// Title menu position.
+		// @tfield Vec2 titleMenuPosition Title level menu position. Horizontal coordinate represents an alignment baseline,
+		// while vertical coordinate represents a first menu entry's vertical position.
+		"titleMenuPosition", &UISettings::TitleMenuPosition,
+			
+		/// Title menu scale.
+		// @tfield float titleMenuScale Title level menu scale.
+		"titleMenuScale", &UISettings::TitleMenuScale,
+
+		/// Title menu alignment.
+		// @tfield Strings.DisplayStringOption titleMenuAlignment Specifies menu alignment.
+		//
+		// Can be set to @{Strings.DisplayStringOption.CENTER} or @{Strings.DisplayStringOption.RIGHT}.
+		// If set to `nil`, or set to any other value, menu will be aligned to the left side of the screen.
+		"titleMenuAlignment", &UISettings::TitleMenuAlignment);
+	}
+
+	/* @fieldtype { [WeaponType]: WeaponSettings } */
 	/// Weapons
 	// @section Weapons
 	// This is a table of weapon settings, with several parameters available for every weapon.
@@ -274,7 +400,7 @@ namespace TEN::Scripting
 		"damage", &WeaponSettings::Damage,
 
 		/// Alternate damage.
-		// @tfield int alternateDamage For Revolver and HK, specifies damage in lasersight mode. For crossbow, specifies damage for explosive ammo.
+		// @tfield int alternateDamage For crossbow, specifies damage for explosive ammo.
 		"alternateDamage", &WeaponSettings::AlternateDamage,
 
 		/// Water level.
@@ -290,7 +416,7 @@ namespace TEN::Scripting
 		"flashColor", &WeaponSettings::FlashColor,
 
 		/// Gunflash range.
-		// @tfield Color flashRange specifies the range of the gunflash.
+		// @tfield int flashRange specifies the range of the gunflash.
 		"flashRange", &WeaponSettings::FlashRange,
 
 		/// Gunflash duration.
@@ -320,33 +446,5 @@ namespace TEN::Scripting
 		/// Muzzle offset.
 		// @tfield Vec3 muzzleOffset specifies offset for spawning muzzle gunflash effects.
 		"muzzleOffset", &WeaponSettings::MuzzleOffset);
-	}
-
-	/// System
-	// @section System
-	// Global system settings that is not directly related to gameplay.
-
-	void SystemSettings::Register(sol::table& parent)
-	{
-		parent.create().new_usertype<SystemSettings>(ScriptReserved_SystemSettings, sol::constructors<SystemSettings()>(),
-			sol::call_constructor, sol::constructors<SystemSettings()>(),
-			sol::meta_function::new_index, NewIndexErrorMaker(SystemSettings, ScriptReserved_SystemSettings),
-
-		/// How should the application respond to script errors?
-		// @tfield Flow.ErrorMode errorMode Error mode to use.
-		"errorMode", &SystemSettings::ErrorMode,
-
-		/// Use multithreading in certain calculations. <br>
-		// When set to `true`, some performance-critical calculations will be performed in parallel, which can give
-		// a significant performance boost. Don't disable unless you have problems with launching or using TombEngine.
-		// @tfield bool multithreaded Determines whether to use multithreading or not.
-		"multithreaded", &SystemSettings::Multithreaded,
-
-		/// Can the game utilize the fast reload feature? <br>
-		// When set to `true`, the game will attempt to perform fast savegame reloading if current level is the same as
-		// the level loaded from the savegame. It will not work if the level timestamp or checksum has changed
-		// (i.e. level was updated). If set to `false`, this functionality is turned off.
-		// @tfield bool fastReload Toggles fast reload on or off.
-		"fastReload", &SystemSettings::FastReload);
 	}
 }
