@@ -46,7 +46,7 @@ PICKUP_DATA.RING_CENTER = {
 
 PICKUP_DATA.HEALTH_MAX = 1000
 
-PICKUP_DATA.constants = {
+PICKUP_DATA.CONSTANTS = {
 	{ TEN.Objects.ObjID.STOPWATCH_ITEM, 2, 0.8, Rotation(0, 180, 0), ItemAction.STATISTICS, "statistics", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.TOOL, false, PICKUP_DATA.RING.MAIN},
 	-- Weapons
 	{ TEN.Objects.ObjID.PISTOLS_ITEM, 6, 0.5, Rotation(244.0, 90.0, 276.0), ItemAction.EQUIP, "pistols", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, false, PICKUP_DATA.RING.MAIN },
@@ -492,7 +492,7 @@ PICKUP_DATA.GetRow = function(lookupValue)
     
 	local lookupCol = COL.OBJECT_ID
 
-    for _, row in ipairs(PICKUP_DATA.constants) do
+    for _, row in ipairs(PICKUP_DATA.CONSTANTS) do
         if row[lookupCol] == lookupValue then
             return row
         end

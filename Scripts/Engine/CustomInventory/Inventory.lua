@@ -4,10 +4,12 @@ local CustomInventory = {}
 local debug = false
 
 --External Modules
-local Statistics = require("Engine.Statistics")
-local Settings = require("Engine.CustomInventory.Settings")
-local Interpolate = require("Engine.InterpolateModule")
 local Menu = require("Engine.CustomMenu")
+local Interpolate = require("Engine.InterpolateModule")
+local Settings = require("Engine.CustomInventory.Settings")
+local Statistics = require("Engine.Statistics")
+local Text = require("Engine.CustomInventory.Text")
+local Utilities = require("Engine.CustomInventory.Utilities")
 
 --Pointers to tables
 local PICKUP_DATA = require("Engine.CustomInventory.PickupData")
@@ -70,8 +72,6 @@ local currentRingAngle = 0
 local previousRingAngle = 0
 local targetRingAngle = 0
 local direction = 1
-local inventoryHeader = {"actions_inventory", Vec2(50, 4), 1.5, COLOR_MAP.HEADER_FONT, true}
-local inventorySubHeader = {"actions_inventory", Vec2(50, 40.3), 0.9, COLOR_MAP.HEADER_FONT, false}
 local menuAlpha = 0
 local saveList = false
 local saveSelected = false
@@ -80,44 +80,58 @@ local saveSlotSelected = 1
 LevelFuncs.Engine.CustomInventory = {}
 
 -- ============================================================================
--- UTILITY FUNCTIONS
+-- TEXT SETUP
 -- ============================================================================
 
-local function ColorCombine(color, transparency)
-    return Color(color.r, color.g, color.b, transparency)
-end
-
-local function OffsetY(position, offsetY)
-    return Vec3(position.x, position.y + offsetY, position.z)
-end
-
-local function PercentPos(x, y)
-    return TEN.Vec2(TEN.Util.PercentToScreen(x, y))
-end
-
-local function CopyRotation(r)
-    return Rotation(r.x, r.y, r.z)
-end
-
-local function Contains(tbl, value)
-    for _, v in ipairs(tbl) do
-        if v == value then
-            return true
-        end
-    end
-    return false
-end
+local inventoryHeader = {"actions_inventory", Vec2(50, 4), 1.5, COLOR_MAP.HEADER_FONT, true}
+local inventorySubHeader = {"actions_inventory", Vec2(50, 40.3), 0.9, COLOR_MAP.HEADER_FONT, false}
 
 local function SetInventoryHeader(string, visible)
-    inventoryHeader[1] = string
-    inventoryHeader[5] = visible
+    -- inventoryHeader[1] = string
+    -- inventoryHeader[5] = visible
 end
 
 local function SetInventorySubHeader(string, visible)
-    inventorySubHeader[1] = string
-    inventorySubHeader[5] = visible
+    -- inventorySubHeader[1] = string
+    -- inventorySubHeader[5] = visible
 end
 
+local function DrawItemLabel(item, primary)
+    -- local entryPosInPixel = primary and Utilities.PercentPos(50, 80) or Utilities.PercentPos(50, 90)
+    -- local scale = primary and 1.5 or 1
+    -- local label = TEN.Flow.GetString(item.name)
+    -- local count = item.count
+    -- local result
+    
+    -- if count == -1 then
+    --     result = TEN.Flow.GetString("unlimited"):gsub(" ", ""):gsub("%%s", "").." "
+    -- elseif count > 1 or item.type == PICKUP_DATA.TYPE.AMMO or item.type == PICKUP_DATA.TYPE.MEDIPACK then
+    --     result = tostring(count).." x "
+    -- else
+    --     result = ""
+    -- end
+    
+    -- local string = result..label
+    -- local entryText = TEN.Strings.DisplayString(string, entryPosInPixel, scale, COLOR_MAP.NORMAL_FONT, false, {Strings.DisplayStringOption.CENTER, Strings.DisplayStringOption.SHADOW})
+    -- TEN.Strings.ShowString(entryText, 1 / 30)
+end
+
+local function DrawInventoryHeader(text, alpha)
+    -- if text[5] then
+    --     local entryText = TEN.Strings.DisplayString(
+    --         Flow.GetString(text[1]),
+    --         Utilities.PercentPos(text[2].x, text[2].y),
+    --         text[3],
+    --         Utilities.ColorCombine(text[4], alpha),
+    --         false,
+    --         {Strings.DisplayStringOption.CENTER, Strings.DisplayStringOption.SHADOW}
+    --     )
+    --     TEN.Strings.ShowString(entryText, 1 / 30)
+    -- end
+end
+-- ============================================================================
+-- HELPER FUNCTIONS
+-- ============================================================================
 local function CalculateCompassAngle()
     local needleOrient = Rotation(0, -Lara:GetRotation().y, 0)
     local wibble = math.sin((timeInMenu % 0x40) / 0x3F * (2 * math.pi))
@@ -664,7 +678,7 @@ end
 
 local function GetCombineItemsCount(selectedItem)
     local itemCount = 0
-    local items = PICKUP_DATA.constants
+    local items = PICKUP_DATA.CONSTANTS
     
     for _, itemRow in ipairs(items) do
         local itemData = PICKUP_DATA.ConvertRowData(itemRow)
@@ -898,7 +912,7 @@ local function TranslateRing(ringName, center, radius, rotationOffset, alpha)
         end
         local newAngle = (currentAngle + angleDiff * alpha) % 360
         
-        currentDisplayItem:SetPosition(OffsetY(position, ring[i].yOffset))
+        currentDisplayItem:SetPosition(Utilities.OffsetY(position, ring[i].yOffset))
         currentDisplayItem:SetRotation(Rotation(itemRotations.x, newAngle, itemRotations.z))
     end
 end
@@ -918,7 +932,7 @@ local function FadeRing(ringName, fadeValue, omitSelectedItem)
         end
         
         local itemColor = currentDisplayItem:GetColor()
-        currentDisplayItem:SetColor(ColorCombine(itemColor, fadeValue))
+        currentDisplayItem:SetColor(Utilities.ColorCombine(itemColor, fadeValue))
         
         ::continue::
     end
@@ -940,7 +954,7 @@ local function ColorRing(ringName, color, omitSelectedItem, alpha)
         
         local itemColor = currentDisplayItem:GetColor()
         local targetColor = InterpolateColor(itemColor, color, alpha)
-        currentDisplayItem:SetColor(ColorCombine(targetColor, itemColor.a))
+        currentDisplayItem:SetColor(Utilities.ColorCombine(targetColor, itemColor.a))
         
         ::continue::
     end
@@ -966,43 +980,10 @@ local function RotateItem(itemName)
     currentDisplayItem:SetColor(targetColor)
 end
 
-local function DrawItemLabel(item, primary)
-    local entryPosInPixel = primary and PercentPos(50, 80) or PercentPos(50, 90)
-    local scale = primary and 1.5 or 1
-    local label = TEN.Flow.GetString(item.name)
-    local count = item.count
-    local result
-    
-    if count == -1 then
-        result = TEN.Flow.GetString("unlimited"):gsub(" ", ""):gsub("%%s", "").." "
-    elseif count > 1 or item.type == PICKUP_DATA.TYPE.AMMO or item.type == PICKUP_DATA.TYPE.MEDIPACK then
-        result = tostring(count).." x "
-    else
-        result = ""
-    end
-    
-    local string = result..label
-    local entryText = TEN.Strings.DisplayString(string, entryPosInPixel, scale, COLOR_MAP.NORMAL_FONT, false, {Strings.DisplayStringOption.CENTER, Strings.DisplayStringOption.SHADOW})
-    TEN.Strings.ShowString(entryText, 1 / 30)
-end
-
-local function DrawInventoryHeader(text, alpha)
-    if text[5] then
-        local entryText = TEN.Strings.DisplayString(
-            Flow.GetString(text[1]),
-            PercentPos(text[2].x, text[2].y),
-            text[3],
-            ColorCombine(text[4], alpha),
-            false,
-            {Strings.DisplayStringOption.CENTER, Strings.DisplayStringOption.SHADOW}
-        )
-        TEN.Strings.ShowString(entryText, 1 / 30)
-    end
-end
-
 local function ShowChosenAmmo(item, textOnly)
     local inventoryItem = GetInventoryItem(item)
     if not inventoryItem or inventoryItem.type ~= TYPE.WEAPON then
+        Text.Hide("ITEM_LABEL_SECONDARY")
         return
     end
     
@@ -1018,7 +999,7 @@ local function ShowChosenAmmo(item, textOnly)
     
     if ammoAdded and not textOnly then
         local data = BuildInventoryItem(base)
-        data.rotation = CopyRotation(data.rotation)
+        data.rotation = Utilities.CopyRotation(data.rotation)
         
         local ammoItem = TEN.View.DisplayItem(
             "ChosenAmmo",
@@ -1034,16 +1015,24 @@ local function ShowChosenAmmo(item, textOnly)
     end
     
     local data = BuildInventoryItem(base)
-    DrawItemLabel(data, false)
+    local label = Text.CreateItemLabel(data)
+    Text.SetText("ITEM_LABEL_SECONDARY", label, true)
+    --DrawItemLabel(data, false)
     
     if not textOnly then
         RotateItem("ChosenAmmo")
     end
 end
 
-local function DeleteChosenAmmo()
+local function DeleteChosenAmmo(itemOnly)
     TEN.View.DisplayItem.RemoveItem("ChosenAmmo")
     ammoAdded = true
+
+    if not itemOnly then
+        
+        Text.Hide("ITEM_LABEL_SECONDARY")
+    
+    end
 end
 
 local function DrawArrows(list, alpha)
@@ -1054,7 +1043,7 @@ local function DrawArrows(list, alpha)
             entry[2],
             entry[1],
             Vec2(3, 3),
-            ColorCombine(COLOR_MAP.NORMAL_FONT, alpha)
+            Utilities.ColorCombine(COLOR_MAP.NORMAL_FONT, alpha)
         )
         entrySprite:Draw(-8, View.AlignMode.CENTER, View.ScaleMode.FIT, TEN.Effects.BlendID.ALPHA_BLEND)
     end
@@ -1100,7 +1089,7 @@ end
 local function DrawBackground(alpha)
     if Settings.BACKGROUND.ENABLE then
         local bgAlpha = math.min(alpha, Settings.BACKGROUND.ALPHA)
-        local bgColor = ColorCombine(Settings.BACKGROUND.COLOR, bgAlpha)
+        local bgColor = Utilities.ColorCombine(Settings.BACKGROUND.COLOR, bgAlpha)
         local bgSprite = TEN.DisplaySprite(
             Settings.BACKGROUND.OBJECTID,
             Settings.BACKGROUND.SPRITEID,
@@ -1118,7 +1107,7 @@ end
 -- ============================================================================
 
 local function ConstructObjectList(ringType, selectedWeapon)
-    local items = PICKUP_DATA.constants
+    local items = PICKUP_DATA.CONSTANTS
     
     if ringType == RING.AMMO or ringType == RING.COMBINE then
         ClearInventory(ringType, true)
@@ -1129,7 +1118,7 @@ local function ConstructObjectList(ringType, selectedWeapon)
     for _, itemRow in ipairs(items) do
         local itemData = PICKUP_DATA.ConvertRowData(itemRow)
         local data = BuildInventoryItem(itemData)
-        data.rotation = CopyRotation(data.rotation)
+        data.rotation = Utilities.CopyRotation(data.rotation)
         
         if data.type == TYPE.AMMO and ringType ~= RING.AMMO then
             local weaponPresent = TEN.Inventory.GetItemCount(PICKUP_DATA.AMMO_SET[data.objectID].weapon)
@@ -1166,7 +1155,7 @@ local function ConstructObjectList(ringType, selectedWeapon)
                 goto continue
             end
         elseif ringType == RING.AMMO then
-            if data.type == TYPE.AMMO and PICKUP_DATA.WEAPON_AMMO_LOOKUP[selectedWeapon] and Contains(PICKUP_DATA.WEAPON_AMMO_LOOKUP[selectedWeapon], data.objectID) then
+            if data.type == TYPE.AMMO and PICKUP_DATA.WEAPON_AMMO_LOOKUP[selectedWeapon] and Utilities.Contains(PICKUP_DATA.WEAPON_AMMO_LOOKUP[selectedWeapon], data.objectID) then
                 data.ringName = RING.AMMO
                 ammoRing = true
                 shouldInsert = true
@@ -1345,7 +1334,7 @@ local function PerformBatchMotion(prefix, motionTable, time, clearProgress, ring
             displayItem:SetColor(interpolated.itemColor.output)
         end
         if interpolated.itemPosition then
-            displayItem:SetPosition(OffsetY(interpolated.itemPosition.output, item.yOffset))
+            displayItem:SetPosition(Utilities.OffsetY(interpolated.itemPosition.output, item.yOffset))
         end
         if interpolated.itemScale then
             displayItem:SetScale(Vec3(interpolated.itemScale.output))
@@ -1551,7 +1540,7 @@ local function SaveItemData(selectedItem)
         local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(selectedItem.objectID))
         itemRotationOld = displayItem:GetRotation()
         itemRotation = selectedItem.rotation
-        examineRotation = CopyRotation(selectedItem.rotation)
+        examineRotation = Utilities.CopyRotation(selectedItem.rotation)
         examineScalerOld = selectedItem.scale
         examineScaler = selectedItem.scale
         itemStoreRotations = false
@@ -1591,7 +1580,7 @@ local function ExamineItem(item)
     if localizedString and examineShowString then
         local entryText = TEN.Strings.DisplayString(
             localizedString,
-            PercentPos(EXAMINE_TEXT_POS.x, EXAMINE_TEXT_POS.y),
+            Utilities.PercentPos(EXAMINE_TEXT_POS.x, EXAMINE_TEXT_POS.y),
             1,
             COLOR_MAP.NORMAL_FONT,
             true,
@@ -1780,7 +1769,7 @@ local function DrawInventory(mode)
         ShowItemMenu()
         ShowChosenAmmo(combineItem1)
     elseif mode == INVENTORY_MODE.ITEM_DESELECT then
-        DeleteChosenAmmo()
+        DeleteChosenAmmo(true)
         SetInventoryHeader("actions_inventory", true)
         if AnimateInventory(mode) then
             combineItem1 = nil
@@ -1946,6 +1935,8 @@ local function UpdateInventory()
     timeInMenu = timeInMenu + 1
     DrawBackground(menuAlpha)
     DrawInventoryHeader(inventoryHeader, menuAlpha)
+    Text.Update()
+    Text.DrawAll()
     
     if LevelVars.Engine.CustomInventory.InventoryOpen then
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
@@ -1978,6 +1969,8 @@ local function RunInventory()
         local settings = TEN.Flow.GetSettings()
         settings.Gameplay.enableInventory = false
         TEN.Flow.SetSettings(settings)
+
+        Text.Setup()
         
         inventoryStart = false
     end
