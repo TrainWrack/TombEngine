@@ -4,10 +4,13 @@ local CustomInventory = {}
 local debug = false
 
 --External Modules
+local Animation = require("Engine.CustomInventory.Animation")
 local Menu = require("Engine.CustomMenu")
 local Interpolate = require("Engine.InterpolateModule")
+local Save = require("Engine.CustomInventory.Save")
 local Settings = require("Engine.CustomInventory.Settings")
-local Statistics = require("Engine.Statistics")
+local States = require("Engine.CustomInventory.States")
+local Statistics = require("Engine.CustomInventory.Statistics")
 local Text = require("Engine.CustomInventory.Text")
 local Utilities = require("Engine.CustomInventory.Utilities")
 
@@ -27,17 +30,14 @@ local CAMERA_START = Vec3(0, -2500, 200)
 local CAMERA_END = Vec3(0, -36, -1151)
 local TARGET_START = Vec3(0, 0, 1000)
 local TARGET_END = Vec3(0, 110, 0)
-local ITEM_SPINBACK_ALPHA = math.min(1.0, 4 * (1/30) / ANIMATION.ITEM_ANIM_TIME)
-local RING_RADIUS = (View.GetAspectRatio() > 1.7) and -512 or -450
+
+
 local ITEM_START = Vec3(0, 200, 512)
 local ITEM_END = Vec3(0, 0, 400)
 local AMMO_LOCATION = Vec3(0, 300, 512)
-local RING_POSITION_OFFSET = 1000
+
 local PROGRESS_COMPLETE = 1
-local EXAMINE_DEFAULT_SCALE = 1
-local EXAMINE_MIN_SCALE = 0.3
-local EXAMINE_MAX_SCALE = 1.6
-local EXAMINE_TEXT_POS = Vec2(50, 80)
+
 local ALPHA_MAX = 255
 local ALPHA_MIN = 0
 
@@ -46,107 +46,28 @@ local useBinoculars = false
 local itemStoreRotations = false
 local itemRotation = Rotation(0, 0, 0)
 local itemRotationOld = Rotation(0, 0, 0)
-local examineRotation = Rotation(0, 0, 0)
-local examineScaler = EXAMINE_DEFAULT_SCALE
-local examineScalerOld = EXAMINE_DEFAULT_SCALE
-local examineShowString = false
+
 local ammoAdded = true
-local statisticsType = false
-local combineItem1 = nil
-local combineItem2 = nil
-local combineResult = nil
-local performCombine = false
+
+
 
 --Structure for inventory
-local inventory = {ring = {}, slice = {}, selectedItem = {}, ringPosition = {}}
-local inventoryOpenItem = nil
-local inventoryStart = true
-local gameflowOverrides = nil
-local selectedRing = RING.MAIN
-local previousRing = nil
+
+local inventorySetup = true
 local timeInMenu = 0
 local inventoryDelay = 0
 local inventoryMode = INVENTORY_MODE.INVENTORY_OPENING
 local previousMode = nil
-local currentRingAngle = 0
-local previousRingAngle = 0
-local targetRingAngle = 0
-local direction = 1
+
 local menuAlpha = 0
-local saveList = false
-local saveSelected = false
-local saveSlotSelected = 1
+
 
 LevelFuncs.Engine.CustomInventory = {}
 
 -- ============================================================================
--- TEXT SETUP
--- ============================================================================
-
-local inventoryHeader = {"actions_inventory", Vec2(50, 4), 1.5, COLOR_MAP.HEADER_FONT, true}
-local inventorySubHeader = {"actions_inventory", Vec2(50, 40.3), 0.9, COLOR_MAP.HEADER_FONT, false}
-
-local function SetInventoryHeader(string, visible)
-    -- inventoryHeader[1] = string
-    -- inventoryHeader[5] = visible
-end
-
-local function SetInventorySubHeader(string, visible)
-    -- inventorySubHeader[1] = string
-    -- inventorySubHeader[5] = visible
-end
-
-local function DrawItemLabel(item, primary)
-    -- local entryPosInPixel = primary and Utilities.PercentPos(50, 80) or Utilities.PercentPos(50, 90)
-    -- local scale = primary and 1.5 or 1
-    -- local label = TEN.Flow.GetString(item.name)
-    -- local count = item.count
-    -- local result
-    
-    -- if count == -1 then
-    --     result = TEN.Flow.GetString("unlimited"):gsub(" ", ""):gsub("%%s", "").." "
-    -- elseif count > 1 or item.type == PICKUP_DATA.TYPE.AMMO or item.type == PICKUP_DATA.TYPE.MEDIPACK then
-    --     result = tostring(count).." x "
-    -- else
-    --     result = ""
-    -- end
-    
-    -- local string = result..label
-    -- local entryText = TEN.Strings.DisplayString(string, entryPosInPixel, scale, COLOR_MAP.NORMAL_FONT, false, {Strings.DisplayStringOption.CENTER, Strings.DisplayStringOption.SHADOW})
-    -- TEN.Strings.ShowString(entryText, 1 / 30)
-end
-
-local function DrawInventoryHeader(text, alpha)
-    -- if text[5] then
-    --     local entryText = TEN.Strings.DisplayString(
-    --         Flow.GetString(text[1]),
-    --         Utilities.PercentPos(text[2].x, text[2].y),
-    --         text[3],
-    --         Utilities.ColorCombine(text[4], alpha),
-    --         false,
-    --         {Strings.DisplayStringOption.CENTER, Strings.DisplayStringOption.SHADOW}
-    --     )
-    --     TEN.Strings.ShowString(entryText, 1 / 30)
-    -- end
-end
--- ============================================================================
 -- HELPER FUNCTIONS
 -- ============================================================================
-local function CalculateCompassAngle()
-    local needleOrient = Rotation(0, -Lara:GetRotation().y, 0)
-    local wibble = math.sin((timeInMenu % 0x40) / 0x3F * (2 * math.pi))
-    needleOrient.y = needleOrient.y + wibble
-    return needleOrient
-end
 
-local function CalculateStopWatchRotation(type)
-    local angles = {}
-    local levelTime = Flow.GetStatistics(type).timeTaken
-    angles.hour_hand_angle = Rotation(0, 0, -(levelTime.h / 12) * 360)
-    angles.minute_hand_angle = Rotation(0, 0, -(levelTime.m / 60) * 360)
-    angles.second_hand_angle = Rotation(0, 0, -(levelTime.s / 60) * 360)
-    return angles
-end
 
 local function HasItemAction(packedFlags, flag)
     return (packedFlags & flag) ~= 0
@@ -163,20 +84,6 @@ end
 
 local function IsSingleFlagSet(flags)
     return flags ~= 0 and (flags & (flags - 1)) == 0
-end
-
-local function InterpolateColor(currentColor, targetColor, alpha)
-    local targetR = targetColor.r
-    local targetG = targetColor.g
-    local targetB = targetColor.b
-    local targetA = targetColor.a
-    
-    local newR = currentColor.r + (targetR - currentColor.r) * alpha
-    local newG = currentColor.g + (targetG - currentColor.g) * alpha
-    local newB = currentColor.b + (targetB - currentColor.b) * alpha
-    local newA = currentColor.a + (targetA - currentColor.a) * alpha
-    
-    return Color(newR, newG, newB, newA)
 end
 
 local function GuiIsPulsed(actionID)
@@ -211,436 +118,8 @@ local function GuiIsPulsed(actionID)
 end
 
 -- ============================================================================
--- INVENTORY MANAGEMENT FUNCTIONS
--- ============================================================================
-
-local function SetRotationInventoryItems()
-    local angles = CalculateStopWatchRotation(statisticsType)
-    
-    local stopwatch = TEN.View.DisplayItem.GetItemByName(tostring(TEN.Objects.ObjID.STOPWATCH_ITEM))
-    stopwatch:SetJointRotation(4, angles.hour_hand_angle)
-    stopwatch:SetJointRotation(5, angles.minute_hand_angle)
-    stopwatch:SetJointRotation(6, angles.second_hand_angle)
-    
-    local compass = TEN.View.DisplayItem.GetItemByName(tostring(TEN.Objects.ObjID.COMPASS_ITEM))
-    compass:SetJointRotation(1, CalculateCompassAngle())
-end
-
-local function FindItemInInventory(targetID)
-    for ringIndex, ring in pairs(inventory.ring) do
-        for itemIndex, itemEntry in ipairs(ring) do
-            if itemEntry.objectID == targetID then
-                return ringIndex, itemIndex
-            end
-        end
-    end
-    return nil, nil
-end
-
-local function GetInventoryItem(itemID)
-    local ringIndex, itemIndex = FindItemInInventory(itemID)
-    if not ringIndex or not itemIndex then
-        return nil
-    end
-    return inventory.ring[ringIndex][itemIndex]
-end
-
-local function ReadGameflow()
-    local overrides = {}
-    for _, itemID in ipairs(TEN.Flow.GetCurrentLevel().objects) do
-        if itemID.objectID then
-            local id = TEN.Inventory.ConvertInventoryItemToObject(itemID.objectID)
-            overrides[id] = { 
-                item = id,
-                yOffset = itemID.yOffset,
-                scale = itemID.scale,
-                rotation = itemID.rotation,
-                menuActions = itemID.action,
-                name = itemID.nameKey,
-                meshBits = itemID.meshBits,
-                orientation = itemID.axis
-            }
-        end
-    end
-    return overrides
-end
-
-local function BuildInventoryItem(data)
-    gameflowOverrides = ReadGameflow() or {}
-    data.count = TEN.Inventory.GetItemCount(data.objectID)
-    
-    local override = gameflowOverrides[data.objectID] or {}
-    
-    if override.yOffset ~= nil then data.yOffset = override.yOffset end
-    if override.scale ~= nil then data.scale = override.scale end
-    if override.rotation ~= nil then data.rotation = override.rotation end
-    if override.menuActions ~= nil then data.menuActions = override.menuActions end
-    if override.name ~= nil then data.name = override.name end
-    if override.meshBits ~= nil then data.meshBits = override.meshBits end
-    if override.orientation ~= nil then data.orientation = override.orientation end
-    if override.type ~= nil then data.type = override.type end
-    if override.combine ~= nil then data.combine = override.combine end
-    
-    return data
-end
-
-local function GetSelectedItem(ring)
-    return inventory.ring[ring][inventory.selectedItem[ring]]
-end
-
-local function ClearInventory(ringName, clearDrawItems)
-    if ringName then
-        local ring = inventory.ring[ringName]
-        
-        if clearDrawItems and ring then
-            for _, itemData in ipairs(ring) do
-                local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(itemData.objectID))
-                displayItem:Remove()
-            end
-        end
-        
-        inventory.ring[ringName] = {}
-        inventory.slice[ringName] = nil
-        inventory.selectedItem[ringName] = nil
-        inventory.ringPosition[ringName] = nil
-    else
-        if clearDrawItems then
-            TEN.View.DisplayItem.ClearAllItems()
-        end
-        
-        inventory = {ring = {}, slice = {}, selectedItem = {}, ringPosition = {}}
-    end
-end
-
--- ============================================================================
--- WATERSKIN AND COMBINE FUNCTIONS
--- ============================================================================
-
-local function PerformWaterskinCombine(flag)
-    local smallRaw = Lara:GetWaterSkinStatus(false)
-    local bigRaw = Lara:GetWaterSkinStatus(true)
-    
-    local smallLiters = (smallRaw > 0) and (smallRaw - 1) or 0
-    local bigLiters = (bigRaw > 0) and (bigRaw - 1) or 0
-    
-    local smallCapacity = 3 - smallLiters
-    local bigCapacity = 5 - bigLiters
-    
-    if flag then
-        if bigRaw > 1 and smallCapacity > 0 then
-            local transfer = math.min(bigLiters, smallCapacity)
-            smallLiters = smallLiters + transfer
-            bigLiters = bigLiters - transfer
-            
-            Lara:SetWaterSkinStatus(smallLiters + 1, false)
-            Lara:SetWaterSkinStatus(bigLiters + 1, true)
-            
-            combineItem1 = (smallLiters + 1) + (TEN.Objects.ObjID.WATERSKIN1_EMPTY - 1)
-            return true
-        end
-    else
-        if smallRaw > 1 and bigCapacity > 0 then
-            local transfer = math.min(smallLiters, bigCapacity)
-            bigLiters = bigLiters + transfer
-            smallLiters = smallLiters - transfer
-            
-            Lara:SetWaterSkinStatus(smallLiters + 1, false)
-            Lara:SetWaterSkinStatus(bigLiters + 1, true)
-            
-            combineItem1 = (bigLiters + 1) + (TEN.Objects.ObjID.WATERSKIN2_EMPTY - 1)
-            return true
-        end
-    end
-    
-    return false
-end
-
-local function CombineItems(item1, item2)
-    local data1 = GetInventoryItem(item1).type
-    local data2 = GetInventoryItem(item2).type
-    
-    if data1 == TYPE.WATERSKIN and data2 == TYPE.WATERSKIN then
-        if (item1 >= TEN.Objects.ObjID.WATERSKIN1_EMPTY and
-            item1 <= TEN.Objects.ObjID.WATERSKIN1_3 and
-            item2 >= TEN.Objects.ObjID.WATERSKIN2_EMPTY and
-            item2 <= TEN.Objects.ObjID.WATERSKIN2_5) then
-            if (PerformWaterskinCombine(false)) then
-                return true
-            end
-        elseif(item2 >= TEN.Objects.ObjID.WATERSKIN1_EMPTY and
-            item2 <= TEN.Objects.ObjID.WATERSKIN1_3 and
-            item1 >= TEN.Objects.ObjID.WATERSKIN2_EMPTY and
-            item1 <= TEN.Objects.ObjID.WATERSKIN2_5) then
-            if (PerformWaterskinCombine(true)) then
-                return true
-            end
-        end
-    end
-    
-    for _, combo in ipairs(PICKUP_DATA.combineTable) do
-        local a, b, result = combo[1], combo[2], combo[3]
-        
-        if (item1 == a and item2 == b) or (item1 == b and item2 == a) then
-            local count1 = TEN.Inventory.GetItemCount(item1)
-            local count2 = TEN.Inventory.GetItemCount(item2)
-            
-            if count1 == 0 or count2 == 0 then
-                return false
-            end
-            
-            if PICKUP_DATA.WEAPON_LASERSIGHT_DATA[result] and
-               PICKUP_DATA.WEAPON_SET[result] and
-               PICKUP_DATA.WEAPON_SET[result].slot then
-                Lara:SetLaserSight(PICKUP_DATA.WEAPON_SET[result].slot, true)
-            end
-            
-            TEN.Inventory.TakeItem(item1, 1)
-            TEN.Inventory.TakeItem(item2, 1)
-            TEN.Inventory.GiveItem(result, 1)
-            
-            combineResult = result
-            return true
-        end
-    end
-    
-    return false
-end
-
-local function SeparateItems(item3)
-    for _, combo in ipairs(PICKUP_DATA.combineTable) do
-        local a, b, result = combo[1], combo[2], combo[3]
-        
-        if item3 == result then
-            local count = TEN.Inventory.GetItemCount(item3)
-            
-            if count == 0 then
-                return false
-            end
-            
-            if PICKUP_DATA.WEAPON_LASERSIGHT_DATA[result] and
-               PICKUP_DATA.WEAPON_SET[result] and
-               PICKUP_DATA.WEAPON_SET[result].slot then
-                Lara:SetLaserSight(PICKUP_DATA.WEAPON_SET[result].slot, false)
-            end
-            
-            TEN.Inventory.TakeItem(item3, 1)
-            TEN.Inventory.GiveItem(a, 1)
-            TEN.Inventory.GiveItem(b, 1)
-            
-            combineItem1 = a
-            return true
-        end
-    end
-    
-    return false
-end
-
--- ============================================================================
 -- MENU FUNCTIONS
 -- ============================================================================
-
-local function DoSave()
-    local slot = Menu.Get("SaveMenu2"):getCurrentItemIndex()
-    saveSlotSelected = slot
-    Flow.SaveGame(slot - 1)
-    saveSelected = true
-    for index = 1, 4 do
-        Interpolate.Clear("SaveMenu"..index)
-    end
-    inventoryMode = INVENTORY_MODE.SAVE_CLOSE
-end
-
-local function DoLoad()
-
-    local slot = Menu.Get("SaveMenu2"):getCurrentItemIndex()
-
-    if Flow.DoesSaveGameExist(slot - 1) then
-        saveSlotSelected = slot
-        Flow.LoadGame(slot - 1)
-        saveSelected = true
-        for index = 1, 4 do
-            Interpolate.Clear("SaveMenu"..index)
-        end
-        inventoryMode = INVENTORY_MODE.SAVE_CLOSE
-    else
-        TEN.Sound.PlaySound(SOUND_MAP.PLAYER_NO)
-    end
-end
-
-local function CreateSaveMenu(save)
-    local textPosition = {
-        Vec2(10, 12),
-        Vec2(20, 12),
-        Vec2(75, 12),
-        Vec2(50, 12),
-    }
-    
-    local saveTitleText = {nil, "save_game", nil, nil}
-    local loadTitleText = {nil, "load_game", nil, nil}
-    local saveFunctions = {nil, "Engine.CustomInventory.DoSave", nil, nil}
-    local loadFunctions = {nil, "Engine.CustomInventory.DoLoad", nil, nil}
-    
-    local soundMap = {
-        [1] = {select = nil, choose = nil},
-        [2] = {select = SOUND_MAP.MENU_SELECT, choose = SOUND_MAP.MENU_CHOOSE},
-        [3] = {select = nil, choose = nil},
-        [4] = {select = nil, choose = nil}
-    }
-    
-    local itemFlag = {Strings.DisplayStringOption.SHADOW}
-    local selectedFlag = {Strings.DisplayStringOption.BLINK, Strings.DisplayStringOption.SHADOW}
-    
-    local itemFlags = {
-        itemFlag,
-        itemFlag,
-        itemFlag,
-        {Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
-    }
-    
-    local selectedFlags = {
-        selectedFlag,
-        selectedFlag,
-        selectedFlag,
-        {Strings.DisplayStringOption.BLINK, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
-    }
-    
-    local headers = Flow.GetSaveHeaders()
-    local items = {[1] = {}, [2] = {}, [3] = {}, [4] = {}}
-    
-    for i = 1, #headers do
-        local h = headers[i]
-        local itemText1, itemText2, itemText3, itemText4
-        
-        if h and h.Present then
-            itemText1 = string.format("%02d", h.Count)
-            itemText2 = string.format("%s", h.LevelName)
-            itemText3 = string.format("%02d:%02d:%02d", h.Hours, h.Minutes, h.Seconds)
-            itemText4 = ""
-        else
-            itemText1 = ""
-            itemText2 = ""
-            itemText3 = ""
-            itemText4 = "empty"
-        end
-        
-        table.insert(items[1], {itemName = itemText1})
-        table.insert(items[2], {itemName = itemText2})
-        table.insert(items[3], {itemName = itemText3})
-        table.insert(items[4], {itemName = itemText4})
-    end
-    
-    if save then
-        for index in ipairs(items) do
-            Menu.Create("SaveMenu"..index, saveTitleText[index], items[index], saveFunctions[index], nil, Menu.Type.ITEMS_ONLY)
-        end
-    else
-        for index in ipairs(items) do
-            Menu.Create("SaveMenu"..index, loadTitleText[index], items[index], loadFunctions[index], nil, Menu.Type.ITEMS_ONLY)
-        end
-    end
-    
-    for index = 1, 4 do
-        local saveMenu = Menu.Get("SaveMenu"..index)
-        local translate = (index == 4)
-        
-        saveMenu:SetItemsPosition(textPosition[index])
-        saveMenu:SetTitlePosition(Vec2(50, 4))
-        saveMenu:SetVisibility(true)
-        saveMenu:SetLineSpacing(5.3)
-        saveMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9, itemFlags[index])
-        saveMenu:SetSelectedItemFlags(selectedFlags[index])
-        saveMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, 1.5, nil, true)
-        saveMenu:SetItemsTranslate(translate)
-        saveMenu:SetSoundEffects(soundMap[index].select, soundMap[index].choose)
-        saveMenu:setCurrentItem(saveSlotSelected)
-    end
-end
-
-local function RunSaveMenu()
-    for index = 1, 4 do
-        local saveMenu = Menu.Get("SaveMenu"..index)
-        saveMenu:Draw()
-    end
-end
-
-local function ChangeStatistics()
-    statisticsType = not statisticsType
-end
-
-local function CreateStatisticsMenu()
-    local statItems = {}
-    local items = {"statistics_level", "statistics_game"}
-    
-    if items then
-        for _, itemData in ipairs(items) do
-            local text = "< " .. Flow.GetString(itemData) .. " >"
-            table.insert(statItems, text)
-        end
-    end
-    
-    local ringTable = {
-        {
-            itemName = "Blank",
-            options = statItems,
-            currentOption = 1
-        }
-    }
-    
-    local statisticsMenu = Menu.Create("SatisticsMenu", "statistics", ringTable, nil, nil, Menu.Type.OPTIONS_ONLY)
-    
-    statisticsMenu:SetOptionsPosition(Vec2(50, 24.7))
-    statisticsMenu:SetVisibility(true)
-    statisticsMenu:SetLineSpacing(5.3)
-    statisticsMenu:SetOptionsFont(COLOR_MAP.NORMAL_FONT, 0.9)
-    statisticsMenu:SetOnOptionChangeFunction("Blank", "Engine.CustomInventory.ChangeStatistics")
-    statisticsMenu:SetWrapAroundOptions(true)
-    statisticsMenu:EnableInputs(true)
-    statisticsMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, nil, nil, true)
-    statisticsMenu:SetTitlePosition(Vec2(50, 4))
-end
-
-local function RunStatisticsMenu()
-    local statisticsMenu = Menu.Get("SatisticsMenu")
-    statisticsMenu:Draw()
-end
-
-local function ChangeWeaponMode()
-    local index = Menu.Get("WeaponModeMenu"):getCurrentItemIndex()
-    Lara:SetWeaponMode(index)
-    inventoryMode = INVENTORY_MODE.WEAPON_MODE_CLOSE
-end
-
-local function CreateWeaponModeMenu(item)
-    local weaponModes = {}
-    local itemData = GetInventoryItem(item)
-    
-    for _, entry in ipairs(PICKUP_DATA.WEAPON_MODE_LOOKUP) do
-        if entry.weapon == item then
-            table.insert(weaponModes, {
-                itemName = entry.string,
-                actionBit = entry.bit,
-                options = nil,
-                currentOption = 1
-            })
-        end
-    end
-    
-    local modeIndex = Lara:GetWeaponMode()
-    local itemMenu = Menu.Create("WeaponModeMenu", itemData.name, weaponModes, "Engine.CustomInventory.ChangeWeaponMode", nil, Menu.Type.ITEMS_ONLY)
-    
-    itemMenu:SetItemsPosition(Vec2(50, 35))
-    itemMenu:SetVisibility(true)
-    itemMenu:SetLineSpacing(5.3)
-    itemMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9)
-    itemMenu:SetItemsTranslate(true)
-    itemMenu:setCurrentItem(modeIndex)
-    itemMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, nil, nil, true)
-end
-
-local function RunWeaponModeMenu()
-    local weaponModeMenu = Menu.Get("WeaponModeMenu")
-    weaponModeMenu:Draw()
-end
 
 local function ParseMenuAction(menuActions)
     if HasItemAction(menuActions, ItemAction.USE) or HasItemAction(menuActions, ItemAction.EQUIP) then
@@ -652,10 +131,10 @@ local function ParseMenuAction(menuActions)
     elseif HasItemAction(menuActions, ItemAction.STATISTICS) then
         inventoryMode = INVENTORY_MODE.STATISTICS_OPEN
     elseif HasItemAction(menuActions, ItemAction.SAVE) then
-        saveList = true
+        Save.saveList = true
         inventoryMode = INVENTORY_MODE.SAVE_SETUP
     elseif HasItemAction(menuActions, ItemAction.LOAD) then
-        saveList = false
+        Save.saveList = false
         inventoryMode = INVENTORY_MODE.SAVE_SETUP
     elseif HasItemAction(menuActions, ItemAction.SEPARATE) then
         inventoryMode = INVENTORY_MODE.SEPARATE
@@ -674,38 +153,6 @@ local function DoItemAction()
     if selectedItem and selectedItem.actionBit then
         ParseMenuAction(selectedItem.actionBit)
     end
-end
-
-local function GetCombineItemsCount(selectedItem)
-    local itemCount = 0
-    local items = PICKUP_DATA.CONSTANTS
-    
-    for _, itemRow in ipairs(items) do
-        local itemData = PICKUP_DATA.ConvertRowData(itemRow)
-        local data = BuildInventoryItem(itemData)
-        local shouldInsert = false
-        
-        if data.combine == true then
-            if selectedItem == data.objectID then
-                goto continue
-            end
-            
-            if data.type == TYPE.WEAPON and Lara:GetLaserSight(PICKUP_DATA.WEAPON_SET[data.objectID].slot) then
-                goto continue
-            end
-            
-            shouldInsert = (data.count ~= 0)
-        else
-            goto continue
-        end
-        
-        if shouldInsert then
-            itemCount = itemCount + 1
-        end
-        
-        ::continue::
-    end
-    return itemCount
 end
 
 local function CreateItemMenu(item)
@@ -877,105 +324,14 @@ local function Input(mode)
 end
 
 -- ============================================================================
--- DISPLAY AND RENDERING FUNCTIONS
+-- ITEM FUNCTIONS
 -- ============================================================================
-
-local function SetRingVisibility(ringName, visible)
-    local ring = inventory.ring[ringName]
-    if not ring then return end
-    
-    local itemCount = #ring
-    for i = 1, itemCount do
-        local currentItem = ring[i].objectID
-        local inventoryItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
-        inventoryItem:SetVisible(visible)
-    end
-end
-
-local function TranslateRing(ringName, center, radius, rotationOffset, alpha)
-    alpha = alpha or 1.0
-    local ring = inventory.ring[ringName]
-    if not ring then return end
-    
-    local itemCount = #ring
-    for i = 1, itemCount do
-        local currentItem = ring[i].objectID
-        local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
-        local angleDeg = (360 / itemCount) * (i - 1) + rotationOffset
-        local position = center:Translate(Rotation(0, angleDeg, 0), radius)
-        local itemRotations = currentDisplayItem:GetRotation()
-        
-        local currentAngle = itemRotations.y
-        local angleDiff = (angleDeg - currentAngle) % 360
-        if angleDiff > 180 then
-            angleDiff = angleDiff - 360
-        end
-        local newAngle = (currentAngle + angleDiff * alpha) % 360
-        
-        currentDisplayItem:SetPosition(Utilities.OffsetY(position, ring[i].yOffset))
-        currentDisplayItem:SetRotation(Rotation(itemRotations.x, newAngle, itemRotations.z))
-    end
-end
-
-local function FadeRing(ringName, fadeValue, omitSelectedItem)
-    local ring = inventory.ring[ringName]
-    if not ring then return end
-    
-    local itemCount = #ring
-    local selectedItem = omitSelectedItem and GetSelectedItem(selectedRing).objectID
-    
-    for i = 1, itemCount do
-        local currentItem = ring[i].objectID
-        local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
-        if omitSelectedItem and selectedItem == currentItem then
-            goto continue
-        end
-        
-        local itemColor = currentDisplayItem:GetColor()
-        currentDisplayItem:SetColor(Utilities.ColorCombine(itemColor, fadeValue))
-        
-        ::continue::
-    end
-end
-
-local function ColorRing(ringName, color, omitSelectedItem, alpha)
-    local ring = inventory.ring[ringName]
-    if not ring then return end
-    
-    local itemCount = #ring
-    local selectedItem = omitSelectedItem and GetSelectedItem(selectedRing).objectID
-    
-    for i = 1, itemCount do
-        local currentItem = ring[i].objectID
-        local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
-        if omitSelectedItem and selectedItem == currentItem then
-            goto continue
-        end
-        
-        local itemColor = currentDisplayItem:GetColor()
-        local targetColor = InterpolateColor(itemColor, color, alpha)
-        currentDisplayItem:SetColor(Utilities.ColorCombine(targetColor, itemColor.a))
-        
-        ::continue::
-    end
-end
-
-local function FadeRings(visible, omitSelectedRing)
-    local fadeValue = visible and ALPHA_MAX or ALPHA_MIN
-    
-    for index in pairs(inventory.ring) do
-        if not (omitSelectedRing and index == selectedRing) then
-            FadeRing(index, fadeValue, false)
-            SetRingVisibility(index, visible)
-        end
-    end
-end
 
 local function RotateItem(itemName)
     local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(itemName)
     local itemRotations = currentDisplayItem:GetRotation()
     local itemColor = currentDisplayItem:GetColor()
-    local targetColor = InterpolateColor(itemColor, COLOR_MAP.ITEM_COLOR_VISIBLE, ITEM_SPINBACK_ALPHA)
+    local targetColor = Animation.Interpolate.Lerp(itemColor, COLOR_MAP.ITEM_COLOR_VISIBLE, ITEM_SPINBACK_ALPHA)
     currentDisplayItem:SetRotation(Rotation(itemRotations.x, (itemRotations.y + ANIMATION.ROTATION_SPEED) % 360, itemRotations.z))
     currentDisplayItem:SetColor(targetColor)
 end
@@ -1032,238 +388,6 @@ local function DeleteChosenAmmo(itemOnly)
         
         Text.Hide("ITEM_LABEL_SECONDARY")
     
-    end
-end
-
-local function DrawArrows(list, alpha)
-    for _, entry in ipairs(list) do
-        local entrySprite = DisplaySprite(
-            TEN.Objects.ObjID.MISC_SPRITES,
-            3,
-            entry[2],
-            entry[1],
-            Vec2(3, 3),
-            Utilities.ColorCombine(COLOR_MAP.NORMAL_FONT, alpha)
-        )
-        entrySprite:Draw(-8, View.AlignMode.CENTER, View.ScaleMode.FIT, TEN.Effects.BlendID.ALPHA_BLEND)
-    end
-end
-
-local function DrawInventorySprites(selectedRing, alpha)
-    local visibleModes = {
-        [INVENTORY_MODE.INVENTORY] = true,
-        [INVENTORY_MODE.INVENTORY_OPENING] = true,
-        [INVENTORY_MODE.INVENTORY_EXIT] = true,
-        [INVENTORY_MODE.RING_OPENING] = true,
-        [INVENTORY_MODE.RING_CLOSING] = true,
-        [INVENTORY_MODE.RING_ROTATE] = true
-    }
-    
-    if not visibleModes[inventoryMode] then
-        return
-    end
-    
-    local arrowsUp = {
-        {0, Vec2(5, 5)},
-        {0, Vec2(95, 5)},
-    }
-    
-    local arrowsDown = {
-        {180, Vec2(5, 95)},
-        {180, Vec2(95, 95)},
-    }
-    
-    if selectedRing ~= PICKUP_DATA.RING.PUZZLE and 
-       selectedRing ~= PICKUP_DATA.RING.COMBINE and 
-       selectedRing ~= PICKUP_DATA.RING.AMMO then
-        DrawArrows(arrowsUp, alpha)
-    end
-    
-    if selectedRing ~= PICKUP_DATA.RING.OPTIONS and 
-       selectedRing ~= PICKUP_DATA.RING.COMBINE and 
-       selectedRing ~= PICKUP_DATA.RING.AMMO then
-        DrawArrows(arrowsDown, alpha)
-    end
-end
-
-local function DrawBackground(alpha)
-    if Settings.BACKGROUND.ENABLE then
-        local bgAlpha = math.min(alpha, Settings.BACKGROUND.ALPHA)
-        local bgColor = Utilities.ColorCombine(Settings.BACKGROUND.COLOR, bgAlpha)
-        local bgSprite = TEN.DisplaySprite(
-            Settings.BACKGROUND.OBJECTID,
-            Settings.BACKGROUND.SPRITEID,
-            Settings.BACKGROUND.POSITION,
-            Settings.BACKGROUND.ROTATION,
-            Settings.BACKGROUND.SCALE,
-            bgColor
-        )
-        bgSprite:Draw(0, Settings.BACKGROUND.ALIGN_MODE, Settings.BACKGROUND.SCALE_MODE, Settings.BACKGROUND.BLEND_MODE)
-    end
-end
-
--- ============================================================================
--- CONSTRUCTION AND SETUP
--- ============================================================================
-
-local function ConstructObjectList(ringType, selectedWeapon)
-    local items = PICKUP_DATA.CONSTANTS
-    
-    if ringType == RING.AMMO or ringType == RING.COMBINE then
-        ClearInventory(ringType, true)
-    else
-        ClearInventory()
-    end
-    
-    for _, itemRow in ipairs(items) do
-        local itemData = PICKUP_DATA.ConvertRowData(itemRow)
-        local data = BuildInventoryItem(itemData)
-        data.rotation = Utilities.CopyRotation(data.rotation)
-        
-        if data.type == TYPE.AMMO and ringType ~= RING.AMMO then
-            local weaponPresent = TEN.Inventory.GetItemCount(PICKUP_DATA.AMMO_SET[data.objectID].weapon)
-            if weaponPresent ~= 0 then
-                goto continue
-            end
-        end
-        
-        if data.type == TYPE.WEAPON then
-            if Lara:GetLaserSight(PICKUP_DATA.WEAPON_SET[data.objectID].slot) then
-                data.meshBits = PICKUP_DATA.WEAPON_LASERSIGHT_DATA[data.objectID].MESHBITS
-                data.name = PICKUP_DATA.WEAPON_LASERSIGHT_DATA[data.objectID].NAME
-                data.menuActions = PICKUP_DATA.WEAPON_LASERSIGHT_DATA[data.objectID].FLAGS
-            end
-        end
-        
-        local ammoRing = false
-        local shouldInsert = false
-        
-        if ringType == RING.COMBINE then
-            if data.combine == true then
-                data.ringName = RING.COMBINE
-                
-                if combineItem1 == data.objectID then
-                    goto continue
-                end
-                
-                if data.type == TYPE.WEAPON and Lara:GetLaserSight(PICKUP_DATA.WEAPON_SET[data.objectID].slot) then
-                    goto continue
-                end
-                
-                shouldInsert = (data.count ~= 0)
-            else
-                goto continue
-            end
-        elseif ringType == RING.AMMO then
-            if data.type == TYPE.AMMO and PICKUP_DATA.WEAPON_AMMO_LOOKUP[selectedWeapon] and Utilities.Contains(PICKUP_DATA.WEAPON_AMMO_LOOKUP[selectedWeapon], data.objectID) then
-                data.ringName = RING.AMMO
-                ammoRing = true
-                shouldInsert = true
-            else
-                goto continue
-            end
-        else
-            shouldInsert = (data.count ~= 0)
-        end
-        
-        if (data.objectID == TEN.Objects.ObjID.LASERSIGHT_ITEM) then
-            if Lara:GetLaserSight(TEN.Objects.WeaponType.CROSSBOW) or 
-               Lara:GetLaserSight(TEN.Objects.WeaponType.REVOLVER) or 
-               Lara:GetLaserSight(TEN.Objects.WeaponType.HK) then
-                shouldInsert = false
-            end
-        end
-        
-        inventory.ring[data.ringName] = inventory.ring[data.ringName] or {}
-        
-        if debug then
-            print("Item: "..Util.GetObjectIDString(data.objectID))
-            print("shouldInsert: "..tostring(shouldInsert))
-            print("ammoRing: "..tostring(ammoRing))
-        end
-        
-        if shouldInsert or ammoRing then
-            table.insert(inventory.ring[data.ringName], data)
-            local inventoryItem = TEN.View.DisplayItem(
-                tostring(data.objectID),
-                data.objectID,
-                RING_CENTER[data.ringName],
-                data.rotation,
-                Vec3(data.scale),
-                data.meshBits
-            )
-            inventoryItem:SetColor(COLOR_MAP.ITEM_COLOR)
-        end
-        
-        ::continue::
-    end
-    
-    if ringType then
-        local ringItems = inventory.ring[ringType] or {}
-        local count = #ringItems
-        inventory.selectedItem[ringType] = 1
-        inventory.slice[ringType] = (count > 0) and (360 / count) or 0
-        inventory.ringPosition[ringType] = RING_CENTER[ringType]
-    else
-        for index, ringItems in pairs(inventory.ring) do
-            local count = #ringItems
-            inventory.selectedItem[index] = 1
-            inventory.slice[index] = (count > 0) and (360 / count) or 0
-            inventory.ringPosition[index] = RING_CENTER[index]
-        end
-    end
-end
-
-local function OpenInventoryAtItem(itemID, repositionRings)
-    if itemID == NO_VALUE then
-        return
-    end
-    
-    local ringIndex, itemIndex = FindItemInInventory(itemID)
-    
-    if not (ringIndex and itemIndex) then
-        return
-    end
-    
-    inventory.selectedItem[ringIndex] = itemIndex
-    local slice = inventory.slice[ringIndex]
-    local angle = -slice * (itemIndex - 1)
-    currentRingAngle = angle
-    targetRingAngle = angle
-    
-    if repositionRings then
-        local ringPosition = RING_CENTER[RING.MAIN]
-        selectedRing = ringIndex
-        
-        for index in pairs(inventory.ring) do
-            local offset = (index - selectedRing) * RING_POSITION_OFFSET
-            inventory.ringPosition[index] = Vec3(ringPosition.x, ringPosition.y + offset, ringPosition.z)
-            TranslateRing(index, inventory.ringPosition[index], RING_RADIUS, angle)
-        end
-    end
-    
-    if itemID == TEN.Objects.ObjID.PC_SAVE_INV_ITEM or itemID == TEN.Objects.ObjID.PC_LOAD_INV_ITEM then
-        if itemID == TEN.Objects.ObjID.PC_SAVE_INV_ITEM then
-            saveList = true
-        end
-        saveSelected = true
-    end
-end
-
-local function SetupSecondaryRing(ringName, item)
-    previousRing = selectedRing
-    combineItem1 = item or GetSelectedItem(selectedRing).objectID
-    targetRingAngle = 0
-    currentRingAngle = 0
-    ConstructObjectList(ringName, combineItem1)
-    selectedRing = ringName
-    inventory.ringPosition[ringName] = RING_CENTER[ringName]
-    
-    if ringName == RING.AMMO then
-        local weaponSlot = PICKUP_DATA.WEAPON_SET[combineItem1].slot
-        local ammoType = Lara:GetAmmoType(weaponSlot)
-        local objectID = PICKUP_DATA.AMMO_TYPE_TO_OBJECT[ammoType]
-        OpenInventoryAtItem(objectID, false)
     end
 end
 
@@ -1566,138 +690,7 @@ local function ExitInventory()
     LevelVars.Engine.CustomInventory.InventoryClosed = true
 end
 
-local function ExamineItem(item)
-    examineScaler = math.max(EXAMINE_MIN_SCALE, math.min(EXAMINE_MAX_SCALE, examineScaler))
-    
-    local objectName = Util.GetObjectIDString(item)
-    local stringKey = objectName:lower().."_text"
-    local localizedString = Flow.IsStringPresent(stringKey) and Flow.GetString(stringKey) or nil
-    
-    local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(item))
-    displayItem:SetRotation(examineRotation)
-    displayItem:SetScale(Vec3(examineScaler))
-    
-    if localizedString and examineShowString then
-        local entryText = TEN.Strings.DisplayString(
-            localizedString,
-            Utilities.PercentPos(EXAMINE_TEXT_POS.x, EXAMINE_TEXT_POS.y),
-            1,
-            COLOR_MAP.NORMAL_FONT,
-            true,
-            {Strings.DisplayStringOption.VERTICAL_CENTER, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
-        )
-        Strings.ShowString(entryText, 1 / 30)
-    end
-end
 
-local function UseItem(item)
-    local levelStatistics = Flow.GetStatistics()
-    local gameStatistics = Flow.GetStatistics(true)
-    
-    local CROUCH_STATES = {
-        LS_CROUCH_IDLE = 71,
-        LS_CROUCH_TURN_LEFT = 105,
-        LS_CROUCH_TURN_RIGHT = 106,
-        LS_CROUCH_TURN_180 = 171
-    }
-    
-    local CRAWL_STATES = {
-        LS_CRAWL_IDLE = 80,
-        LS_CRAWL_FORWARD = 81,
-        LS_CRAWL_BACK = 86,
-        LS_CRAWL_TURN_LEFT = 84,
-        LS_CRAWL_TURN_RIGHT = 85,
-        LS_CRAWL_TURN_180 = 172,
-        LS_CRAWL_TO_HANG = 88
-    }
-    
-    local function TestState(table)
-        local currentState = Lara:GetState()
-        for _, state in pairs(table) do
-            if currentState == state then
-                return true
-            end
-        end
-        return false
-    end
-    
-    local function CrawlTest(item)
-        if item.crawl then
-            return true
-        end
-        return not (TestState(CROUCH_STATES) or TestState(CRAWL_STATES))
-    end
-    
-    local function WaterTest(item)
-        if item.underwater then
-            return true
-        end
-        return (Lara:GetWaterStatus() == TEN.Objects.WaterStatus.DRY or Lara:GetWaterStatus() == TEN.Objects.WaterStatus.WADE)
-    end
-    
-    TEN.Inventory.SetUsedItem(item)
-    TEN.Util.OnUseItemCallBack()
-    
-    if (TEN.Inventory.GetUsedItem() == NO_VALUE) then
-        inventoryMode = INVENTORY_MODE.INVENTORY_EXIT
-        return
-    end
-    
-    if PICKUP_DATA.WEAPON_SET[item] and WaterTest(PICKUP_DATA.WEAPON_SET[item]) and CrawlTest(PICKUP_DATA.WEAPON_SET[item]) then
-        TEN.Inventory.ClearUsedItem()
-        local currentWeapon = Lara:GetWeaponType()
-        
-        if item == TEN.Objects.ObjID.FLARE_INV_ITEM and currentWeapon == TEN.Objects.WeaponType.FLARE then
-            inventoryMode = INVENTORY_MODE.INVENTORY_EXIT
-            return
-        end
-        
-        Lara:SetWeaponType(PICKUP_DATA.WEAPON_SET[item].slot, true)
-        
-        if item == TEN.Objects.ObjID.FLARE_INV_ITEM then
-            TEN.Inventory.TakeItem(item, 1)
-        end
-    end
-    
-    if PICKUP_DATA.HEALTH_SET[item] then
-        TEN.Inventory.ClearUsedItem()
-        local hp = Lara:GetHP()
-        local poison = Lara:GetPoison()
-        
-        if hp <= 0 or hp >= PICKUP_DATA.HEALTH_MAX then
-            if poison == 0 then
-                TEN.Sound.PlaySound(SOUND_MAP.PLAYER_NO)
-                inventoryMode = INVENTORY_MODE.INVENTORY_EXIT
-                return
-            end
-        end
-        
-        local count = TEN.Inventory.GetItemCount(item)
-        
-        if count then
-            if count ~= NO_VALUE then
-                TEN.Inventory.TakeItem(item, 1)
-            end
-            
-            Lara:SetPoison(0)
-            local setHP = math.min(1000, (hp + PICKUP_DATA.HEALTH_SET[item]))
-            Lara:SetHP(setHP)
-            TEN.Sound.PlaySound(SOUND_MAP.TR4_MENU_MEDI)
-            
-            levelStatistics.healthPacksUsed = levelStatistics.healthPacksUsed + 1
-            gameStatistics.healthPacksUsed = gameStatistics.healthPacksUsed + 1
-            Flow.SetStatistics(levelStatistics)
-            Flow.SetStatistics(gameStatistics, true)
-        end
-    end
-    
-    if item == TEN.Objects.ObjID.BINOCULARS_ITEM then
-        TEN.Inventory.ClearUsedItem()
-        useBinoculars = true
-    end
-    
-    inventoryMode = INVENTORY_MODE.INVENTORY_EXIT
-end
 
 local function DrawInventory(mode)
     local selectedItem = GetSelectedItem(selectedRing)
@@ -1956,7 +949,7 @@ local function UpdateInventory()
 end
 
 local function RunInventory()
-    if inventoryStart then
+    if inventorySetup then
         LevelVars.Engine.CustomInventory = {}
         LevelVars.Engine.CustomInventory.InventoryOpen = false
         LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
@@ -1972,7 +965,7 @@ local function RunInventory()
 
         Text.Setup()
         
-        inventoryStart = false
+        inventorySetup = false
     end
     
     if useBinoculars then
@@ -2037,10 +1030,6 @@ end
 -- PUBLIC API (LevelFuncs.Engine.CustomInventory)
 -- ============================================================================
 
-LevelFuncs.Engine.CustomInventory.DoSave = DoSave
-LevelFuncs.Engine.CustomInventory.DoLoad = DoLoad
-LevelFuncs.Engine.CustomInventory.ChangeStatistics = ChangeStatistics
-LevelFuncs.Engine.CustomInventory.ChangeWeaponMode = ChangeWeaponMode
 LevelFuncs.Engine.CustomInventory.DoItemAction = DoItemAction
 LevelFuncs.Engine.CustomInventory.UpdateInventory = UpdateInventory
 LevelFuncs.Engine.CustomInventory.RunInventory = RunInventory

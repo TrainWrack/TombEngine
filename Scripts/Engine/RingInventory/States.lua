@@ -26,9 +26,9 @@
 ]]
 
 local StatePhase = {
-    OPENING = "opening",
-    ACTIVE = "active",
-    CLOSING = "closing"
+    OPENING = 1,
+    ACTIVE = 2,
+    CLOSING = 3
 }
 
 -- ============================================================================
@@ -46,6 +46,23 @@ local InventoryStateMachine = {
 -- STATE DEFINITIONS WITH STATE-LOCAL VARIABLES
 -- ============================================================================
 local StateTransitions = {}
+
+function StateTransitions.Add(name, config)
+    -- Validate inputs
+    if type(name) ~= "string" and type(name) ~= "number" then
+        warn("StateTransitions.Add: name must be a string or number")
+        return false
+    end
+    
+    if type(config) ~= "table" then
+        warn("StateTransitions.Add: config must be a table")
+        return false
+    end
+    
+    -- Add the transition configuration
+    StateTransitions[name] = config
+    return true
+end
 --[[
 
     -- ========================================================================
@@ -690,6 +707,36 @@ Automatic cleanup on state exit
 Can use same names in different states (no conflicts)
 Easy to debug - just print stateData
 ]]
+
+local examineState = {
+        onEnter = function()
+            -- Setup
+            
+            -- Initialize state-local variables
+            InventoryStateMachine.stateData = {}
+            
+            InventoryStateMachine.phase = StatePhase.OPENING
+        end,
+        
+        onUpdate = function()
+
+            if InventoryStateMachine.phase == StatePhase.OPENING then
+                
+            elseif InventoryStateMachine.phase == StatePhase.ACTIVE then
+
+                
+            elseif InventoryStateMachine.phase == StatePhase.CLOSING then
+
+            end
+        end,
+        
+        onExit = function(nextState)
+            -- Cleanup (state-local variables automatically cleared)
+
+            InventoryStateMachine.stateData = {}  -- Clear state data
+            return nextState
+        end
+}
 
 return {
     StateMachine = InventoryStateMachine,
