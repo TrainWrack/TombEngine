@@ -1,3 +1,7 @@
+-- ============================================================================
+-- Combine - Handles combine functions and data for ring inventory
+-- ============================================================================
+
 --Pointers to tables
 local PICKUP_DATA = require("Engine.CustomInventory.PickupData")
 local TYPE = PICKUP_DATA.TYPE
@@ -7,13 +11,8 @@ local Combine = {}
 
 --Variables
 Combine.performCombine = false
-Combine.item1 = nil
-Combine.item2 = nil
 Combine.result = nil
 
--- ============================================================================
--- WATERSKIN AND COMBINE FUNCTIONS
--- ============================================================================
 function Combine.PerformWaterskinCombine(flag)
     local smallRaw = Lara:GetWaterSkinStatus(false)
     local bigRaw = Lara:GetWaterSkinStatus(true)
@@ -33,7 +32,7 @@ function Combine.PerformWaterskinCombine(flag)
             Lara:SetWaterSkinStatus(smallLiters + 1, false)
             Lara:SetWaterSkinStatus(bigLiters + 1, true)
             
-            combineItem1 = (smallLiters + 1) + (TEN.Objects.ObjID.WATERSKIN1_EMPTY - 1)
+            Combine.result = (smallLiters + 1) + (TEN.Objects.ObjID.WATERSKIN1_EMPTY - 1)
             return true
         end
     else
@@ -45,7 +44,7 @@ function Combine.PerformWaterskinCombine(flag)
             Lara:SetWaterSkinStatus(smallLiters + 1, false)
             Lara:SetWaterSkinStatus(bigLiters + 1, true)
             
-            combineItem1 = (bigLiters + 1) + (TEN.Objects.ObjID.WATERSKIN2_EMPTY - 1)
+            Combine.result = (bigLiters + 1) + (TEN.Objects.ObjID.WATERSKIN2_EMPTY - 1)
             return true
         end
     end
@@ -97,7 +96,7 @@ function Combine.CombineItems(data1, data2)
             TEN.Inventory.TakeItem(item2, 1)
             TEN.Inventory.GiveItem(result, 1)
             
-            combineResult = result
+            Combine.result = result
             return true
         end
     end
@@ -126,7 +125,7 @@ function Combine.SeparateItems(item3)
             TEN.Inventory.GiveItem(a, 1)
             TEN.Inventory.GiveItem(b, 1)
             
-            combineItem1 = a
+            Combine.result = a
             return true
         end
     end

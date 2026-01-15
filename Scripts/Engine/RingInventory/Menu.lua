@@ -1,3 +1,8 @@
+
+-- ============================================================================
+-- Menu Module - Creates custom menus for ring inventory
+-- ============================================================================
+
 local Menu = {}
 local debug = false
 Menu.__index = Menu

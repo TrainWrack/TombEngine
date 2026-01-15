@@ -1,6 +1,12 @@
+-- ============================================================================
+-- Statistics - Handles statistics function and data for ring inventory
+-- ============================================================================
+
 --External Modules
-local Menu = require("Engine.CustomMenu")
+local Input = require("Engine.CustomInventory.Input")
+local Menu = require("Engine.CustomInventory.Menu")
 local Settings = require("Engine.CustomInventory.Settings")
+local Text = require("Engine.CustomInventory.Text")
 
 --Pointers to tables
 local COLOR_MAP = Settings.COLOR_MAP
@@ -9,7 +15,46 @@ local Statistics = {}
 
 Statistics.type = false
 
-function Statistics.ShowLevelStats()
+local EXAMINE_TEXT = 
+{
+name = "EXAMINE_TEXT",                 
+text = "",               
+position = EXAMINE_TEXT_POS,                   
+scale = 1,                             
+color = COLOR_MAP.NORMAL_FONT,        
+visible = false,                           
+flags = 
+{
+    Strings.DisplayStringOption.VERTICAL_CENTER,
+    Strings.DisplayStringOption.CENTER,
+    Strings.DisplayStringOption.SHADOW
+},
+translate = false,
+}
+    
+Text.Create(EXAMINE_TEXT) --Create Examine Text Channel
+
+local EXAMINE_TEXT = 
+{
+name = "EXAMINE_TEXT",                 
+text = "",               
+position = EXAMINE_TEXT_POS,                   
+scale = 1,                             
+color = COLOR_MAP.NORMAL_FONT,        
+visible = false,                           
+flags = 
+{
+    Strings.DisplayStringOption.VERTICAL_CENTER,
+    Strings.DisplayStringOption.CENTER,
+    Strings.DisplayStringOption.SHADOW
+},
+translate = false,
+}
+    
+Text.Create(EXAMINE_TEXT) --Create Examine Text Channel
+
+
+function Statistics.ShowStats()
    
     local levelStats = Flow.GetStatistics(Statistics.type)
     local level = Flow.GetCurrentLevel()
@@ -46,7 +91,7 @@ function Statistics.ShowLevelStats()
 
 end
 
-function Statistics.ChangeStatistics()
+function Statistics.ToggleType()
     Statistics.type = not Statistics.type
 end
 
@@ -89,7 +134,7 @@ end
 
 local function CalculateCompassAngle()
     local needleOrient = Rotation(0, -Lara:GetRotation().y, 0)
-    local wibble = math.sin((timeInMenu % 0x40) / 0x3F * (2 * math.pi))
+    local wibble = math.sin((Input.GetTimeInMenu() % 0x40) / 0x3F * (2 * math.pi))
     needleOrient.y = needleOrient.y + wibble
     return needleOrient
 end

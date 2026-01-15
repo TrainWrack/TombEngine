@@ -1,7 +1,9 @@
---Code for weapon mode menu and setting
+-- ============================================================================
+-- WeaponMode - Handles weapon mode functions and data for ring inventory
+-- ============================================================================
 
 --External Modules
-local Menu = require("Engine.CustomMenu")
+local Menu = require("Engine.CustomInventory.Menu")
 local Settings = require("Engine.CustomInventory.Settings")
 
 --Pointers to tables

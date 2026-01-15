@@ -181,6 +181,13 @@ function TextChannels.SetColor(channelName, color)
     end
 end
 
+function TextChannels.SetTranslate(channelName, translate)
+    local state = TextChannelStates[channelName]
+    if state then
+        state.translate = translate
+    end
+end
+
 -- ============================================================================
 -- UPDATE ALL CHANNELS
 -- ============================================================================
@@ -446,22 +453,6 @@ TextChannels.CONFIGS = {
             Strings.DisplayStringOption.SHADOW
         },
         translate = false,
-    },
-    EXAMINE_TEXT = 
-    {
-        name = "EXAMINE_TEXT",                 
-        text = "",               
-        position = Vec2(50, 80),                   
-        scale = 1,                             
-        color = COLOR_MAP.NORMAL_FONT,        
-        visible = false,                           
-        flags = 
-        {
-            Strings.DisplayStringOption.VERTICAL_CENTER,
-            Strings.DisplayStringOption.CENTER,
-            Strings.DisplayStringOption.SHADOW
-        },
-        translate = true,
     }
 }
 

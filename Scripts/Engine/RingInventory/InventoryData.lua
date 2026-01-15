@@ -9,30 +9,97 @@ local COLOR_MAP = Settings.COLOR_MAP
 local ANIMATION = Settings.ANIMATION
 
 --Structure for inventory
-local inventory = {}
+local Inventory = {}
 
-inventory.ring = {}
-inventory.slice = {}
-inventory.selectedRing = RING.MAIN
-inventory.previousRing = nil
-inventory.selectedItem = {}
-inventory.ringPosition = {}
-inventory.chosenItem = nil
-inventory.openAtItem = nil
-inventory.gameflowOverrides = nil
+Inventory.ring = {}
+Inventory.slice = {}
+Inventory.selectedRing = RING.MAIN
+Inventory.previousRing = nil
+Inventory.selectedItem = {}
+Inventory.ringPosition = {}
+Inventory.chosenItem = nil
+Inventory.openAtItem = nil
+Inventory.gameflowOverrides = nil
 
-local function ConstructObjectList(ringType, selectedWeapon)
+function Inventory.Clear(ringName, clearDrawItems)
+    if ringName then
+        local ring = Inventory.ring[ringName]
+        
+        if clearDrawItems and ring then
+            for _, itemData in ipairs(ring) do
+                local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(itemData.objectID))
+                displayItem:Remove()
+            end
+        end
+        
+        Inventory.ring[ringName] = {}
+        Inventory.slice[ringName] = nil
+        Inventory.selectedItem[ringName] = nil
+        Inventory.ringPosition[ringName] = nil
+    else
+        if clearDrawItems then
+            TEN.View.DisplayItem.ClearAllItems()
+        end
+        
+        Inventory.ring = {}
+        Inventory.slice = {}
+        Inventory.selectedItem = {}
+        Inventory.ringPosition = {}
+
+    end
+end
+
+local function ReadGameflow()
+    local overrides = {}
+    for _, itemID in ipairs(TEN.Flow.GetCurrentLevel().objects) do
+        if itemID.objectID then
+            local id = TEN.Inventory.ConvertInventoryItemToObject(itemID.objectID)
+            overrides[id] = { 
+                item = id,
+                yOffset = itemID.yOffset,
+                scale = itemID.scale,
+                rotation = itemID.rotation,
+                menuActions = itemID.action,
+                name = itemID.nameKey,
+                meshBits = itemID.meshBits,
+                orientation = itemID.axis
+            }
+        end
+    end
+    return overrides
+end
+
+function Inventory.BuildItem(data)
+    Inventory.gameflowOverrides = ReadGameflow() or {}
+    data.count = TEN.Inventory.GetItemCount(data.objectID)
+    
+    local override = Inventory.gameflowOverrides[data.objectID] or {}
+    
+    if override.yOffset ~= nil then data.yOffset = override.yOffset end
+    if override.scale ~= nil then data.scale = override.scale end
+    if override.rotation ~= nil then data.rotation = override.rotation end
+    if override.menuActions ~= nil then data.menuActions = override.menuActions end
+    if override.name ~= nil then data.name = override.name end
+    if override.meshBits ~= nil then data.meshBits = override.meshBits end
+    if override.orientation ~= nil then data.orientation = override.orientation end
+    if override.type ~= nil then data.type = override.type end
+    if override.combine ~= nil then data.combine = override.combine end
+    
+    return data
+end
+
+function Inventory.Construct(ringType, selectedWeapon)
     local items = PICKUP_DATA.CONSTANTS
     
     if ringType == RING.AMMO or ringType == RING.COMBINE then
-        ClearInventory(ringType, true)
+        Inventory.ClearInventory(ringType, true)
     else
-        ClearInventory()
+        Inventory.ClearInventory()
     end
     
     for _, itemRow in ipairs(items) do
         local itemData = PICKUP_DATA.ConvertRowData(itemRow)
-        local data = BuildInventoryItem(itemData)
+        local data = Inventory.BuildItem(itemData)
         data.rotation = Utilities.CopyRotation(data.rotation)
         
         if data.type == TYPE.AMMO and ringType ~= RING.AMMO then
@@ -129,7 +196,7 @@ local function ConstructObjectList(ringType, selectedWeapon)
     end
 end
 
-local function OpenInventoryAtItem(itemID, repositionRings)
+function Inventory.OpenAtItem(itemID, repositionRings)
     if itemID == NO_VALUE then
         return
     end
@@ -165,12 +232,12 @@ local function OpenInventoryAtItem(itemID, repositionRings)
     end
 end
 
-local function SetupSecondaryRing(ringName, item)
+function Inventory.SetupSecondaryRing(ringName, item)
     previousRing = selectedRing
     combineItem1 = item or GetSelectedItem(selectedRing).objectID
     targetRingAngle = 0
     currentRingAngle = 0
-    ConstructObjectList(ringName, combineItem1)
+    Inventory.ConstructObjectList(ringName, combineItem1)
     selectedRing = ringName
     inventory.ringPosition[ringName] = RING_CENTER[ringName]
     
@@ -182,10 +249,8 @@ local function SetupSecondaryRing(ringName, item)
     end
 end
 
-
-
 local function FindItemInInventory(targetID)
-    for ringIndex, ring in pairs(inventory.ring) do
+    for ringIndex, ring in pairs(Inventory.ring) do
         for itemIndex, itemEntry in ipairs(ring) do
             if itemEntry.objectID == targetID then
                 return ringIndex, itemIndex
@@ -195,85 +260,34 @@ local function FindItemInInventory(targetID)
     return nil, nil
 end
 
-local function GetInventoryItem(itemID)
+function Inventory.GetInventoryItem(itemID)
     local ringIndex, itemIndex = FindItemInInventory(itemID)
     if not ringIndex or not itemIndex then
         return nil
     end
-    return inventory.ring[ringIndex][itemIndex]
+    return Inventory.ring[ringIndex][itemIndex]
 end
 
-local function ReadGameflow()
-    local overrides = {}
-    for _, itemID in ipairs(TEN.Flow.GetCurrentLevel().objects) do
-        if itemID.objectID then
-            local id = TEN.Inventory.ConvertInventoryItemToObject(itemID.objectID)
-            overrides[id] = { 
-                item = id,
-                yOffset = itemID.yOffset,
-                scale = itemID.scale,
-                rotation = itemID.rotation,
-                menuActions = itemID.action,
-                name = itemID.nameKey,
-                meshBits = itemID.meshBits,
-                orientation = itemID.axis
-            }
-        end
+function Inventory.GetRing(ring)
+    return Inventory.ring[ring]
+end
+
+function Inventory.GetSelectedItem(ring)
+    return Inventory.ring[ring][Inventory.selectedItem[ring]]
+end
+
+function Inventory.GetSelectedItemIndex(ring)
+    return Inventory.selectedItem[ring]
+end
+
+function Inventory.GetRingSlice(ring)
+    
+    if Inventory.slice[ring] then
+        return Inventory.slice[ring]
     end
-    return overrides
-end
 
-local function BuildInventoryItem(data)
-    gameflowOverrides = ReadGameflow() or {}
-    data.count = TEN.Inventory.GetItemCount(data.objectID)
-    
-    local override = gameflowOverrides[data.objectID] or {}
-    
-    if override.yOffset ~= nil then data.yOffset = override.yOffset end
-    if override.scale ~= nil then data.scale = override.scale end
-    if override.rotation ~= nil then data.rotation = override.rotation end
-    if override.menuActions ~= nil then data.menuActions = override.menuActions end
-    if override.name ~= nil then data.name = override.name end
-    if override.meshBits ~= nil then data.meshBits = override.meshBits end
-    if override.orientation ~= nil then data.orientation = override.orientation end
-    if override.type ~= nil then data.type = override.type end
-    if override.combine ~= nil then data.combine = override.combine end
-    
-    return data
-end
+    return 0
 
-local function GetSelectedItem(ring)
-    return inventory.ring[ring][inventory.selectedItem[ring]]
-end
-
-local function GetSelectedRing(ring)
-    return inventory.ring[ring][inventory.selectedItem[ring]]
-end
-
-
-
-local function ClearInventory(ringName, clearDrawItems)
-    if ringName then
-        local ring = inventory.ring[ringName]
-        
-        if clearDrawItems and ring then
-            for _, itemData in ipairs(ring) do
-                local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(itemData.objectID))
-                displayItem:Remove()
-            end
-        end
-        
-        inventory.ring[ringName] = {}
-        inventory.slice[ringName] = nil
-        inventory.selectedItem[ringName] = nil
-        inventory.ringPosition[ringName] = nil
-    else
-        if clearDrawItems then
-            TEN.View.DisplayItem.ClearAllItems()
-        end
-        
-        inventory = {ring = {}, slice = {}, selectedItem = {}, ringPosition = {}}
-    end
 end
 
 local function GetCombineItemsCount(selectedItem)
@@ -307,3 +321,5 @@ local function GetCombineItemsCount(selectedItem)
     end
     return itemCount
 end
+
+return Inventory
