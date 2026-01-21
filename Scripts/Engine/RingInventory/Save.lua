@@ -1,6 +1,6 @@
 --External Modules
-local Menu = require("Engine.CustomMenu")
-local Settings = require("Engine.CustomInventory.Settings")
+local Menu = require("Engine.RingInventory.Menu")
+local Settings = require("Engine.RingInventory.Settings")
 
 --Pointers to tables
 local SOUND_MAP = Settings.SOUND_MAP
@@ -51,8 +51,8 @@ function Save.CreateSaveMenu(save)
     
     local saveTitleText = {nil, "save_game", nil, nil}
     local loadTitleText = {nil, "load_game", nil, nil}
-    local saveFunctions = {nil, "Engine.CustomInventory.DoSave", nil, nil}
-    local loadFunctions = {nil, "Engine.CustomInventory.DoLoad", nil, nil}
+    local saveFunctions = {nil, "Engine.RingInventory.DoSave", nil, nil}
+    local loadFunctions = {nil, "Engine.RingInventory.DoLoad", nil, nil}
     
     local soundMap = {
         [1] = {select = nil, choose = nil},
@@ -126,7 +126,7 @@ function Save.CreateSaveMenu(save)
         saveMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, 1.5, nil, true)
         saveMenu:SetItemsTranslate(translate)
         saveMenu:SetSoundEffects(soundMap[index].select, soundMap[index].choose)
-        saveMenu:setCurrentItem(saveSlotSelected)
+        saveMenu:setCurrentItem(Save.saveSlotSelected)
     end
 end
 
@@ -138,10 +138,10 @@ function Save.RunSaveMenu()
 end
 
 -- ============================================================================
--- PUBLIC API (LevelFuncs.Engine.CustomInventory)
+-- PUBLIC API (LevelFuncs.Engine.RingInventory)
 -- ============================================================================
-LevelFuncs.Engine.CustomInventory = LevelFuncs.Engine.CustomInventory or {}
-LevelFuncs.Engine.CustomInventory.DoSave = Save.DoSave
-LevelFuncs.Engine.CustomInventory.DoLoad = Save.DoLoad
+LevelFuncs.Engine.RingInventory = LevelFuncs.Engine.RingInventory or {}
+LevelFuncs.Engine.RingInventory.DoSave = Save.DoSave
+LevelFuncs.Engine.RingInventory.DoLoad = Save.DoLoad
 
 return Save

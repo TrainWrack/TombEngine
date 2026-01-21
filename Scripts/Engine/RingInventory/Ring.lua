@@ -1,4 +1,13 @@
 
+--External Modules
+local CONSTANTS = require("Engine.RingInventory.Constants")
+local CustomInventory = require("Engine.RingInventory.Inventory")
+local Settings = require("Engine.RingInventory.Settings")
+local Utilities = require("Engine.RingInventory.Utilities")
+
+--Pointers to tables
+local SOUND_MAP = Settings.SOUND_MAP
+
 local Ring = {}
 
 Ring.TYPE = {
@@ -27,7 +36,7 @@ Ring.targetRingAngle = 0
 Ring.direction = 1
 
 function Ring.SetVisibility(ringName, visible)
-    local ring = inventory.ring[ringName]
+    local ring = Inventory.GetRing(ringName)
     if not ring then return end
     
     local itemCount = #ring
@@ -40,7 +49,7 @@ end
 
 function Ring.Translate(ringName, center, radius, rotationOffset, alpha)
     alpha = alpha or 1.0
-    local ring = inventory.ring[ringName]
+    local ring = Inventory.GetRing(ringName)
     if not ring then return end
     
     local itemCount = #ring
@@ -64,7 +73,7 @@ function Ring.Translate(ringName, center, radius, rotationOffset, alpha)
 end
 
 function Ring.Fade(ringName, fadeValue, omitSelectedItem)
-    local ring = inventory.ring[ringName]
+    local ring = Inventory.GetRing(ringName)
     if not ring then return end
     
     local itemCount = #ring
@@ -85,7 +94,7 @@ function Ring.Fade(ringName, fadeValue, omitSelectedItem)
 end
 
 function Ring.Color(ringName, color, omitSelectedItem, alpha)
-    local ring = inventory.ring[ringName]
+    local ring = Inventory.GetRing(ringName)
     if not ring then return end
     
     local itemCount = #ring

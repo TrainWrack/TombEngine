@@ -494,7 +494,7 @@ local Input = function(menuName)
 
     if itemCount == 0 then return end
 
-    if KeyIsHit(ActionID.FORWARD) then
+    if Input.KeyIsHit(ActionID.FORWARD) then
         if menu.sounds then PlaySoundEffect(menu.name, menu.sounds.menuSelect) end
         if menu.wrapAroundItems then
             menu.currentItem = (menu.currentItem - 2) % itemCount + 1
@@ -508,7 +508,7 @@ local Input = function(menuName)
             PerformFunction(menu.itemChangeFunction)
         end
         
-    elseif KeyIsHit(ActionID.BACK) then
+    elseif Input.KeyIsHit(ActionID.BACK) then
         PlaySoundEffect(menu.name, menu.sounds.menuSelect)
         if menu.wrapAroundItems then
             menu.currentItem = menu.currentItem % itemCount + 1
@@ -521,7 +521,7 @@ local Input = function(menuName)
         if previousItem ~= menu.currentItem and menu.itemChangeFunction then
             PerformFunction(menu.itemChangeFunction)
         end
-    elseif KeyIsHit(ActionID.LEFT) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
+    elseif Input.KeyIsHit(ActionID.LEFT) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
         PlaySoundEffect(menu.name, menu.sounds.menuSelect)
         local currentItem = menu.items[menu.currentItem]
         if currentItem.options and #currentItem.options > 1 then
@@ -535,7 +535,7 @@ local Input = function(menuName)
                 PerformFunction(currentItem.onOptionChange)
 		    end
         end
-    elseif KeyIsHit(ActionID.RIGHT) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
+    elseif Input.KeyIsHit(ActionID.RIGHT) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
         PlaySoundEffect(menu.name, menu.sounds.menuSelect)
         local currentItem = menu.items[menu.currentItem]
         if currentItem.options and #currentItem.options > 1 then
@@ -549,12 +549,12 @@ local Input = function(menuName)
                 PerformFunction(currentItem.onOptionChange)
 		    end
         end
-    elseif KeyIsHit(ActionID.ACTION) or KeyIsHit(ActionID.SELECT) then
+    elseif Input.KeyIsHit(ActionID.ACTION) or Input.KeyIsHit(ActionID.SELECT) then
         if menu.acceptFunction then 
             PlaySoundEffect(menu.name, menu.sounds.menuChoose)
             PerformFunction(menu.acceptFunction)
         end
-    elseif KeyIsHit(ActionID.INVENTORY) or KeyIsHit(ActionID.DESELECT) then
+    elseif Input.KeyIsHit(ActionID.INVENTORY) or Input.KeyIsHit(ActionID.DESELECT) then
         if menu.exitFunction then 
             PlaySoundEffect(menu.name, menu.sounds.menuSelect)
             PerformFunction(menu.exitFunction) end

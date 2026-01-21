@@ -1,3 +1,12 @@
+--External Modules
+local CustomInventory = require("Engine.RingInventory.Inventory")
+local Settings = require("Engine.CustomInventory.Settings")
+local Utilities = require("Engine.CustomInventory.Utilities")
+
+--Pointers to tables
+local COLOR_MAP = Settings.COLOR_MAP
+local INVENTORY_MODE = CustomInventory.INVENTORY_MODE
+
 local Sprites = {}
 
 local function DrawArrows(list, alpha)
@@ -24,7 +33,7 @@ function Sprites.Arrows(selectedRing, alpha)
         [INVENTORY_MODE.RING_ROTATE] = true
     }
     
-    if not visibleModes[inventoryMode] then
+    if not visibleModes[CustomInventory.GetMode()] then
         return
     end
     
@@ -52,6 +61,7 @@ function Sprites.Arrows(selectedRing, alpha)
 end
 
 function Sprites.Background(alpha)
+    
     if Settings.BACKGROUND.ENABLE then
         local bgAlpha = math.min(alpha, Settings.BACKGROUND.ALPHA)
         local bgColor = Utilities.ColorCombine(Settings.BACKGROUND.COLOR, bgAlpha)
@@ -65,8 +75,6 @@ function Sprites.Background(alpha)
         )
         bgSprite:Draw(0, Settings.BACKGROUND.ALIGN_MODE, Settings.BACKGROUND.SCALE_MODE, Settings.BACKGROUND.BLEND_MODE)
     end
-
-
 
 end
 

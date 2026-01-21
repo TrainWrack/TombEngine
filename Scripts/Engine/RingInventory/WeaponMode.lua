@@ -3,11 +3,11 @@
 -- ============================================================================
 
 --External Modules
-local Menu = require("Engine.CustomInventory.Menu")
-local Settings = require("Engine.CustomInventory.Settings")
+local Menu = require("Engine.RingInventory.Menu")
+local Settings = require("Engine.RingInventory.Settings")
 
 --Pointers to tables
-local PICKUP_DATA = require("Engine.CustomInventory.PickupData")
+local PICKUP_DATA = require("Engine.RingInventory.PickupData")
 local COLOR_MAP = Settings.COLOR_MAP
 
 local WeaponMode = {}
@@ -33,27 +33,29 @@ function WeaponMode.CreateWeaponModeMenu(itemData)
     end
     
     local modeIndex = Lara:GetWeaponMode()
-    local itemMenu = Menu.Create("WeaponModeMenu", nil, weaponModes, "Engine.CustomInventory.ChangeWeaponMode", nil, Menu.Type.ITEMS_ONLY)
+    local weaponModeMenu = Menu.Create("WeaponModeMenu", nil, weaponModes, "Engine.RingInventory.ChangeWeaponMode", nil, Menu.Type.ITEMS_ONLY)
     
-    itemMenu:SetItemsPosition(Vec2(50, 35))
-    itemMenu:SetVisibility(true)
-    itemMenu:SetLineSpacing(5.3)
-    itemMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9)
-    itemMenu:SetItemsTranslate(true)
-    itemMenu:setCurrentItem(modeIndex)
-    itemMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, nil, nil, true)
+    weaponModeMenu:SetItemsPosition(Vec2(50, 35))
+    weaponModeMenu:SetVisibility(true)
+    weaponModeMenu:SetLineSpacing(5.3)
+    weaponModeMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9)
+    weaponModeMenu:SetItemsTranslate(true)
+    weaponModeMenu:setCurrentItem(modeIndex)
+    weaponModeMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, nil, nil, true)
 end
 
 function WeaponMode.RunWeaponModeMenu()
+
     local weaponModeMenu = Menu.Get("WeaponModeMenu")
     weaponModeMenu:Draw()
+
 end
 
 
 -- ============================================================================
--- PUBLIC API (LevelFuncs.Engine.CustomInventory)
+-- PUBLIC API (LevelFuncs.Engine.RingInventory)
 -- ============================================================================
-LevelFuncs.Engine.CustomInventory = LevelFuncs.Engine.CustomInventory or {}
-LevelFuncs.Engine.CustomInventory.ChangeWeaponMode = WeaponMode.ChangeWeaponMode
+LevelFuncs.Engine.RingInventory = LevelFuncs.Engine.RingInventory or {}
+LevelFuncs.Engine.RingInventory.ChangeWeaponMode = WeaponMode.ChangeWeaponMode
 
 return WeaponMode

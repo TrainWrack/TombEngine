@@ -3,96 +3,135 @@
 -- ============================================================================
 
 --External Modules
-local Input = require("Engine.CustomInventory.Input")
-local Menu = require("Engine.CustomInventory.Menu")
-local Settings = require("Engine.CustomInventory.Settings")
-local Text = require("Engine.CustomInventory.Text")
+local Input = require("Engine.RingInventory.Input")
+local Menu = require("Engine.RingInventory.Menu")
+local Settings = require("Engine.RingInventory.Settings")
+local Text = require("Engine.RingInventory.Text")
 
 --Pointers to tables
 local COLOR_MAP = Settings.COLOR_MAP
 
 local Statistics = {}
 
-Statistics.type = false
+local statisticsType = false
 
-local EXAMINE_TEXT = 
+local LEVEL_HEADER_POS = Vec2(50, 33.3)
+local HEADER_TEXT_POS = Vec2(22.4, 41.7)
+local STATS_TEXT_POS = Vec2(65, 41.7)
+local STATS_TEXT_SCALE = 1
+
+local LEVEL_HEADER_TEXT = 
 {
-name = "EXAMINE_TEXT",                 
+name = "LEVEL_HEADER_TEXT",                 
 text = "",               
-position = EXAMINE_TEXT_POS,                   
-scale = 1,                             
-color = COLOR_MAP.NORMAL_FONT,        
+position = LEVEL_HEADER_POS,                   
+scale = STATS_TEXT_SCALE,                             
+color = COLOR_MAP.HEADER_FONT,        
 visible = false,                           
 flags = 
 {
-    Strings.DisplayStringOption.VERTICAL_CENTER,
     Strings.DisplayStringOption.CENTER,
     Strings.DisplayStringOption.SHADOW
 },
 translate = false,
 }
-    
-Text.Create(EXAMINE_TEXT) --Create Examine Text Channel
 
-local EXAMINE_TEXT = 
+local HEADER_TEXT = 
 {
-name = "EXAMINE_TEXT",                 
+name = "HEADER_TEXT",                 
 text = "",               
-position = EXAMINE_TEXT_POS,                   
-scale = 1,                             
+position = HEADER_TEXT_POS,                   
+scale = STATS_TEXT_SCALE,                             
 color = COLOR_MAP.NORMAL_FONT,        
 visible = false,                           
 flags = 
 {
-    Strings.DisplayStringOption.VERTICAL_CENTER,
-    Strings.DisplayStringOption.CENTER,
     Strings.DisplayStringOption.SHADOW
 },
 translate = false,
 }
-    
-Text.Create(EXAMINE_TEXT) --Create Examine Text Channel
 
+local STATS_TEXT = 
+{
+name = "STATS_TEXT",                 
+text = "",               
+position = STATS_TEXT_POS,                   
+scale = STATS_TEXT_SCALE,                             
+color = COLOR_MAP.NORMAL_FONT,        
+visible = false,                           
+flags = 
+{
+    Strings.DisplayStringOption.SHADOW
+},
+translate = false,
+}
 
-function Statistics.ShowStats()
-   
-    local levelStats = Flow.GetStatistics(Statistics.type)
+Text.Create(LEVEL_HEADER_TEXT)
+Text.Create(HEADER_TEXT) 
+Text.Create(STATS_TEXT)
+Text.AddToGroup("STATISTICS", "LEVEL_HEADER_TEXT")
+Text.AddToGroup("STATISTICS", "HEADER_TEXT")
+Text.AddToGroup("STATISTICS", "STATS_TEXT")
+
+local GetStatsistics = function()
+
     local level = Flow.GetCurrentLevel()
-   
-    local levelNameX, levelNameY = TEN.Util.PercentToScreen(50, 33.3)
-    local headingsX, headingsY = TEN.Util.PercentToScreen(22.4, 41.7)
-    local dataX, dataY = TEN.Util.PercentToScreen(65, 41.7)
-    local textScale = 1
-
- 	local headings = DisplayString("Time Taken\nSecrets\nPickups\nKills\nAmmo Used\nMedi packs used\nDistance Travelled", Vec2(headingsX, headingsY), textScale, COLOR_MAP.NORMAL_FONT, false)
-	local levelName = DisplayString(tostring(Flow.GetString(level.nameKey)), Vec2(levelNameX, levelNameY), textScale, COLOR_MAP.HEADER_FONT, false)
-
-    local stats = DisplayString(
-        tostring(levelStats.timeTaken):sub(1, -4) .. "\n" ..
+    local levelStats = Flow.GetStatistics(statisticsType)
+    local statistics = tostring(levelStats.timeTaken):sub(1, -4) .. "\n" ..
         tostring(Flow.GetSecretCount()) .. " / " .. tostring(level.secrets) .. "\n" ..
         tostring(levelStats.pickups) .. "\n" ..
         tostring(levelStats.kills) .. "\n" ..
         tostring(levelStats.ammoUsed) .. "\n" ..
         tostring(levelStats.healthPacksUsed) .. "\n" ..
-        string.format("%.1f", levelStats.distanceTraveled / 420) .. " m",
-        Vec2(dataX, dataY),
-        textScale,
-        COLOR_MAP.NORMAL_FONT,
-        false
-    )
+        string.format("%.1f", levelStats.distanceTraveled / 420) .. " m"
 
-    levelName:SetFlags({ TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW })
-    headings:SetFlags({ TEN.Strings.DisplayStringOption.SHADOW })
-    stats:SetFlags({ TEN.Strings.DisplayStringOption.SHADOW })
+    return statistics
 
-    TEN.Strings.ShowString(levelName, 1 / 30)
-    TEN.Strings.ShowString(headings, 1 / 30)
-    TEN.Strings.ShowString(stats, 1 / 30)
+end
+
+function Statistics.SetupStats()
+
+    local level = Flow.GetCurrentLevel()
+    local levelHeader = Flow.GetString(level.nameKey)
+    local headings = 
+        Flow.GetString("time_taken").."\n"..
+        Flow.GetString("total_secrets_found").."\n"..
+        Flow.GetString("pickups").."\n"..
+        Flow.GetString("kills").."\n"..
+        Flow.GetString("ammo_used").."\n"..
+        Flow.GetString("used_medipacks").."\n"..
+        Flow.GetString("distance_travelled")
+    
+    local statistics = GetStatsistics()
+    
+    Text.SetText("LEVEL_HEADER_TEXT", levelHeader, false)
+    Text.SetText("HEADER_TEXT", headings, false)
+    Text.SetText("STATS_TEXT", statistics, false)
+
+end
+
+function Statistics.Show()
+
+    Text.ShowGroup("STATISTICS")
+
+end
+
+function Statistics.Hide()
+
+    Text.HideGroup("STATISTICS")
+
+end
+
+function Statistics.UpdateStatistics()
+
+    local statistics = GetStatsistics()
+    Text.SetText("STATS_TEXT", statistics, true)
 
 end
 
 function Statistics.ToggleType()
-    Statistics.type = not Statistics.type
+    statisticsType = not statisticsType
+    Statistics.UpdateStatistics()
 end
 
 function Statistics.CreateStatisticsMenu()
@@ -120,7 +159,7 @@ function Statistics.CreateStatisticsMenu()
     statisticsMenu:SetVisibility(true)
     statisticsMenu:SetLineSpacing(5.3)
     statisticsMenu:SetOptionsFont(COLOR_MAP.NORMAL_FONT, 0.9)
-    statisticsMenu:SetOnOptionChangeFunction("Blank", "Engine.CustomInventory.ChangeStatistics")
+    statisticsMenu:SetOnOptionChangeFunction("Blank", "Engine.RingInventory.ChangeStatistics")
     statisticsMenu:SetWrapAroundOptions(true)
     statisticsMenu:EnableInputs(true)
     statisticsMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, nil, nil, true)
@@ -129,6 +168,7 @@ end
 
 function Statistics.RunStatisticsMenu()
     local statisticsMenu = Menu.Get("SatisticsMenu")
+    statisticsMenu:SetTransparency(Text.GetAlpha())
     statisticsMenu:Draw()
 end
 
@@ -152,19 +192,22 @@ function Statistics.SetItemRotations()
 
     local angles = CalculateStopWatchRotation()
     local stopwatch = TEN.View.DisplayItem.GetItemByName(tostring(TEN.Objects.ObjID.STOPWATCH_ITEM))
-    stopwatch:SetJointRotation(4, angles.hour_hand_angle)
-    stopwatch:SetJointRotation(5, angles.minute_hand_angle)
-    stopwatch:SetJointRotation(6, angles.second_hand_angle)
-    
-    local compass = TEN.View.DisplayItem.GetItemByName(tostring(TEN.Objects.ObjID.COMPASS_ITEM))
-    compass:SetJointRotation(1, CalculateCompassAngle())
+    if stopwatch then
+        stopwatch:SetJointRotation(4, angles.hour_hand_angle)
+        stopwatch:SetJointRotation(5, angles.minute_hand_angle)
+        stopwatch:SetJointRotation(6, angles.second_hand_angle)
+    end
 
+    local compass = TEN.View.DisplayItem.GetItemByName(tostring(TEN.Objects.ObjID.COMPASS_ITEM))
+    if compass then
+        compass:SetJointRotation(1, CalculateCompassAngle())
+    end
 end
 
 -- ============================================================================
 -- PUBLIC API (LevelFuncs.Engine.CustomInventory)
 -- ============================================================================
-LevelFuncs.Engine.CustomInventory = LevelFuncs.Engine.CustomInventory or {}
-LevelFuncs.Engine.CustomInventory.ChangeStatistics = Statistics.ChangeStatistics
+LevelFuncs.Engine.RingInventory = LevelFuncs.Engine.RingInventory or {}
+LevelFuncs.Engine.RingInventory.ChangeStatistics = Statistics.ToggleType
 
 return Statistics

@@ -4,18 +4,19 @@ local CustomInventory = {}
 local debug = false
 
 --External Modules
-local Animation = require("Engine.CustomInventory.Animation")
+local Animation = require("Engine.RingInventory.Animation")
 local Menu = require("Engine.CustomMenu")
 local Interpolate = require("Engine.InterpolateModule")
-local Save = require("Engine.CustomInventory.Save")
-local Settings = require("Engine.CustomInventory.Settings")
-local States = require("Engine.CustomInventory.States")
-local Statistics = require("Engine.CustomInventory.Statistics")
-local Text = require("Engine.CustomInventory.Text")
-local Utilities = require("Engine.CustomInventory.Utilities")
+local Save = require("Engine.RingInventory.Save")
+local Settings = require("Engine.RingInventory.Settings")
+local States = require("Engine.RingInventory.States")
+local Statistics = require("Engine.RingInventory.Statistics")
+local Strings = require("Engine.RingInventory.Statistics")
+local Text = require("Engine.RingInventory.Text")
+local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointers to tables
-local PICKUP_DATA = require("Engine.CustomInventory.PickupData")
+local PICKUP_DATA = require("Engine.RingInventory.PickupData")
 local TYPE = PICKUP_DATA.TYPE
 local RING = PICKUP_DATA.RING
 local RING_CENTER = PICKUP_DATA.RING_CENTER
@@ -58,16 +59,53 @@ local timeInMenu = 0
 local inventoryDelay = 0
 local inventoryMode = INVENTORY_MODE.INVENTORY_OPENING
 local previousMode = nil
-
 local menuAlpha = 0
 
+CustomInventory.INVENTORY_MODE = 
+{
+    INVENTORY = 1,
+    RING_OPENING = 2,
+    RING_CLOSING = 3,
+	RING_CHANGE = 4,
+    RING_ROTATE = 5,
+    STATISTICS_OPEN = 6,
+	STATISTICS = 7,
+    STATISTICS_CLOSE = 8,
+    EXAMINE_OPEN = 9,
+	EXAMINE = 10,
+	EXAMINE_RESET = 11,
+    EXAMINE_CLOSE = 12,
+    ITEM_USE = 13,
+    ITEM_SELECT = 14,
+    ITEM_DESELECT = 15,
+    ITEM_SELECTED = 16,
+    COMBINE = 17,
+    COMBINE_SETUP = 18,
+    COMBINE_CLOSE = 19,
+    COMBINE_RING_OPENING = 20,
+    COMBINE_SUCCESS = 21,
+	COMBINE_COMPLETE = 22,
+	SEPARATE = 23,
+    SEPARATE_COMPLETE = 24,
+    AMMO_SELECT_SETUP = 25,
+    AMMO_SELECT_OPEN = 26,
+    AMMO_SELECT = 27,
+    AMMO_SELECT_CLOSE = 28,
+    SAVE_SETUP = 29,
+    SAVE_MENU = 30,
+    SAVE_CLOSE = 31,
+    WEAPON_MODE_SETUP = 32,
+    WEAPON_MODE = 33,
+    WEAPON_MODE_CLOSE = 34,
+	INVENTORY_EXIT = 35,
+	INVENTORY_OPENING = 36
+}
 
-LevelFuncs.Engine.CustomInventory = {}
+LevelFuncs.Engine.RingInventory = {}
 
 -- ============================================================================
 -- HELPER FUNCTIONS
 -- ============================================================================
-
 
 local function HasItemAction(packedFlags, flag)
     return (packedFlags & flag) ~= 0
@@ -180,7 +218,7 @@ local function CreateItemMenu(item)
         end
     end
     
-    local itemMenu = Menu.Create("menuActions", nil, menuActions, "Engine.CustomInventory.DoItemAction", nil, Menu.Type.ITEMS_ONLY)
+    local itemMenu = Menu.Create("menuActions", nil, menuActions, "Engine.RingInventory.DoItemAction", nil, Menu.Type.ITEMS_ONLY)
     
     itemMenu:SetItemsPosition(Vec2(50, 35))
     itemMenu:SetVisibility(true)
@@ -249,7 +287,7 @@ local function Input(mode)
             else
                 inventoryMode = INVENTORY_MODE.ITEM_SELECT
             end
-        elseif (GuiIsPulsed(TEN.Input.ActionID.INVENTORY) or GuiIsPulsed(TEN.Input.ActionID.DESELECT)) and LevelVars.Engine.CustomInventory.InventoryOpenFreeze then
+        elseif (GuiIsPulsed(TEN.Input.ActionID.INVENTORY) or GuiIsPulsed(TEN.Input.ActionID.DESELECT)) and LevelVars.Engine.RingInventory.InventoryOpenFreeze then
             TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
             inventoryMode = INVENTORY_MODE.RING_CLOSING
         end
@@ -528,7 +566,7 @@ local function AnimateInventory(mode)
     elseif mode == INVENTORY_MODE.RING_OPENING then
         if PerformBatchMotion("RingOpening", ringAnimation, ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing) then
             FadeRings(true, true)
-            LevelVars.Engine.CustomInventory.InventoryOpenFreeze = true
+            LevelVars.Engine.RingInventory.InventoryOpenFreeze = true
             return true
         end
     elseif mode == INVENTORY_MODE.RING_CLOSING then
@@ -675,7 +713,7 @@ end
 -- MAIN DRAW AND USE FUNCTIONS
 -- ============================================================================
 local function ExitInventory()
-    LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
+    LevelVars.Engine.RingInventory.InventoryOpenFreeze = false
     ClearInventory(nil, true)
     TEN.Inventory.SetEnterInventory(NO_VALUE)
     Interpolate.ClearAll()
@@ -687,7 +725,7 @@ local function ExitInventory()
     timeInMenu = 0
     saveList = false
     combineItem1 = nil
-    LevelVars.Engine.CustomInventory.InventoryClosed = true
+    LevelVars.Engine.RingInventory.InventoryClosed = true
 end
 
 
@@ -848,7 +886,7 @@ local function DrawInventory(mode)
             combineResult = nil
             performCombine = false
             inventoryMode = INVENTORY_MODE.COMBINE_COMPLETE
-            LevelVars.Engine.CustomInventory.InventoryOpen = true
+            LevelVars.Engine.RingInventory.InventoryOpen = true
         end
     elseif mode == INVENTORY_MODE.COMBINE_COMPLETE then
         if AnimateInventory(mode) then
@@ -892,7 +930,7 @@ local function DrawInventory(mode)
             SeparateItems(selectedItem.objectID)
             inventoryOpenItem = combineItem1
             combineItem1 = nil
-            LevelVars.Engine.CustomInventory.InventoryOpen = true
+            LevelVars.Engine.RingInventory.InventoryOpen = true
             inventoryMode = INVENTORY_MODE.SEPARATE_COMPLETE
         end
     elseif mode == INVENTORY_MODE.SEPARATE_COMPLETE then
@@ -921,7 +959,7 @@ local function DrawInventory(mode)
 end
 
 local function UpdateInventory()
-    if not LevelVars.Engine.CustomInventory.InventoryRunning then
+    if not LevelVars.Engine.RingInventory.InventoryRunning then
         return
     end
     
@@ -931,13 +969,13 @@ local function UpdateInventory()
     Text.Update()
     Text.DrawAll()
     
-    if LevelVars.Engine.CustomInventory.InventoryOpen then
+    if LevelVars.Engine.RingInventory.InventoryOpen then
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         currentRingAngle = 0
         targetRingAngle = 0
         TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_OPEN)
         ConstructObjectList()
-        LevelVars.Engine.CustomInventory.InventoryOpen = false
+        LevelVars.Engine.RingInventory.InventoryOpen = false
         OpenInventoryAtItem(inventoryOpenItem, true)
     else
         Input(inventoryMode)
@@ -950,11 +988,11 @@ end
 
 local function RunInventory()
     if inventorySetup then
-        LevelVars.Engine.CustomInventory = {}
-        LevelVars.Engine.CustomInventory.InventoryOpen = false
-        LevelVars.Engine.CustomInventory.InventoryOpenFreeze = false
-        LevelVars.Engine.CustomInventory.InventoryClosed = false
-        LevelVars.Engine.CustomInventory.InventoryRunning = false
+        LevelVars.Engine.RingInventory = {}
+        LevelVars.Engine.RingInventory.InventoryOpen = false
+        LevelVars.Engine.RingInventory.InventoryOpenFreeze = false
+        LevelVars.Engine.RingInventory.InventoryClosed = false
+        LevelVars.Engine.RingInventory.InventoryRunning = false
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         TEN.View.SetPostProcessStrength(1)
         TEN.View.SetPostProcessTint(COLOR_MAP.ITEM_COLOR_VISIBLE)
@@ -977,32 +1015,32 @@ local function RunInventory()
     local isNotUsingBinoculars = TEN.View.GetCameraType() ~= CameraType.BINOCULARS
     
     if (TEN.Input.IsKeyHit(TEN.Input.ActionID.INVENTORY) or TEN.Inventory.GetEnterInventory() ~= NO_VALUE) and 
-       not LevelVars.Engine.CustomInventory.InventoryOpen and 
+       not LevelVars.Engine.RingInventory.InventoryOpen and 
        playerHp and 
        isNotUsingBinoculars then
-        LevelVars.Engine.CustomInventory.InventoryOpen = true
+        LevelVars.Engine.RingInventory.InventoryOpen = true
         inventoryOpenItem = TEN.Inventory.GetEnterInventory()
         inventoryDelay = 0
     end
     
     if (TEN.Input.IsKeyHit(TEN.Input.ActionID.SAVE) or TEN.Inventory.GetEnterInventory() ~= NO_VALUE) and 
-       not LevelVars.Engine.CustomInventory.InventoryOpen and 
+       not LevelVars.Engine.RingInventory.InventoryOpen and 
        playerHp and 
        isNotUsingBinoculars then
-        LevelVars.Engine.CustomInventory.InventoryOpen = true
+        LevelVars.Engine.RingInventory.InventoryOpen = true
         inventoryOpenItem = TEN.Objects.ObjID.PC_SAVE_INV_ITEM
         inventoryDelay = 0
     end
     
     if (TEN.Input.IsKeyHit(TEN.Input.ActionID.LOAD) or TEN.Inventory.GetEnterInventory() ~= NO_VALUE) and 
-       not LevelVars.Engine.CustomInventory.InventoryOpen and 
+       not LevelVars.Engine.RingInventory.InventoryOpen and 
        isNotUsingBinoculars then
-        LevelVars.Engine.CustomInventory.InventoryOpen = true
+        LevelVars.Engine.RingInventory.InventoryOpen = true
         inventoryOpenItem = TEN.Objects.ObjID.PC_LOAD_INV_ITEM
         inventoryDelay = 0
     end
     
-    if LevelVars.Engine.CustomInventory.InventoryOpen == true then
+    if LevelVars.Engine.RingInventory.InventoryOpen == true then
         inventoryDelay = inventoryDelay + 1
         TEN.View.SetPostProcessMode(View.PostProcessMode.MONOCHROME)
         TEN.View.SetPostProcessStrength(COLOR_MAP.BACKGROUND.a / ALPHA_MAX)
@@ -1012,33 +1050,46 @@ local function RunInventory()
             TEN.View.DisplayItem.SetTargetPosition(TARGET_START)
             TEN.View.DisplayItem.SetFOV(80)
             TEN.View.DisplayItem.SetAmbientLight(COLOR_MAP.INVENTORY_AMBIENT)
-            LevelVars.Engine.CustomInventory.InventoryRunning = true
+            LevelVars.Engine.RingInventory.InventoryRunning = true
             Flow.SetFreezeMode(Flow.FreezeMode.FULL)
         end
     end
     
-    if LevelVars.Engine.CustomInventory.InventoryClosed then
+    if LevelVars.Engine.RingInventory.InventoryClosed then
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         TEN.View.SetPostProcessStrength(1)
         TEN.View.SetPostProcessTint(COLOR_MAP.ITEM_COLOR_VISIBLE)
-        LevelVars.Engine.CustomInventory.InventoryClosed = false
-        LevelVars.Engine.CustomInventory.InventoryRunning = false
+        LevelVars.Engine.RingInventory.InventoryClosed = false
+        LevelVars.Engine.RingInventory.InventoryRunning = false
     end
 end
 
+function CustomInventory.SetMode(mode)
+
+    previousMode = inventoryMode
+    inventoryMode = mode
+
+end
+
+function CustomInventory.GetMode()
+
+    return inventoryMode
+    
+end
+
 -- ============================================================================
--- PUBLIC API (LevelFuncs.Engine.CustomInventory)
+-- PUBLIC API (LevelFuncs.Engine.RingInventory)
 -- ============================================================================
 
-LevelFuncs.Engine.CustomInventory.DoItemAction = DoItemAction
-LevelFuncs.Engine.CustomInventory.UpdateInventory = UpdateInventory
-LevelFuncs.Engine.CustomInventory.RunInventory = RunInventory
+LevelFuncs.Engine.RingInventory.DoItemAction = DoItemAction
+LevelFuncs.Engine.RingInventory.UpdateInventory = UpdateInventory
+LevelFuncs.Engine.RingInventory.RunInventory = RunInventory
 
 -- ============================================================================
 -- CALLBACKS
 -- ============================================================================
 
-TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.CustomInventory.UpdateInventory)
-TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.Engine.CustomInventory.RunInventory)
+TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.RingInventory.UpdateInventory)
+TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.Engine.RingInventory.RunInventory)
 
 return CustomInventory

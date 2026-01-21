@@ -4,7 +4,6 @@
 --External Modules
 local Settings = require("Engine.CustomInventory.Settings")
 local Text = require("Engine.CustomInventory.Text")
-local Utilities = require("Engine.CustomInventory.Utilities")
 
 --Pointer to tables
 local COLOR_MAP = Settings.COLOR_MAP
@@ -16,6 +15,8 @@ local EXAMINE_DEFAULT_SCALE = 1
 local EXAMINE_MIN_SCALE = 0.3
 local EXAMINE_MAX_SCALE = 1.6
 local EXAMINE_TEXT_POS = Vec2(50, 80)
+local ROTATION_MULTIPLIER = 2
+local ZOOM_MULTIPLIER = 0.3
 
 local EXAMINE_TEXT = 
 {
@@ -77,27 +78,24 @@ function Examine.ToggleText()
 
 end
 
-function Examine.SetScale(scale)
+function Examine.ModifyRotation(dirX, dirY, dirZ)
 
-    examineScaler = scale
-
-end
-
-function Examine.GetScale()
-
-    return examineScaler
+    examineRotation.x = examineRotation.x + dirX * ROTATION_MULTIPLIER
+    examineRotation.y = examineRotation.y + dirY * ROTATION_MULTIPLIER
+    examineRotation.z = examineRotation.z + dirZ * ROTATION_MULTIPLIER
 
 end
 
-function Examine.SetRotation(rotation)
+function Examine.ModifyScale(dir)
 
-    examineRotation = rotation
+    examineScaler = examineScaler + dir * ZOOM_MULTIPLIER
 
 end
 
-function Examine.GetRotation()
+function Examine.ResetExamine()
 
-    return examineRotation
+    examineRotation = Rotation(0, 0, 0)
+    examineScaler = EXAMINE_DEFAULT_SCALE
 
 end
 
