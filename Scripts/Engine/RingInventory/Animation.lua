@@ -31,14 +31,14 @@ local Easing = {
         local p = 0.3
         local s = p / 4
         local t1 = t - 1
-        return -(math.pow(2, 10 * t1) * math.sin((t1 - s) * (2 * math.pi) / p))
+        return -(2 ^ (10 * t1) * math.sin((t1 - s) * (2 * math.pi) / p))
     end,
     
     EaseOutElastic = function(t)
         if t == 0 or t == 1 then return t end
         local p = 0.3
         local s = p / 4
-        return math.pow(2, -10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1
+        return 2 ^ (-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1
     end,
     
     Smoothstep = function(t)

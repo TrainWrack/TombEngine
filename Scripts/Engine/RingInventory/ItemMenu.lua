@@ -1,0 +1,130 @@
+-- ============================================================================
+-- MENU FUNCTIONS
+-- ============================================================================
+--External Modules
+local CustomInventory = require("Engine.RingInventory.CustomInventory")
+local Menu = require("Engine.RingInventory.Menu")
+local PICKUP_DATA = require("Engine.RingInventory.PickupData")
+local Save = require("Engine.RingInventory.Save")
+local InventoryData = require("Engine.RingInventory.InventoryData")
+local InventoryItem = require("Engine.RingInventory.InventoryItem")
+
+--Pointers to tables
+local COLOR_MAP = Settings.COLOR_MAP
+local INVENTORY_MODE = CustomInventory.INVENTORY_MODE
+
+
+local ItemMenu = {}
+
+local function HasItemAction(packedFlags, flag)
+    return (packedFlags & flag) ~= 0
+end
+
+local function HasChooseAmmo(menuActions)
+    for _, flag in ipairs(PICKUP_DATA.CHOOSE_AMMO_FLAGS) do
+        if HasItemAction(menuActions, flag) then
+            return true
+        end
+    end
+    return false
+end
+
+function ItemMenu.ParseAction(menuActions)
+    if HasItemAction(menuActions, ItemAction.USE) or HasItemAction(menuActions, ItemAction.EQUIP) then
+        CustomInventory.SetMode(INVENTORY_MODE.ITEM_USE)
+    elseif HasItemAction(menuActions, ItemAction.EXAMINE) then
+        CustomInventory.SetMode(INVENTORY_MODE.EXAMINE_OPEN)
+    elseif HasItemAction(menuActions, ItemAction.COMBINE) then
+        CustomInventory.SetMode(INVENTORY_MODE.COMBINE_SETUP)
+    elseif HasItemAction(menuActions, ItemAction.STATISTICS) then
+        CustomInventory.SetMode(INVENTORY_MODE.STATISTICS_OPEN)
+    elseif HasItemAction(menuActions, ItemAction.SAVE) then
+        Save.saveList = true
+        CustomInventory.SetMode(INVENTORY_MODE.SAVE_SETUP)
+    elseif HasItemAction(menuActions, ItemAction.LOAD) then
+        Save.saveList = false
+        CustomInventory.SetMode(INVENTORY_MODE.SAVE_SETUP)
+    elseif HasItemAction(menuActions, ItemAction.SEPARATE) then
+        CustomInventory.SetMode(INVENTORY_MODE.SEPARATE)
+    elseif HasItemAction(menuActions, ItemAction.CHOOSE_AMMO_HK) then
+        CustomInventory.SetMode(INVENTORY_MODE.WEAPON_MODE_SETUP)
+    elseif HasChooseAmmo(menuActions) then
+        CustomInventory.SetMode(INVENTORY_MODE.AMMO_SELECT_SETUP)
+    end
+end
+
+function ItemMenu.DoItemAction()
+    local menu = LevelVars.Engine.Menus["menuActions"]
+    if not menu then return end
+    
+    local selectedItem = menu.items[menu.currentItem]
+    if selectedItem and selectedItem.actionBit then
+        ItemMenu.ParseAction(selectedItem.actionBit)
+    end
+end
+
+function ItemMenu.Create(item)
+    local menuActions = {}
+    local itemData = InventoryData.GetInventoryItem(item)
+    local itemMenuActions = nil
+    
+    if not itemData then
+        return
+    end
+    
+    local itemMenuActions = itemData:GetMenuActions()
+
+    for _, entry in ipairs(PICKUP_DATA.ItemActionFlags) do
+        if HasItemAction(itemMenuActions, entry.bit) then
+            local allowInsert = true
+            
+            if entry.bit == ItemAction.COMBINE then
+                local itemCount = InventoryData.GetCombineItemsCount(itemData:GetObjectID())
+                allowInsert = (itemCount ~= 0)
+            end
+            
+            if allowInsert then
+                table.insert(menuActions, {
+                    itemName = entry.string,
+                    actionBit = entry.bit,
+                    options = nil,
+                    currentOption = 1
+                })
+            end
+        end
+    end
+    
+    local itemMenu = Menu.Create("menuActions", nil, menuActions, "Engine.RingInventory.DoItemAction", nil, Menu.Type.ITEMS_ONLY)
+    
+    itemMenu:SetItemsPosition(Vec2(50, 35))
+    itemMenu:SetVisibility(true)
+    itemMenu:SetLineSpacing(5.3)
+    itemMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9)
+    itemMenu:SetItemsTranslate(true)
+    itemMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, 1.5, nil, true)
+    itemMenu:SetTitlePosition(Vec2(50, 4))
+end
+
+function ItemMenu.Show()
+    Menu.AddActive("menuActions")
+end
+
+function ItemMenu.Hide()
+    Menu.RemoveActive("menuActions")
+end
+
+function ItemMenu.SetTransparency(alpha)
+
+    local itemMenu = Menu.Get("menuActions")
+    itemMenu:SetTransparency(alpha)
+
+end
+
+
+
+-- ============================================================================
+-- PUBLIC API (LevelFuncs.Engine.RingInventory)
+-- ============================================================================
+LevelFuncs.Engine.RingInventory.DoItemAction = ItemMenu.DoItemAction
+
+return ItemMenu

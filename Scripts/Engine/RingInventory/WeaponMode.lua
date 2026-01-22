@@ -44,10 +44,18 @@ function WeaponMode.CreateWeaponModeMenu(itemData)
     weaponModeMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, nil, nil, true)
 end
 
-function WeaponMode.RunWeaponModeMenu()
+function WeaponMode.Show()
+    Menu.AddActive("WeaponModeMenu")
+end
+
+function WeaponMode.Hide()
+    Menu.RemoveActive("WeaponModeMenu")
+end
+
+function WeaponMode.SetTransparency(alpha)
 
     local weaponModeMenu = Menu.Get("WeaponModeMenu")
-    weaponModeMenu:Draw()
+    weaponModeMenu:SetTransparency(alpha)
 
 end
 

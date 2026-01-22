@@ -19,6 +19,8 @@ local SOUND_MAP =
     menuChoose = 111,
 }
 
+Menu.Active = {}
+
 LevelFuncs.Engine.Menu = {}
 LevelVars.Engine.Menus = {}
 
@@ -119,6 +121,26 @@ Menu.DeleteAll = function()
             LevelVars.Engine.Menus[name] = nil
         end
     end
+end
+
+Menu.AddActive = function(menuName)
+    
+    if not menuName then
+        return
+    end
+
+    Menu.Active[menuName] = true
+
+end
+
+Menu.RemoveActive = function(menuName)
+
+    if not menuName then
+        return
+    end
+
+    Menu.Active[menuName] = nil
+
 end
 
 Menu.Status = function(value)
@@ -653,6 +675,14 @@ LevelFuncs.Engine.Menu.DrawMenus = function()
     for menuName in pairs(LevelVars.Engine.Menus) do
         LevelFuncs.Engine.Menu.DrawMenu(menuName)
     end
+end
+
+LevelFuncs.Engine.Menu.DrawActiveMenus = function()
+
+    for menuName in pairs(LevelVars.Engine.Menus) do
+        LevelFuncs.Engine.Menu.DrawMenu(menuName)
+    end
+    
 end
 
 return Menu

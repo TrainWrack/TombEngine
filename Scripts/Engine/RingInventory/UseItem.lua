@@ -116,7 +116,7 @@ function Use.Item(item)
     
     if item == TEN.Objects.ObjID.BINOCULARS_ITEM then
         TEN.Inventory.ClearUsedItem()
-        useBinoculars = true
+        CustomInventory.UseBinoculars()
     end
     
     CustomInventory.SetMode(CustomInventory.INVENTORY_MODE.INVENTORY_EXIT)

@@ -1,7 +1,11 @@
-
 -- ============================================================================
 -- ItemSpin Module - Handles item rotation animations for ring inventory
 -- ============================================================================
+
+--External Modules
+local InventoryData = require("Engine.RingInventory.InventoryData")
+local InventoryItem = require("Engine.RingInventory.InventoryItem")
+
 local ItemSpin = {}
 
 -- Configuration
@@ -47,13 +51,13 @@ end
 function ItemSpin.Update()
     if not ItemSpin.ringName then return end
     
-    local ring = inventory.ring[ItemSpin.ringName]
+    local ring = InventoryData.GetRing(ItemSpin.ringName)
     if not ring then return end
     
     local itemCount = #ring
     
     for i = 1, itemCount do
-        local currentItem = ring[i].objectID
+        local currentItem = ring[i]:GetObjectID()
         local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
         
         if displayItem then

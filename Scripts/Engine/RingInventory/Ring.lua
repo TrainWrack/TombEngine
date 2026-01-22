@@ -1,7 +1,9 @@
 
 --External Modules
+local Animation = require("Engine.RingInventory.Animation")
 local CONSTANTS = require("Engine.RingInventory.Constants")
 local CustomInventory = require("Engine.RingInventory.Inventory")
+local InventoryData = require("Engine.RingInventory.InventoryData")
 local Settings = require("Engine.RingInventory.Settings")
 local Utilities = require("Engine.RingInventory.Utilities")
 
@@ -10,13 +12,7 @@ local SOUND_MAP = Settings.SOUND_MAP
 
 local Ring = {}
 
-Ring.TYPE = {
-	PUZZLE = 1,
-    MAIN = 2,
-	OPTIONS = 3,
-	COMBINE = 4,
-	AMMO = 5
-}
+
 
 Ring.CENTER = {
     [PICKUP_DATA.RING.PUZZLE] = Vec3(0,-800,1024),
@@ -77,7 +73,7 @@ function Ring.Fade(ringName, fadeValue, omitSelectedItem)
     if not ring then return end
     
     local itemCount = #ring
-    local selectedItem = omitSelectedItem and GetSelectedItem(selectedRing).objectID
+    local selectedItem = omitSelectedItem and Inventory.GetSelectedItem(Inventory.GetSelectedRing()).objectID
     
     for i = 1, itemCount do
         local currentItem = ring[i].objectID
@@ -98,7 +94,7 @@ function Ring.Color(ringName, color, omitSelectedItem, alpha)
     if not ring then return end
     
     local itemCount = #ring
-    local selectedItem = omitSelectedItem and GetSelectedItem(selectedRing).objectID
+    local selectedItem = omitSelectedItem and Inventory.GetSelectedItem(Inventory.GetSelectedRing()).objectID
     
     for i = 1, itemCount do
         local currentItem = ring[i].objectID
@@ -116,12 +112,12 @@ function Ring.Color(ringName, color, omitSelectedItem, alpha)
 end
 
 function Ring.FadeAll(visible, omitSelectedRing)
-    local fadeValue = visible and ALPHA_MAX or ALPHA_MIN
+    local fadeValue = visible and CONSTANTS.ALPHA_MAX or CONSTANTS.ALPHA_MIN
     
-    for index in pairs(inventory.ring) do
+    for index in pairs(InventoryData.GetAllRings()) do
         if not (omitSelectedRing and index == selectedRing) then
-            FadeRing(index, fadeValue, false)
-            SetRingVisibility(index, visible)
+            Ring.FadeRing(index, fadeValue, false)
+            Ring.SetRingVisibility(index, visible)
         end
     end
 end

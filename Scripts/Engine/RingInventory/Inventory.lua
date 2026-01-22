@@ -107,18 +107,7 @@ LevelFuncs.Engine.RingInventory = {}
 -- HELPER FUNCTIONS
 -- ============================================================================
 
-local function HasItemAction(packedFlags, flag)
-    return (packedFlags & flag) ~= 0
-end
 
-local function HasChooseAmmo(menuActions)
-    for _, flag in ipairs(PICKUP_DATA.CHOOSE_AMMO_FLAGS) do
-        if HasItemAction(menuActions, flag) then
-            return true
-        end
-    end
-    return false
-end
 
 local function IsSingleFlagSet(flags)
     return flags ~= 0 and (flags & (flags - 1)) == 0
@@ -155,84 +144,7 @@ local function GuiIsPulsed(actionID)
     return TEN.Input.IsKeyPulsed(actionID, DELAY, INITIAL_DELAY)
 end
 
--- ============================================================================
--- MENU FUNCTIONS
--- ============================================================================
 
-local function ParseMenuAction(menuActions)
-    if HasItemAction(menuActions, ItemAction.USE) or HasItemAction(menuActions, ItemAction.EQUIP) then
-        inventoryMode = INVENTORY_MODE.ITEM_USE
-    elseif HasItemAction(menuActions, ItemAction.EXAMINE) then
-        inventoryMode = INVENTORY_MODE.EXAMINE_OPEN
-    elseif HasItemAction(menuActions, ItemAction.COMBINE) then
-        inventoryMode = INVENTORY_MODE.COMBINE_SETUP
-    elseif HasItemAction(menuActions, ItemAction.STATISTICS) then
-        inventoryMode = INVENTORY_MODE.STATISTICS_OPEN
-    elseif HasItemAction(menuActions, ItemAction.SAVE) then
-        Save.saveList = true
-        inventoryMode = INVENTORY_MODE.SAVE_SETUP
-    elseif HasItemAction(menuActions, ItemAction.LOAD) then
-        Save.saveList = false
-        inventoryMode = INVENTORY_MODE.SAVE_SETUP
-    elseif HasItemAction(menuActions, ItemAction.SEPARATE) then
-        inventoryMode = INVENTORY_MODE.SEPARATE
-    elseif HasItemAction(menuActions, ItemAction.CHOOSE_AMMO_HK) then
-        inventoryMode = INVENTORY_MODE.WEAPON_MODE_SETUP
-    elseif HasChooseAmmo(menuActions) then
-        inventoryMode = INVENTORY_MODE.AMMO_SELECT_SETUP
-    end
-end
-
-local function DoItemAction()
-    local menu = LevelVars.Engine.Menus["menuActions"]
-    if not menu then return end
-    
-    local selectedItem = menu.items[menu.currentItem]
-    if selectedItem and selectedItem.actionBit then
-        ParseMenuAction(selectedItem.actionBit)
-    end
-end
-
-local function CreateItemMenu(item)
-    local menuActions = {}
-    local itemData = GetInventoryItem(item)
-    local itemMenuActions = itemData.menuActions
-    
-    for _, entry in ipairs(PICKUP_DATA.ItemActionFlags) do
-        if HasItemAction(itemMenuActions, entry.bit) then
-            local allowInsert = true
-            
-            if entry.bit == ItemAction.COMBINE then
-                local itemCount = GetCombineItemsCount(itemData.objectID)
-                allowInsert = (itemCount ~= 0)
-            end
-            
-            if allowInsert then
-                table.insert(menuActions, {
-                    itemName = entry.string,
-                    actionBit = entry.bit,
-                    options = nil,
-                    currentOption = 1
-                })
-            end
-        end
-    end
-    
-    local itemMenu = Menu.Create("menuActions", nil, menuActions, "Engine.RingInventory.DoItemAction", nil, Menu.Type.ITEMS_ONLY)
-    
-    itemMenu:SetItemsPosition(Vec2(50, 35))
-    itemMenu:SetVisibility(true)
-    itemMenu:SetLineSpacing(5.3)
-    itemMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9)
-    itemMenu:SetItemsTranslate(true)
-    itemMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, 1.5, nil, true)
-    itemMenu:SetTitlePosition(Vec2(50, 4))
-end
-
-local function ShowItemMenu()
-    local itemMenu = Menu.Get("menuActions")
-    itemMenu:Draw()
-end
 
 -- ============================================================================
 -- INPUT HANDLING
@@ -1075,6 +987,18 @@ function CustomInventory.GetMode()
 
     return inventoryMode
     
+end
+
+function CustomInventory.IsMode(mode)
+
+    return inventoryMode == mode
+    
+end
+
+function CustomInventory.UseBinoculars()
+
+    useBinoculars = true
+
 end
 
 -- ============================================================================

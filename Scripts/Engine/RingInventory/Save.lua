@@ -9,14 +9,14 @@ local COLOR_MAP = Settings.COLOR_MAP
 local Save = {}
 
 Save.saveList = false
-Save.saveSelected = false
+local saveSelected = false
 Save.saveSlotSelected = 1
 
 function Save.DoSave()
     local slot = Menu.Get("SaveMenu2"):getCurrentItemIndex()
     Save.saveSlotSelected = slot
     Flow.SaveGame(slot - 1)
-    Save.saveSelected = true
+    saveSelected = true
     for index = 1, 4 do
         Menu.Delete("SaveMenu"..index)
     end
@@ -30,7 +30,7 @@ function Save.DoLoad()
     if Flow.DoesSaveGameExist(slot - 1) then
         Save.saveSlotSelected = slot
         Flow.LoadGame(slot - 1)
-        Save.saveSelected = true
+        saveSelected = true
         for index = 1, 4 do
             Menu.Delete("SaveMenu"..index)
         end
@@ -41,7 +41,7 @@ function Save.DoLoad()
     end
 end
 
-function Save.CreateSaveMenu(save)
+function Save.CreateSaveMenu()
     local textPosition = {
         Vec2(10, 12),
         Vec2(20, 12),
@@ -49,8 +49,6 @@ function Save.CreateSaveMenu(save)
         Vec2(50, 12),
     }
     
-    local saveTitleText = {nil, "save_game", nil, nil}
-    local loadTitleText = {nil, "load_game", nil, nil}
     local saveFunctions = {nil, "Engine.RingInventory.DoSave", nil, nil}
     local loadFunctions = {nil, "Engine.RingInventory.DoLoad", nil, nil}
     
@@ -103,13 +101,13 @@ function Save.CreateSaveMenu(save)
         table.insert(items[4], {itemName = itemText4})
     end
     
-    if save then
+    if saveSelected then
         for index in ipairs(items) do
-            Menu.Create("SaveMenu"..index, saveTitleText[index], items[index], saveFunctions[index], nil, Menu.Type.ITEMS_ONLY)
+            Menu.Create("SaveMenu"..index, nil, items[index], saveFunctions[index], nil, Menu.Type.ITEMS_ONLY)
         end
     else
         for index in ipairs(items) do
-            Menu.Create("SaveMenu"..index, loadTitleText[index], items[index], loadFunctions[index], nil, Menu.Type.ITEMS_ONLY)
+            Menu.Create("SaveMenu"..index, nil, items[index], loadFunctions[index], nil, Menu.Type.ITEMS_ONLY)
         end
     end
     
@@ -118,25 +116,44 @@ function Save.CreateSaveMenu(save)
         local translate = (index == 4)
         
         saveMenu:SetItemsPosition(textPosition[index])
-        saveMenu:SetTitlePosition(Vec2(50, 4))
         saveMenu:SetVisibility(true)
         saveMenu:SetLineSpacing(5.3)
         saveMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9, itemFlags[index])
         saveMenu:SetSelectedItemFlags(selectedFlags[index])
-        saveMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, 1.5, nil, true)
         saveMenu:SetItemsTranslate(translate)
         saveMenu:SetSoundEffects(soundMap[index].select, soundMap[index].choose)
         saveMenu:setCurrentItem(Save.saveSlotSelected)
     end
 end
 
-function Save.RunSaveMenu()
+function Save.Show()
     for index = 1, 4 do
-        local saveMenu = Menu.Get("SaveMenu"..index)
-        saveMenu:Draw()
+        Menu.AddActive("SaveMenu"..index)
     end
 end
 
+function Save.Hide()
+    for index = 1, 4 do
+        Menu.RemoveActive("SaveMenu"..index)
+    end
+end
+
+function Save.SetTransparency(alpha)
+
+    for index = 1, 4 do
+        local saveMenu = Menu.Get("SaveMenu"..index)
+        saveMenu:SetTransparency(alpha)
+    end
+
+end
+
+function Save.SetSaveMenu()
+    saveSelected = true
+end
+
+function Save.SetLoadMenu()
+    saveSelected = false
+end
 -- ============================================================================
 -- PUBLIC API (LevelFuncs.Engine.RingInventory)
 -- ============================================================================

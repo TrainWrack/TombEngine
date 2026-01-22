@@ -1,5 +1,6 @@
 --Pointers to tables
-local PICKUP_DATA = require("Engine.CustomInventory.PickupData")
+local PICKUP_DATA = require("Engine.RingInventory.PickupData")
+local INVENTORY_ITEM = require("Engine.RingInventory.InventoryItem")
 local TYPE = PICKUP_DATA.TYPE
 local RING = PICKUP_DATA.RING
 local RING_CENTER = PICKUP_DATA.RING_CENTER
@@ -11,15 +12,16 @@ local ANIMATION = Settings.ANIMATION
 --Structure for inventory
 local Inventory = {}
 
-Inventory.ring = {}
-Inventory.slice = {}
-Inventory.selectedRing = RING.MAIN
-Inventory.previousRing = nil
-Inventory.selectedItem = {}
-Inventory.ringPosition = {}
-Inventory.chosenItem = nil
-Inventory.openAtItem = nil
-Inventory.gameflowOverrides = nil
+local ring = {}
+local slice = {}
+local selectedRing = RING.MAIN
+local previousRing = nil
+local selectedItem = {}
+local ringPosition = {}
+local chosenItem = nil
+local openAtItem = nil
+local gameflowOverrides = nil
+
 
 function Inventory.Clear(ringName, clearDrawItems)
     if ringName then
@@ -27,7 +29,7 @@ function Inventory.Clear(ringName, clearDrawItems)
         
         if clearDrawItems and ring then
             for _, itemData in ipairs(ring) do
-                local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(itemData.objectID))
+                local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(itemData:GetObjectID()))
                 displayItem:Remove()
             end
         end
@@ -165,6 +167,11 @@ function Inventory.Construct(ringType, selectedWeapon)
         end
         
         if shouldInsert or ammoRing then
+
+            if getmetatable(data) ~= INVENTORY_ITEM then
+                setmetatable(data, INVENTORY_ITEM)
+            end
+
             table.insert(inventory.ring[data.ringName], data)
             local inventoryItem = TEN.View.DisplayItem(
                 tostring(data.objectID),
@@ -261,15 +268,20 @@ local function FindItemInInventory(targetID)
 end
 
 function Inventory.GetInventoryItem(itemID)
+    
     local ringIndex, itemIndex = FindItemInInventory(itemID)
-    if not ringIndex or not itemIndex then
-        return nil
-    end
+    
+    if not ringIndex or not itemIndex then return nil end 
     return Inventory.ring[ringIndex][itemIndex]
+    
 end
 
 function Inventory.GetRing(ring)
     return Inventory.ring[ring]
+end
+
+function Inventory.GetAllRings()
+    return Inventory.ring
 end
 
 function Inventory.GetSelectedItem(ring)
@@ -287,6 +299,25 @@ function Inventory.GetRingSlice(ring)
     end
 
     return 0
+
+end
+
+function Inventory.GetSelectedRing()
+    return selectedRing
+end
+
+function Inventory.GetPreviousRing()
+    return previousRing
+end
+
+function Inventory.SetSelectedRing(ringName)
+
+    if not RING_TYPE[ringName] then
+        return
+    end
+
+    previousRing = selectedRing
+    selectedRing = ringName
 
 end
 
