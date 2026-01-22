@@ -1,4 +1,3 @@
-
 -- ============================================================================
 -- Menu Module - Creates custom menus for ring inventory
 -- ============================================================================
@@ -32,6 +31,7 @@ local LINE_SPACING = 6
 local TEXT_FLAGS_SELECT = {Strings.DisplayStringOption.BLINK, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
 local TEXT_FLAGS_NORMAL = {Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
 local SCROLL_SPEED = 0.2
+local FADE_SPEED = 0.15  -- Speed of fade animation (higher = faster)
 
 local percentPos = function(x, y)
     return TEN.Vec2(TEN.Util.PercentToScreen(x, y))
@@ -92,7 +92,11 @@ Menu.Create = function(menuName, title, items, acceptFunction, exitFunction, men
         inputs = true,
         visibleStartIndex = 1,
         scrollY = 0,
-        targetScrollY = 0
+        targetScrollY = 0,
+        -- Fade properties
+        currentAlpha = 0,
+        targetAlpha = 0,
+        fadeSpeed = FADE_SPEED
     }
 
     return setmetatable(self, Menu)
@@ -130,6 +134,13 @@ Menu.AddActive = function(menuName)
     end
 
     Menu.Active[menuName] = true
+    
+    -- Set visible and trigger fade in
+    local menu = LevelVars.Engine.Menus[menuName]
+    if menu then
+        menu.visible = true
+        menu.targetAlpha = 1.0
+    end
 
 end
 
@@ -139,7 +150,11 @@ Menu.RemoveActive = function(menuName)
         return
     end
 
-    Menu.Active[menuName] = nil
+    -- Trigger fade out (will be removed from Active when fade completes)
+    local menu = LevelVars.Engine.Menus[menuName]
+    if menu then
+        menu.targetAlpha = 0.0
+    end
 
 end
 
@@ -166,6 +181,12 @@ function Menu:Draw()
 	end
 end
 
+function Menu:Update()
+	if LevelVars.Engine.Menus[self.name] then
+		LevelFuncs.Engine.Menu.UpdateMenu(self.name)
+	end
+end
+
 function Menu:Reset()
 	local menu = LevelVars.Engine.Menus[self.name]
 	if not menu then return end
@@ -183,7 +204,15 @@ end
 function Menu:SetVisibility(visible)
     --the visible variable is a boolean
 	if LevelVars.Engine.Menus[self.name] then
-		LevelVars.Engine.Menus[self.name].visible = visible == true
+		local menu = LevelVars.Engine.Menus[self.name]
+		
+		if visible then
+			menu.visible = true  -- Set visible immediately for fade in
+			menu.targetAlpha = 1.0
+		else
+			menu.targetAlpha = 0.0  -- Trigger fade out
+			-- visible will be set to false when fade completes in UpdateMenu
+		end
 	end
 end
 
@@ -194,6 +223,12 @@ function Menu:SetTransparency(transparency)
 
 		LevelVars.Engine.Menus[self.name].menuTransparency = transparency * 255
 
+    end
+end
+
+function Menu:SetFadeSpeed(speed)
+    if LevelVars.Engine.Menus[self.name] then
+        LevelVars.Engine.Menus[self.name].fadeSpeed = math.max(0.01, math.min(1.0, speed))
     end
 end
 
@@ -585,104 +620,151 @@ local Input = function(menuName)
 
 end
 
-LevelFuncs.Engine.Menu.DrawMenu = function(menuName)
+-- Update function - handles logic, input, and animations
+function Menu.UpdateMenu(menuName)
 
     local menu = LevelVars.Engine.Menus[menuName]
 
-    if menu.visible then
-        
-        if menu.inputs then Input(menuName) end
-
-        if menu.titleString then
-
-            --Hack to hardcode the translate to false for strings which are blank
-                local translate = menu.titleTranslate
-
-                if menu.titleString == "" then translate = false end
-
-            local titleNode = DisplayString(menu.titleString, percentPos(menu.titlePosition.x, menu.titlePosition.y), menu.titleTextScale, colorCombine(menu.titleTextColor, menu.menuTransparency) , translate, menu.titleTextFlags)
-            TEN.Strings.ShowString(titleNode, 1 / 30)
-        end
-
-        local baseYItems = menu.itemsPosition.y
-        local offset = menu.lineSpacing
-
-        -- Store previous visibleStartIndex to detect change
-        menu.prevVisibleStartIndex = menu.prevVisibleStartIndex or menu.visibleStartIndex
-
-        -- Adjust visibleStartIndex based on current selection
-        if menu.currentItem < menu.visibleStartIndex then
-            menu.visibleStartIndex = menu.currentItem
-        elseif menu.currentItem >= menu.visibleStartIndex + menu.maxVisibleItems then
-            menu.visibleStartIndex = menu.currentItem - menu.maxVisibleItems + 1
-        end
-
-        -- If visibleStartIndex changed, update scroll target
-        if menu.visibleStartIndex ~= menu.prevVisibleStartIndex then
-            menu.targetScrollY = (menu.visibleStartIndex - 1) * offset
-            menu.prevVisibleStartIndex = menu.visibleStartIndex
-        end
-
-        -- Smooth scroll animation
-        menu.scrollY = menu.scrollY + (menu.targetScrollY - menu.scrollY) * SCROLL_SPEED
-
-        for i = 1, #menu.items do
-            local item = menu.items[i]
-            local yItems = baseYItems + (i - 1) * offset - menu.scrollY
-
-            -- Skip items not in visible drawing range
-            if i < menu.visibleStartIndex or i > menu.visibleStartIndex + menu.maxVisibleItems - 1 then
-                goto continue
-            end
-
-            if menu.menuType == Menu.Type.ITEMS_ONLY or menu.menuType == Menu.Type.ITEMS_AND_OPTIONS then
-                
-                --Hack to hardcode the translate to false for strings which are blank
-                local translate = menu.itemsTranslate
-
-                if item.itemName == "" then translate = false end
-
-                local itemNode = DisplayString(item.itemName, percentPos(menu.itemsPosition.x, yItems), menu.itemsTextScale, colorCombine(menu.itemsTextColor, menu.menuTransparency), translate)
-                if menu.menuType == Menu.Type.ITEMS_ONLY and i == menu.currentItem then
-                    itemNode:SetFlags(menu.itemsSelectedFlags)
-                else
-                    itemNode:SetFlags(menu.itemsTextFlags)
-                end
-                TEN.Strings.ShowString(itemNode, 1 / 30)
-            end
-
-            if menu.menuType == Menu.Type.OPTIONS_ONLY or menu.menuType == Menu.Type.ITEMS_AND_OPTIONS then
-                local baseYOptions = menu.optionsPosition.y
-                local yOptions = baseYOptions + (i - 1) * offset - menu.scrollY
-                local selectedOption = item.options and item.options[item.currentOption] or ""
-                local optNode = DisplayString(selectedOption, percentPos(menu.optionsPosition.x, yOptions), menu.optionsTextScale, colorCombine(menu.optionsTextColor, menu.menuTransparency), menu.optionsTranslate)
-                if i == menu.currentItem then
-                    optNode:SetFlags(menu.optionsSelectedFlags)
-                else
-                    optNode:SetFlags(menu.optionsTextFlags)
-                end
-                TEN.Strings.ShowString(optNode, 1 / 30)
-            end
-
-            ::continue::
-        end
-    end
-end
-
-
-LevelFuncs.Engine.Menu.DrawMenus = function()
-
-    for menuName in pairs(LevelVars.Engine.Menus) do
-        LevelFuncs.Engine.Menu.DrawMenu(menuName)
-    end
-end
-
-LevelFuncs.Engine.Menu.DrawActiveMenus = function()
-
-    for menuName in pairs(LevelVars.Engine.Menus) do
-        LevelFuncs.Engine.Menu.DrawMenu(menuName)
+    if not menu.visible then
+        return
     end
     
+    -- Update fade animation
+    if menu.currentAlpha ~= menu.targetAlpha then
+        local diff = menu.targetAlpha - menu.currentAlpha
+        menu.currentAlpha = menu.currentAlpha + diff * menu.fadeSpeed
+        
+        -- Snap to target if very close
+        if math.abs(diff) < 0.01 then
+            menu.currentAlpha = menu.targetAlpha
+            
+            -- If fade out completed, remove from active and set invisible
+            if menu.currentAlpha == 0 then
+                Menu.Active[menuName] = nil
+                menu.visible = false
+            end
+        end
+    end
+    
+    -- Handle input only when fully faded in
+    if menu.inputs and menu.currentAlpha >= 0.99 then
+        Input(menuName)
+    end
+    
+    -- Store previous visibleStartIndex to detect change
+    menu.prevVisibleStartIndex = menu.prevVisibleStartIndex or menu.visibleStartIndex
+
+    -- Adjust visibleStartIndex based on current selection
+    if menu.currentItem < menu.visibleStartIndex then
+        menu.visibleStartIndex = menu.currentItem
+    elseif menu.currentItem >= menu.visibleStartIndex + menu.maxVisibleItems then
+        menu.visibleStartIndex = menu.currentItem - menu.maxVisibleItems + 1
+    end
+
+    -- If visibleStartIndex changed, update scroll target
+    if menu.visibleStartIndex ~= menu.prevVisibleStartIndex then
+        menu.targetScrollY = (menu.visibleStartIndex - 1) * menu.lineSpacing
+        menu.prevVisibleStartIndex = menu.visibleStartIndex
+    end
+
+    -- Smooth scroll animation
+    menu.scrollY = menu.scrollY + (menu.targetScrollY - menu.scrollY) * SCROLL_SPEED
+end
+
+-- Draw function - handles rendering only
+function Menu.DrawMenu(menuName)
+
+    local menu = LevelVars.Engine.Menus[menuName]
+
+    if not menu.visible then
+        return
+    end
+    
+    -- Skip rendering if fully transparent
+    if menu.currentAlpha <= 0 then
+        return
+    end
+    
+    -- Calculate actual transparency based on fade
+    local actualTransparency = menu.menuTransparency * menu.currentAlpha
+
+    -- Draw title
+    if menu.titleString then
+        local translate = menu.titleTranslate
+        if menu.titleString == "" then translate = false end
+
+        local titleNode = DisplayString(menu.titleString, percentPos(menu.titlePosition.x, menu.titlePosition.y), menu.titleTextScale, colorCombine(menu.titleTextColor, actualTransparency) , translate, menu.titleTextFlags)
+        TEN.Strings.ShowString(titleNode, 1 / 30)
+    end
+
+    local baseYItems = menu.itemsPosition.y
+    local offset = menu.lineSpacing
+
+    -- Draw menu items
+    for i = 1, #menu.items do
+        local item = menu.items[i]
+        local yItems = baseYItems + (i - 1) * offset - menu.scrollY
+
+        -- Skip items not in visible drawing range
+        if i < menu.visibleStartIndex or i > menu.visibleStartIndex + menu.maxVisibleItems - 1 then
+            goto continue
+        end
+
+        -- Draw item names
+        if menu.menuType == Menu.Type.ITEMS_ONLY or menu.menuType == Menu.Type.ITEMS_AND_OPTIONS then
+            local translate = menu.itemsTranslate
+            if item.itemName == "" then translate = false end
+
+            local itemNode = DisplayString(item.itemName, percentPos(menu.itemsPosition.x, yItems), menu.itemsTextScale, colorCombine(menu.itemsTextColor, actualTransparency), translate)
+            if menu.menuType == Menu.Type.ITEMS_ONLY and i == menu.currentItem then
+                itemNode:SetFlags(menu.itemsSelectedFlags)
+            else
+                itemNode:SetFlags(menu.itemsTextFlags)
+            end
+            TEN.Strings.ShowString(itemNode, 1 / 30)
+        end
+
+        -- Draw options
+        if menu.menuType == Menu.Type.OPTIONS_ONLY or menu.menuType == Menu.Type.ITEMS_AND_OPTIONS then
+            local baseYOptions = menu.optionsPosition.y
+            local yOptions = baseYOptions + (i - 1) * offset - menu.scrollY
+            local selectedOption = item.options and item.options[item.currentOption] or ""
+            local optNode = DisplayString(selectedOption, percentPos(menu.optionsPosition.x, yOptions), menu.optionsTextScale, colorCombine(menu.optionsTextColor, actualTransparency), menu.optionsTranslate)
+            if i == menu.currentItem then
+                optNode:SetFlags(menu.optionsSelectedFlags)
+            else
+                optNode:SetFlags(menu.optionsTextFlags)
+            end
+            TEN.Strings.ShowString(optNode, 1 / 30)
+        end
+
+        ::continue::
+    end
+end
+
+
+function Menu.UpdateAllMenus()
+    for menuName in pairs(LevelVars.Engine.Menus) do
+        Menu.UpdateMenu(menuName)
+    end
+end
+
+function Menu.DrawAllMenus()
+    for menuName in pairs(LevelVars.Engine.Menus) do
+        Menu.DrawMenu(menuName)
+    end
+end
+
+function Menu.UpdateActiveMenus()
+    for menuName in pairs(Menu.Active) do
+        Menu.UpdateMenu(menuName)
+    end
+end
+
+function Menu.DrawActiveMenus()
+    for menuName in pairs(Menu.Active) do
+        Menu.DrawMenu(menuName)
+    end
 end
 
 return Menu
