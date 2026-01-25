@@ -3,6 +3,9 @@
 #include "Game/spotcam.h"
 #include "Specific/logging.h"
 
+// Conversion constant: degrees to angle units (used in roll calculations)
+constexpr float DEGREES_TO_ANGLE_UNITS = 182.0444f;
+
 std::vector<WAYPOINT> WayPoints;
 
 void ClearWayPoints()
@@ -57,7 +60,7 @@ Pose CalculateWayPointTransform(const std::string& name, float alpha, bool loop)
 		xPos.push_back(wp->x);
 		yPos.push_back(wp->y);
 		zPos.push_back(wp->z);
-		rolls.push_back((int)(wp->roll * 182.0444f)); // Convert degrees to angle units
+		rolls.push_back((int)(wp->roll * DEGREES_TO_ANGLE_UNITS));
 	}
 
 	// Compute spline interpolation of waypoint parameters

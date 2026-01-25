@@ -532,6 +532,12 @@ void LoadCameras()
 	int waypointCount = ReadCount();
 	TENLog("Waypoint count: " + std::to_string(waypointCount), LogLevel::Info);
 	
+	if (waypointCount < 0 || waypointCount > MAX_WAYPOINTS)
+	{
+		TENLog("Invalid waypoint count: " + std::to_string(waypointCount), LogLevel::Error);
+		waypointCount = 0;
+	}
+	
 	WayPoints.clear();
 	WayPoints.reserve(waypointCount);
 	
