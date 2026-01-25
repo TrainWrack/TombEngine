@@ -27,9 +27,6 @@ public:
 	Vec3 GetPos() const;
 	void SetPos(Vec3 const& pos);
 	
-	Vec3 GetTarget() const;
-	void SetTarget(Vec3 const& target);
-	
 	std::string GetName() const;
 	void SetName(std::string const&);
 	
@@ -43,4 +40,7 @@ public:
 
 private:
 	SPOTCAM& m_waypoint;
+	
+	// Helper function to calculate waypoint path transform
+	Pose CalculateWayPointTransform(int sequence, float alpha, bool loop) const;
 };
