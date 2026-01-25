@@ -188,7 +188,6 @@ ObjectsHandler::ObjectsHandler(sol::state* lua, sol::table& parent) :
 	Volume::SetNameCallbacks(
 		[this](auto && ... param) { return AddName(std::forward<decltype(param)>(param)...); },
 		[this](auto && ... param) { return RemoveName(std::forward<decltype(param)>(param)...); });
-
 	WayPointObject::Register(_table_objects);
 	WayPointObject::SetNameCallbacks(
 		[this](auto && ... param) { return AddName(std::forward<decltype(param)>(param)...); },
