@@ -488,6 +488,17 @@ constexpr char ScriptReserved_SinkSetName[]			= "SetName";
 constexpr char ScriptReserved_SinkSetPosition[]		= "SetPosition";
 constexpr char ScriptReserved_SinkSetStrength[]		= "SetStrength";
 
+// WayPoint
+
+constexpr char ScriptReserved_WayPoint[]				= "WayPoint";
+constexpr char ScriptReserved_GetWayPointByName[]		= "GetWayPointByName";
+constexpr char ScriptReserved_GetWayPointsByType[]		= "GetWayPointsByType";
+constexpr char ScriptReserved_GetPathPosition[]			= "GetPathPosition";
+constexpr char ScriptReserved_GetPathRotation[]			= "GetPathRotation";
+constexpr char ScriptReserved_GetType[]					= "GetType";
+constexpr char ScriptReserved_SetType[]					= "SetType";
+constexpr char ScriptReserved_GetSequence[]				= "GetSequence";
+
 // Static
 
 constexpr char ScriptReserved_Static[]				= "Static";

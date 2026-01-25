@@ -19,6 +19,7 @@
 #include "Scripting/Internal/TEN/Objects/Sink/SinkObject.h"
 #include "Scripting/Internal/TEN/Objects/SoundSource/SoundSourceObject.h"
 #include "Scripting/Internal/TEN/Objects/Volume/VolumeObject.h"
+#include "Scripting/Internal/TEN/Objects/WayPoint/WayPointObject.h"
 
 using namespace TEN::Scripting::Objects;
 
@@ -80,6 +81,22 @@ ObjectsHandler::ObjectsHandler(sol::state* lua, sol::table& parent) :
 	@treturn Objects.Sink A non-owning Sink referencing the sink.
 	*/
 	_table_objects.set_function(ScriptReserved_GetSinkByName, &ObjectsHandler::GetByName<Sink, ScriptReserved_Sink>, this);
+
+	/***
+	Get a WayPoint by its name.
+	@function GetWayPointByName
+	@tparam string name The unique name of the waypoint.
+	@treturn Objects.WayPoint A non-owning WayPoint referencing the waypoint.
+	*/
+	_table_objects.set_function(ScriptReserved_GetWayPointByName, &ObjectsHandler::GetByName<WayPointObject, ScriptReserved_WayPoint>, this);
+
+	/***
+	Get waypoints by their type/camera number.
+	@function GetWayPointsByType
+	@tparam int type The type/camera number of the waypoints.
+	@treturn table Table of waypoints referencing the given type.
+	*/
+	_table_objects.set_function(ScriptReserved_GetWayPointsByType, &ObjectsHandler::GetWayPointsByType<WayPointObject>, this);
 
 	/***
 	Get a SoundSource by its name.
@@ -169,6 +186,11 @@ ObjectsHandler::ObjectsHandler(sol::state* lua, sol::table& parent) :
 
 	Volume::Register(_table_objects);
 	Volume::SetNameCallbacks(
+		[this](auto && ... param) { return AddName(std::forward<decltype(param)>(param)...); },
+		[this](auto && ... param) { return RemoveName(std::forward<decltype(param)>(param)...); });
+
+	WayPointObject::Register(_table_objects);
+	WayPointObject::SetNameCallbacks(
 		[this](auto && ... param) { return AddName(std::forward<decltype(param)>(param)...); },
 		[this](auto && ... param) { return RemoveName(std::forward<decltype(param)>(param)...); });
 

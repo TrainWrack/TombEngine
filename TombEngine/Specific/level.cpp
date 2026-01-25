@@ -525,7 +525,17 @@ void LoadCameras()
 
 	// TODO: Read properly!
 	if (NumberSpotcams != 0)
+	{
 		ReadBytes(SpotCam, NumberSpotcams * sizeof(SPOTCAM));
+		
+		// Register waypoints with script engine
+		for (int i = 0; i < NumberSpotcams; i++)
+		{
+			// Generate auto-generated name for waypoint
+			std::string waypointName = "waypoint_" + std::to_string(SpotCam[i].sequence) + "_" + std::to_string(SpotCam[i].camera);
+			g_GameScriptEntities->AddName(waypointName, SpotCam[i]);
+		}
+	}
 
 	int sinkCount = ReadCount();
 	TENLog("Sink count: " + std::to_string(sinkCount), LogLevel::Info);

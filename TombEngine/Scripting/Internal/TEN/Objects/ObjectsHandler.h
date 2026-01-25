@@ -8,6 +8,8 @@
 #include "Scripting/Internal/TEN/Objects/Static/StaticObject.h"
 #include "Scripting/Internal/TEN/Objects/AIObject/AIObject.h"
 
+struct SPOTCAM;
+
 class ObjectsHandler : public ScriptInterfaceObjectsHandler
 {
 public:
@@ -124,6 +126,26 @@ private:
 		}
 
 		return rooms;
+	}
+
+	template <typename R>
+	std::vector <std::unique_ptr<R>> GetWayPointsByType(int type)
+	{
+		auto waypoints = std::vector<std::unique_ptr<R>>{};
+		for (const auto& [key, value] : _nameMap)
+		{
+			if (!std::holds_alternative<std::reference_wrapper<SPOTCAM>>(value))
+				continue;
+
+			auto waypoint = std::get<std::reference_wrapper<SPOTCAM>>(value).get();
+			
+			if (waypoint.camera == type)
+			{
+				waypoints.push_back(GetByName<R, ScriptReserved_WayPoint>(key));
+			}
+		}
+
+		return waypoints;
 	}
 
 	int GetIndexByName(std::string const& name) const override
