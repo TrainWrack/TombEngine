@@ -806,6 +806,44 @@ void TestTriggers(int x, int y, int z, FloorInfo* floor, Activator activator, bo
 			}
 			break;
 
+		case TO_VOLUME:
+		{
+			// Find the volume by global index across all rooms
+			int globalIndex = 0;
+			TriggerVolume* targetVolume = nullptr;
+
+			for (auto& room : g_Level.Rooms)
+			{
+				for (auto& volume : room.TriggerVolumes)
+				{
+					if (globalIndex == value)
+					{
+						targetVolume = &volume;
+						break;
+					}
+					globalIndex++;
+				}
+				if (targetVolume != nullptr)
+					break;
+			}
+
+			if (targetVolume != nullptr)
+			{
+				// Set volume enabled state based on trigger type
+				if (triggerType == TRIGGER_TYPES::ANTIPAD ||
+					triggerType == TRIGGER_TYPES::ANTITRIGGER ||
+					triggerType == TRIGGER_TYPES::HEAVYANTITRIGGER)
+				{
+					targetVolume->Enabled = false;
+				}
+				else
+				{
+					targetVolume->Enabled = true;
+				}
+			}
+		}
+		break;
+
 		case TO_VOLUMEEVENT:
 		case TO_GLOBALEVENT:
 			trigger = *(data++);
