@@ -504,6 +504,7 @@ constexpr char ScriptReserved_GetRadius1[]				= "GetRadius1";
 constexpr char ScriptReserved_SetRadius1[]				= "SetRadius1";
 constexpr char ScriptReserved_GetRadius2[]				= "GetRadius2";
 constexpr char ScriptReserved_SetRadius2[]				= "SetRadius2";
+constexpr char ScriptReserved_Preview[]					= "Preview";
 
 // Static
 

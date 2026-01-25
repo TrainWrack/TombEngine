@@ -44,6 +44,8 @@ public:
 	
 	Vec3 GetPathPosition(float alpha, bool loop) const;
 	Rotation GetPathRotation(float alpha, bool loop) const;
+	
+	void Preview(sol::optional<Vector4> color) const;
 
 private:
 	WAYPOINT& m_waypoint;

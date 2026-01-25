@@ -1,6 +1,7 @@
 #include "framework.h"
 #include "WayPointObject.h"
 #include "Game/waypoint.h"
+#include "Game/debug/debug.h"
 
 #include "Scripting/Internal/ReservedScriptNames.h"
 #include "Scripting/Internal/ScriptAssert.h"
@@ -8,6 +9,8 @@
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
 #include "Specific/level.h"
+
+using namespace TEN::Debug;
 
 /***
 Waypoint objects for navigation and path traversal.
@@ -101,7 +104,12 @@ void WayPointObject::Register(sol::table& parent)
 		// @tparam float alpha Progress along the path (0.0 to 1.0).
 		// @tparam bool loop Whether to loop the path continuously.
 		// @treturn Rotation Interpolated rotation at the given alpha.
-		ScriptReserved_GetPathRotation, &WayPointObject::GetPathRotation);
+		ScriptReserved_GetPathRotation, &WayPointObject::GetPathRotation,
+
+		/// Preview/visualize the waypoint for debugging purposes.
+		// @function WayPoint:Preview
+		// @tparam[opt] Color color Optional color for the preview (defaults to orange).
+		ScriptReserved_Preview, &WayPointObject::Preview);
 }
 
 Vec3 WayPointObject::GetPos() const
@@ -188,3 +196,146 @@ Rotation WayPointObject::GetPathRotation(float alpha, bool loop) const
 {
 	return Rotation(CalculateWayPointTransform(m_waypoint.name, alpha, loop).Orientation);
 }
+
+void WayPointObject::Preview(sol::optional<Vector4> color) const
+{
+	constexpr auto DEFAULT_COLOR = Vector4(1.0f, 0.65f, 0.0f, 1.0f); // Orange
+	constexpr auto TARGET_RADIUS = 128.0f;
+	constexpr auto NUM_SEGMENTS = 32;
+	
+	Vector4 previewColor = color.value_or(DEFAULT_COLOR);
+	Color drawColor(previewColor.x, previewColor.y, previewColor.z, previewColor.w);
+	
+	Vector3 centerPos(m_waypoint.x, m_waypoint.y, m_waypoint.z);
+	WayPointType wpType = static_cast<WayPointType>(m_waypoint.type);
+	
+	// Create rotation matrix from waypoint's rotations
+	Matrix rotationMatrix = Matrix::CreateRotationX(m_waypoint.rotationX * (float)RADIAN) *
+	                        Matrix::CreateRotationY(m_waypoint.rotationY * (float)RADIAN) *
+	                        Matrix::CreateRotationZ(m_waypoint.roll * (float)RADIAN);
+	Quaternion orient = Quaternion::CreateFromRotationMatrix(rotationMatrix);
+	
+	switch (wpType)
+	{
+		case WayPointType::Point:
+			// Draw a target marker for a single point
+			DrawDebugTarget(centerPos, orient, TARGET_RADIUS, drawColor, RendererDebugPage::CollisionStats);
+			break;
+			
+		case WayPointType::Circle:
+		{
+			// Draw a sphere to represent the circle
+			DrawDebugSphere(centerPos, m_waypoint.radius1, drawColor, RendererDebugPage::CollisionStats, true);
+			break;
+		}
+		
+		case WayPointType::Ellipse:
+		{
+			// Draw ellipse as a series of lines
+			// Since there's no direct ellipse function, we'll draw it as connected line segments
+			for (int i = 0; i < NUM_SEGMENTS; i++)
+			{
+				float angle1 = (i / (float)NUM_SEGMENTS) * 2.0f * (float)PI;
+				float angle2 = ((i + 1) / (float)NUM_SEGMENTS) * 2.0f * (float)PI;
+				
+				Vector3 local1(std::cos(angle1) * m_waypoint.radius1, 0.0f, std::sin(angle1) * m_waypoint.radius2);
+				Vector3 local2(std::cos(angle2) * m_waypoint.radius1, 0.0f, std::sin(angle2) * m_waypoint.radius2);
+				
+				Vector3 world1 = Vector3::Transform(local1, rotationMatrix) + centerPos;
+				Vector3 world2 = Vector3::Transform(local2, rotationMatrix) + centerPos;
+				
+				DrawDebugLine(world1, world2, drawColor, RendererDebugPage::CollisionStats);
+			}
+			break;
+		}
+		
+		case WayPointType::Square:
+		{
+			// Draw square as four connected lines
+			float r = m_waypoint.radius1;
+			Vector3 corners[5] = {
+				Vector3(-r, 0.0f, -r),
+				Vector3(r, 0.0f, -r),
+				Vector3(r, 0.0f, r),
+				Vector3(-r, 0.0f, r),
+				Vector3(-r, 0.0f, -r) // Close the loop
+			};
+			
+			for (int i = 0; i < 4; i++)
+			{
+				Vector3 world1 = Vector3::Transform(corners[i], rotationMatrix) + centerPos;
+				Vector3 world2 = Vector3::Transform(corners[i + 1], rotationMatrix) + centerPos;
+				DrawDebugLine(world1, world2, drawColor, RendererDebugPage::CollisionStats);
+			}
+			break;
+		}
+		
+		case WayPointType::Rectangle:
+		{
+			// Draw rectangle as four connected lines
+			float r1 = m_waypoint.radius1;
+			float r2 = m_waypoint.radius2;
+			Vector3 corners[5] = {
+				Vector3(-r1, 0.0f, -r2),
+				Vector3(r1, 0.0f, -r2),
+				Vector3(r1, 0.0f, r2),
+				Vector3(-r1, 0.0f, r2),
+				Vector3(-r1, 0.0f, -r2) // Close the loop
+			};
+			
+			for (int i = 0; i < 4; i++)
+			{
+				Vector3 world1 = Vector3::Transform(corners[i], rotationMatrix) + centerPos;
+				Vector3 world2 = Vector3::Transform(corners[i + 1], rotationMatrix) + centerPos;
+				DrawDebugLine(world1, world2, drawColor, RendererDebugPage::CollisionStats);
+			}
+			break;
+		}
+		
+		case WayPointType::Linear:
+		case WayPointType::Bezier:
+		{
+			// Draw path as connected line segments
+			// Find all waypoints with the same name
+			std::vector<const WAYPOINT*> pathWaypoints;
+			for (const auto& wp : WayPoints)
+			{
+				if (wp.name == m_waypoint.name)
+					pathWaypoints.push_back(&wp);
+			}
+			
+			if (pathWaypoints.size() < 2)
+			{
+				// If there's only one waypoint, just draw a target
+				DrawDebugTarget(centerPos, orient, TARGET_RADIUS, drawColor, RendererDebugPage::CollisionStats);
+				break;
+			}
+			
+			// Sort by number
+			std::sort(pathWaypoints.begin(), pathWaypoints.end(), 
+				[](const WAYPOINT* a, const WAYPOINT* b) { return a->number < b->number; });
+			
+			// Draw lines between waypoints or interpolated path
+			constexpr int PATH_SEGMENTS = 50;
+			for (int i = 0; i < PATH_SEGMENTS; i++)
+			{
+				float alpha1 = i / (float)PATH_SEGMENTS;
+				float alpha2 = (i + 1) / (float)PATH_SEGMENTS;
+				
+				Vector3 pos1 = CalculateWayPointTransform(m_waypoint.name, alpha1, false).Position;
+				Vector3 pos2 = CalculateWayPointTransform(m_waypoint.name, alpha2, false).Position;
+				
+				DrawDebugLine(pos1, pos2, drawColor, RendererDebugPage::CollisionStats);
+			}
+			
+			// Draw markers at each waypoint position
+			for (const auto* wp : pathWaypoints)
+			{
+				Vector3 wpPos(wp->x, wp->y, wp->z);
+				DrawDebugSphere(wpPos, 32.0f, drawColor, RendererDebugPage::CollisionStats, true);
+			}
+			break;
+		}
+	}
+}
+
