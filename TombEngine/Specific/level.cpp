@@ -559,13 +559,6 @@ void LoadCameras()
 		waypoint.luaName = ReadString();
 		
 		WayPoints.push_back(waypoint);
-		
-		// Register with script engine using LuaName if available, otherwise use Name
-		std::string scriptName = waypoint.luaName.empty() ? waypoint.name : waypoint.luaName;
-		if (!scriptName.empty())
-		{
-			g_GameScriptEntities->AddName(scriptName, WayPoints.back());
-		}
 	}
 
 	int sinkCount = ReadCount();

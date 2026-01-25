@@ -128,26 +128,6 @@ private:
 		return rooms;
 	}
 
-	template <typename R>
-	std::vector <std::unique_ptr<R>> GetWayPointsByType(int type)
-	{
-		auto waypoints = std::vector<std::unique_ptr<R>>{};
-		for (const auto& [key, value] : _nameMap)
-		{
-			if (!std::holds_alternative<std::reference_wrapper<WAYPOINT>>(value))
-				continue;
-
-			auto waypoint = std::get<std::reference_wrapper<WAYPOINT>>(value).get();
-			
-			if (waypoint.type == type)
-			{
-				waypoints.push_back(GetByName<R, ScriptReserved_WayPoint>(key));
-			}
-		}
-
-		return waypoints;
-	}
-
 	int GetIndexByName(std::string const& name) const override
 	{
 		if (_nameMap.find(name) == _nameMap.end())

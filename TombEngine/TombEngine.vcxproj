@@ -917,9 +917,9 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Scripting\Internal\TEN\Objects\SoundSource\SoundSourceObject.h" />
     <ClInclude Include="Scripting\Internal\TEN\Objects\Static\StaticObject.h" />
     <ClInclude Include="Scripting\Internal\TEN\Objects\Volume\VolumeObject.h" />
-    <ClInclude Include="Scripting\Internal\TEN\Objects\WayPoint\WayPointObject.h" />
-    <ClInclude Include="Scripting\Internal\TEN\Objects\WayPoint\WayPointTypes.h" />
     <ClInclude Include="Scripting\Internal\TEN\Types\Rotation\Rotation.h" />
+    <ClInclude Include="Scripting\Internal\TEN\WayPoint\WayPointHandler.h" />
+    <ClInclude Include="Scripting\Internal\TEN\WayPoint\WayPointTypes.h" />
     <ClInclude Include="Scripting\Internal\TEN\Sound\SoundHandler.h" />
     <ClInclude Include="Scripting\Internal\TEN\Sound\SoundTrackTypes.h" />
     <ClInclude Include="Scripting\Internal\TEN\Strings\DisplayString\DisplayString.h" />
@@ -1371,9 +1371,9 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClCompile Include="Scripting\Internal\TEN\Objects\SoundSource\SoundSourceObject.cpp" />
     <ClCompile Include="Scripting\Internal\TEN\Objects\Static\StaticObject.cpp" />
     <ClCompile Include="Scripting\Internal\TEN\Objects\Volume\VolumeObject.cpp" />
-    <ClCompile Include="Scripting\Internal\TEN\Objects\WayPoint\WayPointObject.cpp" />
     <ClCompile Include="Scripting\Internal\TEN\Types\Rotation\Rotation.cpp" />
     <ClCompile Include="Scripting\Internal\TEN\Sound\SoundHandler.cpp" />
+    <ClCompile Include="Scripting\Internal\TEN\WayPoint\WayPointHandler.cpp" />
     <ClCompile Include="Scripting\Internal\TEN\Strings\DisplayString\DisplayString.cpp" />
     <ClCompile Include="Scripting\Internal\TEN\Strings\StringsHandler.cpp" />
     <ClCompile Include="Scripting\Internal\TEN\Util\Util.cpp" />

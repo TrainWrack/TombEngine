@@ -13,6 +13,7 @@
 #include "Scripting/Internal/TEN/Sound/SoundHandler.h"
 #include "Scripting/Internal/TEN/Util/Util.h"
 #include "Scripting/Internal/TEN/View/ViewHandler.h"
+#include "Scripting/Internal/TEN/WayPoint/WayPointHandler.h"
 
 constexpr auto DEADLOCK_CHECK_INTERVAL = 500;
 constexpr auto DEADLOCK_HOOK_INSTRUCTION_COUNT = 1000;
@@ -106,4 +107,5 @@ void ScriptInterfaceState::Init(const std::string& assetsDir)
 	TEN::Scripting::Sound::Register(&SolState, RootTable);
 	TEN::Scripting::Util::Register(&SolState, RootTable);
 	TEN::Scripting::View::Register(&SolState, RootTable);
+	TEN::Scripting::WayPoint::Register(&SolState, RootTable);
 }
