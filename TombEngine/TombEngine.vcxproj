@@ -918,6 +918,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Scripting\Internal\TEN\Objects\Static\StaticObject.h" />
     <ClInclude Include="Scripting\Internal\TEN\Objects\Volume\VolumeObject.h" />
     <ClInclude Include="Scripting\Internal\TEN\Objects\WayPoint\WayPointObject.h" />
+    <ClInclude Include="Scripting\Internal\TEN\Objects\WayPoint\WayPointTypes.h" />
     <ClInclude Include="Scripting\Internal\TEN\Types\Rotation\Rotation.h" />
     <ClInclude Include="Scripting\Internal\TEN\Sound\SoundHandler.h" />
     <ClInclude Include="Scripting\Internal\TEN\Sound\SoundTrackTypes.h" />

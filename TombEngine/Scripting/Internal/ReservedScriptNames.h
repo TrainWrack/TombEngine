@@ -491,6 +491,7 @@ constexpr char ScriptReserved_SinkSetStrength[]		= "SetStrength";
 // WayPoint
 
 constexpr char ScriptReserved_WayPoint[]				= "WayPoint";
+constexpr char ScriptReserved_WayPointType[]			= "WayPointType";
 constexpr char ScriptReserved_GetWayPointByName[]		= "GetWayPointByName";
 constexpr char ScriptReserved_GetWayPointsByType[]		= "GetWayPointsByType";
 constexpr char ScriptReserved_GetPathPosition[]			= "GetPathPosition";

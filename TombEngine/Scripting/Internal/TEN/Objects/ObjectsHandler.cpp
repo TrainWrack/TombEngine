@@ -20,6 +20,7 @@
 #include "Scripting/Internal/TEN/Objects/SoundSource/SoundSourceObject.h"
 #include "Scripting/Internal/TEN/Objects/Volume/VolumeObject.h"
 #include "Scripting/Internal/TEN/Objects/WayPoint/WayPointObject.h"
+#include "Scripting/Internal/TEN/Objects/WayPoint/WayPointTypes.h"
 
 using namespace TEN::Scripting::Objects;
 
@@ -200,6 +201,7 @@ ObjectsHandler::ObjectsHandler(sol::state* lua, sol::table& parent) :
 	_handler.MakeReadOnlyTable(_table_objects, ScriptReserved_AmmoType, AMMO_TYPES);
 	_handler.MakeReadOnlyTable(_table_objects, ScriptReserved_HandStatus, HAND_STATUSES);
 	_handler.MakeReadOnlyTable(_table_objects, ScriptReserved_MoveableStatus, MOVEABLE_STATUSES);
+	_handler.MakeReadOnlyTable(_table_objects, ScriptReserved_WayPointType, WAYPOINT_TYPES);
 }
 
 void ObjectsHandler::TestCollidingObjects()
