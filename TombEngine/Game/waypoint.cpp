@@ -88,7 +88,7 @@ Pose CalculateWayPointTransform(const std::string& name, float alpha, bool loop)
 		{
 			float blendFactor = (alpha < BLEND_START) ? 
 				(0.5f + ((alpha / BLEND_RANGE) * 0.5f)) : 
-				(((alpha - BLEND_END) / BLEND_START) * 0.5f);
+				(((alpha - BLEND_END) / BLEND_RANGE) * 0.5f);
 			
 			// Blend between last and first waypoints
 			const WAYPOINT* wp1 = pathWaypoints[waypointCount - 1];
@@ -170,12 +170,14 @@ Pose CalculateWayPointTransform(const std::string& name, float alpha, bool loop)
 		
 		auto getInterpolatedRotation = [&](float t, std::vector<float>& rot)
 		{
-			// Simple linear interpolation for rotations in Bezier mode
+			// Linear interpolation for rotations in Bezier mode
+			// Note: rot vector has padding (first and last elements duplicated for spline continuity)
 			float pos = t * (waypointCount - 1);
 			int idx = (int)pos;
 			idx = std::clamp(idx, 0, waypointCount - 2);
 			float localT = pos - idx;
-			return Lerp(rot[idx + 1], rot[idx + 2], localT); // +1 offset due to padding
+			// Index offset by 1 because vector has padding at start
+			return Lerp(rot[idx + 1], rot[idx + 2], localT);
 		};
 
 		auto position = Vector3::Zero;
@@ -186,7 +188,7 @@ Pose CalculateWayPointTransform(const std::string& name, float alpha, bool loop)
 		{
 			float blendFactor = (alpha < BLEND_START) ? 
 				(0.5f + ((alpha / BLEND_RANGE) * 0.5f)) : 
-				(((alpha - BLEND_END) / BLEND_START) * 0.5f);
+				(((alpha - BLEND_END) / BLEND_RANGE) * 0.5f);
 
 			position = Vector3::Lerp(
 				getInterpolatedPoint(BLEND_END, xPos, yPos, zPos), 
