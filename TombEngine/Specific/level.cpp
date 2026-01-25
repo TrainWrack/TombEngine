@@ -605,14 +605,15 @@ void LoadCameras()
 
 	NumberSpotcams = ReadCount();
 
+	// SpotCamRemap and CameraCnt are indexed by sequence number (unsigned char 0-255)
+	// Always initialize them to handle GetCameraTransform calls even when NumberSpotcams == 0
+	SpotCamRemap.assign(SPOTCAM_MAX_SEQUENCE_ID, 0);
+	CameraCnt.assign(SPOTCAM_MAX_SEQUENCE_ID, 0);
+
 	// TODO: Read properly!
 	if (NumberSpotcams != 0)
 	{
 		SpotCam.resize(NumberSpotcams);
-		// SpotCamRemap and CameraCnt are indexed by sequence number (unsigned char 0-255)
-		// Initialize with 0 to match behavior of original static arrays
-		SpotCamRemap.assign(SPOTCAM_MAX_SEQUENCE_ID, 0);
-		CameraCnt.assign(SPOTCAM_MAX_SEQUENCE_ID, 0);
 		ReadBytes(SpotCam.data(), NumberSpotcams * sizeof(SPOTCAM));
 	}
 

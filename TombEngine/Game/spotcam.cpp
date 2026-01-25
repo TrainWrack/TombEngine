@@ -848,7 +848,7 @@ Pose GetCameraTransform(int sequence, float alpha, bool loop)
 
 	alpha = std::clamp(alpha, 0.0f, 1.0f);
 
-	if (sequence < 0 || sequence >= SpotCamRemap.size())
+	if (sequence < 0 || sequence >= SPOTCAM_MAX_SEQUENCE_ID)
 	{
 		TENLog("Wrong flyby sequence number provided for getting camera coordinates.", LogLevel::Warning);
 		return Pose::Zero;
