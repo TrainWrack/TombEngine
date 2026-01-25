@@ -8,8 +8,6 @@
 #include "Scripting/Internal/TEN/Objects/Static/StaticObject.h"
 #include "Scripting/Internal/TEN/Objects/AIObject/AIObject.h"
 
-struct WAYPOINT;
-
 class ObjectsHandler : public ScriptInterfaceObjectsHandler
 {
 public:
