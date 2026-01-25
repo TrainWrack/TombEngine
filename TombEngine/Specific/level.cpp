@@ -607,7 +607,12 @@ void LoadCameras()
 
 	// TODO: Read properly!
 	if (NumberSpotcams != 0)
-		ReadBytes(SpotCam, NumberSpotcams * sizeof(SPOTCAM));
+	{
+		SpotCam.resize(NumberSpotcams);
+		SpotCamRemap.resize(NumberSpotcams);
+		CameraCnt.resize(NumberSpotcams);
+		ReadBytes(SpotCam.data(), NumberSpotcams * sizeof(SPOTCAM));
+	}
 
 	int sinkCount = ReadCount();
 	TENLog("Sink count: " + std::to_string(sinkCount), LogLevel::Info);

@@ -50,9 +50,9 @@ int LastSpotCamSequence;
 int LaraHealth;
 int LaraAir;
 int CurrentSpotcamSequence;
-SPOTCAM SpotCam[MAX_SPOTCAMS];
-int SpotCamRemap[MAX_SPOTCAMS];
-int CameraCnt[MAX_SPOTCAMS];
+std::vector<SPOTCAM> SpotCam;
+std::vector<int> SpotCamRemap;
+std::vector<int> CameraCnt;
 int NumberSpotcams;
 
 bool CheckTrigger = false;
@@ -67,9 +67,9 @@ void ClearSpotCamSequences()
 	SpotcamDontDrawLara = false;
 	SpotcamOverlay = false;
 
-
-	for (int i = 0; i < MAX_SPOTCAMS; i++)
-		SpotCam[i] = {};
+	SpotCam.clear();
+	SpotCamRemap.clear();
+	CameraCnt.clear();
 }
 
 void InitializeSpotCamSequences(bool startFirstSequence)
@@ -848,7 +848,7 @@ Pose GetCameraTransform(int sequence, float alpha, bool loop)
 
 	alpha = std::clamp(alpha, 0.0f, 1.0f);
 
-	if (sequence < 0 || sequence >= MAX_SPOTCAMS)
+	if (sequence < 0 || sequence >= SpotCamRemap.size())
 	{
 		TENLog("Wrong flyby sequence number provided for getting camera coordinates.", LogLevel::Warning);
 		return Pose::Zero;
