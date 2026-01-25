@@ -609,9 +609,9 @@ void LoadCameras()
 	if (NumberSpotcams != 0)
 	{
 		SpotCam.resize(NumberSpotcams);
-		// SpotCamRemap is indexed by sequence number (unsigned char), so size it to 256
-		SpotCamRemap.resize(256);
-		CameraCnt.resize(256);
+		// SpotCamRemap and CameraCnt are indexed by sequence number (unsigned char 0-255)
+		SpotCamRemap.resize(SPOTCAM_MAX_SEQUENCE_ID);
+		CameraCnt.resize(SPOTCAM_MAX_SEQUENCE_ID);
 		ReadBytes(SpotCam.data(), NumberSpotcams * sizeof(SPOTCAM));
 	}
 

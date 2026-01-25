@@ -3,6 +3,7 @@
 #include "Specific/clock.h"
 #include <vector>
 
+constexpr auto SPOTCAM_MAX_SEQUENCE_ID = 256; // Max value for unsigned char sequence field
 constexpr auto SPOTCAM_CINEMATIC_BARS_HEIGHT = 1.0f / 16;
 constexpr auto SPOTCAM_CINEMATIC_BARS_SPEED = 1.0f / FPS;
 
