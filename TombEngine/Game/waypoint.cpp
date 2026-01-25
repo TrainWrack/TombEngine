@@ -50,17 +50,121 @@ Pose CalculateWayPointTransform(const std::string& name, float alpha, bool loop)
 	WayPointType waypointType = static_cast<WayPointType>(pathWaypoints[0]->type);
 	if (IsSingularType(waypointType))
 	{
-		// For singular types, just return the position and rotation of the single point
 		const WAYPOINT* wp = pathWaypoints[0];
-		Vector3 position(wp->x, wp->y, wp->z);
+		Vector3 centerPosition(wp->x, wp->y, wp->z);
 		
-		// Create rotation from rotationX, rotationY, and roll
+		// Create rotation matrix from waypoint's rotations
+		// Rotations are applied in order: X, Y, Z (Roll)
+		Matrix rotationMatrix = Matrix::CreateRotationX(wp->rotationX * (float)RADIAN) *
+		                        Matrix::CreateRotationY(wp->rotationY * (float)RADIAN) *
+		                        Matrix::CreateRotationZ(wp->roll * (float)RADIAN);
+		
+		Vector3 localPosition = Vector3::Zero;
+		
+		// Calculate position on the shape perimeter based on type and alpha
+		// Starting at 3 o'clock (local x = radius, z = 0) and rotating clockwise
+		switch (waypointType)
+		{
+			case WayPointType::Point:
+				// Point has no shape, return center position
+				localPosition = Vector3::Zero;
+				break;
+				
+			case WayPointType::Circle:
+			{
+				// Circle with radius1
+				// Alpha 0.0 = 3 o'clock, rotating clockwise
+				float angle = alpha * 2.0f * (float)PI;
+				localPosition.x = std::cos(angle) * wp->radius1;
+				localPosition.y = 0.0f;
+				localPosition.z = std::sin(angle) * wp->radius1;
+				break;
+			}
+			
+			case WayPointType::Ellipse:
+			{
+				// Ellipse with radius1 (x-axis) and radius2 (z-axis)
+				float angle = alpha * 2.0f * (float)PI;
+				localPosition.x = std::cos(angle) * wp->radius1;
+				localPosition.y = 0.0f;
+				localPosition.z = std::sin(angle) * wp->radius2;
+				break;
+			}
+			
+			case WayPointType::Square:
+			{
+				// Square with radius1 (half-width/height)
+				// Divide perimeter into 4 equal segments
+				float r = wp->radius1;
+				float segment = alpha * 4.0f;
+				int side = (int)segment;
+				float t = segment - side;
+				
+				switch (side)
+				{
+					case 0: // Right side (3 to 6 o'clock)
+						localPosition = Vector3(r, 0.0f, Lerp(-r, r, t));
+						break;
+					case 1: // Top side (6 to 9 o'clock)
+						localPosition = Vector3(Lerp(r, -r, t), 0.0f, r);
+						break;
+					case 2: // Left side (9 to 12 o'clock)
+						localPosition = Vector3(-r, 0.0f, Lerp(r, -r, t));
+						break;
+					default: // Bottom side (12 to 3 o'clock)
+						localPosition = Vector3(Lerp(-r, r, t), 0.0f, -r);
+						break;
+				}
+				break;
+			}
+			
+			case WayPointType::Rectangle:
+			{
+				// Rectangle with radius1 (half-width x) and radius2 (half-height z)
+				float r1 = wp->radius1;
+				float r2 = wp->radius2;
+				
+				// Calculate perimeter segments weighted by side length
+				float perimeter = 2.0f * (r1 + r2);
+				float distance = alpha * perimeter;
+				
+				if (distance < r2)
+				{
+					// Right side (3 to 6 o'clock)
+					localPosition = Vector3(r1, 0.0f, Lerp(-r2, r2, distance / r2));
+				}
+				else if (distance < r2 + r1)
+				{
+					// Top side (6 to 9 o'clock)
+					float t = (distance - r2) / r1;
+					localPosition = Vector3(Lerp(r1, -r1, t), 0.0f, r2);
+				}
+				else if (distance < 2.0f * r2 + r1)
+				{
+					// Left side (9 to 12 o'clock)
+					float t = (distance - r2 - r1) / r2;
+					localPosition = Vector3(-r1, 0.0f, Lerp(r2, -r2, t));
+				}
+				else
+				{
+					// Bottom side (12 to 3 o'clock)
+					float t = (distance - 2.0f * r2 - r1) / r1;
+					localPosition = Vector3(Lerp(-r1, r1, t), 0.0f, -r2);
+				}
+				break;
+			}
+		}
+		
+		// Transform local position by rotation matrix and add to center
+		Vector3 worldPosition = Vector3::Transform(localPosition, rotationMatrix) + centerPosition;
+		
+		// Create orientation from waypoint's rotations
 		EulerAngles orientation;
 		orientation.x = wp->rotationX * (float)RADIAN;
 		orientation.y = wp->rotationY * (float)RADIAN;
 		orientation.z = wp->roll * (float)RADIAN;
 		
-		return Pose(position, orientation);
+		return Pose(worldPosition, orientation);
 	}
 
 	// For path types (Linear, Bezier), we need at least 2 points
