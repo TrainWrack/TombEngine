@@ -19,6 +19,7 @@
 #include "Game/Setup.h"
 #include "Game/Sink.h"
 #include "Game/spotcam.h"
+#include "Game/waypoint.h"
 #include "Objects/Generic/Doors/generic_doors.h"
 #include "Physics/Physics.h"
 #include "Renderer/Renderer.h"
@@ -525,15 +526,39 @@ void LoadCameras()
 
 	// TODO: Read properly!
 	if (NumberSpotcams != 0)
-	{
 		ReadBytes(SpotCam, NumberSpotcams * sizeof(SPOTCAM));
+
+	// Load waypoints
+	int waypointCount = ReadCount();
+	TENLog("Waypoint count: " + std::to_string(waypointCount), LogLevel::Info);
+	
+	WayPoints.clear();
+	WayPoints.reserve(waypointCount);
+	
+	for (int i = 0; i < waypointCount; i++)
+	{
+		WAYPOINT waypoint;
+		waypoint.x = ReadInt32();
+		waypoint.y = ReadInt32();
+		waypoint.z = ReadInt32();
+		waypoint.roomNumber = ReadInt32();
+		waypoint.rotationX = ReadFloat();
+		waypoint.rotationY = ReadFloat();
+		waypoint.roll = ReadFloat();
+		waypoint.number = ReadUInt16();
+		waypoint.type = ReadInt32();
+		waypoint.radius1 = ReadFloat();
+		waypoint.radius2 = ReadFloat();
+		waypoint.name = ReadString();
+		waypoint.luaName = ReadString();
 		
-		// Register waypoints with script engine
-		for (int i = 0; i < NumberSpotcams; i++)
+		WayPoints.push_back(waypoint);
+		
+		// Register with script engine using LuaName if available, otherwise use Name
+		std::string scriptName = waypoint.luaName.empty() ? waypoint.name : waypoint.luaName;
+		if (!scriptName.empty())
 		{
-			// Generate auto-generated name for waypoint
-			std::string waypointName = "waypoint_" + std::to_string(SpotCam[i].sequence) + "_" + std::to_string(SpotCam[i].camera);
-			g_GameScriptEntities->AddName(waypointName, SpotCam[i]);
+			g_GameScriptEntities->AddName(scriptName, WayPoints.back());
 		}
 	}
 

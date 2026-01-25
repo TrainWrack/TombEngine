@@ -7,7 +7,7 @@ struct SoundSourceInfo;
 struct TriggerVolume;
 struct AI_OBJECT;
 struct RoomData;
-struct SPOTCAM;
+struct WAYPOINT;
 
 using VarMapVal = std::variant<
 	int,
@@ -18,4 +18,4 @@ using VarMapVal = std::variant<
 	std::reference_wrapper<TriggerVolume>,
 	std::reference_wrapper<AI_OBJECT>,
 	std::reference_wrapper<RoomData>,
-	std::reference_wrapper<SPOTCAM>>;
+	std::reference_wrapper<WAYPOINT>>;

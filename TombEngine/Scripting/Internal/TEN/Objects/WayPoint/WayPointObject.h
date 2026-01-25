@@ -3,7 +3,7 @@
 #include "Scripting/Internal/TEN/Objects/NamedBase.h"
 #include "Math/Math.h"
 
-struct SPOTCAM;
+struct WAYPOINT;
 
 namespace sol
 {
@@ -12,11 +12,11 @@ namespace sol
 class Vec3;
 class Rotation;
 
-class WayPointObject : public NamedBase<WayPointObject, SPOTCAM&>
+class WayPointObject : public NamedBase<WayPointObject, WAYPOINT&>
 {
 public:
-	using IdentifierType = std::reference_wrapper<SPOTCAM>;
-	WayPointObject(SPOTCAM& ref);
+	using IdentifierType = std::reference_wrapper<WAYPOINT>;
+	WayPointObject(WAYPOINT& ref);
 	~WayPointObject() = default;
 
 	WayPointObject& operator=(WayPointObject const& other) = delete;
@@ -33,14 +33,18 @@ public:
 	int GetType() const;
 	void SetType(int type);
 	
-	int GetSequence() const;
+	int GetNumber() const;
+	void SetNumber(int number);
+	
+	float GetRadius1() const;
+	void SetRadius1(float radius);
+	
+	float GetRadius2() const;
+	void SetRadius2(float radius);
 	
 	Vec3 GetPathPosition(float alpha, bool loop) const;
 	Rotation GetPathRotation(float alpha, bool loop) const;
 
 private:
-	SPOTCAM& m_waypoint;
-	
-	// Helper function to calculate waypoint path transform
-	Pose CalculateWayPointTransform(int sequence, float alpha, bool loop) const;
+	WAYPOINT& m_waypoint;
 };

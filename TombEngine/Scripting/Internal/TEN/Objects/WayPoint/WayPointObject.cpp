@@ -1,6 +1,6 @@
 #include "framework.h"
 #include "WayPointObject.h"
-#include "Game/spotcam.h"
+#include "Game/waypoint.h"
 
 #include "Scripting/Internal/ReservedScriptNames.h"
 #include "Scripting/Internal/ScriptAssert.h"
@@ -19,7 +19,7 @@ Waypoint objects for navigation and path traversal.
 static auto IndexError = IndexErrorMaker(WayPointObject, ScriptReserved_WayPoint);
 static auto NewIndexError = NewIndexErrorMaker(WayPointObject, ScriptReserved_WayPoint);
 
-WayPointObject::WayPointObject(SPOTCAM& ref) : m_waypoint{ref}
+WayPointObject::WayPointObject(WAYPOINT& ref) : m_waypoint{ref}
 {};
 
 void WayPointObject::Register(sol::table& parent)
@@ -49,20 +49,45 @@ void WayPointObject::Register(sol::table& parent)
 		// @tparam string name The waypoint's new name.
 		ScriptReserved_SetName, &WayPointObject::SetName,
 
-		/// Get the waypoint's type/camera number.
+		/// Get the waypoint's type.
 		// @function WayPoint:GetType
 		// @treturn int The waypoint's type identifier.
 		ScriptReserved_GetType, &WayPointObject::GetType,
 
-		/// Set the waypoint's type/camera number.
+		/// Set the waypoint's type.
 		// @function WayPoint:SetType
 		// @tparam int type The waypoint's new type identifier.
 		ScriptReserved_SetType, &WayPointObject::SetType,
 
-		/// Get the waypoint's sequence number.
-		// @function WayPoint:GetSequence
-		// @treturn int The waypoint's sequence number.
-		ScriptReserved_GetSequence, &WayPointObject::GetSequence,
+		/// Get the waypoint's number.
+		// @function WayPoint:GetNumber
+		// @treturn int The waypoint's number.
+		ScriptReserved_GetNumber, &WayPointObject::GetNumber,
+
+		/// Set the waypoint's number.
+		// @function WayPoint:SetNumber
+		// @tparam int number The waypoint's new number.
+		ScriptReserved_SetNumber, &WayPointObject::SetNumber,
+
+		/// Get the waypoint's radius1.
+		// @function WayPoint:GetRadius1
+		// @treturn float The waypoint's radius1.
+		ScriptReserved_GetRadius1, &WayPointObject::GetRadius1,
+
+		/// Set the waypoint's radius1.
+		// @function WayPoint:SetRadius1
+		// @tparam float radius The waypoint's new radius1.
+		ScriptReserved_SetRadius1, &WayPointObject::SetRadius1,
+
+		/// Get the waypoint's radius2.
+		// @function WayPoint:GetRadius2
+		// @treturn float The waypoint's radius2.
+		ScriptReserved_GetRadius2, &WayPointObject::GetRadius2,
+
+		/// Set the waypoint's radius2.
+		// @function WayPoint:SetRadius2
+		// @tparam float radius The waypoint's new radius2.
+		ScriptReserved_SetRadius2, &WayPointObject::SetRadius2,
 
 		/// Get an interpolated position along the waypoint path.
 		// @function WayPoint:GetPathPosition
@@ -93,8 +118,7 @@ void WayPointObject::SetPos(Vec3 const& pos)
 
 std::string WayPointObject::GetName() const
 {
-	// Generate name based on sequence and camera index
-	return "waypoint_" + std::to_string(m_waypoint.sequence) + "_" + std::to_string(m_waypoint.camera);
+	return m_waypoint.name;
 }
 
 void WayPointObject::SetName(std::string const& id)
@@ -102,128 +126,65 @@ void WayPointObject::SetName(std::string const& id)
 	if (!ScriptAssert(!id.empty(), "Name cannot be blank. Not setting name."))
 		return;
 
-	// Note: SPOTCAM structure doesn't support arbitrary names
-	// This would require extending the level format
-	TENLog("Setting custom waypoint names is not supported. Waypoint names are auto-generated based on sequence and camera index.", LogLevel::Warning, LogConfig::All);
+	if (_callbackSetName(id, m_waypoint))
+	{
+		// Remove old name if it exists
+		_callbackRemoveName(m_waypoint.name);
+		m_waypoint.name = id;
+	}
+	else
+	{
+		ScriptAssertF(false, "Could not add name {} - does a waypoint with this name already exist?", id);
+		TENLog("Name will not be set", LogLevel::Warning, LogConfig::All);
+	}
 }
 
 int WayPointObject::GetType() const
 {
-	return m_waypoint.camera;
+	return m_waypoint.type;
 }
 
 void WayPointObject::SetType(int type)
 {
-	m_waypoint.camera = (unsigned char)type;
+	m_waypoint.type = type;
 }
 
-int WayPointObject::GetSequence() const
+int WayPointObject::GetNumber() const
 {
-	return m_waypoint.sequence;
+	return m_waypoint.number;
 }
 
-// Catmull-Rom spline interpolation for waypoint paths
-Pose WayPointObject::CalculateWayPointTransform(int sequence, float alpha, bool loop) const
+void WayPointObject::SetNumber(int number)
 {
-	constexpr auto BLEND_RANGE = 0.1f;
-	constexpr auto BLEND_START = BLEND_RANGE;
-	constexpr auto BLEND_END   = 1.0f - BLEND_RANGE;
+	m_waypoint.number = (unsigned short)number;
+}
 
-	alpha = std::clamp(alpha, 0.0f, 1.0f);
+float WayPointObject::GetRadius1() const
+{
+	return m_waypoint.radius1;
+}
 
-	if (sequence < 0 || sequence >= MAX_SPOTCAMS)
-	{
-		TENLog("Invalid waypoint sequence number provided for path calculation.", LogLevel::Warning);
-		return Pose::Zero;
-	}
+void WayPointObject::SetRadius1(float radius)
+{
+	m_waypoint.radius1 = radius;
+}
 
-	// Retrieve waypoint count in sequence
-	int waypointCount = CameraCnt[SpotCamRemap[sequence]];
-	if (waypointCount < 2)
-	{
-		TENLog("Not enough waypoints in sequence to calculate the path.", LogLevel::Warning);
-		return Pose::Zero;
-	}
+float WayPointObject::GetRadius2() const
+{
+	return m_waypoint.radius2;
+}
 
-	// Find first ID for sequence
-	int firstSeqID = 0;
-	for (int i = 0; i < SpotCamRemap[sequence]; i++)
-		firstSeqID += CameraCnt[i];
-
-	// Determine number of spline points and spline position
-	int splinePoints = waypointCount + 2;
-	int splineAlpha = int(alpha * (float)USHRT_MAX);
-
-	// Extract waypoint positions and rolls into separate vectors for interpolation
-	std::vector<int> xPos, yPos, zPos, rolls;
-	for (int i = -1; i < (waypointCount + 1); i++)
-	{
-		int seqID = std::clamp(firstSeqID + i, firstSeqID, (firstSeqID + waypointCount) - 1);
-
-		xPos.push_back(SpotCam[seqID].x);
-		yPos.push_back(SpotCam[seqID].y);
-		zPos.push_back(SpotCam[seqID].z);
-		rolls.push_back(SpotCam[seqID].roll);
-	}
-
-	// Compute spline interpolation of waypoint parameters
-	auto getInterpolatedPoint = [&](float t, std::vector<int>& x, std::vector<int>& y, std::vector<int>& z) 
-	{
-		int tAlpha = int(t * (float)USHRT_MAX);
-		return Vector3(Spline(tAlpha, x.data(), splinePoints),
-					   Spline(tAlpha, y.data(), splinePoints),
-					   Spline(tAlpha, z.data(), splinePoints));
-	};
-
-	auto getInterpolatedRoll = [&](float t)
-	{
-		int tAlpha = int(t * (float)USHRT_MAX);
-		return Spline(tAlpha, rolls.data(), splinePoints);
-	};
-
-	auto position = Vector3::Zero;
-	short orientZ = 0;
-
-	// If loop is enabled and alpha is at sequence start or end, blend between last and first waypoints
-	if (loop && (alpha < BLEND_START || alpha >= BLEND_END))
-	{
-		float blendFactor = (alpha < BLEND_START) ? (0.5f + ((alpha / BLEND_RANGE) * 0.5f)) : (((alpha - BLEND_END) / BLEND_START) * 0.5f);
-
-		position = Vector3::Lerp(getInterpolatedPoint(BLEND_END, xPos, yPos, zPos), getInterpolatedPoint(BLEND_START, xPos, yPos, zPos), blendFactor);
-		orientZ = Lerp(getInterpolatedRoll(BLEND_END), getInterpolatedRoll(BLEND_START), blendFactor);
-	}
-	else
-	{
-		position = getInterpolatedPoint(alpha, xPos, yPos, zPos);
-		orientZ = getInterpolatedRoll(alpha);
-	}
-
-	// Calculate direction from current position to next position for orientation
-	// For waypoints, we compute the forward direction based on the path tangent
-	float deltaAlpha = 0.01f; // Small delta for tangent calculation
-	float nextAlpha = std::min(alpha + deltaAlpha, 1.0f);
-	auto nextPosition = getInterpolatedPoint(nextAlpha, xPos, yPos, zPos);
-	auto direction = nextPosition - position;
-	
-	if (direction.LengthSquared() < 0.0001f)
-	{
-		// If positions are too close, use previous point
-		float prevAlpha = std::max(alpha - deltaAlpha, 0.0f);
-		auto prevPosition = getInterpolatedPoint(prevAlpha, xPos, yPos, zPos);
-		direction = position - prevPosition;
-	}
-
-	auto pose = Pose(position, EulerAngles(direction));
-	pose.Orientation.z = orientZ;
-	return pose;
+void WayPointObject::SetRadius2(float radius)
+{
+	m_waypoint.radius2 = radius;
 }
 
 Vec3 WayPointObject::GetPathPosition(float alpha, bool loop) const
 {
-	return Vec3(CalculateWayPointTransform(m_waypoint.sequence, alpha, loop).Position);
+	return Vec3(CalculateWayPointTransform(m_waypoint.name, alpha, loop).Position);
 }
 
 Rotation WayPointObject::GetPathRotation(float alpha, bool loop) const
 {
-	return Rotation(CalculateWayPointTransform(m_waypoint.sequence, alpha, loop).Orientation);
+	return Rotation(CalculateWayPointTransform(m_waypoint.name, alpha, loop).Orientation);
 }

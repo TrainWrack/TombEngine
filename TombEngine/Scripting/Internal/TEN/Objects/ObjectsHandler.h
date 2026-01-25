@@ -8,7 +8,7 @@
 #include "Scripting/Internal/TEN/Objects/Static/StaticObject.h"
 #include "Scripting/Internal/TEN/Objects/AIObject/AIObject.h"
 
-struct SPOTCAM;
+struct WAYPOINT;
 
 class ObjectsHandler : public ScriptInterfaceObjectsHandler
 {
@@ -134,12 +134,12 @@ private:
 		auto waypoints = std::vector<std::unique_ptr<R>>{};
 		for (const auto& [key, value] : _nameMap)
 		{
-			if (!std::holds_alternative<std::reference_wrapper<SPOTCAM>>(value))
+			if (!std::holds_alternative<std::reference_wrapper<WAYPOINT>>(value))
 				continue;
 
-			auto waypoint = std::get<std::reference_wrapper<SPOTCAM>>(value).get();
+			auto waypoint = std::get<std::reference_wrapper<WAYPOINT>>(value).get();
 			
-			if (waypoint.camera == type)
+			if (waypoint.type == type)
 			{
 				waypoints.push_back(GetByName<R, ScriptReserved_WayPoint>(key));
 			}
