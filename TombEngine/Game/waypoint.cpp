@@ -73,8 +73,9 @@ Pose CalculateWayPointTransform(const std::string& name, float alpha, bool loop)
 			case WayPointType::Circle:
 			{
 				// Circle with radius1
-				// Alpha 0.0 = 3 o'clock, rotating clockwise
-				float angle = alpha * 2.0f * (float)PI;
+				// Alpha 0.0 = 12 o'clock, rotating clockwise
+				// Offset angle by -90 degrees to start at top
+				float angle = (alpha * 2.0f * (float)PI) - ((float)PI / 2.0f);
 				localPosition.x = std::cos(angle) * wp->radius1;
 				localPosition.y = 0.0f;
 				localPosition.z = std::sin(angle) * wp->radius1;
@@ -84,7 +85,9 @@ Pose CalculateWayPointTransform(const std::string& name, float alpha, bool loop)
 			case WayPointType::Ellipse:
 			{
 				// Ellipse with radius1 (x-axis) and radius2 (z-axis)
-				float angle = alpha * 2.0f * (float)PI;
+				// Alpha 0.0 = 12 o'clock, rotating clockwise
+				// Offset angle by -90 degrees to start at top
+				float angle = (alpha * 2.0f * (float)PI) - ((float)PI / 2.0f);
 				localPosition.x = std::cos(angle) * wp->radius1;
 				localPosition.y = 0.0f;
 				localPosition.z = std::sin(angle) * wp->radius2;
@@ -94,7 +97,8 @@ Pose CalculateWayPointTransform(const std::string& name, float alpha, bool loop)
 			case WayPointType::Square:
 			{
 				// Square with radius1 (half-width/height)
-				// Divide perimeter into 4 equal segments
+				// Alpha 0.0 = 12 o'clock (top center), rotating clockwise
+				// Divide perimeter into 4 equal segments (0.25 per side)
 				float r = wp->radius1;
 				float segment = alpha * 4.0f;
 				int side = (int)segment;
@@ -102,17 +106,17 @@ Pose CalculateWayPointTransform(const std::string& name, float alpha, bool loop)
 				
 				switch (side)
 				{
-					case 0: // Right side (3 to 6 o'clock)
+					case 0: // Top edge: 12 to 3 o'clock (moving left to right along top)
+						localPosition = Vector3(Lerp(-r, r, t), 0.0f, -r);
+						break;
+					case 1: // Right edge: 3 to 6 o'clock (moving top to bottom along right)
 						localPosition = Vector3(r, 0.0f, Lerp(-r, r, t));
 						break;
-					case 1: // Top side (6 to 9 o'clock)
+					case 2: // Bottom edge: 6 to 9 o'clock (moving right to left along bottom)
 						localPosition = Vector3(Lerp(r, -r, t), 0.0f, r);
 						break;
-					case 2: // Left side (9 to 12 o'clock)
+					default: // Left edge: 9 to 12 o'clock (moving bottom to top along left)
 						localPosition = Vector3(-r, 0.0f, Lerp(r, -r, t));
-						break;
-					default: // Bottom side (12 to 3 o'clock)
-						localPosition = Vector3(Lerp(-r, r, t), 0.0f, -r);
 						break;
 				}
 				break;
@@ -121,35 +125,38 @@ Pose CalculateWayPointTransform(const std::string& name, float alpha, bool loop)
 			case WayPointType::Rectangle:
 			{
 				// Rectangle with radius1 (half-width x) and radius2 (half-height z)
+				// Alpha 0.0 = 12 o'clock (top center), rotating clockwise
 				float r1 = wp->radius1;
 				float r2 = wp->radius2;
 				
 				// Calculate perimeter segments weighted by side length
+				// Perimeter order: top edge (2*r1), right edge (2*r2), bottom edge (2*r1), left edge (2*r2)
 				float perimeter = 2.0f * (r1 + r2);
 				float distance = alpha * perimeter;
 				
-				if (distance < r2)
+				if (distance < 2.0f * r1)
 				{
-					// Right side (3 to 6 o'clock)
-					localPosition = Vector3(r1, 0.0f, Lerp(-r2, r2, distance / r2));
+					// Top edge: 12 to 3 o'clock (moving left to right along top)
+					float t = distance / (2.0f * r1);
+					localPosition = Vector3(Lerp(-r1, r1, t), 0.0f, -r2);
 				}
-				else if (distance < r2 + r1)
+				else if (distance < 2.0f * r1 + 2.0f * r2)
 				{
-					// Top side (6 to 9 o'clock)
-					float t = (distance - r2) / r1;
+					// Right edge: 3 to 6 o'clock (moving top to bottom along right)
+					float t = (distance - 2.0f * r1) / (2.0f * r2);
+					localPosition = Vector3(r1, 0.0f, Lerp(-r2, r2, t));
+				}
+				else if (distance < 4.0f * r1 + 2.0f * r2)
+				{
+					// Bottom edge: 6 to 9 o'clock (moving right to left along bottom)
+					float t = (distance - 2.0f * r1 - 2.0f * r2) / (2.0f * r1);
 					localPosition = Vector3(Lerp(r1, -r1, t), 0.0f, r2);
-				}
-				else if (distance < 2.0f * r2 + r1)
-				{
-					// Left side (9 to 12 o'clock)
-					float t = (distance - r2 - r1) / r2;
-					localPosition = Vector3(-r1, 0.0f, Lerp(r2, -r2, t));
 				}
 				else
 				{
-					// Bottom side (12 to 3 o'clock)
-					float t = (distance - 2.0f * r2 - r1) / r1;
-					localPosition = Vector3(Lerp(-r1, r1, t), 0.0f, -r2);
+					// Left edge: 9 to 12 o'clock (moving bottom to top along left)
+					float t = (distance - 4.0f * r1 - 2.0f * r2) / (2.0f * r2);
+					localPosition = Vector3(-r1, 0.0f, Lerp(r2, -r2, t));
 				}
 				break;
 			}
