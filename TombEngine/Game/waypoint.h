@@ -27,12 +27,12 @@ struct WAYPOINT
 	float rotationX;
 	float rotationY;
 	float roll;
+	unsigned short sequence;
 	unsigned short number;
 	int type;
 	float radius1;
 	float radius2;
 	std::string name;
-	std::string luaName;
 };
 
 extern std::vector<WAYPOINT> WayPoints;

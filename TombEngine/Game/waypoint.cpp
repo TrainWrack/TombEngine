@@ -1,7 +1,6 @@
 #include "framework.h"
 #include "waypoint.h"
 #include "Game/spotcam.h"
-#include "Specific/logging.h"
 
 // Conversion constant: degrees to angle units (used in roll calculations)
 constexpr float DEGREES_TO_ANGLE_UNITS = 182.0444f;

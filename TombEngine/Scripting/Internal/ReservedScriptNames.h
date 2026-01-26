@@ -497,13 +497,12 @@ constexpr char ScriptReserved_GetWayPointsByType[]		= "GetWayPointsByType";
 constexpr char ScriptReserved_GetPathPosition[]			= "GetPathPosition";
 constexpr char ScriptReserved_GetPathRotation[]			= "GetPathRotation";
 constexpr char ScriptReserved_GetType[]					= "GetType";
-constexpr char ScriptReserved_SetType[]					= "SetType";
 constexpr char ScriptReserved_GetNumber[]				= "GetNumber";
-constexpr char ScriptReserved_SetNumber[]				= "SetNumber";
-constexpr char ScriptReserved_GetRadius1[]				= "GetRadius1";
-constexpr char ScriptReserved_SetRadius1[]				= "SetRadius1";
-constexpr char ScriptReserved_GetRadius2[]				= "GetRadius2";
-constexpr char ScriptReserved_SetRadius2[]				= "SetRadius2";
+constexpr char ScriptReserved_GetSequence[]				= "GetSequence";
+constexpr char ScriptReserved_GetDimension1[]			= "GetDimension1";
+constexpr char ScriptReserved_SetDimension1[]			= "SetDimension1";
+constexpr char ScriptReserved_GetDimension2[]			= "GetDimension2";
+constexpr char ScriptReserved_SetDimension2[]			= "SetDimension2";
 constexpr char ScriptReserved_Preview[]					= "Preview";
 
 // Static

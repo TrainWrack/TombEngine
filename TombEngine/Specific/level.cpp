@@ -551,12 +551,12 @@ void LoadCameras()
 		waypoint.rotationX = ReadFloat();
 		waypoint.rotationY = ReadFloat();
 		waypoint.roll = ReadFloat();
+		waypoint.sequence = ReadUInt16();
 		waypoint.number = ReadUInt16();
 		waypoint.type = ReadInt32();
 		waypoint.radius1 = ReadFloat();
 		waypoint.radius2 = ReadFloat();
 		waypoint.name = ReadString();
-		waypoint.luaName = ReadString();
 		
 		WayPoints.push_back(waypoint);
 	}

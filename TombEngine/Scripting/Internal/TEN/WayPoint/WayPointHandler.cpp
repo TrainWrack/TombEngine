@@ -70,50 +70,40 @@ namespace TEN::Scripting::WayPoint
 			// @treturn string The waypoint's name.
 			ScriptReserved_GetName, &WayPointHandler::GetName,
 
-			/// Set the waypoint's name (its unique string identifier).
-			// @function WayPoint:SetName
-			// @tparam string name The waypoint's new name.
-			ScriptReserved_SetName, &WayPointHandler::SetName,
-
 			/// Get the waypoint's type.
 			// @function WayPoint:GetType
 			// @treturn int The waypoint's type identifier.
 			ScriptReserved_GetType, &WayPointHandler::GetType,
 
-			/// Set the waypoint's type.
-			// @function WayPoint:SetType
-			// @tparam int type The waypoint's new type identifier.
-			ScriptReserved_SetType, &WayPointHandler::SetType,
+			/// Get the waypoint's number.
+			// @function WayPoint:GetSequence
+			// @treturn int The waypoint's sequence number.
+			ScriptReserved_GetSequence, & WayPointHandler::GetSequence,
 
 			/// Get the waypoint's number.
 			// @function WayPoint:GetNumber
 			// @treturn int The waypoint's number.
 			ScriptReserved_GetNumber, &WayPointHandler::GetNumber,
 
-			/// Set the waypoint's number.
-			// @function WayPoint:SetNumber
-			// @tparam int number The waypoint's new number.
-			ScriptReserved_SetNumber, &WayPointHandler::SetNumber,
-
 			/// Get the waypoint's radius1.
 			// @function WayPoint:GetRadius1
 			// @treturn float The waypoint's radius1.
-			ScriptReserved_GetRadius1, &WayPointHandler::GetRadius1,
+			ScriptReserved_GetDimension1, &WayPointHandler::GetRadius1,
 
 			/// Set the waypoint's radius1.
 			// @function WayPoint:SetRadius1
 			// @tparam float radius The waypoint's new radius1.
-			ScriptReserved_SetRadius1, &WayPointHandler::SetRadius1,
+			ScriptReserved_SetDimension1, &WayPointHandler::SetRadius1,
 
 			/// Get the waypoint's radius2.
 			// @function WayPoint:GetRadius2
 			// @treturn float The waypoint's radius2.
-			ScriptReserved_GetRadius2, &WayPointHandler::GetRadius2,
+			ScriptReserved_GetDimension2, &WayPointHandler::GetRadius2,
 
 			/// Set the waypoint's radius2.
 			// @function WayPoint:SetRadius2
 			// @tparam float radius The waypoint's new radius2.
-			ScriptReserved_SetRadius2, &WayPointHandler::SetRadius2,
+			ScriptReserved_SetDimension2, &WayPointHandler::SetRadius2,
 
 			/// Get an interpolated position along the waypoint path.
 			// @function WayPoint:GetPathPosition
@@ -152,29 +142,19 @@ namespace TEN::Scripting::WayPoint
 		return m_waypoint->name;
 	}
 
-	void WayPointHandler::SetName(const std::string& name)
-	{
-		m_waypoint->name = name;
-	}
-
 	int WayPointHandler::GetType() const
 	{
 		return m_waypoint->type;
 	}
 
-	void WayPointHandler::SetType(int type)
+	int WayPointHandler::GetSequence() const
 	{
-		m_waypoint->type = type;
+		return m_waypoint->sequence;
 	}
 
 	int WayPointHandler::GetNumber() const
 	{
 		return m_waypoint->number;
-	}
-
-	void WayPointHandler::SetNumber(int number)
-	{
-		m_waypoint->number = number;
 	}
 
 	float WayPointHandler::GetRadius1() const
@@ -332,8 +312,8 @@ namespace TEN::Scripting::WayPoint
 					float alpha1 = i / (float)PATH_SEGMENTS;
 					float alpha2 = (i + 1) / (float)PATH_SEGMENTS;
 					
-					Vector3 pos1 = CalculateWayPointTransform(m_waypoint->name, alpha1, false).Position;
-					Vector3 pos2 = CalculateWayPointTransform(m_waypoint->name, alpha2, false).Position;
+					Vector3 pos1 = CalculateWayPointTransform(m_waypoint->name, alpha1, false).Position.ToVector3();
+					Vector3 pos2 = CalculateWayPointTransform(m_waypoint->name, alpha2, false).Position.ToVector3();
 					
 					DrawDebugLine(pos1, pos2, drawColor, RendererDebugPage::CollisionStats);
 				}
@@ -353,7 +333,7 @@ namespace TEN::Scripting::WayPoint
 	// @function GetWayPointByName
 	// @tparam string name The waypoint name.
 	// @treturn WayPoint The waypoint with the given name, or nil if not found.
-	std::unique_ptr<WayPointHandler> GetWayPointByName(const std::string& name)
+	std::unique_ptr<WayPointHandler> GetWayPointByNameAndNumber(const std::string& name)
 	{
 		// Find waypoint by name
 		for (auto& wp : WayPoints)
@@ -365,6 +345,54 @@ namespace TEN::Scripting::WayPoint
 		}
 		
 		return nullptr;
+	}
+
+	std::unique_ptr<WayPointHandler> GetWayPointBySequenceAndNumber(const std::string& name)
+	{
+		// Find waypoint by name
+		for (auto& wp : WayPoints)
+		{
+			if (wp.name == name)
+			{
+				return std::make_unique<WayPointHandler>(name);
+			}
+		}
+
+		return nullptr;
+	}
+
+	sol::table GetWayPointsByName(sol::this_state s, int type)
+	{
+		sol::state_view lua(s);
+		sol::table result = lua.create_table();
+
+		int index = 1;
+		for (auto& wp : WayPoints)
+		{
+			if (wp.type == type)
+			{
+				result[index++] = std::make_unique<WayPointHandler>(wp.name);
+			}
+		}
+
+		return result;
+	}
+
+	sol::table GetWayPointsBySequence(sol::this_state s, int type)
+	{
+		sol::state_view lua(s);
+		sol::table result = lua.create_table();
+
+		int index = 1;
+		for (auto& wp : WayPoints)
+		{
+			if (wp.type == type)
+			{
+				result[index++] = std::make_unique<WayPointHandler>(wp.name);
+			}
+		}
+
+		return result;
 	}
 
 	/// Get all waypoints with a specific type.

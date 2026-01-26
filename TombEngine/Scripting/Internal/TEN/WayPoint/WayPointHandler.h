@@ -39,14 +39,12 @@ namespace TEN::Scripting::WayPoint
 		void SetPosition(const Vec3& pos);
 		
 		std::string GetName() const;
-		void SetName(const std::string& name);
 		
 		int GetType() const;
-		void SetType(int type);
-		
+
+		int GetSequence() const;
 		int GetNumber() const;
-		void SetNumber(int number);
-		
+
 		float GetRadius1() const;
 		void SetRadius1(float radius);
 		
