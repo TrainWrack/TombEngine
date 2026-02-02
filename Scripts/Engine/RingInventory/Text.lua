@@ -3,6 +3,7 @@ local Settings = require("Engine.RingInventory.Settings")
 local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointer to tables
+local CONSTANTS = require("Engine.RingInventory.Constants")
 local COLOR_MAP = Settings.COLOR_MAP
 local PICKUP_DATA = require("Engine.RingInventory.PickupData")
 
@@ -15,9 +16,9 @@ local TextChannelStates = {}
 
 -- Configuration
 local TEXT_CONFIG = {
-    FADE_SPEED = 255 / 15,  -- Global fade speed
-    MIN_ALPHA = 0,
-    MAX_ALPHA = 255
+    FADE_SPEED = CONSTANTS.TEXT_ALPHA_SPEED,  -- Global fade speed
+    MIN_ALPHA = CONSTANTS.ALPHA_MAX,
+    MAX_ALPHA = CONSTANTS.ALPHA_MIN
 }
 
 -- ============================================================================

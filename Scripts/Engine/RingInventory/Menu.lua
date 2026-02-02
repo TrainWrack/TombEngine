@@ -1,6 +1,13 @@
 -- ============================================================================
 -- Menu Module - Creates custom menus for ring inventory
 -- ============================================================================
+--External Modules
+local Settings = require("Engine.RingInventory.Settings")
+local Utilities = require("Engine.RingInventory.Utilities")
+
+--Pointer to tables
+local CONSTANTS = require("Engine.RingInventory.Constants")
+local COLOR_MAP = Settings.COLOR_MAP
 
 local Menu = {}
 local debug = false
@@ -18,35 +25,25 @@ local SOUND_MAP =
     menuChoose = 111,
 }
 
-Menu.Active = {}
-
+Menu.Active = {} --table to store active menus
+local Menus = {} --table to store all menus
 LevelFuncs.Engine.Menu = {}
-LevelVars.Engine.Menus = {}
 
-local NORMAL_FONT_COLOR = Flow.GetSettings().UI.plainTextColor
-local HEADER_FONT_COLOR = Flow.GetSettings().UI.headerTextColor
+
+local NORMAL_FONT_COLOR = COLOR_MAP.NORMAL_FONT
+local HEADER_FONT_COLOR = COLOR_MAP.HEADER_FONT
 local HEADER_FONT_SCALE = 1.6
 local NORMAL_FONT_SCALE = 1
 local LINE_SPACING = 6
 local TEXT_FLAGS_SELECT = {Strings.DisplayStringOption.BLINK, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
 local TEXT_FLAGS_NORMAL = {Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
 local SCROLL_SPEED = 0.2
-local FADE_SPEED = 0.15  -- Speed of fade animation (higher = faster)
-
-local percentPos = function(x, y)
-    return TEN.Vec2(TEN.Util.PercentToScreen(x, y))
-end
-
-local colorCombine = function(color, transparency)
-
-    return Color(color.r, color.g, color.b, transparency)
-
-end
+local FADE_SPEED = CONSTANTS.TEXT_ALPHA_SPEED  -- Speed of fade animation (higher = faster)
 
 Menu.Create = function(menuName, title, items, acceptFunction, exitFunction, menuType)
     local self = { name = menuName }
 
-    if debug and LevelVars.Engine.Menus[menuName] then
+    if debug and Menus[menuName] then
         print("Warning: a menu with name " .. menuName .. " already exists; overwriting it with a new one...")
     end
 
@@ -56,7 +53,7 @@ Menu.Create = function(menuName, title, items, acceptFunction, exitFunction, men
         end
     end
 
-    LevelVars.Engine.Menus[menuName] = {
+    Menus[menuName] = {
         name = menuName,
         titleString = title,
         items = items or {},
@@ -93,7 +90,6 @@ Menu.Create = function(menuName, title, items, acceptFunction, exitFunction, men
         visibleStartIndex = 1,
         scrollY = 0,
         targetScrollY = 0,
-        -- Fade properties
         currentAlpha = 0,
         targetAlpha = 0,
         fadeSpeed = FADE_SPEED
@@ -104,7 +100,7 @@ end
 
 Menu.Get = function(menuName)
     
-    if LevelVars.Engine.Menus[menuName] then
+    if Menus[menuName] then
         local self = {name = menuName}
         return setmetatable(self, Menu)
     end
@@ -113,16 +109,16 @@ end
 
 Menu.Delete = function (menuName)
    
-	if LevelVars.Engine.Menus[menuName] then
-		LevelVars.Engine.Menus[menuName] = nil
+	if Menus[menuName] then
+		Menus[menuName] = nil
 	end
 
 end
 
 Menu.DeleteAll = function()
-    if LevelVars.Engine and LevelVars.Engine.Menus then
-        for name, _ in pairs(LevelVars.Engine.Menus) do
-            LevelVars.Engine.Menus[name] = nil
+    if LevelVars.Engine and Menus then
+        for name, _ in pairs(Menus) do
+            Menus[name] = nil
         end
     end
 end
@@ -136,10 +132,10 @@ Menu.AddActive = function(menuName)
     Menu.Active[menuName] = true
     
     -- Set visible and trigger fade in
-    local menu = LevelVars.Engine.Menus[menuName]
+    local menu = Menus[menuName]
     if menu then
         menu.visible = true
-        menu.targetAlpha = 1.0
+        menu.targetAlpha = CONSTANTS.ALPHA_MAX
     end
 
 end
@@ -151,44 +147,46 @@ Menu.RemoveActive = function(menuName)
     end
 
     -- Trigger fade out (will be removed from Active when fade completes)
-    local menu = LevelVars.Engine.Menus[menuName]
+    local menu = Menus[menuName]
     if menu then
-        menu.targetAlpha = 0.0
+        menu.targetAlpha = CONSTANTS.ALPHA_MIN
     end
 
 end
 
 Menu.Status = function(value)
 
-    if LevelVars.Engine.Menus then
+    if Menus then
         if value == true then
-            TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.Menu.DrawMenus)
+            TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.Menu.DrawAllMenus)
+            TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.Menu.UpdateAllMenus)
         elseif value == false then
-            TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.Menu.DrawMenus)
+            TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.Menu.DrawAllMenus)
+            TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.Menu.UpdateAllMenus)
         end
     end
 
 end
 
 Menu.IfExists = function (menuName)
-	local menu = LevelVars.Engine.Menus[menuName]
+	local menu = Menus[menuName]
     return menu and true or false
 end
 
 function Menu:Draw()
-	if LevelVars.Engine.Menus[self.name] then
-		LevelFuncs.Engine.Menu.DrawMenu(self.name)
+	if Menus[self.name] then
+		Menu.DrawMenu(self.name)
 	end
 end
 
 function Menu:Update()
-	if LevelVars.Engine.Menus[self.name] then
-		LevelFuncs.Engine.Menu.UpdateMenu(self.name)
+	if Menus[self.name] then
+		Menu.UpdateMenu(self.name)
 	end
 end
 
 function Menu:Reset()
-	local menu = LevelVars.Engine.Menus[self.name]
+	local menu = Menus[self.name]
 	if not menu then return end
 
 	menu.currentItem = 1
@@ -203,68 +201,68 @@ end
 
 function Menu:SetVisibility(visible)
     --the visible variable is a boolean
-	if LevelVars.Engine.Menus[self.name] then
-		local menu = LevelVars.Engine.Menus[self.name]
+	if Menus[self.name] then
+		local menu = Menus[self.name]
 		
 		if visible then
 			menu.visible = true  -- Set visible immediately for fade in
-			menu.targetAlpha = 1.0
+			menu.targetAlpha = CONSTANTS.ALPHA_MAX
 		else
-			menu.targetAlpha = 0.0  -- Trigger fade out
+			menu.targetAlpha = CONSTANTS.ALPHA_MIN  -- Trigger fade out
 			-- visible will be set to false when fade completes in UpdateMenu
 		end
 	end
 end
 
 function Menu:SetTransparency(transparency)
-	if LevelVars.Engine.Menus[self.name] then
+	if Menus[self.name] then
 
         transparency = math.max(0, math.min(1, transparency))
 
-		LevelVars.Engine.Menus[self.name].menuTransparency = transparency * 255
+		Menus[self.name].menuTransparency = transparency * 255
 
     end
 end
 
 function Menu:SetFadeSpeed(speed)
-    if LevelVars.Engine.Menus[self.name] then
-        LevelVars.Engine.Menus[self.name].fadeSpeed = math.max(0.01, math.min(1.0, speed))
+    if Menus[self.name] then
+        Menus[self.name].fadeSpeed = math.max(0.01, math.min(1.0, speed))
     end
 end
 
 function Menu:SetWrapAroundItems(wrapAround)
-	if LevelVars.Engine.Menus[self.name] then
-		LevelVars.Engine.Menus[self.name].wrapAroundItems = wrapAround
+	if Menus[self.name] then
+		Menus[self.name].wrapAroundItems = wrapAround
 	end
 end
 
 function Menu:SetWrapAroundOptions(wrapAround)
-	if LevelVars.Engine.Menus[self.name] then
-		LevelVars.Engine.Menus[self.name].wrapAroundOptions = wrapAround
+	if Menus[self.name] then
+		Menus[self.name].wrapAroundOptions = wrapAround
 	end
 end
 
 function Menu:SetAcceptFunction(functionName)
-	if LevelVars.Engine.Menus[self.name] then
-		LevelVars.Engine.Menus[self.name].acceptFunction = functionName
+	if Menus[self.name] then
+		Menus[self.name].acceptFunction = functionName
 	end
 end
 
 function Menu:SetExitFunction(functionName)
-	if LevelVars.Engine.Menus[self.name] then
-		LevelVars.Engine.Menus[self.name].exitFunction = functionName
+	if Menus[self.name] then
+		Menus[self.name].exitFunction = functionName
 	end
 end
 
 function Menu:SetOnItemChangeFunction(functionName)
-	if LevelVars.Engine.Menus[self.name] then
-		LevelVars.Engine.Menus[self.name].itemChangeFunction = functionName
+	if Menus[self.name] then
+		Menus[self.name].itemChangeFunction = functionName
 	end
 end
 
 function Menu:SetOnOptionChangeFunction(itemName, functionName)
-	if LevelVars.Engine.Menus[self.name] then
-        local menu = LevelVars.Engine.Menus[self.name]
+	if Menus[self.name] then
+        local menu = Menus[self.name]
 
         for _, item in ipairs(menu.items) do
             if item.itemName == itemName then
@@ -277,19 +275,19 @@ function Menu:SetOnOptionChangeFunction(itemName, functionName)
 end
 
 function Menu:SetSelectedItemFlags(flags)
-	if LevelVars.Engine.Menus[self.name] then
-		LevelVars.Engine.Menus[self.name].itemsSelectedFlags = flags
+	if Menus[self.name] then
+		Menus[self.name].itemsSelectedFlags = flags
 	end
 end
 
 function Menu:SetSelectedOptionsFlags(flags)
-	if LevelVars.Engine.Menus[self.name] then
-		LevelVars.Engine.Menus[self.name].optionsSelectedFlags = flags
+	if Menus[self.name] then
+		Menus[self.name].optionsSelectedFlags = flags
 	end
 end
 
 function Menu:SetTitle(title, fontColor, titleScale, flags, translate)
-	local menu = LevelVars.Engine.Menus[self.name]
+	local menu = Menus[self.name]
     if not menu then return end
     if title ~= nil then
         menu.titleString = title
@@ -309,13 +307,13 @@ function Menu:SetTitle(title, fontColor, titleScale, flags, translate)
 end
 
 function Menu:SetTitlePosition(titlePosition)
-	if LevelVars.Engine.Menus[self.name] then
-		LevelVars.Engine.Menus[self.name].titlePosition = titlePosition
+	if Menus[self.name] then
+		Menus[self.name].titlePosition = titlePosition
 	end
 end
 
 function Menu:SetItemsFont(fontColor, fontScale, flags)
-    local menu = LevelVars.Engine.Menus[self.name]
+    local menu = Menus[self.name]
     if not menu then return end
 
     if fontColor ~= nil then
@@ -332,15 +330,15 @@ end
 
 function Menu:SetItemsTranslate(translate)
 
-    if LevelVars.Engine.Menus[self.name] then
-		LevelVars.Engine.Menus[self.name].itemsTranslate = translate
+    if Menus[self.name] then
+		Menus[self.name].itemsTranslate = translate
 	end
 
 end
 
 function Menu:SetOptionsFont(fontColor, fontScale, flags)
 
-    local menu = LevelVars.Engine.Menus[self.name]
+    local menu = Menus[self.name]
     if not menu then return end
 
     if fontColor ~= nil then
@@ -357,45 +355,45 @@ end
 
 function Menu:SetOptionsTranslate(translate)
 
-    if LevelVars.Engine.Menus[self.name] then
-		LevelVars.Engine.Menus[self.name].optionsTranslate = translate
+    if Menus[self.name] then
+		Menus[self.name].optionsTranslate = translate
 	end
 
 end
 
 function Menu:SetItemsPosition(position)
-	if LevelVars.Engine.Menus[self.name] then
-		LevelVars.Engine.Menus[self.name].itemsPosition = position
+	if Menus[self.name] then
+		Menus[self.name].itemsPosition = position
 	end
 end
 
 function Menu:SetOptionsPosition(position)
-	if LevelVars.Engine.Menus[self.name] then
-		LevelVars.Engine.Menus[self.name].optionsPosition = position
+	if Menus[self.name] then
+		Menus[self.name].optionsPosition = position
 	end
 end
 
 function Menu:SetLineSpacing(lineSpacing)
-	if LevelVars.Engine.Menus[self.name] then
-		LevelVars.Engine.Menus[self.name].lineSpacing = lineSpacing
+	if Menus[self.name] then
+		Menus[self.name].lineSpacing = lineSpacing
 	end
 end
 
 function Menu:SetVisibleItems(itemCount)
-	if LevelVars.Engine.Menus[self.name] then
-		LevelVars.Engine.Menus[self.name].maxVisibleItems = itemCount
+	if Menus[self.name] then
+		Menus[self.name].maxVisibleItems = itemCount
 	end
 end
 
 function Menu:IsVisible()
-	local menu = LevelVars.Engine.Menus[self.name]
+	local menu = Menus[self.name]
     return menu and menu.visible or false
 end
 
 function Menu:SetSoundEffects(select, choose)
-    if not LevelVars.Engine.Menus[self.name] then return end
+    if not Menus[self.name] then return end
 
-    local menu = LevelVars.Engine.Menus[self.name]
+    local menu = Menus[self.name]
     menu.sounds = {}
 
     if type(select) == "number" then
@@ -409,17 +407,17 @@ end
 
 function Menu:ClearSoundEffects()
 
-    if not LevelVars.Engine.Menus[self.name] then return end
+    if not Menus[self.name] then return end
 
-    local menu = LevelVars.Engine.Menus[self.name]
+    local menu = Menus[self.name]
     menu.sounds = {}
 
 end
 
 function Menu:EnableInputs(inputs)
 
-    if LevelVars.Engine.Menus[self.name] then
-		LevelVars.Engine.Menus[self.name].inputs = inputs
+    if Menus[self.name] then
+		Menus[self.name].inputs = inputs
 	end
 
 end
@@ -427,21 +425,21 @@ end
 -- Getter Methods
 function Menu:getCurrentItem()
     -- Returns the currently selected item
-    local menu = LevelVars.Engine.Menus[self.name]
+    local menu = Menus[self.name]
     local item = menu.items[menu.currentItem]
     return item and item.itemName or nil
 end
 
 function Menu:getCurrentOption()
     -- Returns the currently selected option for the current item
-    local menu = LevelVars.Engine.Menus[self.name]
+    local menu = Menus[self.name]
     local item = menu.items[menu.currentItem]
     return (item and item.options and item.options[item.currentOption]) or nil
 end
 
 function Menu:getOptionForItem(itemIndex)
     -- Returns the currently selected option for a specific item by index
-    local menu = LevelVars.Engine.Menus[self.name]
+    local menu = Menus[self.name]
    if debug and (not menu.items or not menu.items[itemIndex]) then
         error("Invalid item index: " .. tostring(itemIndex))
     end
@@ -454,19 +452,19 @@ end
 
 -- Returns the index of the currently selected item
 function Menu:getCurrentItemIndex()
-    local menu = LevelVars.Engine.Menus[self.name]
+    local menu = Menus[self.name]
     return menu.currentItem
 end
 
 -- Returns the index of the currently selected option for the current item
 function Menu:getCurrentOptionIndex()
-    local menu = LevelVars.Engine.Menus[self.name]
+    local menu = Menus[self.name]
     local item = menu.items[menu.currentItem]
     return item.currentOption or 1
 end
 
 function Menu:getOptionIndexForItem(itemIndex)
-    local menu = LevelVars.Engine.Menus[self.name]
+    local menu = Menus[self.name]
     if debug and (not menu.items or not menu.items[itemIndex]) then
         error("Invalid item index: " .. tostring(itemIndex))
     end
@@ -479,7 +477,7 @@ function Menu:getOptionIndexForItem(itemIndex)
 end
 
 function Menu:setOptionIndexForItem(itemIndex, optionIndex)
-    local menu = LevelVars.Engine.Menus[self.name]
+    local menu = Menus[self.name]
     if debug and (not menu.items or not menu.items[itemIndex]) then
         error("Invalid item index: " .. tostring(itemIndex))
     end
@@ -499,7 +497,7 @@ function Menu:setOptionIndexForItem(itemIndex, optionIndex)
 end
 
 function Menu:setCurrentItem(itemIndex)
-    local menu = LevelVars.Engine.Menus[self.name]
+    local menu = Menus[self.name]
 
     if debug and not menu.items then
         error("Menu '" .. tostring(self.name) .. "' has no items table.")
@@ -535,7 +533,7 @@ local PerformFunction = function(functionString)
 end
 
 local PlaySoundEffect = function(menuName, soundIndex)
-    local menu = LevelVars.Engine.Menus[menuName]
+    local menu = Menus[menuName]
     if menu and menu.sounds and type(soundIndex) == "number" then
         TEN.Sound.PlaySound(soundIndex)
     end
@@ -543,7 +541,7 @@ end
 
 local Input = function(menuName)
 
-    local menu = LevelVars.Engine.Menus[menuName]
+    local menu = Menus[menuName]
 
     local itemCount = #menu.items
 
@@ -623,7 +621,7 @@ end
 -- Update function - handles logic, input, and animations
 function Menu.UpdateMenu(menuName)
 
-    local menu = LevelVars.Engine.Menus[menuName]
+    local menu = Menus[menuName]
 
     if not menu.visible then
         return
@@ -639,7 +637,7 @@ function Menu.UpdateMenu(menuName)
             menu.currentAlpha = menu.targetAlpha
             
             -- If fade out completed, remove from active and set invisible
-            if menu.currentAlpha == 0 then
+            if menu.currentAlpha == CONSTANTS.ALPHA_MIN then
                 Menu.Active[menuName] = nil
                 menu.visible = false
             end
@@ -647,7 +645,7 @@ function Menu.UpdateMenu(menuName)
     end
     
     -- Handle input only when fully faded in
-    if menu.inputs and menu.currentAlpha >= 0.99 then
+    if menu.inputs and menu.currentAlpha >= CONSTANTS.ALPHA_MAX then
         Input(menuName)
     end
     
@@ -674,7 +672,7 @@ end
 -- Draw function - handles rendering only
 function Menu.DrawMenu(menuName)
 
-    local menu = LevelVars.Engine.Menus[menuName]
+    local menu = Menus[menuName]
 
     if not menu.visible then
         return
@@ -693,7 +691,7 @@ function Menu.DrawMenu(menuName)
         local translate = menu.titleTranslate
         if menu.titleString == "" then translate = false end
 
-        local titleNode = DisplayString(menu.titleString, percentPos(menu.titlePosition.x, menu.titlePosition.y), menu.titleTextScale, colorCombine(menu.titleTextColor, actualTransparency) , translate, menu.titleTextFlags)
+        local titleNode = DisplayString(menu.titleString, Utilities.percentPos(menu.titlePosition.x, menu.titlePosition.y), menu.titleTextScale, Utilities.colorCombine(menu.titleTextColor, actualTransparency) , translate, menu.titleTextFlags)
         TEN.Strings.ShowString(titleNode, 1 / 30)
     end
 
@@ -715,7 +713,7 @@ function Menu.DrawMenu(menuName)
             local translate = menu.itemsTranslate
             if item.itemName == "" then translate = false end
 
-            local itemNode = DisplayString(item.itemName, percentPos(menu.itemsPosition.x, yItems), menu.itemsTextScale, colorCombine(menu.itemsTextColor, actualTransparency), translate)
+            local itemNode = DisplayString(item.itemName, Utilities.percentPos(menu.itemsPosition.x, yItems), menu.itemsTextScale, Utilities.colorCombine(menu.itemsTextColor, actualTransparency), translate)
             if menu.menuType == Menu.Type.ITEMS_ONLY and i == menu.currentItem then
                 itemNode:SetFlags(menu.itemsSelectedFlags)
             else
@@ -729,7 +727,7 @@ function Menu.DrawMenu(menuName)
             local baseYOptions = menu.optionsPosition.y
             local yOptions = baseYOptions + (i - 1) * offset - menu.scrollY
             local selectedOption = item.options and item.options[item.currentOption] or ""
-            local optNode = DisplayString(selectedOption, percentPos(menu.optionsPosition.x, yOptions), menu.optionsTextScale, colorCombine(menu.optionsTextColor, actualTransparency), menu.optionsTranslate)
+            local optNode = DisplayString(selectedOption, Utilities.percentPos(menu.optionsPosition.x, yOptions), menu.optionsTextScale, Utilities.colorCombine(menu.optionsTextColor, actualTransparency), menu.optionsTranslate)
             if i == menu.currentItem then
                 optNode:SetFlags(menu.optionsSelectedFlags)
             else
@@ -744,13 +742,13 @@ end
 
 
 function Menu.UpdateAllMenus()
-    for menuName in pairs(LevelVars.Engine.Menus) do
+    for menuName in pairs(Menus) do
         Menu.UpdateMenu(menuName)
     end
 end
 
 function Menu.DrawAllMenus()
-    for menuName in pairs(LevelVars.Engine.Menus) do
+    for menuName in pairs(Menus) do
         Menu.DrawMenu(menuName)
     end
 end
@@ -766,5 +764,12 @@ function Menu.DrawActiveMenus()
         Menu.DrawMenu(menuName)
     end
 end
+
+-- ============================================================================
+-- PUBLIC API (LevelFuncs.Engine.Menu)
+-- ============================================================================
+LevelFuncs.Engine.Menu = LevelFuncs.Engine.Menu or {}
+LevelFuncs.Engine.Menu.UpdateAllMenus = Menu.UpdateAllMenus
+LevelFuncs.Engine.Menu.DrawAllMenus = Menu.DrawAllMenus
 
 return Menu

@@ -7,6 +7,9 @@ local Utilities = require("Engine.CustomInventory.Utilities")
 local COLOR_MAP = Settings.COLOR_MAP
 local INVENTORY_MODE = CustomInventory.INVENTORY_MODE
 
+--CONSTANTS
+local BG_LAYER = 0
+
 local Sprites = {}
 
 local function DrawArrows(list, alpha)
@@ -73,7 +76,7 @@ function Sprites.Background(alpha)
             Settings.BACKGROUND.SCALE,
             bgColor
         )
-        bgSprite:Draw(0, Settings.BACKGROUND.ALIGN_MODE, Settings.BACKGROUND.SCALE_MODE, Settings.BACKGROUND.BLEND_MODE)
+        bgSprite:Draw(BG_LAYER, Settings.BACKGROUND.ALIGN_MODE, Settings.BACKGROUND.SCALE_MODE, Settings.BACKGROUND.BLEND_MODE)
     end
 
 end

@@ -1,8 +1,9 @@
-local Utilities = {}
-
 -- ============================================================================
 -- UTILITY FUNCTIONS
 -- ============================================================================
+
+local Utilities = {}
+
 Utilities.ColorCombine = function(color, transparency)
 
     return Color(color.r, color.g, color.b, transparency)

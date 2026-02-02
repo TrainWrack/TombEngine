@@ -1,125 +1,312 @@
 
+-- ============================================================================
+-- Ring Class - Manage Rings and items stored in them
+-- ============================================================================
+
 --External Modules
-local Animation = require("Engine.RingInventory.Animation")
-local CONSTANTS = require("Engine.RingInventory.Constants")
-local CustomInventory = require("Engine.RingInventory.Inventory")
-local InventoryData = require("Engine.RingInventory.InventoryData")
-local Settings = require("Engine.RingInventory.Settings")
+local Interpolate = require("Engine.RingInventory.Interpolate")
+local InventoryItem = require("Engine.RingInventory.InventoryItem")
 local Utilities = require("Engine.RingInventory.Utilities")
 
---Pointers to tables
-local SOUND_MAP = Settings.SOUND_MAP
+--Pointer to tables
 
+-- Ring Class - represents a single ring in the inventory
 local Ring = {}
+Ring.__index = Ring
 
-
-
-Ring.CENTER = {
-    [PICKUP_DATA.RING.PUZZLE] = Vec3(0,-800,1024),
-    [PICKUP_DATA.RING.MAIN] = Vec3(0,200,1024),
-    [PICKUP_DATA.RING.OPTIONS] = Vec3(0,1200,1024),
-    [PICKUP_DATA.RING.COMBINE] = Vec3(0,300,1024),
-    [PICKUP_DATA.RING.AMMO] = Vec3(0,300,1024)
-}
-
+-- Class Constants
 Ring.RING_POSITION_OFFSET = 1000
 Ring.RING_RADIUS = (View.GetAspectRatio() > 1.7) and -512 or -450
 
+Ring.TYPE =
+{
+	PUZZLE = 1,
+    MAIN = 2,
+	OPTIONS = 3,
+	COMBINE = 4,
+	AMMO = 5
+}
 
-Ring.currentRingAngle = 0
-Ring.previousRingAngle = 0
-Ring.targetRingAngle = 0
-Ring.direction = 1
+-- Default center positions for different ring types
+Ring.CENTERS = {
+    [Ring.TYPE.PUZZLE] = Vec3(0, -800, 1024),
+    [Ring.TYPE.MAIN] = Vec3(0, 200, 1024),
+    [Ring.TYPE.OPTIONS] = Vec3(0, 1200, 1024),
+    [Ring.TYPE.COMBINE] = Vec3(0, 300, 1024),
+    [Ring.TYPE.AMMO] = Vec3(0, 300, 1024)
+}
 
-function Ring.SetVisibility(ringName, visible)
-    local ring = Inventory.GetRing(ringName)
-    if not ring then return end
+-- Constructor
+function Ring.Create(ringType, centerPosition, inventory)
+    local self = setmetatable({}, Ring)
     
-    local itemCount = #ring
-    for i = 1, itemCount do
-        local currentItem = ring[i].objectID
+    -- Instance variables
+    self.type = ringType
+    self.items = {}
+    self.selectedItemIndex = 1
+    self.position = centerPosition or Vec3(0, 0, 0)
+    self.slice = 0
+    self.inventory = inventory  -- Reference to parent inventory
+    
+    self.currentAngle = 0
+    self.previousAngle = 0
+    self.targetAngle = 0
+    self.direction = 1
+    
+    return self
+end
+
+-- Static method: Get ring by type from inventory
+function Ring.GetRingByType(ringType)
+    if Ring.inventory then
+        return Ring.inventory:GetRing(ringType)
+    end
+    return nil
+end
+
+-- Recalculate slice based on item count
+function Ring:RecalculateSlice()
+    if #self.items > 0 then
+        self.slice = 360 / #self.items
+    else
+        self.slice = 0
+    end
+end
+
+-- Add item to this ring
+function Ring:AddItem(item)
+
+    --Add metatable to item to use Inventory item class.
+    if getmetatable(item) ~= InventoryItem then
+        setmetatable(item, InventoryItem)
+    end
+
+    table.insert(self.items, item)
+    self:RecalculateSlice()
+end
+
+-- Remove item by object ID
+function Ring:RemoveItem(objectID)
+    for i, item in ipairs(self.items) do
+        if item.objectID == objectID then
+            table.remove(self.items, i)
+            -- Adjust selected index if needed
+            if self.selectedItemIndex > #self.items then
+                self.selectedItemIndex = math.max(1, #self.items)
+            end
+            self:RecalculateSlice()
+            return true
+        end
+    end
+    return false
+end
+
+-- Clear all items
+function Ring:Clear()
+    self.items = {}
+    self.selectedItemIndex = 1
+end
+
+-- Get item by object ID
+function Ring:GetItem(objectID)
+    for _, item in ipairs(self.items) do
+        if item.objectID == objectID then
+            return item
+        end
+    end
+    return nil
+end
+
+-- Get all items
+function Ring:GetItems()
+    return self.items
+end
+
+-- Get item count
+function Ring:GetItemCount()
+    return #self.items
+end
+
+-- Get selected item
+function Ring:GetSelectedItem()
+    if #self.items == 0 then return nil end
+    return self.items[self.selectedItemIndex]
+end
+
+-- Set selected item by index
+function Ring:SetSelectedItemIndex(index)
+    if index >= 1 and index <= #self.items then
+        self.selectedItemIndex = index
+        return true
+    end
+    return false
+end
+
+-- Set selected item by object ID
+function Ring:SetSelectedItemByID(objectID)
+    for i, item in ipairs(self.items) do
+        if item.objectID == objectID then
+            self.selectedItemIndex = i
+            return true
+        end
+    end
+    return false
+end
+
+-- Get selected item index
+function Ring:GetSelectedItemIndex()
+    return self.selectedItemIndex
+end
+
+-- Navigate to next item
+function Ring:SelectNext()
+    if #self.items == 0 then return end
+    self.selectedItemIndex = (self.selectedItemIndex % #self.items) + 1
+end
+
+-- Navigate to previous item
+function Ring:SelectPrevious()
+    if #self.items == 0 then return end
+    self.selectedItemIndex = self.selectedItemIndex - 1
+    if self.selectedItemIndex < 1 then
+        self.selectedItemIndex = #self.items
+    end
+end
+
+-- Set visibility for all items in this ring
+function Ring:SetVisibility(visible)
+    for i = 1, #self.items do
+        local currentItem = self.items[i].objectID
         local inventoryItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
-        inventoryItem:SetVisible(visible)
+        if inventoryItem then
+            inventoryItem:SetVisible(visible)
+        end
     end
 end
 
-function Ring.Translate(ringName, center, radius, rotationOffset, alpha)
+-- Translate items in a circle
+function Ring:Translate(center, radius, rotationOffset, alpha)
     alpha = alpha or 1.0
-    local ring = Inventory.GetRing(ringName)
-    if not ring then return end
+    center = center or self.position
+    radius = radius or Ring.RING_RADIUS
+    rotationOffset = rotationOffset or 0
     
-    local itemCount = #ring
+    local itemCount = #self.items
+    if itemCount == 0 then return end
+    
     for i = 1, itemCount do
-        local currentItem = ring[i].objectID
+        local currentItem = self.items[i].objectID
         local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
-        local angleDeg = (360 / itemCount) * (i - 1) + rotationOffset
-        local position = center:Translate(Rotation(0, angleDeg, 0), radius)
-        local itemRotations = currentDisplayItem:GetRotation()
-        
-        local currentAngle = itemRotations.y
-        local angleDiff = (angleDeg - currentAngle) % 360
-        if angleDiff > 180 then
-            angleDiff = angleDiff - 360
+        if currentDisplayItem then
+            local angleDeg = (360 / itemCount) * (i - 1) + rotationOffset
+            local position = center:Translate(Rotation(0, angleDeg, 0), radius)
+            local itemRotations = currentDisplayItem:GetRotation()
+            
+            local currentAngle = itemRotations.y
+            local angleDiff = (angleDeg - currentAngle) % 360
+            if angleDiff > 180 then
+                angleDiff = angleDiff - 360
+            end
+            local newAngle = (currentAngle + angleDiff * alpha) % 360
+            
+            currentDisplayItem:SetPosition(Utilities.OffsetY(position, self.items[i].yOffset))
+            currentDisplayItem:SetRotation(Rotation(itemRotations.x, newAngle, itemRotations.z))
         end
-        local newAngle = (currentAngle + angleDiff * alpha) % 360
-        
-        currentDisplayItem:SetPosition(Utilities.OffsetY(position, ring[i].yOffset))
-        currentDisplayItem:SetRotation(Rotation(itemRotations.x, newAngle, itemRotations.z))
     end
 end
 
-function Ring.Fade(ringName, fadeValue, omitSelectedItem)
-    local ring = Inventory.GetRing(ringName)
-    if not ring then return end
+-- Fade items (except optionally the selected one)
+function Ring:Fade(fadeValue, omitSelectedItem)
+    omitSelectedItem = omitSelectedItem or false
+    local selectedItem = omitSelectedItem and self:GetSelectedItem()
     
-    local itemCount = #ring
-    local selectedItem = omitSelectedItem and Inventory.GetSelectedItem(Inventory.GetSelectedRing()).objectID
-    
-    for i = 1, itemCount do
-        local currentItem = ring[i].objectID
-        local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
-        if omitSelectedItem and selectedItem == currentItem then
+    for i = 1, #self.items do
+        local currentItem = self.items[i].objectID
+        
+        if omitSelectedItem and selectedItem and selectedItem.objectID == currentItem then
             goto continue
         end
         
-        local itemColor = currentDisplayItem:GetColor()
-        currentDisplayItem:SetColor(Utilities.ColorCombine(itemColor, fadeValue))
+        local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
+        if currentDisplayItem then
+            local itemColor = currentDisplayItem:GetColor()
+            currentDisplayItem:SetColor(Utilities.ColorCombine(itemColor, fadeValue))
+        end
         
         ::continue::
     end
 end
 
-function Ring.Color(ringName, color, omitSelectedItem, alpha)
-    local ring = Inventory.GetRing(ringName)
-    if not ring then return end
+-- Color items (except optionally the selected one)
+function Ring:Color(color, omitSelectedItem, alpha)
+    alpha = alpha or 1.0
+    omitSelectedItem = omitSelectedItem or false
+    local selectedItem = omitSelectedItem and self:GetSelectedItem()
     
-    local itemCount = #ring
-    local selectedItem = omitSelectedItem and Inventory.GetSelectedItem(Inventory.GetSelectedRing()).objectID
-    
-    for i = 1, itemCount do
-        local currentItem = ring[i].objectID
-        local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
-        if omitSelectedItem and selectedItem == currentItem then
+    for i = 1, #self.items do
+        local currentItem = self.items[i].objectID
+        
+        if omitSelectedItem and selectedItem and selectedItem.objectID == currentItem then
             goto continue
         end
         
-        local itemColor = currentDisplayItem:GetColor()
-        local targetColor = Animation.Interpolate.Lerp(itemColor, color, alpha)
-        currentDisplayItem:SetColor(Utilities.ColorCombine(targetColor, itemColor.a))
+        local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
+        if currentDisplayItem then
+            local itemColor = currentDisplayItem:GetColor()
+            local targetColor = Interpolate.Calculate(itemColor, color, alpha)
+            currentDisplayItem:SetColor(Utilities.ColorCombine(targetColor, itemColor.a))
+        end
         
         ::continue::
     end
 end
 
-function Ring.FadeAll(visible, omitSelectedRing)
-    local fadeValue = visible and CONSTANTS.ALPHA_MAX or CONSTANTS.ALPHA_MIN
-    
-    for index in pairs(InventoryData.GetAllRings()) do
-        if not (omitSelectedRing and index == selectedRing) then
-            Ring.FadeRing(index, fadeValue, false)
-            Ring.SetRingVisibility(index, visible)
+-- Set ring position
+function Ring:SetPosition(position)
+    self.position = position
+end
+
+-- Get ring position
+function Ring:GetPosition()
+    return self.position
+end
+
+-- Get ring type
+function Ring:GetType()
+    return self.type
+end
+
+-- Get another ring by type from the same inventory
+function Ring:GetRingByType(ringType)
+    if self.inventory then
+        return self.inventory:GetRing(ringType)
+    end
+    return nil
+end
+
+-- Set slice value
+function Ring:SetSlice(slice)
+    self.slice = slice
+end
+
+-- Get slice value
+function Ring:GetSlice()
+    return self.slice
+end
+
+-- Check if ring is empty
+function Ring:IsEmpty()
+    return #self.items == 0
+end
+
+-- Find item index by object ID
+function Ring:FindItemIndex(objectID)
+    for i, item in ipairs(self.items) do
+        if item.objectID == objectID then
+            return i
         end
     end
+    return nil
 end
 
 return Ring

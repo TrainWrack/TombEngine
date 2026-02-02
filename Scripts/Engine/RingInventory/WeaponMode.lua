@@ -6,10 +6,11 @@
 local Menu = require("Engine.RingInventory.Menu")
 local Settings = require("Engine.RingInventory.Settings")
 
---Pointers to tables
-local PICKUP_DATA = require("Engine.RingInventory.PickupData")
+--Pointers to constant tables
 local COLOR_MAP = Settings.COLOR_MAP
+local PICKUP_DATA = require("Engine.RingInventory.PickupData")
 
+--Module Start
 local WeaponMode = {}
 
 function WeaponMode.ChangeWeaponMode()
@@ -22,7 +23,7 @@ function WeaponMode.CreateWeaponModeMenu(itemData)
     local weaponModes = {}
     
     for _, entry in ipairs(PICKUP_DATA.WEAPON_MODE_LOOKUP) do
-        if entry.weapon == itemData.objectID then
+        if entry.weapon == itemData:GetObjectID() then
             table.insert(weaponModes, {
                 itemName = entry.string,
                 actionBit = entry.bit,
@@ -51,14 +52,6 @@ end
 function WeaponMode.Hide()
     Menu.RemoveActive("WeaponModeMenu")
 end
-
-function WeaponMode.SetTransparency(alpha)
-
-    local weaponModeMenu = Menu.Get("WeaponModeMenu")
-    weaponModeMenu:SetTransparency(alpha)
-
-end
-
 
 -- ============================================================================
 -- PUBLIC API (LevelFuncs.Engine.RingInventory)
