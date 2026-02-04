@@ -2,8 +2,9 @@
 -- Examine - Handles examine functions and data for ring inventory
 -- ============================================================================
 --External Modules
-local Settings = require("Engine.CustomInventory.Settings")
-local Text = require("Engine.CustomInventory.Text")
+local Settings = require("Engine.RingInventory.Settings")
+local Text = require("Engine.RingInventory.Text")
+local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointer to tables
 local COLOR_MAP = Settings.COLOR_MAP
@@ -39,6 +40,7 @@ Text.Create(EXAMINE_TEXT) --Create Examine Text Channel
 
 local examineRotation = Rotation(0, 0, 0)
 local examineScaler = EXAMINE_DEFAULT_SCALE
+local examinePreviousScale = EXAMINE_DEFAULT_SCALE
 local examineShowString = false
 
 function Examine.Item(itemData)
@@ -90,6 +92,37 @@ function Examine.ModifyScale(dir)
 
     examineScaler = examineScaler + dir * ZOOM_MULTIPLIER
 
+end
+
+function Examine.GetRotation()
+
+    return examineRotation
+    
+end
+
+function Examine.SetRotation(rotation)
+
+    examineRotation = Utilities.CopyRotation(rotation)
+    
+end
+
+function Examine.GetScale()
+
+    return examineScaler
+
+end
+
+function Examine.GetPreviousScale()
+
+    return examinePreviousScale
+
+end
+
+function Examine.SetScale(scaleValue)
+
+    examinePreviousScale = scaleValue
+    examineScaler = scaleValue
+    
 end
 
 function Examine.ResetExamine()

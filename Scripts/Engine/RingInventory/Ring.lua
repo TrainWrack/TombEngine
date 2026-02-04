@@ -294,6 +294,83 @@ function Ring:GetSlice()
     return self.slice
 end
 
+-- Get current angle
+function Ring:GetCurrentAngle()
+    return self.currentAngle
+end
+
+-- Set current angle
+function Ring:SetCurrentAngle(angle)
+    self.currentAngle = angle
+end
+
+-- Get previous angle
+function Ring:GetPreviousAngle()
+    return self.previousAngle
+end
+
+-- Get target angle
+function Ring:GetTargetAngle()
+    return self.targetAngle
+end
+
+-- Set target angle
+function Ring:SetTargetAngle(angle)
+    self.previousAngle = self.targetAngle
+    self.targetAngle = angle
+end
+
+-- Set target angle
+function Ring:SetTargetAngle(angle)
+    self.previousAngle = self.targetAngle
+    self.targetAngle = angle
+end
+
+-- Calculate rotation angle
+function Ring:CalculateRotation(direction)
+    
+    self.previousAngle = self.targetAngle
+    self.targetAngle = self.currentRingAngle + direction * self.slice
+
+end
+
+-- Set all angles at once
+function Ring:SetAngles(current, previous, target)
+    if current ~= nil then self.currentAngle = current end
+    if previous ~= nil then self.previousAngle = previous end
+    if target ~= nil then self.targetAngle = target end
+end
+
+-- Get all angles at once
+function Ring:GetAngles()
+    return {
+        current = self.currentAngle,
+        previous = self.previousAngle,
+        target = self.targetAngle
+    }
+end
+
+-- Interpolate current angle towards target
+function Ring:InterpolateAngle(alpha)
+    alpha = alpha or 0.1
+    self.previousAngle = self.currentAngle
+    self.currentAngle = self.currentAngle + (self.targetAngle - self.currentAngle) * alpha
+    return self.currentAngle
+end
+
+-- Check if angle has reached target
+function Ring:IsAtTargetAngle(threshold)
+    threshold = threshold or 0.1
+    return math.abs(self.targetAngle - self.currentAngle) < threshold
+end
+
+-- Reset all angles to zero
+function Ring:ResetAngles()
+    self.currentAngle = 0
+    self.previousAngle = 0
+    self.targetAngle = 0
+end
+
 -- Check if ring is empty
 function Ring:IsEmpty()
     return #self.items == 0

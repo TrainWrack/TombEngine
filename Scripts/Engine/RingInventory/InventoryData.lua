@@ -9,10 +9,12 @@ local SOUND_MAP = Settings.SOUND_MAP
 local COLOR_MAP = Settings.COLOR_MAP
 local ANIMATION = Settings.ANIMATION
 
+
 --External Modules
 local Constants = require("Engine.RingInventory.Constants")
 local Ring = require("Engine.RingInventory.Ring")
 local Settings = require("Engine.RingInventory.Settings")
+local Save = require("Engine.RingInventory.Save")
 
 --Pointers to tables
 local COLOR_MAP = Settings.COLOR_MAP
@@ -20,11 +22,12 @@ local RING_CENTER = Ring.CENTERS
 local RING_TYPE = Ring.TYPE
 
 -- Inventory Class - wrapper for managing rings by type
-local Inventory = {}
-Inventory.__index = Inventory
+local InventoryData = {}
+InventoryData.__index = InventoryData
+InventoryData._registry = {}
 
 -- Constructor
-function Inventory.Create()
+function InventoryData.Create(name)
     local self = setmetatable({}, Inventory)
     
     -- Main storage: [ringType] = Ring instance
@@ -33,24 +36,23 @@ function Inventory.Create()
     -- Tracking
     self.selectedRingType = RING.MAIN
     self.previousRingType = nil
-    self.combineItem1 = nil
+    self.chosenItem = nil
+    self.openAtItem = nil
     
     -- Gameflow overrides cache
     self.gameflowOverrides = nil
     
-    -- Ring rotation tracking
-    self.currentRingAngle = 0
-    self.targetRingAngle = 0
-    
-    -- Save/load UI state
-    self.saveList = false
-    self.saveSelected = false
-    
+    self.name = name
+
     return self
 end
 
+function InventoryData.Get(name)
+    return InventoryData._registry[name]
+end
+
 -- Get or create a ring by type
-function Inventory:GetRing(ringType)
+function InventoryData:GetRing(ringType)
     if not self.rings[ringType] then
         local center = RING_CENTER[ringType]
         self.rings[ringType] = Ring.new(ringType, center, self)  -- Pass self as inventory reference
@@ -59,7 +61,7 @@ function Inventory:GetRing(ringType)
 end
 
 -- Add an existing Ring instance to the inventory
-function Inventory:AddRing(ring)
+function InventoryData:AddRing(ring)
     if not ring then
         return false
     end
@@ -74,32 +76,32 @@ function Inventory:AddRing(ring)
 end
 
 -- Check if a ring exists
-function Inventory:HasRing(ringType)
+function InventoryData:HasRing(ringType)
     return self.rings[ringType] ~= nil
 end
 
 -- Get all rings
-function Inventory:GetAllRings()
+function InventoryData:GetAllRings()
     return self.rings
 end
 
 -- Get currently selected ring
-function Inventory:GetSelectedRing()
+function InventoryData:GetSelectedRing()
     return self:GetRing(self.selectedRingType)
 end
 
 -- Get selected ring type
-function Inventory:GetSelectedRingType()
+function InventoryData:GetSelectedRingType()
     return self.selectedRingType
 end
 
 -- Get previous ring type
-function Inventory:GetPreviousRingType()
+function InventoryData:GetPreviousRingType()
     return self.previousRingType
 end
 
 -- Switch to a different ring
-function Inventory:SwitchToRing(ringType)
+function InventoryData:SwitchToRing(ringType)
     if not RING_TYPE[ringType] then
         return false
     end
@@ -110,7 +112,7 @@ function Inventory:SwitchToRing(ringType)
 end
 
 -- Return to previous ring
-function Inventory:ReturnToPreviousRing()
+function InventoryData:ReturnToPreviousRing()
     if self.previousRingType then
         local temp = self.selectedRingType
         self.selectedRingType = self.previousRingType
@@ -121,23 +123,23 @@ function Inventory:ReturnToPreviousRing()
 end
 
 -- Setup secondary ring (combine, ammo, etc.)
-function Inventory:SetupSecondaryRing(ringType, item)
+function InventoryData:SetupSecondaryRing(ringType, item)
     self.previousRingType = self.selectedRingType
     
     local currentRing = self:GetSelectedRing()
-    self.combineItem1 = item or (currentRing and currentRing:GetSelectedItem().objectID)
+    self.chosenItem = item or (currentRing and currentRing:GetSelectedItem().objectID)
     
     -- Get or create the new ring
     local newRing = self:GetRing(ringType)
     
     -- You can implement ConstructObjectList here if needed
-    -- self:ConstructObjectList(ringType, self.combineItem1)
+    -- self:ConstructObjectList(ringType, self.chosenItem)
     
     self.selectedRingType = ringType
     
     -- Special handling for ammo ring
     if ringType == RING.AMMO then
-        local weaponSlot = PICKUP_DATA.WEAPON_SET[self.combineItem1].slot
+        local weaponSlot = PICKUP_DATA.WEAPON_SET[self.chosenItem].slot
         local ammoType = Lara:GetAmmoType(weaponSlot)
         local objectID = PICKUP_DATA.AMMO_TYPE_TO_OBJECT[ammoType]
         newRing:SetSelectedItemByID(objectID)
@@ -147,7 +149,7 @@ function Inventory:SetupSecondaryRing(ringType, item)
 end
 
 -- Find item across all rings
-function Inventory:FindItem(objectID)
+function InventoryData:FindItem(objectID)
     for ringType, ring in pairs(self.rings) do
         local item = ring:GetItem(objectID)
         if item then
@@ -158,7 +160,7 @@ function Inventory:FindItem(objectID)
 end
 
 -- Remove a ring
-function Inventory:RemoveRing(ringType)
+function InventoryData:RemoveRing(ringType)
     if self.rings[ringType] then
         self.rings[ringType] = nil
         
@@ -172,14 +174,14 @@ function Inventory:RemoveRing(ringType)
 end
 
 -- Clear all rings
-function Inventory:ClearAll()
+function InventoryData:ClearAll()
     for _, ring in pairs(self.rings) do
         ring:Clear()
     end
 end
 
 -- Fade all rings
-function Inventory:FadeAll(visible, omitSelectedRing)
+function InventoryData:FadeAll(visible, omitSelectedRing)
     local fadeValue = visible and CONSTANTS.ALPHA_MAX or CONSTANTS.ALPHA_MIN
     
     for ringType, ring in pairs(self.rings) do
@@ -191,7 +193,7 @@ function Inventory:FadeAll(visible, omitSelectedRing)
 end
 
 -- Set visibility for all rings
-function Inventory:SetAllVisibility(visible, omitSelectedRing)
+function InventoryData:SetAllVisibility(visible, omitSelectedRing)
     for ringType, ring in pairs(self.rings) do
         if not (omitSelectedRing and ringType == self.selectedRingType) then
             ring:SetVisibility(visible)
@@ -200,7 +202,7 @@ function Inventory:SetAllVisibility(visible, omitSelectedRing)
 end
 
 -- Color all rings
-function Inventory:ColorAll(color, omitSelectedRing, alpha)
+function InventoryData:ColorAll(color, omitSelectedRing, alpha)
     for ringType, ring in pairs(self.rings) do
         if not (omitSelectedRing and ringType == self.selectedRingType) then
             ring:Color(color, false, alpha)
@@ -209,16 +211,16 @@ function Inventory:ColorAll(color, omitSelectedRing, alpha)
 end
 
 -- Iterator for all rings
-function Inventory:IterateRings()
+function InventoryData:IterateRings()
     return pairs(self.rings)
 end
 
 -- Read gameflow overrides for items
-function Inventory:ReadGameflow()
+function InventoryData:ReadGameflow()
     local overrides = {}
     for _, itemID in ipairs(TEN.Flow.GetCurrentLevel().objects) do
         if itemID.objectID then
-            local id = TEN.Inventory.ConvertInventoryItemToObject(itemID.objectID)
+            local id = TEN.InventoryData.ConvertInventoryItemToObject(itemID.objectID)
             overrides[id] = { 
                 item = id,
                 yOffset = itemID.yOffset,
@@ -235,9 +237,9 @@ function Inventory:ReadGameflow()
 end
 
 -- Build item with gameflow overrides
-function Inventory:BuildItem(data)
+function InventoryData.BuildItem(data)
     self.gameflowOverrides = self.gameflowOverrides or self:ReadGameflow()
-    data.count = TEN.Inventory.GetItemCount(data.objectID)
+    data.count = TEN.InventoryData.GetItemCount(data.objectID)
     
     local override = self.gameflowOverrides[data.objectID] or {}
     
@@ -255,7 +257,7 @@ function Inventory:BuildItem(data)
 end
 
 -- Construct rings with items from game data
-function Inventory:Construct(ringType, selectedWeapon)
+function InventoryData:Construct(ringType, selectedWeapon)
     local items = PICKUP_DATA.CONSTANTS
     
     if ringType == RING.AMMO or ringType == RING.COMBINE then
@@ -270,7 +272,7 @@ function Inventory:Construct(ringType, selectedWeapon)
         data.rotation = Utilities.CopyRotation(data.rotation)
         
         if data.type == TYPE.AMMO and ringType ~= RING.AMMO then
-            local weaponPresent = TEN.Inventory.GetItemCount(PICKUP_DATA.AMMO_SET[data.objectID].weapon)
+            local weaponPresent = TEN.InventoryData.GetItemCount(PICKUP_DATA.AMMO_SET[data.objectID].weapon)
             if weaponPresent ~= 0 then
                 goto continue
             end
@@ -291,7 +293,7 @@ function Inventory:Construct(ringType, selectedWeapon)
             if data.combine == true then
                 data.ringName = RING.COMBINE
                 
-                if self.combineItem1 == data.objectID then
+                if self.chosenItem == data.objectID then
                     goto continue
                 end
                 
@@ -334,7 +336,7 @@ function Inventory:Construct(ringType, selectedWeapon)
             local inventoryItem = TEN.View.DisplayItem(
                 tostring(data.objectID),
                 data.objectID,
-                Inventory.DEFAULT_CENTERS[data.ringName],
+                InventoryData.DEFAULT_CENTERS[data.ringName],
                 data.rotation,
                 Vec3(data.scale),
                 data.meshBits
@@ -348,16 +350,16 @@ function Inventory:Construct(ringType, selectedWeapon)
     -- Initialize ring positions
     if ringType then
         local ring = self:GetRing(ringType)
-        ring:SetPosition(Inventory.DEFAULT_CENTERS[ringType])
+        ring:SetPosition(InventoryData.DEFAULT_CENTERS[ringType])
     else
         for ringType, ring in pairs(self.rings) do
-            ring:SetPosition(Inventory.DEFAULT_CENTERS[ringType])
+            ring:SetPosition(InventoryData.DEFAULT_CENTERS[ringType])
         end
     end
 end
 
 -- Open inventory at specific item
-function Inventory:OpenAtItem(itemID, repositionRings)
+function InventoryData:OpenAtItem(itemID, repositionRings)
     if itemID == NO_VALUE then
         return
     end
@@ -380,7 +382,7 @@ function Inventory:OpenAtItem(itemID, repositionRings)
     self.targetRingAngle = angle
     
     if repositionRings then
-        local ringPosition = Inventory.DEFAULT_CENTERS[RING.MAIN]
+        local ringPosition = InventoryData.DEFAULT_CENTERS[RING.MAIN]
         self.selectedRingType = ringType
         
         for rType, r in pairs(self.rings) do
@@ -399,7 +401,7 @@ function Inventory:OpenAtItem(itemID, repositionRings)
 end
 
 -- Get count of combinable items (excluding selected item)
-function Inventory:GetCombineItemsCount(selectedItem)
+function InventoryData:GetCombineItemsCount(selectedItem)
     local itemCount = 0
     local items = PICKUP_DATA.CONSTANTS
     
@@ -433,7 +435,7 @@ function Inventory:GetCombineItemsCount(selectedItem)
 end
 
 -- Clear a specific ring or all rings
-function Inventory:Clear(ringType, clearDrawItems)
+function InventoryData:Clear(ringType, clearDrawItems)
     if ringType then
         local ring = self.rings[ringType]
         
@@ -466,7 +468,7 @@ function Inventory:Clear(ringType, clearDrawItems)
 end
 
 -- Get count of rings
-function Inventory:GetRingCount()
+function InventoryData:GetRingCount()
     local count = 0
     for _ in pairs(self.rings) do
         count = count + 1
@@ -474,265 +476,302 @@ function Inventory:GetRingCount()
     return count
 end
 
-return Inventory
+--Get item selected
+function InventoryData:GetChosenItem()
 
---Structure for inventory
-local Inventory = {}
+    return self.chosenItem 
 
-
-local chosenItem = nil
-local openAtItem = nil
-local gameflowOverrides = nil
-
-
-function Inventory.Clear(ringName, clearDrawItems)
-    if ringName then
-        local ring = Inventory.ring[ringName]
-        
-        if clearDrawItems and ring then
-            for _, itemData in ipairs(ring) do
-                local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(itemData:GetObjectID()))
-                displayItem:Remove()
-            end
-        end
-        
-        Inventory.ring[ringName] = {}
-        Inventory.slice[ringName] = nil
-        Inventory.selectedItem[ringName] = nil
-        Inventory.ringPosition[ringName] = nil
-    else
-        if clearDrawItems then
-            TEN.View.DisplayItem.ClearAllItems()
-        end
-        
-        Inventory.ring = {}
-        Inventory.slice = {}
-        Inventory.selectedItem = {}
-        Inventory.ringPosition = {}
-
-    end
 end
 
-local function ReadGameflow()
-    local overrides = {}
-    for _, itemID in ipairs(TEN.Flow.GetCurrentLevel().objects) do
-        if itemID.objectID then
-            local id = TEN.Inventory.ConvertInventoryItemToObject(itemID.objectID)
-            overrides[id] = { 
-                item = id,
-                yOffset = itemID.yOffset,
-                scale = itemID.scale,
-                rotation = itemID.rotation,
-                menuActions = itemID.action,
-                name = itemID.nameKey,
-                meshBits = itemID.meshBits,
-                orientation = itemID.axis
-            }
-        end
-    end
-    return overrides
+--Set item selected
+function InventoryData:SetChosenItem(item)
+
+    self.chosenItem = item
+    return true
+
 end
 
-function Inventory.BuildItem(data)
-    Inventory.gameflowOverrides = ReadGameflow() or {}
-    data.count = TEN.Inventory.GetItemCount(data.objectID)
-    
-    local override = Inventory.gameflowOverrides[data.objectID] or {}
-    
-    if override.yOffset ~= nil then data.yOffset = override.yOffset end
-    if override.scale ~= nil then data.scale = override.scale end
-    if override.rotation ~= nil then data.rotation = override.rotation end
-    if override.menuActions ~= nil then data.menuActions = override.menuActions end
-    if override.name ~= nil then data.name = override.name end
-    if override.meshBits ~= nil then data.meshBits = override.meshBits end
-    if override.orientation ~= nil then data.orientation = override.orientation end
-    if override.type ~= nil then data.type = override.type end
-    if override.combine ~= nil then data.combine = override.combine end
-    
-    return data
+--Check item selected
+function InventoryData:IsChosenItem(item)
+
+    return self.chosenItem == item
+
 end
 
-function Inventory.Construct(ringType, selectedWeapon)
-    local items = PICKUP_DATA.CONSTANTS
+--Set open at item
+function InventoryData:GetOpenAtItem()
+
+    return self.openAtItem
+
+end
+
+--Set open at item
+function InventoryData:SetOpenAtItem(item)
+
+    self.openAtItem = item
+    return true
+
+end
+
+return InventoryData
+
+-- --Structure for inventory
+-- local Inventory = {}
+
+
+-- local chosenItem = nil
+-- local openAtItem = nil
+-- local gameflowOverrides = nil
+
+
+-- function InventoryData.Clear(ringName, clearDrawItems)
+--     if ringName then
+--         local ring = InventoryData.ring[ringName]
+        
+--         if clearDrawItems and ring then
+--             for _, itemData in ipairs(ring) do
+--                 local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(itemData:GetObjectID()))
+--                 displayItem:Remove()
+--             end
+--         end
+        
+--         InventoryData.ring[ringName] = {}
+--         InventoryData.slice[ringName] = nil
+--         InventoryData.selectedItem[ringName] = nil
+--         InventoryData.ringPosition[ringName] = nil
+--     else
+--         if clearDrawItems then
+--             TEN.View.DisplayItem.ClearAllItems()
+--         end
+        
+--         InventoryData.ring = {}
+--         InventoryData.slice = {}
+--         InventoryData.selectedItem = {}
+--         InventoryData.ringPosition = {}
+
+--     end
+-- end
+
+-- local function ReadGameflow()
+--     local overrides = {}
+--     for _, itemID in ipairs(TEN.Flow.GetCurrentLevel().objects) do
+--         if itemID.objectID then
+--             local id = TEN.InventoryData.ConvertInventoryItemToObject(itemID.objectID)
+--             overrides[id] = { 
+--                 item = id,
+--                 yOffset = itemID.yOffset,
+--                 scale = itemID.scale,
+--                 rotation = itemID.rotation,
+--                 menuActions = itemID.action,
+--                 name = itemID.nameKey,
+--                 meshBits = itemID.meshBits,
+--                 orientation = itemID.axis
+--             }
+--         end
+--     end
+--     return overrides
+-- end
+
+-- function InventoryData.BuildItem(data)
+--     InventoryData.gameflowOverrides = ReadGameflow() or {}
+--     data.count = TEN.InventoryData.GetItemCount(data.objectID)
     
-    if ringType == RING.AMMO or ringType == RING.COMBINE then
-        Inventory.ClearInventory(ringType, true)
-    else
-        Inventory.ClearInventory()
-    end
+--     local override = InventoryData.gameflowOverrides[data.objectID] or {}
     
-    for _, itemRow in ipairs(items) do
-        local itemData = PICKUP_DATA.ConvertRowData(itemRow)
-        local data = Inventory.BuildItem(itemData)
-        data.rotation = Utilities.CopyRotation(data.rotation)
+--     if override.yOffset ~= nil then data.yOffset = override.yOffset end
+--     if override.scale ~= nil then data.scale = override.scale end
+--     if override.rotation ~= nil then data.rotation = override.rotation end
+--     if override.menuActions ~= nil then data.menuActions = override.menuActions end
+--     if override.name ~= nil then data.name = override.name end
+--     if override.meshBits ~= nil then data.meshBits = override.meshBits end
+--     if override.orientation ~= nil then data.orientation = override.orientation end
+--     if override.type ~= nil then data.type = override.type end
+--     if override.combine ~= nil then data.combine = override.combine end
+    
+--     return data
+-- end
+
+-- function InventoryData.Construct(ringType, selectedWeapon)
+--     local items = PICKUP_DATA.CONSTANTS
+    
+--     if ringType == RING.AMMO or ringType == RING.COMBINE then
+--         InventoryData.ClearInventory(ringType, true)
+--     else
+--         InventoryData.ClearInventory()
+--     end
+    
+--     for _, itemRow in ipairs(items) do
+--         local itemData = PICKUP_DATA.ConvertRowData(itemRow)
+--         local data = InventoryData.BuildItem(itemData)
+--         data.rotation = Utilities.CopyRotation(data.rotation)
         
-        if data.type == TYPE.AMMO and ringType ~= RING.AMMO then
-            local weaponPresent = TEN.Inventory.GetItemCount(PICKUP_DATA.AMMO_SET[data.objectID].weapon)
-            if weaponPresent ~= 0 then
-                goto continue
-            end
-        end
+--         if data.type == TYPE.AMMO and ringType ~= RING.AMMO then
+--             local weaponPresent = TEN.InventoryData.GetItemCount(PICKUP_DATA.AMMO_SET[data.objectID].weapon)
+--             if weaponPresent ~= 0 then
+--                 goto continue
+--             end
+--         end
         
-        if data.type == TYPE.WEAPON then
-            if Lara:GetLaserSight(PICKUP_DATA.WEAPON_SET[data.objectID].slot) then
-                data.meshBits = PICKUP_DATA.WEAPON_LASERSIGHT_DATA[data.objectID].MESHBITS
-                data.name = PICKUP_DATA.WEAPON_LASERSIGHT_DATA[data.objectID].NAME
-                data.menuActions = PICKUP_DATA.WEAPON_LASERSIGHT_DATA[data.objectID].FLAGS
-            end
-        end
+--         if data.type == TYPE.WEAPON then
+--             if Lara:GetLaserSight(PICKUP_DATA.WEAPON_SET[data.objectID].slot) then
+--                 data.meshBits = PICKUP_DATA.WEAPON_LASERSIGHT_DATA[data.objectID].MESHBITS
+--                 data.name = PICKUP_DATA.WEAPON_LASERSIGHT_DATA[data.objectID].NAME
+--                 data.menuActions = PICKUP_DATA.WEAPON_LASERSIGHT_DATA[data.objectID].FLAGS
+--             end
+--         end
         
-        local ammoRing = false
-        local shouldInsert = false
+--         local ammoRing = false
+--         local shouldInsert = false
         
-        if ringType == RING.COMBINE then
-            if data.combine == true then
-                data.ringName = RING.COMBINE
+--         if ringType == RING.COMBINE then
+--             if data.combine == true then
+--                 data.ringName = RING.COMBINE
                 
-                if combineItem1 == data.objectID then
-                    goto continue
-                end
+--                 if combineItem1 == data.objectID then
+--                     goto continue
+--                 end
                 
-                if data.type == TYPE.WEAPON and Lara:GetLaserSight(PICKUP_DATA.WEAPON_SET[data.objectID].slot) then
-                    goto continue
-                end
+--                 if data.type == TYPE.WEAPON and Lara:GetLaserSight(PICKUP_DATA.WEAPON_SET[data.objectID].slot) then
+--                     goto continue
+--                 end
                 
-                shouldInsert = (data.count ~= 0)
-            else
-                goto continue
-            end
-        elseif ringType == RING.AMMO then
-            if data.type == TYPE.AMMO and PICKUP_DATA.WEAPON_AMMO_LOOKUP[selectedWeapon] and Utilities.Contains(PICKUP_DATA.WEAPON_AMMO_LOOKUP[selectedWeapon], data.objectID) then
-                data.ringName = RING.AMMO
-                ammoRing = true
-                shouldInsert = true
-            else
-                goto continue
-            end
-        else
-            shouldInsert = (data.count ~= 0)
-        end
+--                 shouldInsert = (data.count ~= 0)
+--             else
+--                 goto continue
+--             end
+--         elseif ringType == RING.AMMO then
+--             if data.type == TYPE.AMMO and PICKUP_DATA.WEAPON_AMMO_LOOKUP[selectedWeapon] and Utilities.Contains(PICKUP_DATA.WEAPON_AMMO_LOOKUP[selectedWeapon], data.objectID) then
+--                 data.ringName = RING.AMMO
+--                 ammoRing = true
+--                 shouldInsert = true
+--             else
+--                 goto continue
+--             end
+--         else
+--             shouldInsert = (data.count ~= 0)
+--         end
         
-        if (data.objectID == TEN.Objects.ObjID.LASERSIGHT_ITEM) then
-            if Lara:GetLaserSight(TEN.Objects.WeaponType.CROSSBOW) or 
-               Lara:GetLaserSight(TEN.Objects.WeaponType.REVOLVER) or 
-               Lara:GetLaserSight(TEN.Objects.WeaponType.HK) then
-                shouldInsert = false
-            end
-        end
+--         if (data.objectID == TEN.Objects.ObjID.LASERSIGHT_ITEM) then
+--             if Lara:GetLaserSight(TEN.Objects.WeaponType.CROSSBOW) or 
+--                Lara:GetLaserSight(TEN.Objects.WeaponType.REVOLVER) or 
+--                Lara:GetLaserSight(TEN.Objects.WeaponType.HK) then
+--                 shouldInsert = false
+--             end
+--         end
         
-        inventory.ring[data.ringName] = inventory.ring[data.ringName] or {}
+--         InventoryData.ring[data.ringName] = InventoryData.ring[data.ringName] or {}
         
-        if debug then
-            print("Item: "..Util.GetObjectIDString(data.objectID))
-            print("shouldInsert: "..tostring(shouldInsert))
-            print("ammoRing: "..tostring(ammoRing))
-        end
+--         if debug then
+--             print("Item: "..Util.GetObjectIDString(data.objectID))
+--             print("shouldInsert: "..tostring(shouldInsert))
+--             print("ammoRing: "..tostring(ammoRing))
+--         end
         
-        if shouldInsert or ammoRing then
+--         if shouldInsert or ammoRing then
 
-            if getmetatable(data) ~= InventoryItem then
-                setmetatable(data, InventoryItem)
-            end
+--             if getmetatable(data) ~= InventoryItem then
+--                 setmetatable(data, InventoryItem)
+--             end
 
-            table.insert(inventory.ring[data.ringName], data)
-            local inventoryItem = TEN.View.DisplayItem(
-                tostring(data.objectID),
-                data.objectID,
-                RING_CENTER[data.ringName],
-                data.rotation,
-                Vec3(data.scale),
-                data.meshBits
-            )
-            inventoryItem:SetColor(COLOR_MAP.ITEM_COLOR)
-        end
+--             table.insert(InventoryData.ring[data.ringName], data)
+--             local inventoryItem = TEN.View.DisplayItem(
+--                 tostring(data.objectID),
+--                 data.objectID,
+--                 RING_CENTER[data.ringName],
+--                 data.rotation,
+--                 Vec3(data.scale),
+--                 data.meshBits
+--             )
+--             inventoryItem:SetColor(COLOR_MAP.ITEM_COLOR)
+--         end
         
-        ::continue::
-    end
+--         ::continue::
+--     end
     
-    if ringType then
-        local ringItems = inventory.ring[ringType] or {}
-        local count = #ringItems
-        inventory.selectedItem[ringType] = 1
-        inventory.slice[ringType] = (count > 0) and (360 / count) or 0
-        inventory.ringPosition[ringType] = RING_CENTER[ringType]
-    else
-        for index, ringItems in pairs(inventory.ring) do
-            local count = #ringItems
-            inventory.selectedItem[index] = 1
-            inventory.slice[index] = (count > 0) and (360 / count) or 0
-            inventory.ringPosition[index] = RING_CENTER[index]
-        end
-    end
-end
+--     if ringType then
+--         local ringItems = InventoryData.ring[ringType] or {}
+--         local count = #ringItems
+--         InventoryData.selectedItem[ringType] = 1
+--         InventoryData.slice[ringType] = (count > 0) and (360 / count) or 0
+--         InventoryData.ringPosition[ringType] = RING_CENTER[ringType]
+--     else
+--         for index, ringItems in pairs(InventoryData.ring) do
+--             local count = #ringItems
+--             InventoryData.selectedItem[index] = 1
+--             InventoryData.slice[index] = (count > 0) and (360 / count) or 0
+--             InventoryData.ringPosition[index] = RING_CENTER[index]
+--         end
+--     end
+-- end
 
-function Inventory.OpenAtItem(itemID, repositionRings)
-    if itemID == NO_VALUE then
-        return
-    end
+-- function InventoryData.OpenAtItem(itemID, repositionRings)
+--     if itemID == NO_VALUE then
+--         return
+--     end
     
-    local ringIndex, itemIndex = FindItemInInventory(itemID)
+--     local ringIndex, itemIndex = FindItemInInventory(itemID)
     
-    if not (ringIndex and itemIndex) then
-        return
-    end
+--     if not (ringIndex and itemIndex) then
+--         return
+--     end
     
-    inventory.selectedItem[ringIndex] = itemIndex
-    local slice = inventory.slice[ringIndex]
-    local angle = -slice * (itemIndex - 1)
-    currentRingAngle = angle
-    targetRingAngle = angle
+--     InventoryData.selectedItem[ringIndex] = itemIndex
+--     local slice = InventoryData.slice[ringIndex]
+--     local angle = -slice * (itemIndex - 1)
+--     currentRingAngle = angle
+--     targetRingAngle = angle
     
-    if repositionRings then
-        local ringPosition = RING_CENTER[RING.MAIN]
-        selectedRing = ringIndex
+--     if repositionRings then
+--         local ringPosition = RING_CENTER[RING.MAIN]
+--         selectedRing = ringIndex
         
-        for index in pairs(inventory.ring) do
-            local offset = (index - selectedRing) * RING_POSITION_OFFSET
-            inventory.ringPosition[index] = Vec3(ringPosition.x, ringPosition.y + offset, ringPosition.z)
-            TranslateRing(index, inventory.ringPosition[index], RING_RADIUS, angle)
-        end
-    end
+--         for index in pairs(InventoryData.ring) do
+--             local offset = (index - selectedRing) * RING_POSITION_OFFSET
+--             InventoryData.ringPosition[index] = Vec3(ringPosition.x, ringPosition.y + offset, ringPosition.z)
+--             TranslateRing(index, InventoryData.ringPosition[index], RING_RADIUS, angle)
+--         end
+--     end
     
-    if itemID == TEN.Objects.ObjID.PC_SAVE_INV_ITEM or itemID == TEN.Objects.ObjID.PC_LOAD_INV_ITEM then
-        if itemID == TEN.Objects.ObjID.PC_SAVE_INV_ITEM then
-            saveList = true
-        end
-        saveSelected = true
-    end
-end
+--     if itemID == TEN.Objects.ObjID.PC_SAVE_INV_ITEM or itemID == TEN.Objects.ObjID.PC_LOAD_INV_ITEM then
+--         if itemID == TEN.Objects.ObjID.PC_SAVE_INV_ITEM then
+--             saveList = true
+--         end
+--         saveSelected = true
+--     end
+-- end
 
 
 
-local function GetCombineItemsCount(selectedItem)
-    local itemCount = 0
-    local items = PICKUP_DATA.CONSTANTS
+-- local function GetCombineItemsCount(selectedItem)
+--     local itemCount = 0
+--     local items = PICKUP_DATA.CONSTANTS
     
-    for _, itemRow in ipairs(items) do
-        local itemData = PICKUP_DATA.ConvertRowData(itemRow)
-        local data = BuildInventoryItem(itemData)
-        local shouldInsert = false
+--     for _, itemRow in ipairs(items) do
+--         local itemData = PICKUP_DATA.ConvertRowData(itemRow)
+--         local data = BuildInventoryItem(itemData)
+--         local shouldInsert = false
         
-        if data.combine == true then
-            if selectedItem == data.objectID then
-                goto continue
-            end
+--         if data.combine == true then
+--             if selectedItem == data.objectID then
+--                 goto continue
+--             end
             
-            if data.type == TYPE.WEAPON and Lara:GetLaserSight(PICKUP_DATA.WEAPON_SET[data.objectID].slot) then
-                goto continue
-            end
+--             if data.type == TYPE.WEAPON and Lara:GetLaserSight(PICKUP_DATA.WEAPON_SET[data.objectID].slot) then
+--                 goto continue
+--             end
             
-            shouldInsert = (data.count ~= 0)
-        else
-            goto continue
-        end
+--             shouldInsert = (data.count ~= 0)
+--         else
+--             goto continue
+--         end
         
-        if shouldInsert then
-            itemCount = itemCount + 1
-        end
+--         if shouldInsert then
+--             itemCount = itemCount + 1
+--         end
         
-        ::continue::
-    end
-    return itemCount
-end
+--         ::continue::
+--     end
+--     return itemCount
+-- end
 
-return Inventory
+-- return Inventory

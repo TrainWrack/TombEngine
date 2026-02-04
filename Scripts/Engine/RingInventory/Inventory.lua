@@ -7,6 +7,7 @@ local debug = false
 local Animation = require("Engine.RingInventory.Animation")
 local Menu = require("Engine.CustomMenu")
 local Interpolate = require("Engine.InterpolateModule")
+local InventoryStates = require("Engine.RingInventory.InventoryStates")
 local Save = require("Engine.RingInventory.Save")
 local Settings = require("Engine.RingInventory.Settings")
 local States = require("Engine.RingInventory.States")
@@ -19,7 +20,6 @@ local Utilities = require("Engine.RingInventory.Utilities")
 local PICKUP_DATA = require("Engine.RingInventory.PickupData")
 local TYPE = PICKUP_DATA.TYPE
 local RING = PICKUP_DATA.RING
-local RING_CENTER = PICKUP_DATA.RING_CENTER
 local INVENTORY_MODE = PICKUP_DATA.INVENTORY_MODE
 local SOUND_MAP = Settings.SOUND_MAP
 local COLOR_MAP = Settings.COLOR_MAP
@@ -35,171 +35,20 @@ local TARGET_END = Vec3(0, 110, 0)
 
 local ITEM_START = Vec3(0, 200, 512)
 local ITEM_END = Vec3(0, 0, 400)
-local AMMO_LOCATION = Vec3(0, 300, 512)
 
-local PROGRESS_COMPLETE = 1
-
-local ALPHA_MAX = 255
-local ALPHA_MIN = 0
 
 --Variables
 local useBinoculars = false
-local itemStoreRotations = false
-local itemRotation = Rotation(0, 0, 0)
-local itemRotationOld = Rotation(0, 0, 0)
-
-local ammoAdded = true
-
-
 
 --Structure for inventory
 
 local inventorySetup = true
 local timeInMenu = 0
 local inventoryDelay = 0
-local inventoryMode = INVENTORY_MODE.INVENTORY_OPENING
-local previousMode = nil
 local menuAlpha = 0
 
-CustomInventory.INVENTORY_MODE = 
-{
-    INVENTORY = 1,
-    RING_OPENING = 2,
-    RING_CLOSING = 3,
-	RING_CHANGE = 4,
-    RING_ROTATE = 5,
-    STATISTICS_OPEN = 6,
-	STATISTICS = 7,
-    STATISTICS_CLOSE = 8,
-    EXAMINE_OPEN = 9,
-	EXAMINE = 10,
-	EXAMINE_RESET = 11,
-    EXAMINE_CLOSE = 12,
-    ITEM_USE = 13,
-    ITEM_SELECT = 14,
-    ITEM_DESELECT = 15,
-    ITEM_SELECTED = 16,
-    COMBINE = 17,
-    COMBINE_SETUP = 18,
-    COMBINE_CLOSE = 19,
-    COMBINE_RING_OPENING = 20,
-    COMBINE_SUCCESS = 21,
-	COMBINE_COMPLETE = 22,
-	SEPARATE = 23,
-    SEPARATE_COMPLETE = 24,
-    AMMO_SELECT_SETUP = 25,
-    AMMO_SELECT_OPEN = 26,
-    AMMO_SELECT = 27,
-    AMMO_SELECT_CLOSE = 28,
-    SAVE_SETUP = 29,
-    SAVE_MENU = 30,
-    SAVE_CLOSE = 31,
-    WEAPON_MODE_SETUP = 32,
-    WEAPON_MODE = 33,
-    WEAPON_MODE_CLOSE = 34,
-	INVENTORY_EXIT = 35,
-	INVENTORY_OPENING = 36
-}
 
 LevelFuncs.Engine.RingInventory = {}
-
--- ============================================================================
--- HELPER FUNCTIONS
--- ============================================================================
-
-
-
-local function IsSingleFlagSet(flags)
-    return flags ~= 0 and (flags & (flags - 1)) == 0
-end
-
-
-
-
-
-
--- ============================================================================
--- ITEM FUNCTIONS
--- ============================================================================
-
-local function RotateItem(itemName)
-    local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(itemName)
-    local itemRotations = currentDisplayItem:GetRotation()
-    local itemColor = currentDisplayItem:GetColor()
-    local targetColor = Animation.Interpolate.Lerp(itemColor, COLOR_MAP.ITEM_COLOR_VISIBLE, ITEM_SPINBACK_ALPHA)
-    currentDisplayItem:SetRotation(Rotation(itemRotations.x, (itemRotations.y + ANIMATION.ROTATION_SPEED) % 360, itemRotations.z))
-    currentDisplayItem:SetColor(targetColor)
-end
-
-local function ShowChosenAmmo(item, textOnly)
-    local inventoryItem = GetInventoryItem(item)
-    if not inventoryItem or inventoryItem.type ~= TYPE.WEAPON then
-        Text.Hide("ITEM_LABEL_SECONDARY")
-        return
-    end
-    
-    local slot = PICKUP_DATA.WEAPON_SET[item].slot
-    local ammoType = Lara:GetAmmoType(slot)
-    if not ammoType then return end
-    
-    local objectID = PICKUP_DATA.AMMO_TYPE_TO_OBJECT[ammoType]
-    if not objectID then return end
-    
-    local row = PICKUP_DATA.GetRow(objectID)
-    local base = PICKUP_DATA.ConvertRowData(row)
-    
-    if ammoAdded and not textOnly then
-        local data = BuildInventoryItem(base)
-        data.rotation = Utilities.CopyRotation(data.rotation)
-        
-        local ammoItem = TEN.View.DisplayItem(
-            "ChosenAmmo",
-            data.objectID,
-            AMMO_LOCATION,
-            data.rotation,
-            Vec3(data.scale),
-            data.meshBits
-        )
-        
-        ammoItem:SetColor(COLOR_MAP.ITEM_COLOR_VISIBLE)
-        ammoAdded = false
-    end
-    
-    local data = BuildInventoryItem(base)
-    local label = Text.CreateItemLabel(data)
-    Text.SetText("ITEM_LABEL_SECONDARY", label, true)
-    --DrawItemLabel(data, false)
-    
-    if not textOnly then
-        RotateItem("ChosenAmmo")
-    end
-end
-
-local function DeleteChosenAmmo(itemOnly)
-    TEN.View.DisplayItem.RemoveItem("ChosenAmmo")
-    ammoAdded = true
-
-    if not itemOnly then
-        
-        Text.Hide("ITEM_LABEL_SECONDARY")
-    
-    end
-end
-
-
-
-
-local function SaveItemData(selectedItem)
-    if itemStoreRotations then
-        local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(selectedItem.objectID))
-        itemRotationOld = displayItem:GetRotation()
-        itemRotation = selectedItem.rotation
-        examineRotation = Utilities.CopyRotation(selectedItem.rotation)
-        examineScalerOld = selectedItem.scale
-        examineScaler = selectedItem.scale
-        itemStoreRotations = false
-    end
-end
 
 -- ============================================================================
 -- MAIN DRAW AND USE FUNCTIONS
@@ -219,10 +68,6 @@ local function ExitInventory()
     combineItem1 = nil
     LevelVars.Engine.RingInventory.InventoryClosed = true
 end
-
-
-
-
 
 local function UpdateInventory()
     if not LevelVars.Engine.RingInventory.InventoryRunning then
@@ -330,31 +175,6 @@ local function RunInventory()
     end
 end
 
-function CustomInventory.SetMode(mode)
-
-    previousMode = inventoryMode
-    inventoryMode = mode
-
-end
-
-function CustomInventory.GetMode()
-
-    return inventoryMode
-    
-end
-
-function CustomInventory.IsMode(mode)
-
-    return inventoryMode == mode
-    
-end
-
-function CustomInventory.UseBinoculars()
-
-    useBinoculars = true
-
-end
-
 function CustomInventory.GetTimeInMenu()
 
     return timeInMenu
@@ -367,6 +187,7 @@ end
 
 LevelFuncs.Engine.RingInventory.UpdateInventory = UpdateInventory
 LevelFuncs.Engine.RingInventory.RunInventory = RunInventory
+LevelFuncs.Engine.RingInventory.ExitInventory = ExitInventory
 
 -- ============================================================================
 -- CALLBACKS

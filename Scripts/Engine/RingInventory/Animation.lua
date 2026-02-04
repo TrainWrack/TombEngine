@@ -3,6 +3,7 @@
 -- ============================================================================
 
 --External Modules
+local Examine = require("Engine.RingInventory.Examine")
 local Interpolate = require("Engine.RingInventory.Interpolate")
 local InventoryData= require("Engine.RingInventory.InventoryData")
 local PICKUP_DATA = require("Engine.RingInventory.PickupData")
@@ -15,8 +16,36 @@ local CONSTANTS = require("Engine.RingInventory.Constants")
 local INVENTORY_MODE = PICKUP_DATA.INVENTORY_MODE
 local COLOR_MAP = Settings.COLOR_MAP
 
---Combine functions
+--Variables
+local itemRotation = Rotation(0, 0, 0)
+local itemRotationOld = Rotation(0, 0, 0)
+local itemStoreRotations = false
+local direction = 1
+
+--Animation functions
 local Animation = {}
+
+function Animation.SaveItemData(selectedItem)
+    if itemStoreRotations then
+        local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(selectedItem:GetObjectID()))
+        itemRotationOld = displayItem:GetRotation()
+        itemRotation = selectedItem:GetRotation()
+        Examine.SetRotation(selectedItem:GetRotation())
+        Examine.SetScale(selectedItem:GetScale())
+        itemStoreRotations = false
+    end
+end
+
+function Animation.EnableSaveItemData()
+    itemStoreRotations = true
+end
+
+
+function Animation.SetRingDirection(value)
+
+    direction = value
+
+end
 
 function Animation.Clear(prefix, motionTable)
     for _, motion in ipairs(motionTable) do
@@ -112,13 +141,13 @@ function Animation.Inventory(mode)
     
     local useAnimation = {
         {key = "itemPosition", type = Interpolate.Type.VEC3, start = CONSTANTS.ITEM_START, finish = CONSTANTS.ITEM_END},
-        {key = "itemScale", type = Interpolate.Type.LINEAR, start = examineScalerOld, finish = examineScaler},
+        {key = "itemScale", type = Interpolate.Type.LINEAR, start = Examine.GetPreviousScale(), finish = Examine.GetScale()},
         {key = "itemRotation", type = Interpolate.Type.ROTATION, start = itemRotationOld, finish = itemRotation},
     }
     
     local examineReset = {
         useAnimation[2],
-        {key = "itemRotation", type = Interpolate.Type.ROTATION, start = itemRotation, finish = examineRotation},
+        {key = "itemRotation", type = Interpolate.Type.ROTATION, start = itemRotation, finish = Examine.GetRotation()},
     }
     
     local examineAnimation = {

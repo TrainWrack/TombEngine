@@ -1,11 +1,11 @@
 --External Modules
-local CustomInventory = require("Engine.RingInventory.Inventory")
+local InventoryStates = require("Engine.RingInventory.InventoryStates")
 local Settings = require("Engine.CustomInventory.Settings")
 local Utilities = require("Engine.CustomInventory.Utilities")
 
 --Pointers to tables
 local COLOR_MAP = Settings.COLOR_MAP
-local INVENTORY_MODE = CustomInventory.INVENTORY_MODE
+local INVENTORY_MODE = InventoryStates.MODE
 
 --CONSTANTS
 local BG_LAYER = 0
@@ -36,7 +36,7 @@ function Sprites.Arrows(selectedRing, alpha)
         [INVENTORY_MODE.RING_ROTATE] = true
     }
     
-    if not visibleModes[CustomInventory.GetMode()] then
+    if not visibleModes[InventoryStates.GetMode()] then
         return
     end
     

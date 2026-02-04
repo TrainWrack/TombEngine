@@ -36,14 +36,6 @@ PICKUP_DATA.TYPE = {
     SAVE = 7
 }
 
-PICKUP_DATA.RING = {
-	PUZZLE = 1,
-    MAIN = 2,
-	OPTIONS = 3,
-	COMBINE = 4,
-	AMMO = 5
-}
-
 PICKUP_DATA.CONSTANTS = {
 	{ TEN.Objects.ObjID.STOPWATCH_ITEM, 2, 0.8, Rotation(0, 180, 0), ItemAction.STATISTICS, "statistics", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.TOOL, false, RING_TYPE.MAIN},
 	-- Weapons

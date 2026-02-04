@@ -73,7 +73,7 @@ Text.AddToGroup("STATISTICS", "LEVEL_HEADER_TEXT")
 Text.AddToGroup("STATISTICS", "HEADER_TEXT")
 Text.AddToGroup("STATISTICS", "STATS_TEXT")
 
-local GetStatsistics = function()
+local GetStatistics = function()
 
     local level = Flow.GetCurrentLevel()
     local levelStats = Flow.GetStatistics(statisticsType)
@@ -102,7 +102,7 @@ function Statistics.SetupStats()
         Flow.GetString("used_medipacks").."\n"..
         Flow.GetString("distance_travelled")
     
-    local statistics = GetStatsistics()
+    local statistics = GetStatistics()
     
     Text.SetText("LEVEL_HEADER_TEXT", levelHeader, false)
     Text.SetText("HEADER_TEXT", headings, false)
@@ -113,18 +113,20 @@ end
 function Statistics.Show()
 
     Text.ShowGroup("STATISTICS")
+    Menu.AddActive("SatisticsMenu")
 
 end
 
 function Statistics.Hide()
 
     Text.HideGroup("STATISTICS")
-
+    Menu.RemoveActive("SatisticsMenu")
+    
 end
 
 function Statistics.UpdateStatistics()
 
-    local statistics = GetStatsistics()
+    local statistics = GetStatistics()
     Text.SetText("STATS_TEXT", statistics, true)
 
 end
@@ -153,7 +155,7 @@ function Statistics.CreateStatisticsMenu()
         }
     }
     
-    local statisticsMenu = Menu.Create("SatisticsMenu", "statistics", table, nil, nil, Menu.Type.OPTIONS_ONLY)
+    local statisticsMenu = Menu.Create("SatisticsMenu", nil, table, nil, nil, Menu.Type.OPTIONS_ONLY)
     
     statisticsMenu:SetOptionsPosition(Vec2(50, 24.7))
     statisticsMenu:SetVisibility(true)
@@ -162,8 +164,6 @@ function Statistics.CreateStatisticsMenu()
     statisticsMenu:SetOnOptionChangeFunction("Blank", "Engine.RingInventory.ChangeStatistics")
     statisticsMenu:SetWrapAroundOptions(true)
     statisticsMenu:EnableInputs(true)
-    statisticsMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, nil, nil, true)
-    statisticsMenu:SetTitlePosition(Vec2(50, 4))
 end
 
 function Statistics.RunStatisticsMenu()

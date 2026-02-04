@@ -4,10 +4,9 @@
 --External Modules
 local CustomInventory = require("Engine.RingInventory.CustomInventory")
 local Menu = require("Engine.RingInventory.Menu")
-local PICKUP_DATA = require("Engine.RingInventory.PickupData")
+local PickupData = require("Engine.RingInventory.PickupData")
 local Save = require("Engine.RingInventory.Save")
 local InventoryData = require("Engine.RingInventory.InventoryData")
-local InventoryItem = require("Engine.RingInventory.InventoryItem")
 
 --Pointers to tables
 local COLOR_MAP = Settings.COLOR_MAP
@@ -21,7 +20,7 @@ local function HasItemAction(packedFlags, flag)
 end
 
 local function HasChooseAmmo(menuActions)
-    for _, flag in ipairs(PICKUP_DATA.CHOOSE_AMMO_FLAGS) do
+    for _, flag in ipairs(PickupData.CHOOSE_AMMO_FLAGS) do
         if HasItemAction(menuActions, flag) then
             return true
         end
@@ -29,7 +28,18 @@ local function HasChooseAmmo(menuActions)
     return false
 end
 
-function ItemMenu.ParseAction(menuActions)
+function ItemMenu.IsSingleItemAction(item)
+    
+    local flags = item:GetMenuActions()
+
+    return flags ~= 0 and (flags & (flags - 1)) == 0
+
+end
+
+function ItemMenu.ParseAction(item)
+
+    local menuActions = item:GetMenuActions()
+
     if HasItemAction(menuActions, ItemAction.USE) or HasItemAction(menuActions, ItemAction.EQUIP) then
         CustomInventory.SetMode(INVENTORY_MODE.ITEM_USE)
     elseif HasItemAction(menuActions, ItemAction.EXAMINE) then
@@ -39,10 +49,10 @@ function ItemMenu.ParseAction(menuActions)
     elseif HasItemAction(menuActions, ItemAction.STATISTICS) then
         CustomInventory.SetMode(INVENTORY_MODE.STATISTICS_OPEN)
     elseif HasItemAction(menuActions, ItemAction.SAVE) then
-        Save.saveList = true
+        Save.SetSaveMenu()
         CustomInventory.SetMode(INVENTORY_MODE.SAVE_SETUP)
     elseif HasItemAction(menuActions, ItemAction.LOAD) then
-        Save.saveList = false
+        Save.SetLoadMenu()
         CustomInventory.SetMode(INVENTORY_MODE.SAVE_SETUP)
     elseif HasItemAction(menuActions, ItemAction.SEPARATE) then
         CustomInventory.SetMode(INVENTORY_MODE.SEPARATE)
@@ -66,7 +76,6 @@ end
 function ItemMenu.Create(item)
     local menuActions = {}
     local itemData = InventoryData.GetInventoryItem(item)
-    local itemMenuActions = nil
     
     if not itemData then
         return
@@ -74,7 +83,7 @@ function ItemMenu.Create(item)
     
     local itemMenuActions = itemData:GetMenuActions()
 
-    for _, entry in ipairs(PICKUP_DATA.ItemActionFlags) do
+    for _, entry in ipairs(PickupData.ItemActionFlags) do
         if HasItemAction(itemMenuActions, entry.bit) then
             local allowInsert = true
             
@@ -112,15 +121,6 @@ end
 function ItemMenu.Hide()
     Menu.RemoveActive("menuActions")
 end
-
-function ItemMenu.SetTransparency(alpha)
-
-    local itemMenu = Menu.Get("menuActions")
-    itemMenu:SetTransparency(alpha)
-
-end
-
-
 
 -- ============================================================================
 -- PUBLIC API (LevelFuncs.Engine.RingInventory)
