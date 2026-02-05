@@ -4,12 +4,12 @@
 
 --External Modules
 local Constants = require("Engine.RingInventory.Constants")
-local CustomInventory = require("Engine.RingInventory.Inventory")
+local InventoryStates = require("Engine.RingInventory.InventoryStates")
 local Settings = require("Engine.RingInventory.Settings")
 local PickupData = require("Engine.RingInventory.PickupData")
 
 --Pointers to constant tables
-local INVENTORY_MODE = CustomInventory.INVENTORY_MODE
+local INVENTORY_MODE = InventoryStates.MODE
 local SOUND_MAP = Settings.SOUND_MAP
 
 local Use = {}
@@ -64,7 +64,7 @@ function Use.Item(item)
     TEN.Util.OnUseItemCallBack()
     
     if (TEN.Inventory.GetUsedItem() == Constants.NO_VALUE) then
-        CustomInventory.SetMode(INVENTORY_MODE.INVENTORY_EXIT)
+        InventoryStates.SetMode(INVENTORY_MODE.INVENTORY_EXIT)
         return
     end
     
@@ -73,7 +73,7 @@ function Use.Item(item)
         local currentWeapon = Lara:GetWeaponType()
         
         if item == TEN.Objects.ObjID.FLARE_INV_ITEM and currentWeapon == TEN.Objects.WeaponType.FLARE then
-            CustomInventory.SetMode(INVENTORY_MODE.INVENTORY_EXIT)
+            InventoryStates.SetMode(INVENTORY_MODE.INVENTORY_EXIT)
             return
         end
         
@@ -92,7 +92,7 @@ function Use.Item(item)
         if hp <= 0 or hp >= Constants.HEALTH_MAX then
             if poison == 0 then
                 TEN.Sound.PlaySound(SOUND_MAP.PLAYER_NO)
-                CustomInventory.SetMode(INVENTORY_MODE.INVENTORY_EXIT)
+                InventoryStates.SetMode(INVENTORY_MODE.INVENTORY_EXIT)
                 return
             end
         end
@@ -118,10 +118,10 @@ function Use.Item(item)
     
     if item == TEN.Objects.ObjID.BINOCULARS_ITEM then
         TEN.Inventory.ClearUsedItem()
-        CustomInventory.UseBinoculars()
+        InventoryStates.UseBinoculars()
     end
     
-    CustomInventory.SetMode(INVENTORY_MODE.INVENTORY_EXIT)
+    InventoryStates.SetMode(INVENTORY_MODE.INVENTORY_EXIT)
 end
 
 return Use

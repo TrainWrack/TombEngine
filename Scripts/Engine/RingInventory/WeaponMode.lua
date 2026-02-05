@@ -4,11 +4,11 @@
 
 --External Modules
 local Menu = require("Engine.RingInventory.Menu")
+local PickupData = require("Engine.RingInventory.PickupData")
 local Settings = require("Engine.RingInventory.Settings")
 
 --Pointers to constant tables
 local COLOR_MAP = Settings.COLOR_MAP
-local PICKUP_DATA = require("Engine.RingInventory.PickupData")
 
 --Module Start
 local WeaponMode = {}
@@ -22,7 +22,7 @@ function WeaponMode.CreateWeaponModeMenu(itemData)
     
     local weaponModes = {}
     
-    for _, entry in ipairs(PICKUP_DATA.WEAPON_MODE_LOOKUP) do
+    for _, entry in ipairs(PickupData.WEAPON_MODE_LOOKUP) do
         if entry.weapon == itemData:GetObjectID() then
             table.insert(weaponModes, {
                 itemName = entry.string,

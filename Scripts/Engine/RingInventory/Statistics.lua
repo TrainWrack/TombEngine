@@ -113,14 +113,14 @@ end
 function Statistics.Show()
 
     Text.ShowGroup("STATISTICS")
-    Menu.AddActive("SatisticsMenu")
+    Menu.AddActive("StatisticsMenu")
 
 end
 
 function Statistics.Hide()
 
     Text.HideGroup("STATISTICS")
-    Menu.RemoveActive("SatisticsMenu")
+    Menu.RemoveActive("StatisticsMenu")
     
 end
 
@@ -155,7 +155,7 @@ function Statistics.CreateStatisticsMenu()
         }
     }
     
-    local statisticsMenu = Menu.Create("SatisticsMenu", nil, table, nil, nil, Menu.Type.OPTIONS_ONLY)
+    local statisticsMenu = Menu.Create("StatisticsMenu", nil, table, nil, nil, Menu.Type.OPTIONS_ONLY)
     
     statisticsMenu:SetOptionsPosition(Vec2(50, 24.7))
     statisticsMenu:SetVisibility(true)
@@ -167,7 +167,7 @@ function Statistics.CreateStatisticsMenu()
 end
 
 function Statistics.RunStatisticsMenu()
-    local statisticsMenu = Menu.Get("SatisticsMenu")
+    local statisticsMenu = Menu.Get("StatisticsMenu")
     statisticsMenu:SetTransparency(Text.GetAlpha())
     statisticsMenu:Draw()
 end

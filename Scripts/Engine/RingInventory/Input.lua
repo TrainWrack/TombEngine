@@ -6,7 +6,7 @@
 local Animation = require("Engine.RingInventory.Animation")
 local Examine =  require("Engine.RingInventory.Examine")
 local ItemMenu = require("Engine.RingInventory.ItemMenu")
---local RingInventory = require("Engine.RingInventory.Inventory")
+local RingInventory = require("Engine.RingInventory.Inventory")
 local InventoryData= require("Engine.RingInventory.InventoryData")
 local InventoryStates = require("Engine.RingInventory.InventoryStates")
 local Ring = require("Engine.RingInventory.Ring")
