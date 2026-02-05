@@ -5,7 +5,7 @@ local debug = false
 
 --External Modules
 local Constants = require("Engine.RingInventory.Constants")
-local Inputs = require("Engine.RingInventory.Input")
+local Inputs -- Delayed require to break circular dependency
 local Menu = require("Engine.RingInventory.Menu")
 local Interpolate = require("Engine.InterpolateModule")
 local InventoryData = require("Engine.RingInventory.InventoryData")
@@ -60,6 +60,11 @@ end
 local function UpdateInventory()
     if not inventoryRunning then
         return
+    end
+    
+    -- Lazy load Inputs to break circular dependency
+    if not Inputs then
+        Inputs = require("Engine.RingInventory.Input")
     end
     
     timeInMenu = timeInMenu + 1
