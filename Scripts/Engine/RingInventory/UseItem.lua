@@ -3,11 +3,12 @@
 -- ============================================================================
 
 --External Modules
+local Constants = require("Engine.RingInventory.Constants")
 local CustomInventory = require("Engine.RingInventory.Inventory")
 local Settings = require("Engine.RingInventory.Settings")
+local PickupData = require("Engine.RingInventory.PickupData")
 
 --Pointers to constant tables
-local CONSTANTS = require("Engine.RingInventory.Constants")
 local INVENTORY_MODE = CustomInventory.INVENTORY_MODE
 local SOUND_MAP = Settings.SOUND_MAP
 
@@ -62,12 +63,12 @@ function Use.Item(item)
     TEN.Inventory.SetUsedItem(item)
     TEN.Util.OnUseItemCallBack()
     
-    if (TEN.Inventory.GetUsedItem() == CONSTANTS.NO_VALUE) then
+    if (TEN.Inventory.GetUsedItem() == Constants.NO_VALUE) then
         CustomInventory.SetMode(INVENTORY_MODE.INVENTORY_EXIT)
         return
     end
     
-    if PICKUP_DATA.WEAPON_SET[item] and WaterTest(PICKUP_DATA.WEAPON_SET[item]) and CrawlTest(PICKUP_DATA.WEAPON_SET[item]) then
+    if PickupData.WEAPON_SET[item] and WaterTest(PickupData.WEAPON_SET[item]) and CrawlTest(PickupData.WEAPON_SET[item]) then
         TEN.Inventory.ClearUsedItem()
         local currentWeapon = Lara:GetWeaponType()
         
@@ -76,19 +77,19 @@ function Use.Item(item)
             return
         end
         
-        Lara:SetWeaponType(PICKUP_DATA.WEAPON_SET[item].slot, true)
+        Lara:SetWeaponType(PickupData.WEAPON_SET[item].slot, true)
         
         if item == TEN.Objects.ObjID.FLARE_INV_ITEM then
             TEN.Inventory.TakeItem(item, 1)
         end
     end
     
-    if PICKUP_DATA.HEALTH_SET[item] then
+    if PickupData.HEALTH_SET[item] then
         TEN.Inventory.ClearUsedItem()
         local hp = Lara:GetHP()
         local poison = Lara:GetPoison()
         
-        if hp <= 0 or hp >= PICKUP_DATA.HEALTH_MAX then
+        if hp <= 0 or hp >= Constants.HEALTH_MAX then
             if poison == 0 then
                 TEN.Sound.PlaySound(SOUND_MAP.PLAYER_NO)
                 CustomInventory.SetMode(INVENTORY_MODE.INVENTORY_EXIT)
@@ -99,12 +100,12 @@ function Use.Item(item)
         local count = TEN.Inventory.GetItemCount(item)
         
         if count then
-            if count ~= CONSTANTS.NO_VALUE then
+            if count ~= Constants.NO_VALUE then
                 TEN.Inventory.TakeItem(item, 1)
             end
             
             Lara:SetPoison(0)
-            local setHP = math.min(CONSTANTS.HEALTH_MAX, (hp + PICKUP_DATA.HEALTH_SET[item]))
+            local setHP = math.min(Constants.HEALTH_MAX, (hp + PickupData.HEALTH_SET[item]))
             Lara:SetHP(setHP)
             TEN.Sound.PlaySound(SOUND_MAP.TR4_MENU_MEDI)
             

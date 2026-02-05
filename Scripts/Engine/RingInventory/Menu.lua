@@ -691,7 +691,7 @@ function Menu.DrawMenu(menuName)
         local translate = menu.titleTranslate
         if menu.titleString == "" then translate = false end
 
-        local titleNode = DisplayString(menu.titleString, Utilities.percentPos(menu.titlePosition.x, menu.titlePosition.y), menu.titleTextScale, Utilities.colorCombine(menu.titleTextColor, actualTransparency) , translate, menu.titleTextFlags)
+        local titleNode = DisplayString(menu.titleString, Utilities.PercentPos(menu.titlePosition.x, menu.titlePosition.y), menu.titleTextScale, Utilities.ColorCombine(menu.titleTextColor, actualTransparency) , translate, menu.titleTextFlags)
         TEN.Strings.ShowString(titleNode, 1 / 30)
     end
 
@@ -713,7 +713,7 @@ function Menu.DrawMenu(menuName)
             local translate = menu.itemsTranslate
             if item.itemName == "" then translate = false end
 
-            local itemNode = DisplayString(item.itemName, Utilities.percentPos(menu.itemsPosition.x, yItems), menu.itemsTextScale, Utilities.colorCombine(menu.itemsTextColor, actualTransparency), translate)
+            local itemNode = DisplayString(item.itemName, Utilities.percentPos(menu.itemsPosition.x, yItems), menu.itemsTextScale, Utilities.ColorCombine(menu.itemsTextColor, actualTransparency), translate)
             if menu.menuType == Menu.Type.ITEMS_ONLY and i == menu.currentItem then
                 itemNode:SetFlags(menu.itemsSelectedFlags)
             else
@@ -727,7 +727,7 @@ function Menu.DrawMenu(menuName)
             local baseYOptions = menu.optionsPosition.y
             local yOptions = baseYOptions + (i - 1) * offset - menu.scrollY
             local selectedOption = item.options and item.options[item.currentOption] or ""
-            local optNode = DisplayString(selectedOption, Utilities.percentPos(menu.optionsPosition.x, yOptions), menu.optionsTextScale, Utilities.colorCombine(menu.optionsTextColor, actualTransparency), menu.optionsTranslate)
+            local optNode = DisplayString(selectedOption, Utilities.percentPos(menu.optionsPosition.x, yOptions), menu.optionsTextScale, Utilities.ColorCombine(menu.optionsTextColor, actualTransparency), menu.optionsTranslate)
             if i == menu.currentItem then
                 optNode:SetFlags(menu.optionsSelectedFlags)
             else

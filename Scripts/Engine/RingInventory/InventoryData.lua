@@ -32,7 +32,7 @@ local gameflowOverrides = nil
 
 -- Constructor
 function InventoryData.Create(name)
-    local self = setmetatable({}, Inventory)
+    local self = setmetatable({}, InventoryData)
     
     -- Main storage: [ringType] = Ring instance
     self.rings = {}
@@ -56,7 +56,7 @@ end
 function InventoryData:GetRing(ringType)
     if not self.rings[ringType] then
         local center = RING_CENTER[ringType]
-        self.rings[ringType] = Ring.new(ringType, center, self)  -- Pass self as inventory reference
+        self.rings[ringType] = Ring.Create(ringType, center, self)  -- Pass self as inventory reference
     end
     return self.rings[ringType]
 end
@@ -274,7 +274,7 @@ function InventoryData:Construct(ringType, selectedWeapon)
     for _, itemRow in ipairs(items) do
         local itemData = PICKUP_DATA.ConvertRowData(itemRow)
         itemData.rotation = Utilities.CopyRotation(itemData.rotation)
-        local data = BuildItem(itemData)
+        local data = InventoryData.BuildItem(itemData)
         
         if data.type == TYPE.AMMO and ringType ~= RING.AMMO then
             local weaponPresent = TEN.InventoryData.GetItemCount(PICKUP_DATA.AMMO_SET[data.objectID].weapon)
@@ -341,7 +341,7 @@ function InventoryData:Construct(ringType, selectedWeapon)
             local inventoryItem = TEN.View.DisplayItem(
                 tostring(data.objectID),
                 data.objectID,
-                InventoryData.DEFAULT_CENTERS[data.ringName],
+                Ring.CENTERS[data.ringName],
                 data.rotation,
                 Vec3(data.scale),
                 data.meshBits
@@ -481,7 +481,7 @@ function InventoryData:GetRingCount()
     return count
 end
 
---Get item selected
+--Get item selected objectID
 function InventoryData:GetChosenItem()
 
     return self.chosenItem 

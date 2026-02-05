@@ -15,7 +15,7 @@ local PickupData = require("Engine.RingInventory.PickupData")
 local Ring = require("Engine.RingInventory.Ring")
 local Settings = require("Engine.RingInventory.Settings")
 local Statistics = require("Engine.RingInventory.Statistics")
-local Text = require("Engine.RingInventory.Settings")
+local Text = require("Engine.RingInventory.Text")
 local UseItem = require("Engine.RingInventory.UseItem")
 local Utilities = require("Engine.RingInventory.Utilities")
 local WeaponMode =  require("Engine.RingInventory.WeaponMode")
@@ -112,7 +112,7 @@ function InventoryStates.Update()
     if inventoryMode == InventoryStates.MODE.INVENTORY then
         ItemSpin.StartSpin(selectedItem.objectID)
         AmmoItem.Show(selectedItem, true)
-        Text.ShowItemLabel(selectedItem)
+        Text.SetItemLabel(selectedItem)
     elseif inventoryMode == InventoryStates.MODE.RING_OPENING then
         if Animation.Inventory(inventoryMode) then
             if saveSelected then

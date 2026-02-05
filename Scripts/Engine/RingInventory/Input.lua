@@ -6,7 +6,7 @@
 local Animation = require("Engine.RingInventory.Animation")
 local Examine =  require("Engine.RingInventory.Examine")
 local ItemMenu = require("Engine.RingInventory.ItemMenu")
-local RingInventory = require("Engine.RingInventory.Inventory")
+--local RingInventory = require("Engine.RingInventory.Inventory")
 local InventoryData= require("Engine.RingInventory.InventoryData")
 local InventoryStates = require("Engine.RingInventory.InventoryStates")
 local Ring = require("Engine.RingInventory.Ring")
@@ -23,7 +23,7 @@ local function GuiIsPulsed(actionID)
     local DELAY = 0.25
     local INITIAL_DELAY = 0.5
     
-    if (TEN.Input.GetActionTimeActive(actionID) >= RingInventory.GetTimeInMenu()) then
+    if (TEN.Input.GetActionTimeActive(actionID) >= 0) then
         return false
     end
     
@@ -104,8 +104,8 @@ function Inputs.Update()
         elseif GuiIsPulsed(TEN.Input.ActionID.ACTION) or GuiIsPulsed(TEN.Input.ActionID.SELECT) then
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             Animation.EnableSaveItemData()
-            if ItemMenu.IsSingleFlagSet(selectedItem) then
-                ItemMenu.ParseMenuAction(selectedItem)
+            if ItemMenu.IsSingleItemAction(selectedItem) then
+                ItemMenu.ParseAction(selectedItem)
             else
                 InventoryStates.SetMode(INVENTORY_MODE.ITEM_SELECT)
             end

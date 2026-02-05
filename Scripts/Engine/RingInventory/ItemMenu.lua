@@ -7,6 +7,7 @@ local PickupData = require("Engine.RingInventory.PickupData")
 local Save = require("Engine.RingInventory.Save")
 local InventoryData = require("Engine.RingInventory.InventoryData")
 local InventoryStates= require("Engine.RingInventory.InventoryStates")
+local Settings = require("Engine.RingInventory.Settings")
 
 --Pointers to tables
 local COLOR_MAP = Settings.COLOR_MAP

@@ -1,9 +1,11 @@
 --External Modules
 local InventoryStates = require("Engine.RingInventory.InventoryStates")
-local Settings = require("Engine.CustomInventory.Settings")
-local Utilities = require("Engine.CustomInventory.Utilities")
+local Ring = require("Engine.RingInventory.Ring")
+local Settings = require("Engine.RingInventory.Settings")
+local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointers to tables
+local RING = Ring.TYPE
 local COLOR_MAP = Settings.COLOR_MAP
 local INVENTORY_MODE = InventoryStates.MODE
 
@@ -50,15 +52,15 @@ function Sprites.Arrows(selectedRing, alpha)
         {180, Vec2(95, 95)},
     }
     
-    if selectedRing ~= PICKUP_DATA.RING.PUZZLE and 
-       selectedRing ~= PICKUP_DATA.RING.COMBINE and 
-       selectedRing ~= PICKUP_DATA.RING.AMMO then
+    if selectedRing ~= RING.PUZZLE and 
+       selectedRing ~= RING.COMBINE and 
+       selectedRing ~= RING.AMMO then
         DrawArrows(arrowsUp, alpha)
     end
     
-    if selectedRing ~= PICKUP_DATA.RING.OPTIONS and 
-       selectedRing ~= PICKUP_DATA.RING.COMBINE and 
-       selectedRing ~= PICKUP_DATA.RING.AMMO then
+    if selectedRing ~= RING.OPTIONS and 
+       selectedRing ~= RING.COMBINE and 
+       selectedRing ~= RING.AMMO then
         DrawArrows(arrowsDown, alpha)
     end
 end

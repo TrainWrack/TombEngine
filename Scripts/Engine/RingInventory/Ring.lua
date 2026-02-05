@@ -328,12 +328,6 @@ function Ring:SetTargetAngle(angle)
     self.targetAngle = angle
 end
 
--- Set target angle
-function Ring:SetTargetAngle(angle)
-    self.previousAngle = self.targetAngle
-    self.targetAngle = angle
-end
-
 -- Calculate rotation angle
 function Ring:CalculateRotation(direction)
     
