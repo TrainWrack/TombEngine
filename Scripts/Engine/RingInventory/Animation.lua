@@ -3,17 +3,18 @@
 -- ============================================================================
 
 --External Modules
+local Constants = require("Engine.RingInventory.Constants")
 local Examine = require("Engine.RingInventory.Examine")
 local Interpolate = require("Engine.RingInventory.Interpolate")
 local InventoryData= require("Engine.RingInventory.InventoryData")
-local PICKUP_DATA = require("Engine.RingInventory.PickupData")
+local InventoryStates= require("Engine.RingInventory.InventoryStates")
 local Ring = require("Engine.RingInventory.Ring")
 local Settings = require("Engine.RingInventory.Settings")
 local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointers to tables
-local CONSTANTS = require("Engine.RingInventory.Constants")
-local INVENTORY_MODE = PICKUP_DATA.INVENTORY_MODE
+
+local INVENTORY_MODE = InventoryStates.MODE
 
 --Variables
 local itemRotation = Rotation(0, 0, 0)
@@ -55,7 +56,7 @@ function Animation.PerformBatchMotion(prefix, motionTable, time, clearProgress, 
     
     for _, motion in ipairs(motionTable) do
         local id = prefix..motion.key
-        local interp = {output = motion.start, progress = CONSTANTS.PROGRESS_COMPLETE}
+        local interp = {output = motion.start, progress = Constants.PROGRESS_COMPLETE}
         
         if motion.start ~= motion.finish then
             local startVal = reverse and motion.finish or motion.start
@@ -65,7 +66,7 @@ function Animation.PerformBatchMotion(prefix, motionTable, time, clearProgress, 
         
         interpolated[motion.key] = interp
         
-        if interp.progress < CONSTANTS.PROGRESS_COMPLETE then
+        if interp.progress < Constants.PROGRESS_COMPLETE then
             allComplete = false
         end
     end
@@ -128,15 +129,15 @@ function Animation.Inventory(mode)
     local selectedItem = selectedRing:GetSelectedItem()
     
     local ringAnimation = {
-        {key = "ringRadius", start = 0, finish = CONSTANTS.RING_RADIUS},
+        {key = "ringRadius", start = 0, finish = Ring.RING_RADIUS},
         {key = "ringAngle", start = -360, finish = selectedRing:GetCurrentAngle()},
-        {key = "ringFade", start = CONSTANTS.ALPHA_MIN, finish = CONSTANTS.ALPHA_MAX},
-        {key = "camera", start = CONSTANTS.CAMERA_START, finish = CONSTANTS.CAMERA_END},
-        {key = "target", start = CONSTANTS.TARGET_START, finish = CONSTANTS.TARGET_END},
+        {key = "ringFade", start = Constants.ALPHA_MIN, finish = Constants.ALPHA_MAX},
+        {key = "camera", start = Constants.CAMERA_START, finish = Constants.CAMERA_END},
+        {key = "target", start = Constants.TARGET_START, finish = Constants.TARGET_END},
     }
     
     local useAnimation = {
-        {key = "itemPosition", start = CONSTANTS.ITEM_START, finish = CONSTANTS.ITEM_END},
+        {key = "itemPosition", start = Constants.ITEM_START, finish = Constants.ITEM_END},
         {key = "itemScale", start = Examine.GetPreviousScale(), finish = Examine.GetScale()},
         {key = "itemRotation", start = itemRotationOld, finish = itemRotation},
     }
@@ -150,7 +151,7 @@ function Animation.Inventory(mode)
         useAnimation[1],
         useAnimation[2],
         useAnimation[3],
-        {key = "ringFade", start = CONSTANTS.ALPHA_MAX, finish = CONSTANTS.ALPHA_MIN},
+        {key = "ringFade", start = Constants.ALPHA_MAX, finish = Constants.ALPHA_MIN},
     }
     
     local combineRingAnimation = {
@@ -160,11 +161,11 @@ function Animation.Inventory(mode)
     }
     
     local combineClose = {
-        {key = "ringFade", start = CONSTANTS.ALPHA_MAX, finish = CONSTANTS.ALPHA_MIN}
+        {key = "ringFade", start = Constants.ALPHA_MAX, finish = Constants.ALPHA_MIN}
     }
     
     local menuFade = {
-        {key = "menuFade", start = CONSTANTS.ALPHA_MIN, finish = CONSTANTS.ALPHA_MAX}
+        {key = "menuFade", start = Constants.ALPHA_MIN, finish = Constants.ALPHA_MAX}
     }
 
     local ringRotate = {

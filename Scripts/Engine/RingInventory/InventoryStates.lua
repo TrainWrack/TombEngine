@@ -4,25 +4,16 @@ local AmmoItem = require("Engine.RingInventory.AmmoItem")
 local Animation = require("Engine.RingInventory.Animation")
 local Combine = require("Engine.RingInventory.Combine")
 local Examine =  require("Engine.RingInventory.Examine")
-local Interpolate = require("Engine.RingInventory.Interpolate")
 local RingInventory = require("Engine.RingInventory.Inventory")
 local InventoryData= require("Engine.RingInventory.InventoryData")
-local ItemLight = require("Engine.RingInventory.ItemLight")
-local ItemMenu = require("Engine.RingInventory.ItemMenu")
 local ItemSpin= require("Engine.RingInventory.ItemSpin")
-local Menu = require("Engine.RingInventory.Menu")
-local PickupData = require("Engine.RingInventory.PickupData")
-local Ring = require("Engine.RingInventory.Ring")
-local Settings = require("Engine.RingInventory.Settings")
 local Statistics = require("Engine.RingInventory.Statistics")
 local Text = require("Engine.RingInventory.Text")
 local UseItem = require("Engine.RingInventory.UseItem")
-local Utilities = require("Engine.RingInventory.Utilities")
 local WeaponMode =  require("Engine.RingInventory.WeaponMode")
-local Save = require("Engine.RingInventory.Save")
 
 --Pointers to tables
-local CONSTANTS = require("Engine.RingInventory.Constants")
+
 
 local InventoryStates = {}
 

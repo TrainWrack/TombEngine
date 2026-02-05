@@ -3,7 +3,7 @@
 -- ============================================================================
 
 --External Modules
-local Animation = require("Engine.RingInventory.Animation")
+local Interpolate = require("Engine.RingInventory.Interpolate")
 
 --Begin Class
 local ItemLighting = {}
@@ -73,7 +73,7 @@ function ItemLighting.Update()
             -- Handle fading in or out
             if data.isFadingIn or data.isFadingOut then
                 local currentColor = displayItem:GetColor()
-                local targetColor = Animation.Interpolate.Lerp(currentColor, data.targetColor, FADE_SPEED)
+                local targetColor = Interpolate.Lerp(currentColor, data.targetColor, FADE_SPEED)
                 displayItem:SetColor(targetColor)
                 
                 -- Check if fade is complete (simple threshold check)

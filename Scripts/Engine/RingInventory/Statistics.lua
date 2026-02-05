@@ -3,13 +3,15 @@
 -- ============================================================================
 
 --External Modules
-local RingInventory -- Delayed require to break circular dependency
 local Menu = require("Engine.RingInventory.Menu")
 local Settings = require("Engine.RingInventory.Settings")
 local Text = require("Engine.RingInventory.Text")
 
 --Pointers to tables
 local COLOR_MAP = Settings.COLOR_MAP
+
+--Variables
+local counter = 0
 
 local Statistics = {}
 
@@ -173,13 +175,10 @@ function Statistics.RunStatisticsMenu()
 end
 
 local function CalculateCompassAngle()
-    -- Lazy load RingInventory to break circular dependency
-    if not RingInventory then
-        RingInventory = require("Engine.RingInventory.Inventory")
-    end
+    counter = counter + 1
     
     local needleOrient = Rotation(0, -Lara:GetRotation().y, 0)
-    local wibble = math.sin((RingInventory.GetTimeInMenu() % 0x40) / 0x3F * (2 * math.pi))
+    local wibble = math.sin((counter % 0x40) / 0x3F * (2 * math.pi))
     needleOrient.y = needleOrient.y + wibble
     return needleOrient
 end
