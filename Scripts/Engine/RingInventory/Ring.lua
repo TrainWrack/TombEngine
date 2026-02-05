@@ -15,7 +15,7 @@ local Ring = {}
 Ring.__index = Ring
 
 -- Class Constants
-Ring.RING_POSITION_OFFSET = 1000
+local RING_POSITION_OFFSET = 1000
 Ring.RING_RADIUS = (View.GetAspectRatio() > 1.7) and -512 or -450
 
 Ring.TYPE =
@@ -45,6 +45,7 @@ function Ring.Create(ringType, centerPosition, inventory)
     self.items = {}
     self.selectedItemIndex = 1
     self.position = centerPosition or Vec3(0, 0, 0)
+    self.previousPosition = centerPosition or Vec3(0, 0, 0)
     self.slice = 0
     self.inventory = inventory  -- Reference to parent inventory
     
@@ -216,14 +217,12 @@ function Ring:Translate(center, radius, rotationOffset, alpha)
 end
 
 -- Fade items (except optionally the selected one)
-function Ring:Fade(fadeValue, omitSelectedItem)
-    omitSelectedItem = omitSelectedItem or false
-    local selectedItem = omitSelectedItem and self:GetSelectedItem()
+function Ring:Fade(fadeValue, omitItem)
     
     for i = 1, #self.items do
         local currentItem = self.items[i].objectID
         
-        if omitSelectedItem and selectedItem and selectedItem.objectID == currentItem then
+        if omitItem and omitItem.objectID == currentItem then
             goto continue
         end
         
@@ -238,23 +237,19 @@ function Ring:Fade(fadeValue, omitSelectedItem)
 end
 
 -- Color items (except optionally the selected one)
-function Ring:Color(color, omitSelectedItem, alpha)
-    alpha = alpha or 1.0
-    omitSelectedItem = omitSelectedItem or false
-    local selectedItem = omitSelectedItem and self:GetSelectedItem()
+function Ring:Color(color, omitItem)
     
     for i = 1, #self.items do
         local currentItem = self.items[i].objectID
         
-        if omitSelectedItem and selectedItem and selectedItem.objectID == currentItem then
+        if omitItem and omitItem.objectID == currentItem then
             goto continue
         end
         
         local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
         if currentDisplayItem then
             local itemColor = currentDisplayItem:GetColor()
-            local targetColor = Interpolate.Calculate(itemColor, color, alpha)
-            currentDisplayItem:SetColor(Utilities.ColorCombine(targetColor, itemColor.a))
+            currentDisplayItem:SetColor(Utilities.ColorCombine(color, itemColor.a))
         end
         
         ::continue::
@@ -263,12 +258,25 @@ end
 
 -- Set ring position
 function Ring:SetPosition(position)
+    self.previousPosition = self.position 
     self.position = position
+end
+
+function Ring:OffsetPosition(direction)
+
+    self.previousPosition = self.position 
+    self.position = Vec3(self.previousPosition.x, self.previousPosition.y + direction * RING_POSITION_OFFSET, self.previousPosition.z)
+
 end
 
 -- Get ring position
 function Ring:GetPosition()
     return self.position
+end
+
+-- Get ring position
+function Ring:GetPreviousPosition()
+    return self.previousPosition
 end
 
 -- Get ring type

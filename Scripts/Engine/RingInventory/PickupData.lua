@@ -1,4 +1,5 @@
 --External Modules
+local Constants = require("Engine.RingInventory.Constants")
 local Ring = require("Engine.RingInventory.Ring")
 
 --Pointer to tables
@@ -403,8 +404,8 @@ PICKUP_DATA.AMMO_SET = {
 }
 
 PICKUP_DATA.HEALTH_SET = {
-    [TEN.Objects.ObjID.BIGMEDI_ITEM] = PICKUP_DATA.HEALTH_MAX,
-    [TEN.Objects.ObjID.SMALLMEDI_ITEM] = PICKUP_DATA.HEALTH_MAX / 2
+    [TEN.Objects.ObjID.BIGMEDI_ITEM] = Constants.HEALTH_MAX,
+    [TEN.Objects.ObjID.SMALLMEDI_ITEM] = Constants.HEALTH_MAX / 2
 }
 
 PICKUP_DATA.ItemActionFlags = {
@@ -467,16 +468,17 @@ PICKUP_DATA.ConvertRowData = function(row)
     }
 end
 
+PICKUP_DATA.GetProperties = function(objectID)
+
+	local row  = PICKUP_DATA.GetRow(objectID)
+    return PICKUP_DATA.ConvertRowData(row)
+
+end
+
 PICKUP_DATA.AMMO_TYPE_TO_OBJECT = {}
 
 for objID, data in pairs(PICKUP_DATA.AMMO_SET) do
     PICKUP_DATA.AMMO_TYPE_TO_OBJECT[data.slot] = objID
-end
-
-PICKUP_DATA.INVENTORY_MODE_NAME = {}
-
-for k, v in pairs(PICKUP_DATA.INVENTORY_MODE) do
-    PICKUP_DATA.INVENTORY_MODE_NAME[v] = k
 end
 
 return PICKUP_DATA

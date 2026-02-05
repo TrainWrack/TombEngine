@@ -14,13 +14,12 @@ local Utilities = require("Engine.RingInventory.Utilities")
 --Pointers to tables
 local CONSTANTS = require("Engine.RingInventory.Constants")
 local INVENTORY_MODE = PICKUP_DATA.INVENTORY_MODE
-local COLOR_MAP = Settings.COLOR_MAP
 
 --Variables
 local itemRotation = Rotation(0, 0, 0)
 local itemRotationOld = Rotation(0, 0, 0)
 local itemStoreRotations = false
-local direction = 1
+local menuAlpha = 0
 
 --Animation functions
 local Animation = {}
@@ -40,13 +39,6 @@ function Animation.EnableSaveItemData()
     itemStoreRotations = true
 end
 
-
-function Animation.SetRingDirection(value)
-
-    direction = value
-
-end
-
 function Animation.Clear(prefix, motionTable)
     for _, motion in ipairs(motionTable) do
         local id = prefix..motion.key
@@ -58,6 +50,8 @@ function Animation.PerformBatchMotion(prefix, motionTable, time, clearProgress, 
     local interpolated = {}
     local allComplete = true
     local omitSelectedItem = item and true or false
+
+    local selectedRing = Ring.GetRingByType(ringName)
     
     for _, motion in ipairs(motionTable) do
         local id = prefix..motion.key
@@ -66,7 +60,7 @@ function Animation.PerformBatchMotion(prefix, motionTable, time, clearProgress, 
         if motion.start ~= motion.finish then
             local startVal = reverse and motion.finish or motion.start
             local endVal = reverse and motion.start or motion.finish
-            interp = Interpolate.Calculate(id, motion.type, startVal, endVal, time, true)
+            interp = Interpolate.Calculate(id, startVal, endVal, time, Interpolate.Easing.Smoothstep)
         end
         
         interpolated[motion.key] = interp
@@ -76,19 +70,19 @@ function Animation.PerformBatchMotion(prefix, motionTable, time, clearProgress, 
         end
     end
     
-    if interpolated.ringCenter or interpolated.ringRadius or interpolated.ringAngle then
-        local center = interpolated.ringCenter and interpolated.ringCenter.output or inventory.ringPosition[ringName]
-        local radius = interpolated.ringRadius and interpolated.ringRadius.output or CONSTANTS.RING_RADIUS
+    if selectedRing and (interpolated.ringCenter or interpolated.ringRadius or interpolated.ringAngle) then
+        local center = interpolated.ringCenter and interpolated.ringCenter.output or Ring.CENTERS[ringName]
+        local radius = interpolated.ringRadius and interpolated.ringRadius.output or Ring.RING_RADIUS
         local angle = interpolated.ringAngle and interpolated.ringAngle.output or 0
-        Ring.Translate(ringName, center, radius, angle, ITEM_SPINBACK_ALPHA)
+        selectedRing:Translate(ringName, center, radius, angle)
     end
     
-    if interpolated.ringColor then
-        Ring.Color(ringName, interpolated.ringColor.output, omitSelectedItem, ITEM_SPINBACK_ALPHA)
+    if selectedRing and interpolated.ringColor then
+        selectedRing:Color(interpolated.ringColor.output, omitSelectedItem)
     end
     
-    if interpolated.ringFade then
-        Ring.FadeRing(ringName, interpolated.ringFade.output, omitSelectedItem)
+    if selectedRing and interpolated.ringFade then
+        selectedRing:FadeRing(interpolated.ringFade.output, omitSelectedItem)
     end
     
     if interpolated.menuFade then
@@ -128,48 +122,58 @@ function Animation.PerformBatchMotion(prefix, motionTable, time, clearProgress, 
 end
 
 function Animation.Inventory(mode)
-    local selectedItem = GetSelectedItem(selectedRing)
+
+    local ringInventory = InventoryData.Get("RingInventory")
+    local selectedRing = ringInventory:GetSelectedRing()
+    local selectedItem = selectedRing:GetSelectedItem()
     
     local ringAnimation = {
-        {key = "ringRadius", type = Interpolate.Type.LINEAR, start = 0, finish = CONSTANTS.RING_RADIUS},
-        {key = "ringAngle", type = Interpolate.Type.LINEAR, start = -360, finish = currentRingAngle},
-        {key = "ringCenter", type = Interpolate.Type.VEC3, start = inventory.ringPosition[selectedRing], finish = inventory.ringPosition[selectedRing]},
-        {key = "ringFade", type = Interpolate.Type.LINEAR, start = CONSTANTS.ALPHA_MIN, finish = CONSTANTS.ALPHA_MAX},
-        {key = "camera", type = Interpolate.Type.VEC3, start = CONSTANTS.CAMERA_START, finish = CONSTANTS.CAMERA_END},
-        {key = "target", type = Interpolate.Type.VEC3, start = CONSTANTS.TARGET_START, finish = CONSTANTS.TARGET_END},
+        {key = "ringRadius", start = 0, finish = CONSTANTS.RING_RADIUS},
+        {key = "ringAngle", start = -360, finish = selectedRing:GetCurrentAngle()},
+        {key = "ringFade", start = CONSTANTS.ALPHA_MIN, finish = CONSTANTS.ALPHA_MAX},
+        {key = "camera", start = CONSTANTS.CAMERA_START, finish = CONSTANTS.CAMERA_END},
+        {key = "target", start = CONSTANTS.TARGET_START, finish = CONSTANTS.TARGET_END},
     }
     
     local useAnimation = {
-        {key = "itemPosition", type = Interpolate.Type.VEC3, start = CONSTANTS.ITEM_START, finish = CONSTANTS.ITEM_END},
-        {key = "itemScale", type = Interpolate.Type.LINEAR, start = Examine.GetPreviousScale(), finish = Examine.GetScale()},
-        {key = "itemRotation", type = Interpolate.Type.ROTATION, start = itemRotationOld, finish = itemRotation},
+        {key = "itemPosition", start = CONSTANTS.ITEM_START, finish = CONSTANTS.ITEM_END},
+        {key = "itemScale", start = Examine.GetPreviousScale(), finish = Examine.GetScale()},
+        {key = "itemRotation", start = itemRotationOld, finish = itemRotation},
     }
     
     local examineReset = {
         useAnimation[2],
-        {key = "itemRotation", type = Interpolate.Type.ROTATION, start = itemRotation, finish = Examine.GetRotation()},
+        {key = "itemRotation", start = itemRotation, finish = Examine.GetRotation()},
     }
     
     local examineAnimation = {
         useAnimation[1],
         useAnimation[2],
         useAnimation[3],
-        {key = "ringFade", type = Interpolate.Type.LINEAR, start = CONSTANTS.ALPHA_MAX, finish = CONSTANTS.ALPHA_MIN},
+        {key = "ringFade", start = CONSTANTS.ALPHA_MAX, finish = CONSTANTS.ALPHA_MIN},
     }
     
     local combineRingAnimation = {
         ringAnimation[1],
         ringAnimation[2],
-        ringAnimation[3],
-        ringAnimation[4]
+        ringAnimation[3]
     }
     
     local combineClose = {
-        {key = "ringFade", type = Interpolate.Type.LINEAR, start = CONSTANTS.ALPHA_MAX, finish = CONSTANTS.ALPHA_MIN}
+        {key = "ringFade", start = CONSTANTS.ALPHA_MAX, finish = CONSTANTS.ALPHA_MIN}
     }
     
     local menuFade = {
-        {key = "menuFade", type = Interpolate.Type.LINEAR, start = CONSTANTS.ALPHA_MIN, finish = CONSTANTS.ALPHA_MAX}
+        {key = "menuFade", start = CONSTANTS.ALPHA_MIN, finish = CONSTANTS.ALPHA_MAX}
+    }
+
+    local ringRotate = {
+        {key = "ringAngle", start = currentRingAngle, finish = targetRingAngle},
+    }
+
+    local ringChange = {
+        {key = "ringAngle", start = -360, finish = 0},
+        {key = "ringCenter", start = selectedRing:GetPreviousPosition(), finish = selectedRing:GetPosition()},
     }
     
     if mode == INVENTORY_MODE.INVENTORY_OPENING then
@@ -190,17 +194,9 @@ function Animation.Inventory(mode)
     elseif mode == INVENTORY_MODE.RING_CHANGE then
         local allMotionComplete = true
         
-        local rings = InventoryData.GetAllRings()
+        local rings = ringInventory:GetAllRings()
         for index in pairs(rings) do
-            local oldPosition = inventory.ringPosition[index]
-            local newPosition = Vec3(oldPosition.x, oldPosition.y + direction * CONSTANTS.RING_POSITION_OFFSET, oldPosition.z)
-            local motionSet = {
-                {key = "ringAngle", type = Interpolate.Type.LINEAR, start = -360, finish = 0},
-                {key = "ringCenter", type = Interpolate.Type.VEC3, start = oldPosition, finish = newPosition},
-                {key = "ringColor", type = Interpolate.Type.COLOR, start = COLOR_MAP.ITEM_COLOR_DESELECTED, finish = COLOR_MAP.ITEM_COLOR_DESELECTED},
-            }
-            
-            if Animation.PerformBatchMotion("RingChange"..index, motionSet, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, index) then
+            if Animation.PerformBatchMotion("RingChange"..index, ringChange, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, index) then
                 inventory.ringPosition[index] = newPosition
             else
                 allMotionComplete = false
@@ -211,13 +207,7 @@ function Animation.Inventory(mode)
             return true
         end
     elseif mode == INVENTORY_MODE.RING_ROTATE then
-        local motionSet = {
-            {key = "ringAngle", type = Interpolate.Type.LINEAR, start = currentRingAngle, finish = targetRingAngle},
-            {key = "ringColor", type = Interpolate.Type.COLOR, start = COLOR_MAP.ITEM_COLOR_DESELECTED, finish = COLOR_MAP.ITEM_COLOR_DESELECTED},
-        }
-        
-        if Animation.PerformBatchMotion("RingRotate", motionSet, Settings.ANIMATION.ITEM_ANIM_TIME, true, selectedRing) then
-            currentRingAngle = targetRingAngle
+        if Animation.PerformBatchMotion("RingRotate", ringRotate, Settings.ANIMATION.ITEM_ANIM_TIME, true, selectedRing) then
             return true
         end
     elseif mode == INVENTORY_MODE.EXAMINE_OPEN or 
@@ -246,7 +236,7 @@ function Animation.Inventory(mode)
         end
     elseif mode == INVENTORY_MODE.COMBINE_CLOSE then
         local allMotionComplete = true
-        local rings = InventoryData.GetAllRings()
+        local rings = ringInventory:GetAllRings()
         for index in pairs(rings) do
             if not Animation.PerformBatchMotion("combineCloseSuccess"..index, combineClose, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, index) then
                 allMotionComplete = false
@@ -257,7 +247,7 @@ function Animation.Inventory(mode)
         end
     elseif mode == INVENTORY_MODE.COMBINE_COMPLETE then
         local allMotionComplete = true
-        local rings = InventoryData.GetAllRings()
+        local rings = ringInventory:GetAllRings()
         for index in pairs(rings) do
             if not Animation.PerformBatchMotion("combineCloseSuccess"..index, combineClose, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, index, nil, true) then
                 allMotionComplete = false
@@ -288,7 +278,7 @@ function Animation.Inventory(mode)
         end
     elseif mode == INVENTORY_MODE.SEPARATE then
         local allMotionComplete = true
-        local rings = InventoryData.GetAllRings()
+        local rings = ringInventory:GetAllRings()
         for index in pairs(rings) do
             if not Animation.PerformBatchMotion("combineCloseSuccess"..index, combineClose, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, index) then
                 allMotionComplete = false
@@ -299,7 +289,7 @@ function Animation.Inventory(mode)
         end
     elseif mode == INVENTORY_MODE.SEPARATE_COMPLETE then
         local allMotionComplete = true
-        local rings = InventoryData.GetAllRings()
+        local rings = ringInventory:GetAllRings()
         for index in pairs(rings) do
             if not Animation.PerformBatchMotion("combineCloseSuccess"..index, combineClose, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, index, nil, true) then
                 allMotionComplete = false

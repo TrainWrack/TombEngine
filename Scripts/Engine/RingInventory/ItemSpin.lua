@@ -17,6 +17,8 @@ ItemSpin.ROTATION_THRESHOLD = 0.5  -- Threshold for considering rotation complet
 ItemSpin.currentItem = nil
 ItemSpin.ringName = nil  -- Which ring we're managing
 ItemSpin.rotationOffset = 0  -- Current ring rotation offset
+ItemSpin.additionalItem = nil
+
 
 --- Initialize the spin module with a ring
 function ItemSpin.Initialize(ringName, rotationOffset)
@@ -47,8 +49,33 @@ function ItemSpin.StartSpin(itemID)
     ItemSpin.currentItem = itemID
 end
 
+
+function ItemSpin.RotateItem(name)
+
+    ItemSpin.additionalItem = name
+
+end
+
+function ItemSpin.StopItem()
+
+    ItemSpin.additionalItem = nil
+
+end
+
 --- Update all item rotations
 function ItemSpin.Update()
+
+    if ItemSpin.additionalItem then 
+
+        local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(ItemSpin.additionalItem))
+        
+        if displayItem then
+            local currentRotation = displayItem:GetRotation()
+            local newY = (currentRotation.y + ItemSpin.ROTATION_SPEED) % 360
+            displayItem:SetRotation(Rotation(currentRotation.x, newY, currentRotation.z))
+        end
+    end
+
     if not ItemSpin.ringName then return end
     
     local ring = InventoryData.GetRing(ItemSpin.ringName)
@@ -81,6 +108,7 @@ function ItemSpin.Update()
             end
         end
     end
+
 end
 
 --- Get current spinning item

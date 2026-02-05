@@ -2,15 +2,15 @@
 -- MENU FUNCTIONS
 -- ============================================================================
 --External Modules
-local CustomInventory = require("Engine.RingInventory.CustomInventory")
 local Menu = require("Engine.RingInventory.Menu")
 local PickupData = require("Engine.RingInventory.PickupData")
 local Save = require("Engine.RingInventory.Save")
 local InventoryData = require("Engine.RingInventory.InventoryData")
+local InventoryStates= require("Engine.RingInventory.InventoryStates")
 
 --Pointers to tables
 local COLOR_MAP = Settings.COLOR_MAP
-local INVENTORY_MODE = CustomInventory.INVENTORY_MODE
+local INVENTORY_MODE = InventoryStates.MODE
 
 
 local ItemMenu = {}
@@ -41,25 +41,25 @@ function ItemMenu.ParseAction(item)
     local menuActions = item:GetMenuActions()
 
     if HasItemAction(menuActions, ItemAction.USE) or HasItemAction(menuActions, ItemAction.EQUIP) then
-        CustomInventory.SetMode(INVENTORY_MODE.ITEM_USE)
+        InventoryStates.SetMode(INVENTORY_MODE.ITEM_USE)
     elseif HasItemAction(menuActions, ItemAction.EXAMINE) then
-        CustomInventory.SetMode(INVENTORY_MODE.EXAMINE_OPEN)
+        InventoryStates.SetMode(INVENTORY_MODE.EXAMINE_OPEN)
     elseif HasItemAction(menuActions, ItemAction.COMBINE) then
-        CustomInventory.SetMode(INVENTORY_MODE.COMBINE_SETUP)
+        InventoryStates.SetMode(INVENTORY_MODE.COMBINE_SETUP)
     elseif HasItemAction(menuActions, ItemAction.STATISTICS) then
-        CustomInventory.SetMode(INVENTORY_MODE.STATISTICS_OPEN)
+        InventoryStates.SetMode(INVENTORY_MODE.STATISTICS_OPEN)
     elseif HasItemAction(menuActions, ItemAction.SAVE) then
         Save.SetSaveMenu()
-        CustomInventory.SetMode(INVENTORY_MODE.SAVE_SETUP)
+        InventoryStates.SetMode(INVENTORY_MODE.SAVE_SETUP)
     elseif HasItemAction(menuActions, ItemAction.LOAD) then
         Save.SetLoadMenu()
-        CustomInventory.SetMode(INVENTORY_MODE.SAVE_SETUP)
+        InventoryStates.SetMode(INVENTORY_MODE.SAVE_SETUP)
     elseif HasItemAction(menuActions, ItemAction.SEPARATE) then
-        CustomInventory.SetMode(INVENTORY_MODE.SEPARATE)
+        InventoryStates.SetMode(INVENTORY_MODE.SEPARATE)
     elseif HasItemAction(menuActions, ItemAction.CHOOSE_AMMO_HK) then
-        CustomInventory.SetMode(INVENTORY_MODE.WEAPON_MODE_SETUP)
+        InventoryStates.SetMode(INVENTORY_MODE.WEAPON_MODE_SETUP)
     elseif HasChooseAmmo(menuActions) then
-        CustomInventory.SetMode(INVENTORY_MODE.AMMO_SELECT_SETUP)
+        InventoryStates.SetMode(INVENTORY_MODE.AMMO_SELECT_SETUP)
     end
 end
 

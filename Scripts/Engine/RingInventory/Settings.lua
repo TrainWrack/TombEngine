@@ -21,9 +21,9 @@ Settings.COLOR_MAP =
     BLACK = Flow.GetSettings().UI.shadowTextColor,
     BACKGROUND = Color(64, 64, 64, 128),
     INVENTORY_AMBIENT = Color(255, 255, 128),
-    ITEM_COLOR = Color(64, 64, 64, 0),
-    ITEM_COLOR_DESELECTED = Color(32, 32, 32, 255),
-    ITEM_COLOR_VISIBLE = Color(128, 128, 128, 255)
+    ITEM_HIDDEN = Color(32, 32, 32, 0),
+    ITEM_DESELECTED = Color(32, 32, 32, 255),
+    ITEM_SELECTED = Color(128, 128, 128, 255)
 }
 
 Settings.BACKGROUND = 

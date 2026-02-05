@@ -3,15 +3,14 @@
 -- ============================================================================
 
 --Pointers to tables
-local PICKUP_DATA = require("Engine.CustomInventory.PickupData")
-local TYPE = PICKUP_DATA.TYPE
+local PickupData = require("Engine.RingInventory.PickupData")
+local TYPE = PickupData.TYPE
 
 --Combine functions
 local Combine = {}
 
 --Variables
-Combine.performCombine = false
-Combine.result = nil
+local combineResult = nil
 
 function Combine.PerformWaterskinCombine(flag)
     local smallRaw = Lara:GetWaterSkinStatus(false)
@@ -32,7 +31,7 @@ function Combine.PerformWaterskinCombine(flag)
             Lara:SetWaterSkinStatus(smallLiters + 1, false)
             Lara:SetWaterSkinStatus(bigLiters + 1, true)
             
-            Combine.result = (smallLiters + 1) + (TEN.Objects.ObjID.WATERSKIN1_EMPTY - 1)
+            combineResult = (smallLiters + 1) + (TEN.Objects.ObjID.WATERSKIN1_EMPTY - 1)
             return true
         end
     else
@@ -44,7 +43,7 @@ function Combine.PerformWaterskinCombine(flag)
             Lara:SetWaterSkinStatus(smallLiters + 1, false)
             Lara:SetWaterSkinStatus(bigLiters + 1, true)
             
-            Combine.result = (bigLiters + 1) + (TEN.Objects.ObjID.WATERSKIN2_EMPTY - 1)
+            combineResult = (bigLiters + 1) + (TEN.Objects.ObjID.WATERSKIN2_EMPTY - 1)
             return true
         end
     end
@@ -54,8 +53,8 @@ end
 
 function Combine.CombineItems(data1, data2)
     
-    local item1 = data1.objectID
-    local item2 = data2.objectID
+    local item1 = data1:GetObjectID()
+    local item2 = data2:GetObjectID()
     
     if data1.type == TYPE.WATERSKIN and data2.type == TYPE.WATERSKIN then
         if (item1 >= TEN.Objects.ObjID.WATERSKIN1_EMPTY and
@@ -75,7 +74,7 @@ function Combine.CombineItems(data1, data2)
         end
     end
     
-    for _, combo in ipairs(PICKUP_DATA.combineTable) do
+    for _, combo in ipairs(PickupData.combineTable) do
         local a, b, result = combo[1], combo[2], combo[3]
         
         if (item1 == a and item2 == b) or (item1 == b and item2 == a) then
@@ -86,17 +85,17 @@ function Combine.CombineItems(data1, data2)
                 return false
             end
             
-            if PICKUP_DATA.WEAPON_LASERSIGHT_DATA[result] and
-               PICKUP_DATA.WEAPON_SET[result] and
-               PICKUP_DATA.WEAPON_SET[result].slot then
-                Lara:SetLaserSight(PICKUP_DATA.WEAPON_SET[result].slot, true)
+            if PickupData.WEAPON_LASERSIGHT_DATA[result] and
+               PickupData.WEAPON_SET[result] and
+               PickupData.WEAPON_SET[result].slot then
+                Lara:SetLaserSight(PickupData.WEAPON_SET[result].slot, true)
             end
             
             TEN.Inventory.TakeItem(item1, 1)
             TEN.Inventory.TakeItem(item2, 1)
             TEN.Inventory.GiveItem(result, 1)
             
-            Combine.result = result
+            combineResult = result
             return true
         end
     end
@@ -104,33 +103,43 @@ function Combine.CombineItems(data1, data2)
     return false
 end
 
-function Combine.SeparateItems(item3)
-    for _, combo in ipairs(PICKUP_DATA.combineTable) do
+function Combine.SeparateItems(item)
+
+    local itemObjectID = item:GetObjectID()
+    
+    for _, combo in ipairs(PickupData.combineTable) do
         local a, b, result = combo[1], combo[2], combo[3]
         
-        if item3 == result then
-            local count = TEN.Inventory.GetItemCount(item3)
+        if itemObjectID == result then
+            local count = TEN.Inventory.GetItemCount(itemObjectID)
             
             if count == 0 then
                 return false
             end
             
-            if PICKUP_DATA.WEAPON_LASERSIGHT_DATA[result] and
-               PICKUP_DATA.WEAPON_SET[result] and
-               PICKUP_DATA.WEAPON_SET[result].slot then
-                Lara:SetLaserSight(PICKUP_DATA.WEAPON_SET[result].slot, false)
+            if PickupData.WEAPON_LASERSIGHT_DATA[result] and
+               PickupData.WEAPON_SET[result] and
+               PickupData.WEAPON_SET[result].slot then
+                Lara:SetLaserSight(PickupData.WEAPON_SET[result].slot, false)
             end
             
-            TEN.Inventory.TakeItem(item3, 1)
+            TEN.Inventory.TakeItem(itemObjectID, 1)
             TEN.Inventory.GiveItem(a, 1)
             TEN.Inventory.GiveItem(b, 1)
             
-            Combine.result = a
+            combineResult = a
             return true
         end
     end
     
     return false
 end
+
+function Combine.GetResults()
+
+    return combineResult
+
+end
+
 
 return Combine

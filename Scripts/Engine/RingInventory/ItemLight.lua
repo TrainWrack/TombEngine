@@ -3,22 +3,20 @@
 -- ============================================================================
 
 --External Modules
-local Animation = require("Engine.CustomInventory.Animation")
+local Animation = require("Engine.RingInventory.Animation")
 
 --Begin Class
 local ItemLighting = {}
 
 --Constants
 local FADE_SPEED = 0.1  -- Color interpolation speed
-local COLOR_VISIBLE = Color(255, 255, 255, 255)  -- Bright/highlighted
-local COLOR_NORMAL = Color(255, 255, 255, 100)   -- Normal/dimmed
 
 -- State tracking
 ItemLighting.currentItem = nil
 ItemLighting.items = {}  -- Store item data: { originalColor, targetColor, isFadingIn, isFadingOut }
 
 --- Start lighting up an item (fade to visible)
-function ItemLighting.FadeIn(itemID)
+function ItemLighting.FadeIn(itemID, targetColor)
     local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(itemID))
     if not displayItem then return end
     
@@ -31,7 +29,7 @@ function ItemLighting.FadeIn(itemID)
     if not ItemLighting.items[itemID] then
         ItemLighting.items[itemID] = {
             originalColor = displayItem:GetColor(),
-            targetColor = ItemLighting.COLOR_VISIBLE,
+            targetColor = targetColor,
             isFadingIn = false,
             isFadingOut = false
         }
@@ -40,12 +38,12 @@ function ItemLighting.FadeIn(itemID)
     -- Start fading in
     ItemLighting.items[itemID].isFadingIn = true
     ItemLighting.items[itemID].isFadingOut = false
-    ItemLighting.items[itemID].targetColor = ItemLighting.COLOR_VISIBLE
+    ItemLighting.items[itemID].targetColor = targetColor
     ItemLighting.currentItem = itemID
 end
 
 --- Start fading out an item (fade to original color)
-function ItemLighting.FadeOut(itemID)
+function ItemLighting.FadeOut(itemID, targetColor)
     if not ItemLighting.items[itemID] then return end
     
     local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(itemID))
@@ -57,7 +55,7 @@ function ItemLighting.FadeOut(itemID)
     -- Start fading out
     ItemLighting.items[itemID].isFadingIn = false
     ItemLighting.items[itemID].isFadingOut = true
-    ItemLighting.items[itemID].targetColor = ItemLighting.items[itemID].originalColor
+    ItemLighting.items[itemID].targetColor = targetColor
 end
 
 --- Update all fading items

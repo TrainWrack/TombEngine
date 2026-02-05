@@ -492,4 +492,18 @@ function TextChannels.CreateItemLabel(item)
 
 end
 
+function TextChannels.SetItemLabel(item)
+
+    local text = TextChannels.CreateItemLabel(item)
+    TextChannels.SetText("ITEM_LABEL_PRIMARY", text, true)
+
+end
+
+function TextChannels.SetItemSubLabel(item)
+
+    local text = TextChannels.CreateItemLabel(item)
+    TextChannels.SetText("ITEM_LABEL_SECONDARY", text, true)
+
+end
+
 return TextChannels
