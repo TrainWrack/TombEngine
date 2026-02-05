@@ -2010,7 +2010,7 @@ namespace TEN::Gui
 
 	void GuiController::FadeAmmoSelector()
 	{
-		if (!Rings[(int)RingTypes::Inventory].RingActive)
+		if (!Rings[(int)RingTypes::Inventory].RingActive && !AmmoSelectorFlag)
 		{
 			AmmoSelectorFadeVal = 0;
 		}
@@ -2065,6 +2065,9 @@ namespace TEN::Gui
 				return;
 			}
 
+			if (player.Context.Vehicle != NO_VALUE)
+				return;
+
 			switch (InventoryItemChosen)
 			{
 				case ID_PISTOLS_ITEM:
@@ -2113,6 +2116,9 @@ namespace TEN::Gui
 			{
 				return;
 			}
+
+			if (player.Context.Vehicle != NO_VALUE)
+				return;
 
 			switch (InventoryItemChosen)
 			{
