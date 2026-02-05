@@ -4,8 +4,6 @@
 -- ============================================================================
 
 --External Modules
-local Interpolate = require("Engine.RingInventory.Interpolate")
-local InventoryItem = require("Engine.RingInventory.InventoryItem")
 local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointer to tables
@@ -76,11 +74,6 @@ end
 
 -- Add item to this ring
 function Ring:AddItem(item)
-
-    --Add metatable to item to use Inventory item class.
-    if getmetatable(item) ~= InventoryItem then
-        setmetatable(item, InventoryItem)
-    end
 
     table.insert(self.items, item)
     self:RecalculateSlice()

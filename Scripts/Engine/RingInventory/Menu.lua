@@ -2,11 +2,11 @@
 -- Menu Module - Creates custom menus for ring inventory
 -- ============================================================================
 --External Modules
+local Constants = require("Engine.RingInventory.Constants")
 local Settings = require("Engine.RingInventory.Settings")
 local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointer to tables
-local CONSTANTS = require("Engine.RingInventory.Constants")
 local COLOR_MAP = Settings.COLOR_MAP
 
 local Menu = {}
@@ -38,7 +38,7 @@ local LINE_SPACING = 6
 local TEXT_FLAGS_SELECT = {Strings.DisplayStringOption.BLINK, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
 local TEXT_FLAGS_NORMAL = {Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
 local SCROLL_SPEED = 0.2
-local FADE_SPEED = CONSTANTS.TEXT_ALPHA_SPEED  -- Speed of fade animation (higher = faster)
+local FADE_SPEED = Constants.TEXT_ALPHA_SPEED  -- Speed of fade animation (higher = faster)
 
 Menu.Create = function(menuName, title, items, acceptFunction, exitFunction, menuType)
     local self = { name = menuName }
@@ -135,7 +135,7 @@ Menu.AddActive = function(menuName)
     local menu = Menus[menuName]
     if menu then
         menu.visible = true
-        menu.targetAlpha = CONSTANTS.ALPHA_MAX
+        menu.targetAlpha = Constants.ALPHA_MAX
     end
 
 end
@@ -149,7 +149,7 @@ Menu.RemoveActive = function(menuName)
     -- Trigger fade out (will be removed from Active when fade completes)
     local menu = Menus[menuName]
     if menu then
-        menu.targetAlpha = CONSTANTS.ALPHA_MIN
+        menu.targetAlpha = Constants.ALPHA_MIN
     end
 
 end
@@ -206,9 +206,9 @@ function Menu:SetVisibility(visible)
 		
 		if visible then
 			menu.visible = true  -- Set visible immediately for fade in
-			menu.targetAlpha = CONSTANTS.ALPHA_MAX
+			menu.targetAlpha = Constants.ALPHA_MAX
 		else
-			menu.targetAlpha = CONSTANTS.ALPHA_MIN  -- Trigger fade out
+			menu.targetAlpha = Constants.ALPHA_MIN  -- Trigger fade out
 			-- visible will be set to false when fade completes in UpdateMenu
 		end
 	end
@@ -637,7 +637,7 @@ function Menu.UpdateMenu(menuName)
             menu.currentAlpha = menu.targetAlpha
             
             -- If fade out completed, remove from active and set invisible
-            if menu.currentAlpha == CONSTANTS.ALPHA_MIN then
+            if menu.currentAlpha == Constants.ALPHA_MIN then
                 Menu.Active[menuName] = nil
                 menu.visible = false
             end
@@ -645,7 +645,7 @@ function Menu.UpdateMenu(menuName)
     end
     
     -- Handle input only when fully faded in
-    if menu.inputs and menu.currentAlpha >= CONSTANTS.ALPHA_MAX then
+    if menu.inputs and menu.currentAlpha >= Constants.ALPHA_MAX then
         Input(menuName)
     end
     

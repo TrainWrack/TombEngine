@@ -7,14 +7,9 @@ local Constants = require("Engine.RingInventory.Constants")
 local Examine = require("Engine.RingInventory.Examine")
 local Interpolate = require("Engine.RingInventory.Interpolate")
 local InventoryData= require("Engine.RingInventory.InventoryData")
-local InventoryStates= require("Engine.RingInventory.InventoryStates")
 local Ring = require("Engine.RingInventory.Ring")
 local Settings = require("Engine.RingInventory.Settings")
 local Utilities = require("Engine.RingInventory.Utilities")
-
---Pointers to tables
-
-local INVENTORY_MODE = InventoryStates.MODE
 
 --Variables
 local itemRotation = Rotation(0, 0, 0)
@@ -123,6 +118,8 @@ function Animation.PerformBatchMotion(prefix, motionTable, time, clearProgress, 
 end
 
 function Animation.Inventory(mode)
+    local InventoryStates = require("Engine.RingInventory.InventoryStates")
+    local INVENTORY_MODE = InventoryStates.MODE
 
     local ringInventory = InventoryData.Get("RingInventory")
     local selectedRing = ringInventory:GetSelectedRing()
@@ -198,7 +195,7 @@ function Animation.Inventory(mode)
         local rings = ringInventory:GetAllRings()
         for index in pairs(rings) do
             if Animation.PerformBatchMotion("RingChange"..index, ringChange, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, index) then
-                inventory.ringPosition[index] = newPosition
+                --inventory.ringPosition[index] = newPosition
             else
                 allMotionComplete = false
             end

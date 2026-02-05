@@ -1,26 +1,17 @@
---Pointers to tables
-local PICKUP_DATA = require("Engine.RingInventory.PickupData")
-local InventoryItem = require("Engine.RingInventory.InventoryItem")
-local TYPE = PICKUP_DATA.TYPE
-local RING = PICKUP_DATA.RING
-local RING_CENTER = PICKUP_DATA.RING_CENTER
-local INVENTORY_MODE = PICKUP_DATA.INVENTORY_MODE
-local SOUND_MAP = Settings.SOUND_MAP
-local COLOR_MAP = Settings.COLOR_MAP
-local ANIMATION = Settings.ANIMATION
-
-
 --External Modules
 local Constants = require("Engine.RingInventory.Constants")
 local Ring = require("Engine.RingInventory.Ring")
+local InventoryItem = require("Engine.RingInventory.InventoryItem")
 local Settings = require("Engine.RingInventory.Settings")
-local Save = require("Engine.RingInventory.Save")
+local PickupData = require("Engine.RingInventory.PickupData")
 local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointers to tables
 local COLOR_MAP = Settings.COLOR_MAP
 local RING_CENTER = Ring.CENTERS
 local RING_TYPE = Ring.TYPE
+local TYPE = PickupData.TYPE
+local RING = Ring.TYPE
 
 -- Inventory Class - wrapper for managing rings by type
 local InventoryData = {}
@@ -140,9 +131,9 @@ function InventoryData:SetupSecondaryRing(ringType, item)
     
     -- Special handling for ammo ring
     if ringType == RING.AMMO then
-        local weaponSlot = PICKUP_DATA.WEAPON_SET[self.chosenItem].slot
+        local weaponSlot = PickupData.WEAPON_SET[self.chosenItem].slot
         local ammoType = Lara:GetAmmoType(weaponSlot)
-        local objectID = PICKUP_DATA.AMMO_TYPE_TO_OBJECT[ammoType]
+        local objectID = PickupData.AMMO_TYPE_TO_OBJECT[ammoType]
         newRing:SetSelectedItemByID(objectID)
     end
     
@@ -263,7 +254,7 @@ end
 -- Construct rings with items from game data
 function InventoryData:Construct(ringType, selectedWeapon)
     
-    local items = PICKUP_DATA.CONSTANTS
+    local items = PickupData.CONSTANTS
     
     if ringType == RING.AMMO or ringType == RING.COMBINE then
         self:Clear(ringType, true)
@@ -272,22 +263,22 @@ function InventoryData:Construct(ringType, selectedWeapon)
     end
     
     for _, itemRow in ipairs(items) do
-        local itemData = PICKUP_DATA.ConvertRowData(itemRow)
+        local itemData = PickupData.ConvertRowData(itemRow)
         itemData.rotation = Utilities.CopyRotation(itemData.rotation)
         local data = InventoryData.BuildItem(itemData)
         
         if data.type == TYPE.AMMO and ringType ~= RING.AMMO then
-            local weaponPresent = TEN.InventoryData.GetItemCount(PICKUP_DATA.AMMO_SET[data.objectID].weapon)
+            local weaponPresent = TEN.InventoryData.GetItemCount(PickupData.AMMO_SET[data.objectID].weapon)
             if weaponPresent ~= 0 then
                 goto continue
             end
         end
         
         if data.type == TYPE.WEAPON then
-            if Lara:GetLaserSight(PICKUP_DATA.WEAPON_SET[data.objectID].slot) then
-                data.meshBits = PICKUP_DATA.WEAPON_LASERSIGHT_DATA[data.objectID].MESHBITS
-                data.name = PICKUP_DATA.WEAPON_LASERSIGHT_DATA[data.objectID].NAME
-                data.menuActions = PICKUP_DATA.WEAPON_LASERSIGHT_DATA[data.objectID].FLAGS
+            if Lara:GetLaserSight(PickupData.WEAPON_SET[data.objectID].slot) then
+                data.meshBits = PickupData.WEAPON_LASERSIGHT_DATA[data.objectID].MESHBITS
+                data.name = PickupData.WEAPON_LASERSIGHT_DATA[data.objectID].NAME
+                data.menuActions = PickupData.WEAPON_LASERSIGHT_DATA[data.objectID].FLAGS
             end
         end
         
@@ -302,7 +293,7 @@ function InventoryData:Construct(ringType, selectedWeapon)
                     goto continue
                 end
                 
-                if data.type == TYPE.WEAPON and Lara:GetLaserSight(PICKUP_DATA.WEAPON_SET[data.objectID].slot) then
+                if data.type == TYPE.WEAPON and Lara:GetLaserSight(PickupData.WEAPON_SET[data.objectID].slot) then
                     goto continue
                 end
                 
@@ -311,7 +302,7 @@ function InventoryData:Construct(ringType, selectedWeapon)
                 goto continue
             end
         elseif ringType == RING.AMMO then
-            if data.type == TYPE.AMMO and PICKUP_DATA.WEAPON_AMMO_LOOKUP[selectedWeapon] and Utilities.Contains(PICKUP_DATA.WEAPON_AMMO_LOOKUP[selectedWeapon], data.objectID) then
+            if data.type == TYPE.AMMO and PickupData.WEAPON_AMMO_LOOKUP[selectedWeapon] and Utilities.Contains(PickupData.WEAPON_AMMO_LOOKUP[selectedWeapon], data.objectID) then
                 data.ringName = RING.AMMO
                 ammoRing = true
                 shouldInsert = true
@@ -408,10 +399,10 @@ end
 -- Get count of combinable items (excluding selected item)
 function InventoryData:GetCombineItemsCount(selectedItem)
     local itemCount = 0
-    local items = PICKUP_DATA.CONSTANTS
+    local items = PickupData.CONSTANTS
     
     for _, itemRow in ipairs(items) do
-        local itemData = PICKUP_DATA.ConvertRowData(itemRow)
+        local itemData = PickupData.ConvertRowData(itemRow)
         local data = self:BuildItem(itemData)
         local shouldInsert = false
         
@@ -420,7 +411,7 @@ function InventoryData:GetCombineItemsCount(selectedItem)
                 goto continue
             end
             
-            if data.type == TYPE.WEAPON and Lara:GetLaserSight(PICKUP_DATA.WEAPON_SET[data.objectID].slot) then
+            if data.type == TYPE.WEAPON and Lara:GetLaserSight(PickupData.WEAPON_SET[data.objectID].slot) then
                 goto continue
             end
             

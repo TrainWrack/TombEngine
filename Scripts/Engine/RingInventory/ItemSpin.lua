@@ -3,8 +3,7 @@
 -- ============================================================================
 
 --External Modules
-local InventoryData = require("Engine.RingInventory.InventoryData")
-local InventoryItem = require("Engine.RingInventory.InventoryItem")
+local Ring = require("Engine.RingInventory.Ring")
 
 local ItemSpin = {}
 
@@ -78,7 +77,7 @@ function ItemSpin.Update()
 
     if not ItemSpin.ringName then return end
     
-    local ring = InventoryData.GetRing(ItemSpin.ringName)
+    local ring = Ring.GetRingByType(ItemSpin.ringName)
     if not ring then return end
     
     local itemCount = #ring

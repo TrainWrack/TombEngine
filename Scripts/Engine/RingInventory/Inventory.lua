@@ -9,7 +9,7 @@ local Inputs -- Delayed require to break circular dependency
 local Menu = require("Engine.RingInventory.Menu")
 local Interpolate = require("Engine.InterpolateModule")
 local InventoryData = require("Engine.RingInventory.InventoryData")
-local InventoryStates = require("Engine.RingInventory.InventoryStates")
+local InventoryStates -- Delayed require to break circular dependency
 local ItemLight = require("Engine.RingInventory.ItemLight")
 local ItemSpin= require("Engine.RingInventory.ItemSpin")
 local Settings = require("Engine.RingInventory.Settings")
@@ -18,7 +18,6 @@ local Ring      = require("Engine.RingInventory.Ring")
 
 --Pointers to tables
 local RING = Ring.TYPE
-local INVENTORY_MODE = InventoryStates.MODE
 local SOUND_MAP = Settings.SOUND_MAP
 local COLOR_MAP = Settings.COLOR_MAP
 
@@ -41,6 +40,11 @@ LevelFuncs.Engine.RingInventory = {}
 -- MAIN FUNCTIONS
 -- ============================================================================
 local function ExitInventory()
+    if not InventoryStates then
+        InventoryStates = require("Engine.RingInventory.InventoryStates")
+    end
+    local INVENTORY_MODE = InventoryStates.MODE
+    
     local ringInventory = InventoryData.Get("RingInventory")
     inventoryOpenFreeze = false
     ringInventory:Clear(nil, true)
@@ -65,6 +69,11 @@ local function UpdateInventory()
     -- Lazy load Inputs to break circular dependency
     if not Inputs then
         Inputs = require("Engine.RingInventory.Input")
+    end
+    
+    -- Lazy load InventoryStates to break circular dependency
+    if not InventoryStates then
+        InventoryStates = require("Engine.RingInventory.InventoryStates")
     end
     
     timeInMenu = timeInMenu + 1
