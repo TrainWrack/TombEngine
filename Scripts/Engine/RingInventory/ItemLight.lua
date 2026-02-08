@@ -42,6 +42,18 @@ function ItemLighting.FadeIn(itemID, targetColor)
     ItemLighting.currentItem = itemID
 end
 
+--- Start lighting up an item (fade to visible)
+function ItemLighting.SetOriginalColor(itemID, originalColor)
+    
+    if not ItemLighting.items[itemID] then
+        return
+    end
+    
+    -- Start fading in
+    ItemLighting.items[itemID].originalColor = originalColor
+
+end
+
 --- Start fading out an item (fade to original color)
 function ItemLighting.FadeOut(itemID, targetColor)
     if not ItemLighting.items[itemID] then return end
@@ -51,6 +63,8 @@ function ItemLighting.FadeOut(itemID, targetColor)
         ItemLighting.items[itemID] = nil
         return
     end
+
+    targetColor = targetColor or ItemLighting.items[itemID].originalColor
     
     -- Start fading out
     ItemLighting.items[itemID].isFadingIn = false
@@ -73,15 +87,15 @@ function ItemLighting.Update()
             -- Handle fading in or out
             if data.isFadingIn or data.isFadingOut then
                 local currentColor = displayItem:GetColor()
-                local targetColor = Interpolate.Lerp(currentColor, data.targetColor, FADE_SPEED)
+                local targetColor = Interpolate.Lerp(currentColor, data.targetColor, FADE_SPEED, Interpolate.Easing.Linear)
                 displayItem:SetColor(targetColor)
                 
                 -- Check if fade is complete (simple threshold check)
                 local threshold = 2
-                if math.abs(targetColor.r - currentColor.r) < threshold and
-                   math.abs(targetColor.g - currentColor.g) < threshold and
-                   math.abs(targetColor.b - currentColor.b) < threshold and
-                   math.abs(targetColor.a - currentColor.a) < threshold then
+                if math.abs(data.targetColor.r - targetColor.r) < threshold and
+                   math.abs(data.targetColor.g - targetColor.g) < threshold and
+                   math.abs(data.targetColor.b - targetColor.b) < threshold and
+                   math.abs(data.targetColor.a - targetColor.a) < threshold then
                     -- Snap to exact target
                     displayItem:SetColor(data.targetColor)
                     

@@ -57,7 +57,7 @@ Interpolate.Easing = {
 
 -- Pure interpolation function (no state)
 function Interpolate.Lerp(start, finish, t, easing)
-    easing = easing or Interpolate.Easing.Linear
+    easing = easing or Interpolate.Easing.Smoothstep
     local factor = easing(t)
     
     -- Number

@@ -8,13 +8,14 @@ local COLOR_MAP = Settings.COLOR_MAP
 
 local Save = {}
 
-Save.saveList = false
-local saveSelected = false
-Save.saveSlotSelected = 1
+local saveMenu = false --Checks if to create save or load menu
+local quickSave = false --checks if quicksave is enabled
+local saveSelected = false --checks if saveslot has been selected
+local saveSlotSelected = 1 --index of save slot selected
 
 function Save.DoSave()
     local slot = Menu.Get("SaveMenu2"):getCurrentItemIndex()
-    Save.saveSlotSelected = slot
+    saveSlotSelected = slot
     Flow.SaveGame(slot - 1)
     saveSelected = true
     for index = 1, 4 do
@@ -28,7 +29,7 @@ function Save.DoLoad()
     local slot = Menu.Get("SaveMenu2"):getCurrentItemIndex()
 
     if Flow.DoesSaveGameExist(slot - 1) then
-        Save.saveSlotSelected = slot
+        saveSlotSelected = slot
         Flow.LoadGame(slot - 1)
         saveSelected = true
         for index = 1, 4 do
@@ -101,7 +102,7 @@ function Save.CreateSaveMenu()
         table.insert(items[4], {itemName = itemText4})
     end
     
-    if saveSelected then
+    if saveMenu then
         for index in ipairs(items) do
             Menu.Create("SaveMenu"..index, nil, items[index], saveFunctions[index], nil, Menu.Type.ITEMS_ONLY)
         end
@@ -112,17 +113,17 @@ function Save.CreateSaveMenu()
     end
     
     for index = 1, 4 do
-        local saveMenu = Menu.Get("SaveMenu"..index)
+        local saveList = Menu.Get("SaveMenu"..index)
         local translate = (index == 4)
         
-        saveMenu:SetItemsPosition(textPosition[index])
-        saveMenu:SetVisibility(true)
-        saveMenu:SetLineSpacing(5.3)
-        saveMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9, itemFlags[index])
-        saveMenu:SetSelectedItemFlags(selectedFlags[index])
-        saveMenu:SetItemsTranslate(translate)
-        saveMenu:SetSoundEffects(soundMap[index].select, soundMap[index].choose)
-        saveMenu:setCurrentItem(Save.saveSlotSelected)
+        saveList:SetItemsPosition(textPosition[index])
+        saveList:SetVisibility(true)
+        saveList:SetLineSpacing(5.3)
+        saveList:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9, itemFlags[index])
+        saveList:SetSelectedItemFlags(selectedFlags[index])
+        saveList:SetItemsTranslate(translate)
+        saveList:SetSoundEffects(soundMap[index].select, soundMap[index].choose)
+        saveList:setCurrentItem(saveSlotSelected)
     end
 end
 
@@ -147,13 +148,32 @@ function Save.SetTransparency(alpha)
 
 end
 
+--Sets the menu to Save menu
 function Save.SetSaveMenu()
-    saveSelected = true
+    saveMenu = true
 end
 
+--Sets the menu to Load menu
 function Save.SetLoadMenu()
-    saveSelected = false
+    saveMenu = false
 end
+
+--Check if a save has been selected
+function Save.IsSaveSelected()
+    return saveSelected == true
+end
+
+--Set quick save status. True means menu is in quick save mode.
+function Save.SetQuickSaveStatus(status)
+    quickSave = status
+end
+
+--Check if Quick Save is enabled
+function Save.IsQuickSaveEnabled()
+    return quickSave == true
+end
+
+
 -- ============================================================================
 -- PUBLIC API (LevelFuncs.Engine.RingInventory)
 -- ============================================================================

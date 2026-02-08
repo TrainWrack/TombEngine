@@ -50,7 +50,6 @@ function Ring.Create(ringType, centerPosition, inventory)
     self.currentAngle = 0
     self.previousAngle = 0
     self.targetAngle = 0
-    self.direction = 1
     
     return self
 end
@@ -188,23 +187,26 @@ function Ring:Translate(center, radius, rotationOffset, alpha)
     local itemCount = #self.items
     if itemCount == 0 then return end
     
+    local ItemSpin  = require("Engine.RingInventory.ItemSpin")
+    ItemSpin.SetRotationOffset(rotationOffset)
+
     for i = 1, itemCount do
         local currentItem = self.items[i].objectID
         local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
         if currentDisplayItem then
             local angleDeg = (360 / itemCount) * (i - 1) + rotationOffset
             local position = center:Translate(Rotation(0, angleDeg, 0), radius)
-            local itemRotations = currentDisplayItem:GetRotation()
+            -- local itemRotations = currentDisplayItem:GetRotation()
             
-            local currentAngle = itemRotations.y
-            local angleDiff = (angleDeg - currentAngle) % 360
-            if angleDiff > 180 then
-                angleDiff = angleDiff - 360
-            end
-            local newAngle = (currentAngle + angleDiff * alpha) % 360
+            -- local currentAngle = itemRotations.y
+            -- local angleDiff = (angleDeg - currentAngle) % 360
+            -- if angleDiff > 180 then
+            --     angleDiff = angleDiff - 360
+            -- end
+            -- local newAngle = (currentAngle + angleDiff * alpha) % 360
             
             currentDisplayItem:SetPosition(Utilities.OffsetY(position, self.items[i].yOffset))
-            currentDisplayItem:SetRotation(Rotation(itemRotations.x, newAngle, itemRotations.z))
+            -- currentDisplayItem:SetRotation(Rotation(itemRotations.x, newAngle, itemRotations.z))
         end
     end
 end
@@ -215,7 +217,7 @@ function Ring:Fade(fadeValue, omitItem)
     for i = 1, #self.items do
         local currentItem = self.items[i].objectID
         
-        if omitItem and omitItem.objectID == currentItem then
+        if omitItem and omitItem:GetObjectID() == currentItem then
             goto continue
         end
         
@@ -324,8 +326,8 @@ end
 -- Calculate rotation angle
 function Ring:CalculateRotation(direction)
     
-    self.previousAngle = self.targetAngle
-    self.targetAngle = self.currentRingAngle + direction * self.slice
+    self.previousAngle = self.currentAngle
+    self.targetAngle = self.currentAngle + direction * self.slice
 
 end
 

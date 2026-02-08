@@ -18,8 +18,8 @@ local TextChannelStates = {}
 -- Configuration
 local TEXT_CONFIG = {
     FADE_SPEED = Constants.TEXT_ALPHA_SPEED,  -- Global fade speed
-    MIN_ALPHA = Constants.ALPHA_MAX,
-    MAX_ALPHA = Constants.ALPHA_MIN
+    MIN_ALPHA = Constants.ALPHA_MIN,
+    MAX_ALPHA = Constants.ALPHA_MAX
 }
 
 -- ============================================================================
@@ -414,7 +414,7 @@ TextChannels.CONFIGS = {
     SUB_HEADER = 
     {
         name = "SUB_HEADER",                 
-        text = "actions_inventory",               
+        text = "",               
         position = Vec2(50, 40.3),                   
         scale = 0.9,                             
         color = COLOR_MAP.HEADER_FONT,        

@@ -13,125 +13,119 @@ local RING_TYPE = Ring.TYPE
 local TYPE = PickupData.TYPE
 local RING = Ring.TYPE
 
--- Inventory Class - wrapper for managing rings by type
+-- Inventory Module
 local InventoryData = {}
-InventoryData.__index = InventoryData
-InventoryData._registry = {}
+
+-- Instance data (private)
+local rings = {}
+local selectedRingType = RING.MAIN
+local previousRingType = nil
+local chosenItem = nil
+local openAtItem = nil
+
+local saveList = false
+local saveSelected = false
 
 --Variables
 local gameflowOverrides = nil
 
--- Constructor
-function InventoryData.Create(name)
-    local self = setmetatable({}, InventoryData)
-    
-    -- Main storage: [ringType] = Ring instance
-    self.rings = {}
-    
-    -- Tracking
-    self.selectedRingType = RING.MAIN
-    self.previousRingType = nil
-    self.chosenItem = nil
-    self.openAtItem = nil
-    
-    self.name = name
-
-    return self
-end
-
-function InventoryData.Get(name)
-    return InventoryData._registry[name]
+-- Reset all data (useful for level changes)
+function InventoryData.Reset()
+    InventoryData.Clear(nil, true)
+    rings = {}
+    selectedRingType = RING.MAIN
+    previousRingType = nil
+    chosenItem = nil
+    openAtItem = nil
+    gameflowOverrides = nil
 end
 
 -- Get or create a ring by type
-function InventoryData:GetRing(ringType)
-    if not self.rings[ringType] then
+function InventoryData.GetRing(ringType)
+    if not rings[ringType] then
         local center = RING_CENTER[ringType]
-        self.rings[ringType] = Ring.Create(ringType, center, self)  -- Pass self as inventory reference
+        rings[ringType] = Ring.Create(ringType, center)
     end
-    return self.rings[ringType]
+    return rings[ringType]
 end
 
 -- Add an existing Ring instance to the inventory
-function InventoryData:AddRing(ring)
+function InventoryData.AddRing(ring)
     if not ring then
         return false
     end
     
-    -- Set the ring's inventory reference to this inventory
-    ring.inventory = self
-    
     -- Store the ring
-    self.rings[ring.type] = ring
+    rings[ring.type] = ring
     
     return true
 end
 
 -- Check if a ring exists
-function InventoryData:HasRing(ringType)
-    return self.rings[ringType] ~= nil
+function InventoryData.HasRing(ringType)
+    return rings[ringType] ~= nil
 end
 
 -- Get all rings
-function InventoryData:GetAllRings()
-    return self.rings
+function InventoryData.GetAllRings()
+    return rings
 end
 
 -- Get currently selected ring
-function InventoryData:GetSelectedRing()
-    return self:GetRing(self.selectedRingType)
+function InventoryData.GetSelectedRing()
+    return InventoryData.GetRing(selectedRingType)
 end
 
 -- Get selected ring type
-function InventoryData:GetSelectedRingType()
-    return self.selectedRingType
+function InventoryData.GetSelectedRingType()
+    return selectedRingType
 end
 
 -- Get previous ring type
-function InventoryData:GetPreviousRingType()
-    return self.previousRingType
+function InventoryData.GetPreviousRingType()
+    return previousRingType
 end
 
 -- Switch to a different ring
-function InventoryData:SwitchToRing(ringType)
+function InventoryData.SwitchToRing(ringType)
     if not RING_TYPE[ringType] then
         return false
     end
     
-    self.previousRingType = self.selectedRingType
-    self.selectedRingType = ringType
+    previousRingType = selectedRingType
+    selectedRingType = ringType
     return true
 end
 
 -- Return to previous ring
-function InventoryData:ReturnToPreviousRing()
-    if self.previousRingType then
-        local temp = self.selectedRingType
-        self.selectedRingType = self.previousRingType
-        self.previousRingType = temp
+function InventoryData.ReturnToPreviousRing()
+    if previousRingType then
+        local temp = selectedRingType
+        selectedRingType = previousRingType
+        previousRingType = temp
         return true
     end
     return false
 end
 
 -- Setup secondary ring (combine, ammo, etc.)
-function InventoryData:SetupSecondaryRing(ringType, item)
-    self.previousRingType = self.selectedRingType
+function InventoryData.SetupSecondaryRing(ringType, item)
+    previousRingType = selectedRingType
     
-    local currentRing = self:GetSelectedRing()
-    self.chosenItem = item or (currentRing and currentRing:GetSelectedItem().objectID)
+    local currentRing = InventoryData.GetSelectedRing()
+    chosenItem = item or (currentRing and currentRing:GetSelectedItem().objectID)
     
     -- Get or create the new ring
-    local newRing = self:GetRing(ringType)
+    local newRing = InventoryData.GetRing(ringType)
     
     -- You can implement ConstructObjectList here if needed
-    -- self:ConstructObjectList(ringType, self.chosenItem)
+    -- InventoryData.ConstructObjectList(ringType, chosenItem)
     
-    self.selectedRingType = ringType
+    selectedRingType = ringType
     
     -- Special handling for ammo ring
     if ringType == RING.AMMO then
-        local weaponSlot = PickupData.WEAPON_SET[self.chosenItem].slot
+        local weaponSlot = PickupData.WEAPON_SET[chosenItem].slot
         local ammoType = Lara:GetAmmoType(weaponSlot)
         local objectID = PickupData.AMMO_TYPE_TO_OBJECT[ammoType]
         newRing:SetSelectedItemByID(objectID)
@@ -141,8 +135,8 @@ function InventoryData:SetupSecondaryRing(ringType, item)
 end
 
 -- Find item across all rings
-function InventoryData:FindItem(objectID)
-    for ringType, ring in pairs(self.rings) do
+function InventoryData.FindItem(objectID)
+    for ringType, ring in pairs(rings) do
         local item = ring:GetItem(objectID)
         if item then
             return item, ringType, ring
@@ -152,13 +146,13 @@ function InventoryData:FindItem(objectID)
 end
 
 -- Remove a ring
-function InventoryData:RemoveRing(ringType)
-    if self.rings[ringType] then
-        self.rings[ringType] = nil
+function InventoryData.RemoveRing(ringType)
+    if rings[ringType] then
+        rings[ringType] = nil
         
         -- If we removed the selected ring, switch to main
-        if self.selectedRingType == ringType then
-            self.selectedRingType = RING.MAIN
+        if selectedRingType == ringType then
+            selectedRingType = RING.MAIN
         end
         return true
     end
@@ -166,18 +160,18 @@ function InventoryData:RemoveRing(ringType)
 end
 
 -- Clear all rings
-function InventoryData:ClearAll()
-    for _, ring in pairs(self.rings) do
+function InventoryData.ClearAll()
+    for _, ring in pairs(rings) do
         ring:Clear()
     end
 end
 
 -- Fade all rings
-function InventoryData:FadeAll(visible, omitSelectedRing)
+function InventoryData.FadeAll(visible, omitSelectedRing)
     local fadeValue = visible and CONSTANTS.ALPHA_MAX or CONSTANTS.ALPHA_MIN
     
-    for ringType, ring in pairs(self.rings) do
-        if not (omitSelectedRing and ringType == self.selectedRingType) then
+    for ringType, ring in pairs(rings) do
+        if not (omitSelectedRing and ringType == selectedRingType) then
             ring:Fade(fadeValue)
             ring:SetVisibility(visible)
         end
@@ -185,26 +179,26 @@ function InventoryData:FadeAll(visible, omitSelectedRing)
 end
 
 -- Set visibility for all rings
-function InventoryData:SetAllVisibility(visible, omitSelectedRing)
-    for ringType, ring in pairs(self.rings) do
-        if not (omitSelectedRing and ringType == self.selectedRingType) then
+function InventoryData.SetAllVisibility(visible, omitSelectedRing)
+    for ringType, ring in pairs(rings) do
+        if not (omitSelectedRing and ringType == selectedRingType) then
             ring:SetVisibility(visible)
         end
     end
 end
 
 -- Color all rings
-function InventoryData:ColorAll(color, omitSelectedRing)
-    for ringType, ring in pairs(self.rings) do
-        if not (omitSelectedRing and ringType == self.selectedRingType) then
+function InventoryData.ColorAll(color, omitSelectedRing)
+    for ringType, ring in pairs(rings) do
+        if not (omitSelectedRing and ringType == selectedRingType) then
             ring:Color(color)
         end
     end
 end
 
 -- Iterator for all rings
-function InventoryData:IterateRings()
-    return pairs(self.rings)
+function InventoryData.IterateRings()
+    return pairs(rings)
 end
 
 -- Read gameflow overrides for items
@@ -212,7 +206,7 @@ local ReadGameflow = function()
     local overrides = {}
     for _, itemID in ipairs(TEN.Flow.GetCurrentLevel().objects) do
         if itemID.objectID then
-            local id = TEN.InventoryData.ConvertInventoryItemToObject(itemID.objectID)
+            local id = TEN.Inventory.ConvertInventoryItemToObject(itemID.objectID)
             overrides[id] = { 
                 item = id,
                 yOffset = itemID.yOffset,
@@ -231,7 +225,7 @@ end
 -- Build item with gameflow overrides
 function InventoryData.BuildItem(data)
     gameflowOverrides = gameflowOverrides or ReadGameflow()
-    data.count = TEN.InventoryData.GetItemCount(data.objectID)
+    data.count = TEN.Inventory.GetItemCount(data.objectID)
     
     local override = gameflowOverrides[data.objectID] or {}
     
@@ -252,14 +246,14 @@ function InventoryData.BuildItem(data)
 end
 
 -- Construct rings with items from game data
-function InventoryData:Construct(ringType, selectedWeapon)
+function InventoryData.Construct(ringType, selectedWeapon)
     
     local items = PickupData.CONSTANTS
     
     if ringType == RING.AMMO or ringType == RING.COMBINE then
-        self:Clear(ringType, true)
+        InventoryData.Clear(ringType, true)
     else
-        self:Clear(nil, true)
+        InventoryData.Clear(nil, true)
     end
     
     for _, itemRow in ipairs(items) do
@@ -268,7 +262,7 @@ function InventoryData:Construct(ringType, selectedWeapon)
         local data = InventoryData.BuildItem(itemData)
         
         if data.type == TYPE.AMMO and ringType ~= RING.AMMO then
-            local weaponPresent = TEN.InventoryData.GetItemCount(PickupData.AMMO_SET[data.objectID].weapon)
+            local weaponPresent = TEN.Inventory.GetItemCount(PickupData.AMMO_SET[data.objectID].weapon)
             if weaponPresent ~= 0 then
                 goto continue
             end
@@ -289,7 +283,7 @@ function InventoryData:Construct(ringType, selectedWeapon)
             if data.combine == true then
                 data.ringName = RING.COMBINE
                 
-                if self.chosenItem == data.objectID then
+                if chosenItem == data.objectID then
                     goto continue
                 end
                 
@@ -323,7 +317,7 @@ function InventoryData:Construct(ringType, selectedWeapon)
         
         if shouldInsert or ammoRing then
             -- Get or create the ring for this item
-            local ring = self:GetRing(data.ringName)
+            local ring = InventoryData.GetRing(data.ringName)
             
             -- Add item to ring
             ring:AddItem(data)
@@ -337,7 +331,7 @@ function InventoryData:Construct(ringType, selectedWeapon)
                 Vec3(data.scale),
                 data.meshBits
             )
-            inventoryItem:SetColor(COLOR_MAP.ITEM_COLOR)
+            inventoryItem:SetColor(COLOR_MAP.ITEM_HIDDEN)
         end
         
         ::continue::
@@ -345,22 +339,23 @@ function InventoryData:Construct(ringType, selectedWeapon)
     
     -- Initialize ring positions
     if ringType then
-        local ring = self:GetRing(ringType)
-        ring:SetPosition(InventoryData.DEFAULT_CENTERS[ringType])
+        local ring = InventoryData.GetRing(ringType)
+        ring:SetPosition(RING_CENTER[ringType])
     else
-        for ringType, ring in pairs(self.rings) do
-            ring:SetPosition(InventoryData.DEFAULT_CENTERS[ringType])
+        for ringType, ring in pairs(rings) do
+            ring:SetPosition(RING_CENTER[ringType])
         end
     end
 end
 
 -- Open inventory at specific item
-function InventoryData:OpenAtItem(itemID, repositionRings)
+function InventoryData.OpenAtItem(itemID, repositionRings)
+    
     if itemID == Constants.NO_VALUE then
         return
     end
     
-    local item, ringType, ring = self:FindItem(itemID)
+    local item, ringType, ring = InventoryData.FindItem(itemID)
     
     if not (ringType and ring) then
         return
@@ -378,11 +373,11 @@ function InventoryData:OpenAtItem(itemID, repositionRings)
     self.targetRingAngle = angle
     
     if repositionRings then
-        local ringPosition = InventoryData.DEFAULT_CENTERS[RING.MAIN]
-        self.selectedRingType = ringType
+        local ringPosition = RING_CENTER[RING.MAIN]
+        selectedRingType = ringType
         
-        for rType, r in pairs(self.rings) do
-            local offset = (rType - self.selectedRingType) * 1000  -- RING_POSITION_OFFSET
+        for rType, r in pairs(rings) do
+            local offset = (rType - selectedRingType) * 1000  -- RING_POSITION_OFFSET
             local position = Vec3(ringPosition.x, ringPosition.y + offset, ringPosition.z)
             r:SetPosition(position)
             r:Translate(position, Ring.RING_RADIUS, angle)
@@ -391,19 +386,19 @@ function InventoryData:OpenAtItem(itemID, repositionRings)
     
     if itemID == TEN.Objects.ObjID.PC_SAVE_INV_ITEM or itemID == TEN.Objects.ObjID.PC_LOAD_INV_ITEM then
         -- Handle save/load UI state
-        self.saveList = (itemID == TEN.Objects.ObjID.PC_SAVE_INV_ITEM)
-        self.saveSelected = true
+        saveList = (itemID == TEN.Objects.ObjID.PC_SAVE_INV_ITEM)
+        saveSelected = true
     end
 end
 
 -- Get count of combinable items (excluding selected item)
-function InventoryData:GetCombineItemsCount(selectedItem)
+function InventoryData.GetCombineItemsCount(selectedItem)
     local itemCount = 0
     local items = PickupData.CONSTANTS
     
     for _, itemRow in ipairs(items) do
         local itemData = PickupData.ConvertRowData(itemRow)
-        local data = self:BuildItem(itemData)
+        local data = InventoryData.BuildItem(itemData)
         local shouldInsert = false
         
         if data.combine == true then
@@ -431,9 +426,9 @@ function InventoryData:GetCombineItemsCount(selectedItem)
 end
 
 -- Clear a specific ring or all rings
-function InventoryData:Clear(ringType, clearDrawItems)
+function InventoryData.Clear(ringType, clearDrawItems)
     if ringType then
-        local ring = self.rings[ringType]
+        local ring = rings[ringType]
         
         if clearDrawItems and ring then
             for _, item in ipairs(ring:GetItems()) do
@@ -445,11 +440,11 @@ function InventoryData:Clear(ringType, clearDrawItems)
         end
         
         -- Remove the ring entirely
-        self.rings[ringType] = nil
+        rings[ringType] = nil
         
         -- If we cleared the selected ring, switch to main
-        if self.selectedRingType == ringType then
-            self.selectedRingType = RING.MAIN
+        if selectedRingType == ringType then
+            selectedRingType = RING.MAIN
         end
     else
         -- Clear all rings
@@ -457,54 +452,54 @@ function InventoryData:Clear(ringType, clearDrawItems)
             TEN.View.DisplayItem.ClearAllItems()
         end
         
-        self.rings = {}
-        self.selectedRingType = RING.MAIN
-        self.previousRingType = nil
+        rings = {}
+        selectedRingType = RING.MAIN
+        previousRingType = nil
     end
 end
 
 -- Get count of rings
-function InventoryData:GetRingCount()
+function InventoryData.GetRingCount()
     local count = 0
-    for _ in pairs(self.rings) do
+    for _ in pairs(rings) do
         count = count + 1
     end
     return count
 end
 
 --Get item selected objectID
-function InventoryData:GetChosenItem()
+function InventoryData.GetChosenItem()
 
-    return self.chosenItem 
+    return chosenItem 
 
 end
 
 --Set item selected objectID
-function InventoryData:SetChosenItem(objectID)
+function InventoryData.SetChosenItem(objectID)
 
-    self.chosenItem = objectID
+    chosenItem = objectID
     return true
 
 end
 
 --Check item selected objectID
-function InventoryData:IsChosenItem(objectID)
+function InventoryData.IsChosenItem(objectID)
 
-    return self.chosenItem == objectID
+    return chosenItem == objectID
 
 end
 
 --Get open at item objectID
-function InventoryData:GetOpenAtItem()
+function InventoryData.GetOpenAtItem()
 
-    return self.openAtItem
+    return openAtItem
 
 end
 
 --Set open at item objectID
-function InventoryData:SetOpenAtItem(objectID)
+function InventoryData.SetOpenAtItem(objectID)
 
-    self.openAtItem = objectID
+    openAtItem = objectID
     return true
 
 end

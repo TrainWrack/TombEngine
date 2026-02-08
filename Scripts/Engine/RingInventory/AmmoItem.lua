@@ -12,6 +12,7 @@ local Text = require("Engine.RingInventory.Text")
 
 --Pointers to tables
 local COLOR_MAP = Settings.COLOR_MAP
+local TYPE = PickupData.TYPE
 
 --Begin Class
 local AmmoItem = {}
@@ -21,13 +22,20 @@ local AMMO_LOCATION = Vec3(0, 300, 512)
 
 local function GetChosenAmmo(weaponItem)
 
+    if not weaponItem or weaponItem:GetType() ~= TYPE.WEAPON then
+        return
+    end
+
     local itemObjectID = weaponItem:GetObjectID()
-    local weaponSlot = PickupData.WEAPON_SET[itemObjectID].slot
+
     if not itemObjectID then
         return
     end
 
+    local weaponSlot = PickupData.WEAPON_SET[itemObjectID].slot
+
     local ammoType = Lara:GetAmmoType(weaponSlot)
+    
     if not ammoType then
         return
     end

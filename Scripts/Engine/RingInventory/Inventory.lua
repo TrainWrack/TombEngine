@@ -44,20 +44,17 @@ local function ExitInventory()
         InventoryStates = require("Engine.RingInventory.InventoryStates")
     end
     local INVENTORY_MODE = InventoryStates.MODE
-    
-    local ringInventory = InventoryData.Get("RingInventory")
-    inventoryOpenFreeze = false
-    ringInventory:Clear(nil, true)
+    InventoryData.ClearAll()
     TEN.Inventory.SetEnterInventory(Constants.NO_VALUE)
     Interpolate.ClearAll()
     Menu.DeleteAll()
     Flow.SetFreezeMode(Flow.FreezeMode.NONE)
     InventoryStates.SetMode(INVENTORY_MODE.INVENTORY_OPENING)
-    ringInventory:SwitchToRing(RING.MAIN)
+    InventoryData.SwitchToRing(RING.MAIN)
     TEN.View.DisplayItem.ResetCamera()
     timeInMenu = 0
     saveList = false
-    InventoryData:SetChosenItem()
+    InventoryData.SetChosenItem()
     inventoryClosed = true
 end
 
@@ -65,7 +62,7 @@ local function UpdateInventory()
     if not inventoryRunning then
         return
     end
-    
+
     -- Lazy load Inputs to break circular dependency
     if not Inputs then
         Inputs = require("Engine.RingInventory.Input")
@@ -83,9 +80,14 @@ local function UpdateInventory()
         currentRingAngle = 0
         targetRingAngle = 0
         TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_OPEN)
-        ConstructObjectList()
+        InventoryData.Construct()
         inventoryOpen = false
-        OpenInventoryAtItem(inventoryOpenItem, true)
+        InventoryData.OpenAtItem(InventoryData.GetChosenItem(), true)
+        ItemSpin.Initialize(RING.MAIN)
+        local selectedRing = InventoryData.GetSelectedRing()
+        local selectedItem = selectedRing:GetSelectedItem()
+        InventoryStates.UpdateItem(selectedItem)
+        ItemLight.SetOriginalColor(selectedItem:GetObjectID(), COLOR_MAP.ITEM_DESELECTED)
     else
         Inputs.Update()
         InventoryStates.Update()
@@ -95,10 +97,6 @@ local function UpdateInventory()
         ItemSpin.Update()
         Text.DrawAll()
         Text.Update()
-        
-        DrawInventory(inventoryMode)
-        DrawInventoryHeader(inventorySubHeader, menuAlpha)
-        DrawInventorySprites(selectedRing, menuAlpha)
     end
 end
 
@@ -110,19 +108,15 @@ local function RunInventory()
         inventoryRunning = false
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         TEN.View.SetPostProcessStrength(1)
-        TEN.View.SetPostProcessTint(COLOR_MAP.ITEM_COLOR_VISIBLE)
+        TEN.View.SetPostProcessTint(COLOR_MAP.ITEM_SELECTED)
         
         local settings = TEN.Flow.GetSettings()
         settings.Gameplay.enableInventory = false
         TEN.Flow.SetSettings(settings)
-
-        InventoryData.Create("RingInventory")
         Text.Setup()
         
         inventorySetup = false
     end
-
-    local ringInventory = InventoryData.Get("RingInventory")
     
     if useBinoculars then
         TEN.View.UseBinoculars()
@@ -137,7 +131,7 @@ local function RunInventory()
        playerHp and 
        isNotUsingBinoculars then
         inventoryOpen = true
-        ringInventory:SetOpenAtItem(TEN.Inventory.GetEnterInventory())
+        InventoryData.SetOpenAtItem(TEN.Inventory.GetEnterInventory()) --Line 141
         inventoryDelay = 0
     end
     
@@ -146,7 +140,7 @@ local function RunInventory()
        playerHp and 
        isNotUsingBinoculars then
         inventoryOpen = true
-        ringInventory:SetOpenAtItem(TEN.Objects.ObjID.PC_SAVE_INV_ITEM)
+        InventoryData.SetOpenAtItem(TEN.Objects.ObjID.PC_SAVE_INV_ITEM)
         inventoryDelay = 0
     end
     
@@ -154,14 +148,14 @@ local function RunInventory()
        not inventoryOpen and 
        isNotUsingBinoculars then
         inventoryOpen = true
-        ringInventory:SetOpenAtItem(TEN.Objects.ObjID.PC_LOAD_INV_ITEM)
+        InventoryData.SetOpenAtItem(TEN.Objects.ObjID.PC_LOAD_INV_ITEM)
         inventoryDelay = 0
     end
     
     if inventoryOpen == true then
         inventoryDelay = inventoryDelay + 1
         TEN.View.SetPostProcessMode(View.PostProcessMode.MONOCHROME)
-        TEN.View.SetPostProcessStrength(COLOR_MAP.BACKGROUND.a / ALPHA_MAX)
+        TEN.View.SetPostProcessStrength(COLOR_MAP.BACKGROUND.a / Constants.ALPHA_MAX)
         TEN.View.SetPostProcessTint(COLOR_MAP.BACKGROUND)
         if inventoryDelay >= 2 then
             TEN.View.DisplayItem.SetCameraPosition(Constants.CAMERA_START)
