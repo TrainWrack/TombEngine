@@ -84,7 +84,7 @@ Menu.Create = function(menuName, title, items, acceptFunction, exitFunction, men
         titleTextColor = HEADER_FONT_COLOR,
         titleTextScale = HEADER_FONT_SCALE,
         titleTranslate = false,
-        menuTransparency = 255,
+        menuTransparency = 1,
         sounds = SOUND_MAP,
         inputs = true,
         visibleStartIndex = 1,
@@ -135,6 +135,7 @@ Menu.AddActive = function(menuName)
     local menu = Menus[menuName]
     if menu then
         menu.visible = true
+        menu.currentAlpha = Constants.ALPHA_MIN
         menu.targetAlpha = Constants.ALPHA_MAX
     end
 
@@ -149,6 +150,7 @@ Menu.RemoveActive = function(menuName)
     -- Trigger fade out (will be removed from Active when fade completes)
     local menu = Menus[menuName]
     if menu then
+        menu.currentAlpha = Constants.ALPHA_MAX
         menu.targetAlpha = Constants.ALPHA_MIN
     end
 
@@ -219,7 +221,7 @@ function Menu:SetTransparency(transparency)
 
         transparency = math.max(0, math.min(1, transparency))
 
-		Menus[self.name].menuTransparency = transparency * 255
+		Menus[self.name].menuTransparency = transparency
 
     end
 end
@@ -629,18 +631,19 @@ function Menu.UpdateMenu(menuName)
     
     -- Update fade animation
     if menu.currentAlpha ~= menu.targetAlpha then
-        local diff = menu.targetAlpha - menu.currentAlpha
-        menu.currentAlpha = menu.currentAlpha + diff * menu.fadeSpeed
-        
-        -- Snap to target if very close
-        if math.abs(diff) < 0.01 then
-            menu.currentAlpha = menu.targetAlpha
+
+        if menu.targetAlpha > menu.currentAlpha then
+            -- Fading in
+            menu.currentAlpha = math.min(menu.currentAlpha + menu.fadeSpeed, menu.targetAlpha)
+        else
+            -- Fading out
+            menu.currentAlpha = math.max(menu.currentAlpha - menu.fadeSpeed, menu.targetAlpha)
+        end
             
-            -- If fade out completed, remove from active and set invisible
-            if menu.currentAlpha == Constants.ALPHA_MIN then
-                Menu.Active[menuName] = nil
-                menu.visible = false
-            end
+        -- If fade out completed, remove from active and set invisible
+        if menu.currentAlpha <= Constants.ALPHA_MIN then
+            Menu.Active[menuName] = nil
+            menu.visible = false
         end
     end
     
@@ -679,7 +682,7 @@ function Menu.DrawMenu(menuName)
     end
     
     -- Skip rendering if fully transparent
-    if menu.currentAlpha <= 0 then
+    if menu.currentAlpha < 0.5 then
         return
     end
     
@@ -713,7 +716,7 @@ function Menu.DrawMenu(menuName)
             local translate = menu.itemsTranslate
             if item.itemName == "" then translate = false end
 
-            local itemNode = DisplayString(item.itemName, Utilities.percentPos(menu.itemsPosition.x, yItems), menu.itemsTextScale, Utilities.ColorCombine(menu.itemsTextColor, actualTransparency), translate)
+            local itemNode = DisplayString(item.itemName, Utilities.PercentPos(menu.itemsPosition.x, yItems), menu.itemsTextScale, Utilities.ColorCombine(menu.itemsTextColor, actualTransparency), translate)
             if menu.menuType == Menu.Type.ITEMS_ONLY and i == menu.currentItem then
                 itemNode:SetFlags(menu.itemsSelectedFlags)
             else
@@ -727,7 +730,7 @@ function Menu.DrawMenu(menuName)
             local baseYOptions = menu.optionsPosition.y
             local yOptions = baseYOptions + (i - 1) * offset - menu.scrollY
             local selectedOption = item.options and item.options[item.currentOption] or ""
-            local optNode = DisplayString(selectedOption, Utilities.percentPos(menu.optionsPosition.x, yOptions), menu.optionsTextScale, Utilities.ColorCombine(menu.optionsTextColor, actualTransparency), menu.optionsTranslate)
+            local optNode = DisplayString(selectedOption, Utilities.PercentPos(menu.optionsPosition.x, yOptions), menu.optionsTextScale, Utilities.ColorCombine(menu.optionsTextColor, actualTransparency), menu.optionsTranslate)
             if i == menu.currentItem then
                 optNode:SetFlags(menu.optionsSelectedFlags)
             else

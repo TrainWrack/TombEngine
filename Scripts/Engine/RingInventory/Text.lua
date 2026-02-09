@@ -127,12 +127,13 @@ function TextChannels.SetText(channelName, newText, shouldShow)
         state.nextText = newText
         state.isTransitioning = true
         state.nextAlpha = TEXT_CONFIG.MIN_ALPHA
-    elseif visibilityChanged and not state.visible and state.currentAlpha > 0 then
-        -- Just hiding (no text change), fade out current text
-        state.isTransitioning = true
-        state.nextText = state.currentText
-        state.nextAlpha = TEXT_CONFIG.MIN_ALPHA
     end
+    -- elseif visibilityChanged and not state.visible and state.currentAlpha > 0 then
+    --     -- Just hiding (no text change), fade out current text
+    --     state.isTransitioning = true
+    --     state.nextText = state.currentText
+    --     state.nextAlpha = TEXT_CONFIG.MIN_ALPHA
+    -- end
 end
 
 function TextChannels.Show(channelName)
@@ -155,10 +156,12 @@ function TextChannels.Hide(channelName)
             state.onHide()
         end
         
-        -- Start fade out transition
-        if state.currentAlpha > 0 then
-            state.isTransitioning = true
-        end
+        -- -- Start fade out transition
+        -- if state.currentAlpha > 0 then
+        --     state.isTransitioning = true
+        --     state.nextText = state.currentText
+        --     state.nextAlpha = TEXT_CONFIG.MIN_ALPHA
+        -- end
     end
 end
 

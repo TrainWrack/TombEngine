@@ -45,7 +45,6 @@ end
 function Animation.PerformBatchMotion(prefix, motionTable, time, clearProgress, selectedRing, item, reverse)
     local interpolated = {}
     local allComplete = true
-    local omitSelectedItem = item and true or false
     local ringName = selectedRing and selectedRing:GetType() or nil
     
     for _, motion in ipairs(motionTable) do
@@ -73,11 +72,11 @@ function Animation.PerformBatchMotion(prefix, motionTable, time, clearProgress, 
     end
     
     if selectedRing and interpolated.ringColor then
-        selectedRing:Color(interpolated.ringColor.output, omitSelectedItem)
+        selectedRing:Color(interpolated.ringColor.output, item)
     end
     
     if selectedRing and interpolated.ringFade then
-        selectedRing:Fade(interpolated.ringFade.output, omitSelectedItem)
+        selectedRing:Fade(interpolated.ringFade.output, item)
     end
     
     if interpolated.menuFade then

@@ -188,7 +188,7 @@ function Ring:Translate(center, radius, rotationOffset, alpha)
     if itemCount == 0 then return end
     
     local ItemSpin  = require("Engine.RingInventory.ItemSpin")
-    ItemSpin.SetRotationOffset(rotationOffset)
+    ItemSpin.Initialize(self.type, rotationOffset)
 
     for i = 1, itemCount do
         local currentItem = self.items[i].objectID
@@ -196,17 +196,7 @@ function Ring:Translate(center, radius, rotationOffset, alpha)
         if currentDisplayItem then
             local angleDeg = (360 / itemCount) * (i - 1) + rotationOffset
             local position = center:Translate(Rotation(0, angleDeg, 0), radius)
-            -- local itemRotations = currentDisplayItem:GetRotation()
-            
-            -- local currentAngle = itemRotations.y
-            -- local angleDiff = (angleDeg - currentAngle) % 360
-            -- if angleDiff > 180 then
-            --     angleDiff = angleDiff - 360
-            -- end
-            -- local newAngle = (currentAngle + angleDiff * alpha) % 360
-            
             currentDisplayItem:SetPosition(Utilities.OffsetY(position, self.items[i].yOffset))
-            -- currentDisplayItem:SetRotation(Rotation(itemRotations.x, newAngle, itemRotations.z))
         end
     end
 end

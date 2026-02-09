@@ -13,6 +13,7 @@ local InventoryStates -- Delayed require to break circular dependency
 local ItemLight = require("Engine.RingInventory.ItemLight")
 local ItemSpin= require("Engine.RingInventory.ItemSpin")
 local Settings = require("Engine.RingInventory.Settings")
+local Strings = require("Engine.RingInventory.Strings")
 local Text = require("Engine.RingInventory.Text")
 local Ring      = require("Engine.RingInventory.Ring")
 

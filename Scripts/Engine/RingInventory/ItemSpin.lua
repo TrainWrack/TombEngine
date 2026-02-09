@@ -35,6 +35,10 @@ function ItemSpin.StartSpin(itemID)
     ItemSpin.currentItem = itemID
 end
 
+function ItemSpin.StopSpin()
+    ItemSpin.currentItem = nil
+end
+
 function ItemSpin.RotateItem(name)
     ItemSpin.additionalItem = name
 end

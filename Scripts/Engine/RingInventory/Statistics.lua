@@ -160,18 +160,11 @@ function Statistics.CreateStatisticsMenu()
     local statisticsMenu = Menu.Create("StatisticsMenu", nil, table, nil, nil, Menu.Type.OPTIONS_ONLY)
     
     statisticsMenu:SetOptionsPosition(Vec2(50, 24.7))
-    statisticsMenu:SetVisibility(true)
     statisticsMenu:SetLineSpacing(5.3)
     statisticsMenu:SetOptionsFont(COLOR_MAP.NORMAL_FONT, 0.9)
     statisticsMenu:SetOnOptionChangeFunction("Blank", "Engine.RingInventory.ChangeStatistics")
     statisticsMenu:SetWrapAroundOptions(true)
     statisticsMenu:EnableInputs(true)
-end
-
-function Statistics.RunStatisticsMenu()
-    local statisticsMenu = Menu.Get("StatisticsMenu")
-    statisticsMenu:SetTransparency(Text.GetAlpha())
-    statisticsMenu:Draw()
 end
 
 local function CalculateCompassAngle()

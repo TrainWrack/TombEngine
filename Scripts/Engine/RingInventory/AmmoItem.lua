@@ -41,6 +41,7 @@ local function GetChosenAmmo(weaponItem)
     end
     
     local objectID = PickupData.AMMO_TYPE_TO_OBJECT[ammoType]
+    
     if not objectID then return end
     
     local base  = PickupData.GetProperties(objectID)
@@ -53,6 +54,7 @@ end
 function AmmoItem.Show(weaponItem, textOnly)
 
     local item = GetChosenAmmo(weaponItem)
+    
     if item then
 
         if not textOnly then
@@ -60,11 +62,19 @@ function AmmoItem.Show(weaponItem, textOnly)
             displayItem:SetColor(COLOR_MAP.ITEM_HIDDEN)
 
             ItemLight.FadeIn("ChosenAmmo", COLOR_MAP.ITEM_SELECTED)
-            Text.SetItemSubLabel(item)
             ItemSpin.RotateItem("ChosenAmmo")
 
         end
+
+        Text.SetItemSubLabel(item)
     end
+
+    if not item then
+        
+        Text.Hide("ITEM_LABEL_SECONDARY")
+
+    end
+
 end
 
 function AmmoItem.Hide()

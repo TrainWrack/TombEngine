@@ -75,10 +75,11 @@ function Interpolate.Lerp(start, finish, t, easing)
     
     -- Vec3 or Rotation
     if start.x and start.y and start.z then
-        local mt = getmetatable(start)
         
-        -- Check if it's a Rotation (has __Signed method)
-        if mt and mt.__Signed then
+        local ROTATION = TEN.Rotation(0, 0, 0)
+        local IsRotation = getmetatable(start) == getmetatable(ROTATION)
+        
+        if IsRotation then
             return Rotation(
                 start.x + (finish.x - start.x) * factor,
                 start.y + (finish.y - start.y) * factor,
