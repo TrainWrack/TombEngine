@@ -5,7 +5,7 @@
 --External Modules
 local Constants = require("Engine.RingInventory.Constants")
 local Settings = require("Engine.RingInventory.Settings")
-local PickupData = require("Engine.RingInventory.PickupData")
+
 
 --Pointers to constant tables
 local SOUND_MAP = Settings.SOUND_MAP
@@ -54,7 +54,9 @@ local function WaterTest(item)
 end
 
 function Use.Item(item)
+
     local InventoryStates = require("Engine.RingInventory.InventoryStates")
+    local PickupData = require("Engine.RingInventory.PickupData")
     local INVENTORY_MODE = InventoryStates.MODE
     
     local levelStatistics = Flow.GetStatistics()

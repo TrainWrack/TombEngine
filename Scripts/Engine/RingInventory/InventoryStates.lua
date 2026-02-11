@@ -198,9 +198,9 @@ function InventoryStates.Update()
         
     elseif inventoryMode == InventoryStates.MODE.STATISTICS_CLOSE then
         Statistics.Hide()
+        Text.SetText("HEADER", "actions_inventory", true)
         InventoryStates.UpdateItem(selectedItem)
         if combineItem1 or Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
-            Text.SetText("HEADER", "actions_inventory", true)
             inventoryMode = combineItem1 and InventoryStates.MODE.ITEM_SELECTED or InventoryStates.MODE.INVENTORY
         end
     elseif inventoryMode == InventoryStates.MODE.SAVE_SETUP then

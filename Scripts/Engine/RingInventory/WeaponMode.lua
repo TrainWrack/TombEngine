@@ -4,7 +4,6 @@
 
 --External Modules
 local Menu = require("Engine.RingInventory.Menu")
-local PickupData = require("Engine.RingInventory.PickupData")
 local Settings = require("Engine.RingInventory.Settings")
 
 --Pointers to constant tables
@@ -20,6 +19,8 @@ end
 
 function WeaponMode.CreateWeaponModeMenu(itemData)
     
+    local PickupData = require("Engine.RingInventory.PickupData")
+
     local weaponModes = {}
     
     for _, entry in ipairs(PickupData.WEAPON_MODE_LOOKUP) do

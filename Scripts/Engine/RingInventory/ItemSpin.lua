@@ -1,6 +1,3 @@
--- DEBUG VERSION - Replace your ItemSpin.lua with this temporarily
--- Look at the console output to see what's happening
-
 --External Modules
 local InventoryData = require("Engine.RingInventory.InventoryData")
 
@@ -9,6 +6,8 @@ local ItemSpin = {}
 ItemSpin.ROTATION_SPEED = 5
 ItemSpin.ALIGNMENT_SPEED = 0.125
 ItemSpin.ROTATION_THRESHOLD = 0.5
+
+local enabled = true
 
 ItemSpin.currentItem = nil
 ItemSpin.ringName = nil
@@ -33,10 +32,12 @@ end
 
 function ItemSpin.StartSpin(itemID)
     ItemSpin.currentItem = itemID
+    enabled = true
 end
 
 function ItemSpin.StopSpin()
     ItemSpin.currentItem = nil
+    enabled = false
 end
 
 function ItemSpin.RotateItem(name)
@@ -56,6 +57,10 @@ function ItemSpin.Update()
             local newY = (currentRotation.y + ItemSpin.ROTATION_SPEED) % 360
             displayItem:SetRotation(Rotation(currentRotation.x, newY, currentRotation.z))
         end
+    end
+
+    if not enabled then
+        return
     end
 
     if not ItemSpin.ringName then return end
@@ -109,6 +114,7 @@ function ItemSpin.Reset()
     ItemSpin.currentItem = nil
     ItemSpin.ringName = nil
     ItemSpin.rotationOffset = 0
+    enabled = true
 end
 
 return ItemSpin

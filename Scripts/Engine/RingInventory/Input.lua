@@ -16,15 +16,17 @@ local INVENTORY_MODE = InventoryStates.MODE
 local RING = Ring.TYPE
 local SOUND_MAP = Settings.SOUND_MAP
 
+local timer = 0
+
 local Inputs = {}
 
 local function GuiIsPulsed(actionID)
     local DELAY = 0.25
     local INITIAL_DELAY = 0.5
     
-    -- if (TEN.Input.GetActionTimeActive(actionID) >= 0) then
-    --     return false
-    -- end
+    if (TEN.Input.GetActionTimeActive(actionID) >= timer) then
+        return false
+    end
     
     local oppositeAction = nil
     if actionID == TEN.Input.ActionID.FORWARD then
@@ -71,8 +73,10 @@ local function DoRightKey()
     TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
 end
 
-function Inputs.Update()
+function Inputs.Update(timeInMenu)
     
+    timer = timeInMenu
+
     local selectedRing = InventoryData.GetSelectedRingType()
     local previousRing = InventoryData.GetPreviousRingType()
     local selectedRingData = InventoryData.GetSelectedRing()

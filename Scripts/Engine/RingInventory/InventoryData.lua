@@ -23,6 +23,8 @@ local previousRingType = nil
 local chosenItem = nil
 local openAtItem = nil
 
+local useBinoculars = false
+
 local saveList = false
 local saveSelected = false
 
@@ -501,6 +503,18 @@ function InventoryData.SetOpenAtItem(objectID)
 
     openAtItem = objectID
     return true
+
+end
+
+function InventoryData.SetUseBinoculars(value)
+
+    useBinoculars = value
+
+end
+
+function InventoryData.GetUseBinoculars()
+
+    return useBinoculars
 
 end
 

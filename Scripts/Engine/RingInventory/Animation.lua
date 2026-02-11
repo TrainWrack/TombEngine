@@ -179,7 +179,7 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
             return true
         end
     elseif mode == INVENTORY_MODE.RING_CLOSING then
-        Ring.FadeAll(false, true)
+        InventoryData.FadeAll(false, true)
         if Animation.PerformBatchMotion("RingClosing", ringAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
             return true
         end

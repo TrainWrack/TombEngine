@@ -1,8 +1,5 @@
 --RING INVENTORY BY TRAINWRECK
 
-local CustomInventory = {}
-local debug = false
-
 --External Modules
 local Constants = require("Engine.RingInventory.Constants")
 local Inputs -- Delayed require to break circular dependency
@@ -13,6 +10,7 @@ local InventoryStates -- Delayed require to break circular dependency
 local ItemLight = require("Engine.RingInventory.ItemLight")
 local ItemSpin= require("Engine.RingInventory.ItemSpin")
 local Settings = require("Engine.RingInventory.Settings")
+local Statistics -- Delayed require to break circular dependency
 local Strings = require("Engine.RingInventory.Strings")
 local Text = require("Engine.RingInventory.Text")
 local Ring      = require("Engine.RingInventory.Ring")
@@ -23,10 +21,8 @@ local SOUND_MAP = Settings.SOUND_MAP
 local COLOR_MAP = Settings.COLOR_MAP
 
 --Variables
-local useBinoculars = false
 local timeInMenu = 0
 local inventoryDelay = 0
-local menuAlpha = 0
 
 local inventorySetup = true
 local inventorySetupFreeze = false
@@ -73,6 +69,10 @@ local function UpdateInventory()
     if not InventoryStates then
         InventoryStates = require("Engine.RingInventory.InventoryStates")
     end
+
+    if not Statistics then
+        Statistics = require("Engine.RingInventory.Statistics")
+    end 
     
     timeInMenu = timeInMenu + 1
    
@@ -90,12 +90,13 @@ local function UpdateInventory()
         InventoryStates.UpdateItem(selectedItem)
         ItemLight.SetOriginalColor(selectedItem:GetObjectID(), COLOR_MAP.ITEM_DESELECTED)
     else
-        Inputs.Update()
+        Inputs.Update(timeInMenu)
         InventoryStates.Update()
         Menu.DrawActiveMenus()
         Menu.UpdateActiveMenus()
         ItemLight.Update()
         ItemSpin.Update()
+        Statistics.SetItemRotations(timeInMenu)
         Text.DrawAll()
         Text.Update()
     end
@@ -119,9 +120,9 @@ local function RunInventory()
         inventorySetup = false
     end
     
-    if useBinoculars then
+    if InventoryData.GetUseBinoculars() then
         TEN.View.UseBinoculars()
-        useBinoculars = false
+        InventoryData.SetUseBinoculars(false)
     end
     
     local playerHp = Lara:GetHP() > 0
@@ -177,22 +178,11 @@ local function RunInventory()
     end
 end
 
-function CustomInventory.GetTimeInMenu()
-
-    return timeInMenu
-
-end
-
-function CustomInventory.EnableBinoculars()
-
-    useBinoculars = true
-
-end
 
 -- ============================================================================
 -- PUBLIC API (LevelFuncs.Engine.RingInventory)
 -- ============================================================================
-
+LevelFuncs.Engine.RingInventory = LevelFuncs.Engine.RingInventory or {}
 LevelFuncs.Engine.RingInventory.UpdateInventory = UpdateInventory
 LevelFuncs.Engine.RingInventory.RunInventory = RunInventory
 LevelFuncs.Engine.RingInventory.ExitInventory = ExitInventory
@@ -200,8 +190,5 @@ LevelFuncs.Engine.RingInventory.ExitInventory = ExitInventory
 -- ============================================================================
 -- CALLBACKS
 -- ============================================================================
-
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.RingInventory.UpdateInventory)
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.Engine.RingInventory.RunInventory)
-
-return CustomInventory

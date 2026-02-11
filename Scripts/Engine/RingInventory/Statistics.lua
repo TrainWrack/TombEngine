@@ -11,9 +11,8 @@ local Text = require("Engine.RingInventory.Text")
 local COLOR_MAP = Settings.COLOR_MAP
 
 --Variables
-local counter = 0
-
-local Statistics = {}
+local oneTimeCheck = true
+local Stats = {}
 
 local statisticsType = false
 
@@ -91,7 +90,7 @@ local GetStatistics = function()
 
 end
 
-function Statistics.SetupStats()
+function Stats.SetupStats()
 
     local level = Flow.GetCurrentLevel()
     local levelHeader = Flow.GetString(level.nameKey)
@@ -112,33 +111,36 @@ function Statistics.SetupStats()
 
 end
 
-function Statistics.Show()
+function Stats.Show()
 
     Text.ShowGroup("STATISTICS")
     Menu.AddActive("StatisticsMenu")
-
+    oneTimeCheck = true
 end
 
-function Statistics.Hide()
-
-    Text.HideGroup("STATISTICS")
-    Menu.RemoveActive("StatisticsMenu")
+function Stats.Hide()
     
+    if oneTimeCheck then
+        Text.HideGroup("STATISTICS")
+        Menu.RemoveActive("StatisticsMenu")
+        oneTimeCheck = false
+    end
+
 end
 
-function Statistics.UpdateStatistics()
+function Stats.UpdateStatistics()
 
     local statistics = GetStatistics()
     Text.SetText("STATS_TEXT", statistics, true)
 
 end
 
-function Statistics.ToggleType()
+function Stats.ToggleType()
     statisticsType = not statisticsType
-    Statistics.UpdateStatistics()
+    Stats.UpdateStatistics()
 end
 
-function Statistics.CreateStatisticsMenu()
+function Stats.CreateStatisticsMenu()
     local statItems = {}
     local items = {"statistics_level", "statistics_game"}
     
@@ -167,25 +169,23 @@ function Statistics.CreateStatisticsMenu()
     statisticsMenu:EnableInputs(true)
 end
 
-local function CalculateCompassAngle()
-    counter = counter + 1
-    
+local function CalculateCompassAngle(timeCount)
     local needleOrient = Rotation(0, -Lara:GetRotation().y, 0)
-    local wibble = math.sin((counter % 0x40) / 0x3F * (2 * math.pi))
+    local wibble = math.sin((timeCount % 0x40) / 0x3F * (2 * math.pi))
     needleOrient.y = needleOrient.y + wibble
     return needleOrient
 end
 
 local function CalculateStopWatchRotation()
     local angles = {}
-    local levelTime = Flow.GetStatistics(Statistics.type).timeTaken
+    local levelTime = Flow.GetStatistics(statisticsType).timeTaken
     angles.hour_hand_angle = Rotation(0, 0, -(levelTime.h / 12) * 360)
     angles.minute_hand_angle = Rotation(0, 0, -(levelTime.m / 60) * 360)
     angles.second_hand_angle = Rotation(0, 0, -(levelTime.s / 60) * 360)
     return angles
 end
 
-function Statistics.SetItemRotations()
+function Stats.SetItemRotations(timeCount)
 
     local angles = CalculateStopWatchRotation()
     local stopwatch = TEN.View.DisplayItem.GetItemByName(tostring(TEN.Objects.ObjID.STOPWATCH_ITEM))
@@ -197,7 +197,7 @@ function Statistics.SetItemRotations()
 
     local compass = TEN.View.DisplayItem.GetItemByName(tostring(TEN.Objects.ObjID.COMPASS_ITEM))
     if compass then
-        compass:SetJointRotation(1, CalculateCompassAngle())
+        compass:SetJointRotation(1, CalculateCompassAngle(timeCount))
     end
 end
 
@@ -205,6 +205,6 @@ end
 -- PUBLIC API (LevelFuncs.Engine.CustomInventory)
 -- ============================================================================
 LevelFuncs.Engine.RingInventory = LevelFuncs.Engine.RingInventory or {}
-LevelFuncs.Engine.RingInventory.ChangeStatistics = Statistics.ToggleType
+LevelFuncs.Engine.RingInventory.ChangeStatistics = Stats.ToggleType
 
-return Statistics
+return Stats
