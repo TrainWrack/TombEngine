@@ -19,11 +19,9 @@ local InventoryData = {}
 -- Instance data (private)
 local rings = {}
 local selectedRingType = RING.MAIN
-local previousRingType = nil
+local previousRingType = RING.MAIN
 local chosenItem = nil
 local openAtItem = nil
-
-local useBinoculars = false
 
 local saveList = false
 local saveSelected = false
@@ -33,10 +31,10 @@ local gameflowOverrides = nil
 
 -- Reset all data (useful for level changes)
 function InventoryData.Reset()
-    InventoryData.Clear(nil, true)
+    InventoryData.ClearAll()
     rings = {}
     selectedRingType = RING.MAIN
-    previousRingType = nil
+    previousRingType = RING.MAIN
     chosenItem = nil
     openAtItem = nil
     gameflowOverrides = nil
@@ -90,20 +88,35 @@ end
 
 -- Switch to a different ring
 function InventoryData.SwitchToRing(ringType)
-    if not RING_TYPE[ringType] then
+    local isValid = false
+    for _, value in pairs(RING_TYPE) do
+        if value == ringType then
+            isValid = true
+            break
+        end
+    end
+    
+    if not isValid then
         return false
     end
+
+    local ItemSpin = require("Engine.RingInventory.ItemSpin")
     
     previousRingType = selectedRingType
     selectedRingType = ringType
+    ItemSpin.Initialize(ringType, 0)
     return true
 end
 
 -- Return to previous ring
 function InventoryData.ReturnToPreviousRing()
     if previousRingType then
+
+        local ItemSpin = require("Engine.RingInventory.ItemSpin")
+
         local temp = selectedRingType
         selectedRingType = previousRingType
+        ItemSpin.Initialize(previousRingType, 0)
         previousRingType = temp
         return true
     end
@@ -161,13 +174,6 @@ function InventoryData.RemoveRing(ringType)
     return false
 end
 
--- Clear all rings
-function InventoryData.ClearAll()
-    for _, ring in pairs(rings) do
-        ring:Clear()
-    end
-end
-
 -- Fade all rings
 function InventoryData.FadeAll(visible, omitSelectedRing)
     local fadeValue = visible and CONSTANTS.ALPHA_MAX or CONSTANTS.ALPHA_MIN
@@ -195,6 +201,13 @@ function InventoryData.ColorAll(color, omitSelectedRing)
         if not (omitSelectedRing and ringType == selectedRingType) then
             ring:Color(color)
         end
+    end
+end
+
+-- OFfset all rings
+function InventoryData.OffsetAll(direction)
+    for ringType, ring in pairs(rings) do
+        ring:OffsetPosition(direction)
     end
 end
 
@@ -253,9 +266,9 @@ function InventoryData.Construct(ringType, selectedWeapon)
     local items = PickupData.CONSTANTS
     
     if ringType == RING.AMMO or ringType == RING.COMBINE then
-        InventoryData.Clear(ringType, true)
+        InventoryData.Clear(ringType)
     else
-        InventoryData.Clear(nil, true)
+        InventoryData.ClearAll()
     end
     
     for _, itemRow in ipairs(items) do
@@ -428,36 +441,28 @@ function InventoryData.GetCombineItemsCount(selectedItem)
 end
 
 -- Clear a specific ring or all rings
-function InventoryData.Clear(ringType, clearDrawItems)
-    if ringType then
-        local ring = rings[ringType]
+function InventoryData.Clear(ringType)
         
-        if clearDrawItems and ring then
-            for _, item in ipairs(ring:GetItems()) do
-                local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(item.objectID))
-                if displayItem then
-                    displayItem:Remove()
-                end
-            end
-        end
-        
-        -- Remove the ring entirely
-        rings[ringType] = nil
-        
-        -- If we cleared the selected ring, switch to main
+    local ring = InventoryData.GetRing(ringType)
+    
+    if ring then
+        ring:Clear()
+
+    -- If we cleared the selected ring, switch to main
         if selectedRingType == ringType then
             selectedRingType = RING.MAIN
         end
-    else
-        -- Clear all rings
-        if clearDrawItems then
-            TEN.View.DisplayItem.ClearAllItems()
-        end
-        
-        rings = {}
-        selectedRingType = RING.MAIN
-        previousRingType = nil
+
     end
+
+end
+
+function InventoryData.ClearAll()
+
+    for ringType, ring in pairs(rings) do
+        ring:Clear()
+    end
+
 end
 
 -- Get count of rings
@@ -503,18 +508,6 @@ function InventoryData.SetOpenAtItem(objectID)
 
     openAtItem = objectID
     return true
-
-end
-
-function InventoryData.SetUseBinoculars(value)
-
-    useBinoculars = value
-
-end
-
-function InventoryData.GetUseBinoculars()
-
-    return useBinoculars
 
 end
 

@@ -6,7 +6,6 @@
 local Constants = require("Engine.RingInventory.Constants")
 local Settings = require("Engine.RingInventory.Settings")
 
-
 --Pointers to constant tables
 local SOUND_MAP = Settings.SOUND_MAP
 

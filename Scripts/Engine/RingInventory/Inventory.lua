@@ -2,9 +2,8 @@
 
 --External Modules
 local Constants = require("Engine.RingInventory.Constants")
-local Inputs -- Delayed require to break circular dependency
 local Menu = require("Engine.RingInventory.Menu")
-local Interpolate = require("Engine.InterpolateModule")
+local Interpolate = require("Engine.RingInventory.Interpolate")
 local InventoryData = require("Engine.RingInventory.InventoryData")
 local InventoryStates -- Delayed require to break circular dependency
 local ItemLight = require("Engine.RingInventory.ItemLight")
@@ -41,14 +40,15 @@ local function ExitInventory()
         InventoryStates = require("Engine.RingInventory.InventoryStates")
     end
     local INVENTORY_MODE = InventoryStates.MODE
-    InventoryData.ClearAll()
-    TEN.Inventory.SetEnterInventory(Constants.NO_VALUE)
+    InventoryData.Reset()
+    TEN.Inventory.SetFocusedItem(Constants.NO_VALUE)
     Interpolate.ClearAll()
     Menu.DeleteAll()
     Flow.SetFreezeMode(Flow.FreezeMode.NONE)
     InventoryStates.SetMode(INVENTORY_MODE.INVENTORY_OPENING)
     InventoryData.SwitchToRing(RING.MAIN)
     TEN.View.DisplayItem.ResetCamera()
+    Text.DestroyAll()
     timeInMenu = 0
     saveList = false
     InventoryData.SetChosenItem()
@@ -58,11 +58,6 @@ end
 local function UpdateInventory()
     if not inventoryRunning then
         return
-    end
-
-    -- Lazy load Inputs to break circular dependency
-    if not Inputs then
-        Inputs = require("Engine.RingInventory.Input")
     end
     
     -- Lazy load InventoryStates to break circular dependency
@@ -89,16 +84,11 @@ local function UpdateInventory()
         local selectedItem = selectedRing:GetSelectedItem()
         InventoryStates.UpdateItem(selectedItem)
         ItemLight.SetOriginalColor(selectedItem:GetObjectID(), COLOR_MAP.ITEM_DESELECTED)
+        Text.Setup()
     else
-        Inputs.Update(timeInMenu)
-        InventoryStates.Update()
-        Menu.DrawActiveMenus()
-        Menu.UpdateActiveMenus()
-        ItemLight.Update()
-        ItemSpin.Update()
-        Statistics.SetItemRotations(timeInMenu)
-        Text.DrawAll()
-        Text.Update()
+        
+        InventoryStates.Update(timeInMenu)
+
     end
 end
 
@@ -120,24 +110,19 @@ local function RunInventory()
         inventorySetup = false
     end
     
-    if InventoryData.GetUseBinoculars() then
-        TEN.View.UseBinoculars()
-        InventoryData.SetUseBinoculars(false)
-    end
-    
     local playerHp = Lara:GetHP() > 0
     local isNotUsingBinoculars = TEN.View.GetCameraType() ~= CameraType.BINOCULARS
     
-    if (TEN.Input.IsKeyHit(TEN.Input.ActionID.INVENTORY) or TEN.Inventory.GetEnterInventory() ~= Constants.NO_VALUE) and 
+    if (TEN.Input.IsKeyHit(TEN.Input.ActionID.INVENTORY) or TEN.Inventory.GetFocusedItem() ~= Constants.NO_VALUE) and 
        not inventoryOpen and 
        playerHp and 
        isNotUsingBinoculars then
         inventoryOpen = true
-        InventoryData.SetOpenAtItem(TEN.Inventory.GetEnterInventory()) --Line 141
+        InventoryData.SetOpenAtItem(TEN.Inventory.GetFocusedItem()) --Line 141
         inventoryDelay = 0
     end
     
-    if (TEN.Input.IsKeyHit(TEN.Input.ActionID.SAVE) or TEN.Inventory.GetEnterInventory() ~= Constants.NO_VALUE) and 
+    if (TEN.Input.IsKeyHit(TEN.Input.ActionID.SAVE) or TEN.Inventory.GetFocusedItem() ~= Constants.NO_VALUE) and 
        not inventoryOpen and 
        playerHp and 
        isNotUsingBinoculars then
@@ -146,7 +131,7 @@ local function RunInventory()
         inventoryDelay = 0
     end
     
-    if (TEN.Input.IsKeyHit(TEN.Input.ActionID.LOAD) or TEN.Inventory.GetEnterInventory() ~= Constants.NO_VALUE) and 
+    if (TEN.Input.IsKeyHit(TEN.Input.ActionID.LOAD) or TEN.Inventory.GetFocusedItem() ~= Constants.NO_VALUE) and 
        not inventoryOpen and 
        isNotUsingBinoculars then
         inventoryOpen = true
@@ -172,7 +157,7 @@ local function RunInventory()
     if inventoryClosed then
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         TEN.View.SetPostProcessStrength(1)
-        TEN.View.SetPostProcessTint(COLOR_MAP.ITEM_COLOR_VISIBLE)
+        TEN.View.SetPostProcessTint(COLOR_MAP.ITEM_SELECTED)
         inventoryClosed = false
         inventoryRunning = false
     end

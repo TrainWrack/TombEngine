@@ -96,6 +96,15 @@ end
 
 -- Clear all items
 function Ring:Clear()
+
+    for i = 1, #self.items do
+        local currentItem = self.items[i]:GetObjectID()
+        local inventoryItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
+        if inventoryItem then
+            inventoryItem:Remove()
+        end
+    end
+
     self.items = {}
     self.selectedItemIndex = 1
 end

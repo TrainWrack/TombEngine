@@ -161,18 +161,10 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
 
     local ringRotate = {
         {key = "ringAngle", start = selectedRing:GetCurrentAngle(), finish = selectedRing:GetTargetAngle()},
+        {key = "ringCenter", start = selectedRing:GetPosition(), finish = selectedRing:GetPosition()}
     }
 
-    local ringChange = {
-        {key = "ringAngle", start = -360, finish = 0},
-        {key = "ringCenter", start = selectedRing:GetPreviousPosition(), finish = selectedRing:GetPosition()},
-    }
-    
-    if mode == INVENTORY_MODE.INVENTORY_OPENING then
-        if Animation.PerformBatchMotion("MenuFadeIn", menuFade, Settings.ANIMATION.ITEM_ANIM_TIME, false, nil, nil, false) then
-            return true
-        end
-    elseif mode == INVENTORY_MODE.RING_OPENING then
+    if mode == INVENTORY_MODE.RING_OPENING then
         if Animation.PerformBatchMotion("RingOpening", ringAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing) then
             InventoryData.FadeAll(true, true)
             LevelVars.Engine.RingInventory.InventoryOpenFreeze = true
@@ -188,9 +180,13 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
         
         local rings = InventoryData.GetAllRings()
         for ringType, ring in pairs(rings) do
-            if Animation.PerformBatchMotion("RingChange"..ringType, ringChange, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, ring) then
-                --inventory.ringPosition[ringType] = newPosition
-            else
+
+            local ringChange = 
+            {
+            {key = "ringAngle", start = -360, finish = 0},
+            {key = "ringCenter", start = ring:GetPreviousPosition(), finish = ring:GetPosition()},
+            }
+            if not Animation.PerformBatchMotion("RingChange"..ringType, ringChange, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, ring) then
                 allMotionComplete = false
             end
         end
@@ -255,7 +251,7 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
             end
         end
         
-        Ring.FadeAll(false, true)
+        InventoryData.FadeAll(false, true)
         
         if Animation.PerformBatchMotion("RingClosing", ringAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
             if combineItem1 then
@@ -288,10 +284,6 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
             end
         end
         if allMotionComplete then
-            return true
-        end
-    elseif mode == INVENTORY_MODE.INVENTORY_EXIT then
-        if Animation.PerformBatchMotion("InventoryExit", menuFade, Settings.ANIMATION.ITEM_ANIM_TIME, false, nil, nil, true) then
             return true
         end
     end

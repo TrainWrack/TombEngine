@@ -3,7 +3,6 @@
 -- ============================================================================
 
 --External Modules
-local InventoryData = require("Engine.RingInventory.InventoryData")
 local ItemLight = require("Engine.RingInventory.ItemLight")
 local ItemSpin= require("Engine.RingInventory.ItemSpin")
 local PickupData = require("Engine.RingInventory.PickupData")
@@ -43,6 +42,8 @@ local function GetChosenAmmo(weaponItem)
     local objectID = PickupData.AMMO_TYPE_TO_OBJECT[ammoType]
     
     if not objectID then return end
+
+    local InventoryData = require("Engine.RingInventory.InventoryData")
     
     local base  = PickupData.GetProperties(objectID)
     local data = InventoryData.BuildItem(base)

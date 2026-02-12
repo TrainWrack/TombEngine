@@ -82,22 +82,26 @@ function Inputs.Update(timeInMenu)
     local selectedRingData = InventoryData.GetSelectedRing()
     local selectedItem  = selectedRingData:GetSelectedItem()
     local mode = InventoryStates.GetMode()
+
     if mode == INVENTORY_MODE.INVENTORY then
         if GuiIsPulsed(TEN.Input.ActionID.LEFT) then
             DoLeftKey()
         elseif GuiIsPulsed(TEN.Input.ActionID.RIGHT) then
             DoRightKey()
         elseif GuiIsPulsed(TEN.Input.ActionID.FORWARD) and selectedRing < RING.COMBINE then
-            InventoryData.SwitchToRing(math.max(RING.PUZZLE, selectedRing - 1))
-            if selectedRing ~= previousRing then
+            local targetRing = math.max(RING.PUZZLE, selectedRing - 1)
+            if targetRing ~= selectedRing then
+                InventoryData.SwitchToRing(targetRing)
+                InventoryData.OffsetAll(1)
                 InventoryStates.SetMode(INVENTORY_MODE.RING_CHANGE)
-                selectedRingData:OffsetPosition(1)
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
             end
         elseif GuiIsPulsed(TEN.Input.ActionID.BACK) and selectedRing < RING.COMBINE then
-            InventoryData.SwitchToRing(math.min(RING.OPTIONS, selectedRing + 1))
-            if selectedRing ~= previousRing then
-                selectedRingData:OffsetPosition(-1)
+            --add check for the options ring here to skip it if it empty
+            local targetRing = math.min(RING.OPTIONS, selectedRing + 1)
+            if targetRing ~= selectedRing then
+                InventoryData.SwitchToRing(targetRing)
+                InventoryData.OffsetAll(-1)
                 InventoryStates.SetMode(INVENTORY_MODE.RING_CHANGE)
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
             end
