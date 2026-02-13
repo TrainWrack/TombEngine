@@ -122,8 +122,7 @@ function InventoryStates.Update(timeInMenu)
     ItemLight.Update()
     ItemSpin.Update()
     Statistics.SetItemRotations(timeInMenu)
-    Text.DrawAll()
-    Text.Update()
+
     Inputs.Update(timeInMenu)
 
     local selectedRing = InventoryData.GetSelectedRing()
@@ -141,6 +140,10 @@ function InventoryStates.Update(timeInMenu)
             end
         end
     elseif inventoryMode == InventoryStates.MODE.RING_CLOSING then
+            Text.Hide("ITEM_LABEL_PRIMARY")
+            Text.Hide("ITEM_LABEL_SECONDARY")
+            Text.Hide("HEADER")
+            Text.Hide("SUB_HEADER")
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             InventoryStates.SetMode(InventoryStates.MODE.INVENTORY_EXIT)
         end
@@ -156,8 +159,7 @@ function InventoryStates.Update(timeInMenu)
         end
     elseif inventoryMode == InventoryStates.MODE.RING_CHANGE then
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
-            selectedRing = InventoryData.GetSelectedRing()
-            selectedRing:GetSelectedItem()
+            ItemSpin.Initialize(selectedRing:GetType(), 0)
             InventoryStates.UpdateItem(selectedItem)
             InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
         end

@@ -402,7 +402,7 @@ TextChannels.CONFIGS = {
     HEADER = 
     {
         name = "HEADER",                 -- Unique identifier
-        text = "actions_inventory",               -- Current display text
+        text = "",               -- Current display text
         position = Vec2(50, 4),                   -- Screen position (percentage)
         scale = 1.5,                              -- Text scale
         color = COLOR_MAP.HEADER_FONT,        -- Base color

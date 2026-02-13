@@ -67,13 +67,6 @@ flags =
 translate = false,
 }
 
-Text.Create(LEVEL_HEADER_TEXT)
-Text.Create(HEADER_TEXT) 
-Text.Create(STATS_TEXT)
-Text.AddToGroup("STATISTICS", "LEVEL_HEADER_TEXT")
-Text.AddToGroup("STATISTICS", "HEADER_TEXT")
-Text.AddToGroup("STATISTICS", "STATS_TEXT")
-
 local GetStatistics = function()
 
     local level = Flow.GetCurrentLevel()
@@ -91,6 +84,13 @@ local GetStatistics = function()
 end
 
 function Stats.SetupStats()
+
+    Text.Create(LEVEL_HEADER_TEXT)
+    Text.Create(HEADER_TEXT) 
+    Text.Create(STATS_TEXT)
+    Text.AddToGroup("STATISTICS", "LEVEL_HEADER_TEXT")
+    Text.AddToGroup("STATISTICS", "HEADER_TEXT")
+    Text.AddToGroup("STATISTICS", "STATS_TEXT")
 
     local level = Flow.GetCurrentLevel()
     local levelHeader = Flow.GetString(level.nameKey)

@@ -35,8 +35,6 @@ flags =
 },
 translate = false,
 }
-    
-Text.Create(EXAMINE_TEXT) --Create Examine Text Channel
 
 local examineRotation = Rotation(0, 0, 0)
 local examineScaler = EXAMINE_DEFAULT_SCALE
@@ -55,6 +53,8 @@ end
 
 function Examine.SetupText(itemData)
 
+    Text.Create(EXAMINE_TEXT) --Create Examine Text Channel
+    
     local item = itemData.objectID
 
     examineShowString = false

@@ -3,15 +3,6 @@ local Interpolate = {}
 -- Internal motion progress tracker
 LevelVars.Engine.InterpolateProgress = {}
 
--- Type of interpolation to perform
-Interpolate.Type = {
-    LINEAR   = 1,
-    VEC2     = 2,
-    VEC3     = 3,
-    ROTATION = 4,
-    COLOR    = 5
-}
-
 -- Easing functions
 Interpolate.Easing = {
     Linear = function(t) return t end,

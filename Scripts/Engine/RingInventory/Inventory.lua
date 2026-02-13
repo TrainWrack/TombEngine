@@ -70,25 +70,24 @@ local function UpdateInventory()
     end 
     
     timeInMenu = timeInMenu + 1
-   
+    
+    Text.Update()
+    Text.DrawAll()
+
     if inventoryOpen then
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
-        currentRingAngle = 0
-        targetRingAngle = 0
         TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_OPEN)
         InventoryData.Construct()
-        inventoryOpen = false
         InventoryData.OpenAtItem(InventoryData.GetChosenItem(), true)
         ItemSpin.Initialize(RING.MAIN)
         local selectedRing = InventoryData.GetSelectedRing()
         local selectedItem = selectedRing:GetSelectedItem()
+        Text.Setup()
         InventoryStates.UpdateItem(selectedItem)
         ItemLight.SetOriginalColor(selectedItem:GetObjectID(), COLOR_MAP.ITEM_DESELECTED)
-        Text.Setup()
+        inventoryOpen = false
     else
-        
         InventoryStates.Update(timeInMenu)
-
     end
 end
 
@@ -101,11 +100,9 @@ local function RunInventory()
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         TEN.View.SetPostProcessStrength(1)
         TEN.View.SetPostProcessTint(COLOR_MAP.ITEM_SELECTED)
-        
         local settings = TEN.Flow.GetSettings()
         settings.Gameplay.enableInventory = false
         TEN.Flow.SetSettings(settings)
-        Text.Setup()
         
         inventorySetup = false
     end
