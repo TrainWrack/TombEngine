@@ -181,16 +181,6 @@ function InventoryData.FadeAll(visible, omitSelectedRing)
     for ringType, ring in pairs(rings) do
         if not (omitSelectedRing and ringType == selectedRingType) then
             ring:Fade(fadeValue)
-            ring:SetVisibility(visible)
-        end
-    end
-end
-
--- Set visibility for all rings
-function InventoryData.SetAllVisibility(visible, omitSelectedRing)
-    for ringType, ring in pairs(rings) do
-        if not (omitSelectedRing and ringType == selectedRingType) then
-            ring:SetVisibility(visible)
         end
     end
 end
@@ -334,19 +324,12 @@ function InventoryData.Construct(ringType, selectedWeapon)
             -- Get or create the ring for this item
             local ring = InventoryData.GetRing(data.ringName)
             
+            -- Create display item
+            local displayItem = data:CreateDisplayItem(Ring.CENTERS[data.ringName])
+            displayItem:SetColor(COLOR_MAP.ITEM_HIDDEN)
             -- Add item to ring
             ring:AddItem(data)
             
-            -- Create display item
-            local inventoryItem = TEN.View.DisplayItem(
-                tostring(data.objectID),
-                data.objectID,
-                Ring.CENTERS[data.ringName],
-                data.rotation,
-                Vec3(data.scale),
-                data.meshBits
-            )
-            inventoryItem:SetColor(COLOR_MAP.ITEM_HIDDEN)
         end
         
         ::continue::
@@ -384,8 +367,8 @@ function InventoryData.OpenAtItem(itemID, repositionRings)
     local angle = -slice * (itemIndex - 1)
     
     -- Store angle (you may want to make these instance variables)
-    self.currentRingAngle = angle
-    self.targetRingAngle = angle
+    ring:SetCurrentAngle(angle)
+    ring:SetTargetAngle(angle)
     
     if repositionRings then
         local ringPosition = RING_CENTER[RING.MAIN]
@@ -461,6 +444,14 @@ function InventoryData.ClearAll()
 
     for ringType, ring in pairs(rings) do
         ring:Clear()
+    end
+
+end
+
+function InventoryData.DrawAllRings()
+
+    for ringType, ring in pairs(rings) do
+        ring:Draw()
     end
 
 end

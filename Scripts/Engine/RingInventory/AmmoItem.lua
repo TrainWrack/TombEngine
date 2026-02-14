@@ -51,7 +51,7 @@ local function GetChosenAmmo(weaponItem)
     return data
 
 end
-
+--Update this function to make sure item is drawn somewhere else, Maybe add ammoselected ring
 function AmmoItem.Show(weaponItem, textOnly)
 
     local item = GetChosenAmmo(weaponItem)
@@ -80,7 +80,7 @@ end
 
 function AmmoItem.Hide()
 
-    ItemLight.FadeOut("ChosenAmmo", COLOR_MAP.ITEM_HIDDEN)
+    --ItemLight.FadeOut("ChosenAmmo", COLOR_MAP.ITEM_HIDDEN)
     Text.Hide("ITEM_LABEL_SECONDARY")
     ItemSpin.StopItem()
 

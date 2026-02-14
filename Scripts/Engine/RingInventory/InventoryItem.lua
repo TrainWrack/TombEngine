@@ -45,6 +45,43 @@ function InventoryItem:GetMenuActions()
     return self.menuActions
 end
 
+function InventoryItem:GetDisplayItem()
+    return self.displayItem
+end
+
+-- ============================================================================
+-- DISPLAY ITEM MANAGEMENT
+-- ============================================================================
+
+-- Create and store DisplayItem for this item
+function InventoryItem:CreateDisplayItem(defaultPosition)
+    self.displayItem = TEN.View.DisplayItem(
+        tostring(self.objectID),
+        self.objectID,
+        defaultPosition,
+        self.rotation,
+        Vec3(self.scale),
+        self.meshBits
+    )
+    return self.displayItem
+end
+
+-- Clear the DisplayItem reference
+function InventoryItem:ClearDisplayItem()
+    self.displayItem = nil
+end
+
+function InventoryItem:Draw()
+
+    if self.displayItem then
+        self.displayItem:Draw()
+    end
+end
+
+-- ============================================================================
+-- UTILITY METHODS
+-- ============================================================================
+
 function InventoryItem:CanCombine()
     return self.combine ~= nil
 end

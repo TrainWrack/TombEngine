@@ -30,8 +30,8 @@ function ItemSpin.SetRotationOffset(offset)
     ItemSpin.rotationOffset = offset
 end
 
-function ItemSpin.StartSpin(itemID)
-    ItemSpin.currentItem = itemID
+function ItemSpin.StartSpin(item)
+    ItemSpin.currentItem = item
     enabled = true
 end
 
@@ -40,8 +40,8 @@ function ItemSpin.StopSpin()
     enabled = false
 end
 
-function ItemSpin.RotateItem(name)
-    ItemSpin.additionalItem = name
+function ItemSpin.RotateItem(item)
+    ItemSpin.additionalItem = item
 end
 
 function ItemSpin.StopItem()
@@ -51,7 +51,7 @@ end
 function ItemSpin.Update()
 
     if ItemSpin.additionalItem then 
-        local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(ItemSpin.additionalItem))
+        local displayItem = ItemSpin.additionalItem:GetDisplayItem()
         if displayItem then
             local currentRotation = displayItem:GetRotation()
             local newY = (currentRotation.y + ItemSpin.ROTATION_SPEED) % 360
@@ -79,13 +79,13 @@ function ItemSpin.Update()
         if item and item.objectID then
             local currentItem = item.objectID
             
-            local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
+            local displayItem = ItemSpin.currentItem:GetDisplayItem()
             
             if displayItem then
                 local targetAngle = CalculateRingAngle(i, itemCount, ItemSpin.rotationOffset)
                 local currentRotation = displayItem:GetRotation()
                 
-                if currentItem == ItemSpin.currentItem then
+                if currentItem == ItemSpin.currentItem:GetObjectID() then
                     local newY = (currentRotation.y + ItemSpin.ROTATION_SPEED) % 360
                     displayItem:SetRotation(Rotation(currentRotation.x, newY, currentRotation.z))
                 else
@@ -106,8 +106,8 @@ function ItemSpin.GetCurrentItem()
     return ItemSpin.currentItem
 end
 
-function ItemSpin.IsSpinning(itemID)
-    return ItemSpin.currentItem == itemID
+function ItemSpin.IsSpinning(item)
+    return ItemSpin.currentItem == item
 end
 
 function ItemSpin.Reset()

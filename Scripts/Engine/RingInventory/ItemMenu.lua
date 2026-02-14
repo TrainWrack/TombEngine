@@ -48,7 +48,7 @@ function ItemMenu.ParseAction(item)
     elseif HasItemAction(menuActions, ItemAction.COMBINE) then
         InventoryStates.SetMode(INVENTORY_MODE.COMBINE_SETUP)
     elseif HasItemAction(menuActions, ItemAction.STATISTICS) then
-        InventoryStates.SetMode(INVENTORY_MODE.STATISTICS_OPEN)
+        InventoryStates.SetMode(INVENTORY_MODE.STATISTICS_SETUP)
     elseif HasItemAction(menuActions, ItemAction.SAVE) then
         Save.SetSaveMenu()
         InventoryStates.SetMode(INVENTORY_MODE.SAVE_SETUP)

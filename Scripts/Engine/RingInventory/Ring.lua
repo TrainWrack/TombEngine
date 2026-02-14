@@ -96,15 +96,6 @@ end
 
 -- Clear all items
 function Ring:Clear()
-
-    for i = 1, #self.items do
-        local currentItem = self.items[i]:GetObjectID()
-        local inventoryItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
-        if inventoryItem then
-            inventoryItem:Remove()
-        end
-    end
-
     self.items = {}
     self.selectedItemIndex = 1
 end
@@ -175,17 +166,6 @@ function Ring:SelectPrevious()
     end
 end
 
--- Set visibility for all items in this ring
-function Ring:SetVisibility(visible)
-    for i = 1, #self.items do
-        local currentItem = self.items[i].objectID
-        local inventoryItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
-        if inventoryItem then
-            inventoryItem:SetVisible(visible)
-        end
-    end
-end
-
 -- Translate items in a circle
 function Ring:Translate(center, radius, rotationOffset, alpha)
     alpha = alpha or 1.0
@@ -201,7 +181,7 @@ function Ring:Translate(center, radius, rotationOffset, alpha)
 
     for i = 1, itemCount do
         local currentItem = self.items[i].objectID
-        local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
+        local currentDisplayItem = self.items[i]:GetDisplayItem()
         if currentDisplayItem then
             local angleDeg = (360 / itemCount) * (i - 1) + rotationOffset
             local position = center:Translate(Rotation(0, angleDeg, 0), radius)
@@ -220,7 +200,7 @@ function Ring:Fade(fadeValue, omitItem)
             goto continue
         end
         
-        local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
+        local currentDisplayItem = self.items[i]:GetDisplayItem()
         if currentDisplayItem then
             local itemColor = currentDisplayItem:GetColor()
             currentDisplayItem:SetColor(Utilities.ColorCombine(itemColor, fadeValue))
@@ -240,7 +220,7 @@ function Ring:Color(color, omitItem)
             goto continue
         end
         
-        local currentDisplayItem = TEN.View.DisplayItem.GetItemByName(tostring(currentItem))
+        local currentDisplayItem = self.items[i]:GetDisplayItem()
         if currentDisplayItem then
             local itemColor = currentDisplayItem:GetColor()
             currentDisplayItem:SetColor(Utilities.ColorCombine(color, itemColor.a))
@@ -380,6 +360,14 @@ function Ring:FindItemIndex(objectID)
         end
     end
     return nil
+end
+
+--Draw items in the ring
+function Ring:Draw()
+    for i = 1, #self.items do
+        local item = self.items[i]
+        item:Draw()
+    end
 end
 
 return Ring

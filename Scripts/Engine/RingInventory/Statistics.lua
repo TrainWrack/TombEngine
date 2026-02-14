@@ -168,7 +168,7 @@ function Stats.CreateStatisticsMenu()
     statisticsMenu:SetWrapAroundOptions(true)
     statisticsMenu:EnableInputs(true)
 end
-
+--Move out from Statistics
 local function CalculateCompassAngle(timeCount)
     local needleOrient = Rotation(0, -Lara:GetRotation().y, 0)
     local wibble = math.sin((timeCount % 0x40) / 0x3F * (2 * math.pi))
@@ -188,14 +188,14 @@ end
 function Stats.SetItemRotations(timeCount)
 
     local angles = CalculateStopWatchRotation()
-    local stopwatch = TEN.View.DisplayItem.GetItemByName(tostring(TEN.Objects.ObjID.STOPWATCH_ITEM))
+    local stopwatch
     if stopwatch then
         stopwatch:SetJointRotation(4, angles.hour_hand_angle)
         stopwatch:SetJointRotation(5, angles.minute_hand_angle)
         stopwatch:SetJointRotation(6, angles.second_hand_angle)
     end
 
-    local compass = TEN.View.DisplayItem.GetItemByName(tostring(TEN.Objects.ObjID.COMPASS_ITEM))
+    local compass
     if compass then
         compass:SetJointRotation(1, CalculateCompassAngle(timeCount))
     end

@@ -22,7 +22,7 @@ local Animation = {}
 
 function Animation.SaveItemData(selectedItem)
     if itemStoreRotations then
-        local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(selectedItem:GetObjectID()))
+        local displayItem = selectedItem:GetDisplayItem()
         itemRotationOld = displayItem:GetRotation()
         itemRotation = selectedItem:GetRotation()
         Examine.SetRotation(selectedItem:GetRotation())
@@ -92,7 +92,7 @@ function Animation.PerformBatchMotion(prefix, motionTable, time, clearProgress, 
     end
     
     if item then
-        local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(item.objectID))
+        local displayItem = item:GetDisplayItem()
         if interpolated.itemColor then
             displayItem:SetColor(interpolated.itemColor.output)
         end

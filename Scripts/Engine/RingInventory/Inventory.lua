@@ -44,7 +44,6 @@ local function ExitInventory()
     TEN.Inventory.SetFocusedItem(Constants.NO_VALUE)
     Interpolate.ClearAll()
     Menu.DeleteAll()
-    Flow.SetFreezeMode(Flow.FreezeMode.NONE)
     InventoryStates.SetMode(INVENTORY_MODE.INVENTORY_OPENING)
     InventoryData.SwitchToRing(RING.MAIN)
     TEN.View.DisplayItem.ResetCamera()
@@ -53,6 +52,7 @@ local function ExitInventory()
     saveList = false
     InventoryData.SetChosenItem()
     inventoryClosed = true
+    Flow.SetFreezeMode(Flow.FreezeMode.NONE)
 end
 
 local function UpdateInventory()
@@ -71,6 +71,7 @@ local function UpdateInventory()
     
     timeInMenu = timeInMenu + 1
     
+    InventoryData.DrawAllRings()
     Text.Update()
     Text.DrawAll()
 
@@ -84,7 +85,7 @@ local function UpdateInventory()
         local selectedItem = selectedRing:GetSelectedItem()
         Text.Setup()
         InventoryStates.UpdateItem(selectedItem)
-        ItemLight.SetOriginalColor(selectedItem:GetObjectID(), COLOR_MAP.ITEM_DESELECTED)
+        ItemLight.SetOriginalColor(selectedItem, COLOR_MAP.ITEM_DESELECTED)
         inventoryOpen = false
     else
         InventoryStates.Update(timeInMenu)

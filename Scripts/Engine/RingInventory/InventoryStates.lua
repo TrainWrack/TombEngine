@@ -59,7 +59,8 @@ InventoryStates.MODE =
     WEAPON_MODE = 33,
     WEAPON_MODE_CLOSE = 34,
 	INVENTORY_EXIT = 35,
-	INVENTORY_OPENING = 36
+	INVENTORY_OPENING = 36,
+    STATISTICS_SETUP = 37
 }
 
 local inventoryMode = InventoryStates.MODE.INVENTORY_OPENING
@@ -101,13 +102,11 @@ function InventoryStates.IsMode(mode)
 end
 
 function InventoryStates.UpdateItem(selectedItem)
-
-    local selectedItemID = selectedItem and selectedItem:GetObjectID() or nil
     
     AmmoItem.Show(selectedItem, true)
     Text.SetItemLabel(selectedItem)
-    ItemLight.FadeIn(selectedItemID, COLOR_MAP.ITEM_SELECTED)
-    ItemSpin.StartSpin(selectedItemID)
+    ItemLight.FadeIn(selectedItem, COLOR_MAP.ITEM_SELECTED)
+    ItemSpin.StartSpin(selectedItem)
 
 end
 
@@ -201,7 +200,7 @@ function InventoryStates.Update(timeInMenu)
             currentRingAngle = previousRingAngle
             inventoryMode = InventoryStates.MODE.INVENTORY
         end
-    elseif inventoryMode == InventoryStates.MODE.STATISTICS_OPEN then
+    elseif inventoryMode == InventoryStates.MODE.STATISTICS_SETUP then
         AmmoItem.Hide()
         Text.Hide("ITEM_LABEL_PRIMARY")
         ItemSpin.StopSpin()
@@ -210,6 +209,8 @@ function InventoryStates.Update(timeInMenu)
         Statistics.CreateStatisticsMenu()
         Text.SetText("HEADER", "statistics", true)
         Statistics.Show()
+        inventoryMode = InventoryStates.MODE.STATISTICS_OPEN
+    elseif inventoryMode == InventoryStates.MODE.STATISTICS_OPEN then
         if combineItem1 or Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             inventoryMode = InventoryStates.MODE.STATISTICS
         end

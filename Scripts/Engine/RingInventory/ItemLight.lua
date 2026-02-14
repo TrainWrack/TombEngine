@@ -16,18 +16,20 @@ ItemLighting.currentItem = nil
 ItemLighting.items = {}  -- Store item data: { originalColor, targetColor, isFadingIn, isFadingOut }
 
 --- Start lighting up an item (fade to visible)
-function ItemLighting.FadeIn(itemID, targetColor)
-    local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(itemID))
+function ItemLighting.FadeIn(item, targetColor)
+    local itemID = item:GetObjectID()
+    local displayItem = item:GetDisplayItem()
     if not displayItem then return end
     
     -- Stop previous item if exists
-    if ItemLighting.currentItem and ItemLighting.currentItem ~= itemID then
+    if ItemLighting.currentItem and ItemLighting.currentItem ~= item then
         ItemLighting.FadeOut(ItemLighting.currentItem)
     end
     
     -- Initialize item data if not exists
     if not ItemLighting.items[itemID] then
         ItemLighting.items[itemID] = {
+            item = item,
             originalColor = displayItem:GetColor(),
             targetColor = targetColor,
             isFadingIn = false,
@@ -39,12 +41,14 @@ function ItemLighting.FadeIn(itemID, targetColor)
     ItemLighting.items[itemID].isFadingIn = true
     ItemLighting.items[itemID].isFadingOut = false
     ItemLighting.items[itemID].targetColor = targetColor
-    ItemLighting.currentItem = itemID
+    ItemLighting.currentItem = item
 end
 
 --- Start lighting up an item (fade to visible)
-function ItemLighting.SetOriginalColor(itemID, originalColor)
+function ItemLighting.SetOriginalColor(item, originalColor)
     
+    local itemID = item:GetObjectID()
+
     if not ItemLighting.items[itemID] then
         return
     end
@@ -55,10 +59,13 @@ function ItemLighting.SetOriginalColor(itemID, originalColor)
 end
 
 --- Start fading out an item (fade to original color)
-function ItemLighting.FadeOut(itemID, targetColor)
+function ItemLighting.FadeOut(item, targetColor)
+
+    local itemID = item:GetObjectID()
+
     if not ItemLighting.items[itemID] then return end
     
-    local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(itemID))
+    local displayItem = item:GetDisplayItem()
     if not displayItem then
         ItemLighting.items[itemID] = nil
         return
@@ -75,12 +82,13 @@ end
 --- Update all fading items
 function ItemLighting.Update()
     for itemID, data in pairs(ItemLighting.items) do
-        local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(itemID))
+        local item = data.item
+        local displayItem = item:GetDisplayItem()
         
         if not displayItem then
             -- Clean up if item no longer exists
             ItemLighting.items[itemID] = nil
-            if ItemLighting.currentItem == itemID then
+            if ItemLighting.currentItem == item then
                 ItemLighting.currentItem = nil
             end
         else
@@ -102,7 +110,7 @@ function ItemLighting.Update()
                     -- Clean up if fading out is complete
                     if data.isFadingOut then
                         ItemLighting.items[itemID] = nil
-                        if ItemLighting.currentItem == itemID then
+                        if ItemLighting.currentItem == item then
                             ItemLighting.currentItem = nil
                         end
                     else
@@ -121,12 +129,14 @@ function ItemLighting.GetCurrentItem()
 end
 
 --- Check if an item is fading in
-function ItemLighting.IsFadingIn(itemID)
+function ItemLighting.IsFadingIn(item)
+    local itemID = item:GetObjectID()
     return ItemLighting.items[itemID] and ItemLighting.items[itemID].isFadingIn
 end
 
 --- Check if an item is fading out
-function ItemLighting.IsFadingOut(itemID)
+function ItemLighting.IsFadingOut(item)
+    local itemID = item:GetObjectID()
     return ItemLighting.items[itemID] and ItemLighting.items[itemID].isFadingOut
 end
 

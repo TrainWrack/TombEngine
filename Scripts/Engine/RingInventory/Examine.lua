@@ -43,9 +43,8 @@ local examineShowString = false
 
 function Examine.Item(itemData)
 
-    local item = itemData.objectID
     examineScaler = math.max(EXAMINE_MIN_SCALE, math.min(EXAMINE_MAX_SCALE, examineScaler))
-    local displayItem = TEN.View.DisplayItem.GetItemByName(tostring(item))
+    local displayItem = itemData:GetDisplayItem()
     displayItem:SetRotation(examineRotation)
     displayItem:SetScale(Vec3(examineScaler))
     
@@ -58,7 +57,7 @@ function Examine.SetupText(itemData)
     local item = itemData.objectID
 
     examineShowString = false
-    local objectName = Util.GetObjectIDString(item)
+    local objectName = Objects.GetSlotName(item)
     local stringKey = objectName:lower().."_text"
     local localizedString = Flow.IsStringPresent(stringKey) and Flow.GetString(stringKey) or nil
 
