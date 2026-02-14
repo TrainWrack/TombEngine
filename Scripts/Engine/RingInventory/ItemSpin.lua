@@ -77,15 +77,14 @@ function ItemSpin.Update()
     for i = 1, itemCount do
         local item = items[i]
         if item and item.objectID then
-            local currentItem = item.objectID
-            
-            local displayItem = ItemSpin.currentItem:GetDisplayItem()
+
+            local displayItem = item:GetDisplayItem()
             
             if displayItem then
                 local targetAngle = CalculateRingAngle(i, itemCount, ItemSpin.rotationOffset)
                 local currentRotation = displayItem:GetRotation()
                 
-                if currentItem == ItemSpin.currentItem:GetObjectID() then
+                if item == ItemSpin.currentItem then
                     local newY = (currentRotation.y + ItemSpin.ROTATION_SPEED) % 360
                     displayItem:SetRotation(Rotation(currentRotation.x, newY, currentRotation.z))
                 else
