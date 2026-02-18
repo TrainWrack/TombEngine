@@ -16,6 +16,7 @@
 #include "Game/effects/Footprint.h"
 #include "Game/effects/Ripple.h"
 #include "Game/effects/simple_particle.h"
+#include "Game/effects/ParticleGroup.h"
 #include "Game/effects/smoke.h"
 #include "Game/effects/spark.h"
 #include "Game/effects/Splash.h"
@@ -1800,6 +1801,38 @@ namespace TEN::Renderer
 					Lerp(part.PrevSize, part.size, GetInterpolationFactor()),
 					Lerp(part.PrevSize, part.size, GetInterpolationFactor()) / 2),
 				BlendMode::AlphaBlend, true, view);
+		}
+	}
+
+	void Renderer::PrepareParticleGroups(RenderView& view)
+	{
+		using namespace TEN::Effects::ParticleGroups;
+
+		for (const auto& group : ParticleGroupList)
+		{
+			if (!group.Active)
+				continue;
+
+			if (!CheckIfSlotExists(group.SpriteSeqID, "ParticleGroup rendering"))
+				continue;
+
+			for (const auto& p : group.Particles)
+			{
+				if (!p.Active)
+					continue;
+
+				auto interpPos = Vector3::Lerp(p.PrevPosition, p.Position, GetInterpolationFactor());
+				auto interpSize = Lerp(p.PrevSize, p.Size, GetInterpolationFactor());
+				auto interpRotation = Lerp(p.PrevRotation, p.Rotation, GetInterpolationFactor());
+
+				AddSpriteBillboard(
+					&_sprites[Objects[group.SpriteSeqID].meshIndex + p.SpriteIndex],
+					interpPos,
+					Vector4(p.ParticleColor.R(), p.ParticleColor.G(), p.ParticleColor.B(), p.ParticleColor.A()),
+					interpRotation, 1.0f,
+					Vector2(interpSize, interpSize),
+					group.RenderBlendMode, true, view);
+			}
 		}
 	}
 

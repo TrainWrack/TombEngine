@@ -19,6 +19,7 @@
 #include "Game/effects/Hair.h"
 #include "Game/effects/Ripple.h"
 #include "Game/effects/simple_particle.h"
+#include "Game/effects/ParticleGroup.h"
 #include "Game/effects/smoke.h"
 #include "Game/effects/spark.h"
 #include "Game/effects/Splash.h"
@@ -76,6 +77,7 @@ using namespace TEN::Effects::Environment;
 using namespace TEN::Effects::Explosion;
 using namespace TEN::Effects::Footprint;
 using namespace TEN::Effects::Hair;
+using namespace TEN::Effects::ParticleGroups;
 using namespace TEN::Effects::Ripple;
 using namespace TEN::Effects::Smoke;
 using namespace TEN::Effects::Spark;
@@ -216,6 +218,7 @@ GameStatus GamePhase(bool insideMenu)
 	UpdateSparkParticles();
 	UpdateSmokeParticles();
 	UpdateSimpleParticles();
+	UpdateParticleGroups();
 	UpdateExplosionParticles();
 	UpdateShockwaves();
 	UpdateBeetleSwarm();

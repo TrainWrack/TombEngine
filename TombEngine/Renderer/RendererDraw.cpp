@@ -1822,6 +1822,7 @@ namespace TEN::Renderer
 		PrepareSmokes(view);
 		PrepareSmokeParticles(view);
 		PrepareSimpleParticles(view);
+		PrepareParticleGroups(view);
 		PrepareSparkParticles(view);
 		PrepareExplosionParticles(view);
 		PrepareFootprints(view);

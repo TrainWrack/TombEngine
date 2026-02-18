@@ -10,10 +10,12 @@
 #include "Game/effects/effects.h"
 #include "Game/effects/Electricity.h"
 #include "Game/effects/explosion.h"
+#include "Game/effects/ParticleGroup.h"
 #include "Game/effects/spark.h"
 #include "Game/effects/Streamer.h"
 #include "Game/effects/tomb4fx.h"
 #include "Game/effects/weather.h"
+#include "Game/room.h"
 #include "Game/Setup.h"
 #include "Math/Math.h"
 #include "Objects/Utils/object_helper.h"
@@ -44,6 +46,7 @@ using namespace TEN::Effects::DisplaySprite;
 using namespace TEN::Effects::Electricity;
 using namespace TEN::Effects::Environment;
 using namespace TEN::Effects::Explosion;
+using namespace TEN::Effects::ParticleGroups;
 using namespace TEN::Effects::Spark;
 using namespace TEN::Effects::Streamer;
 using namespace TEN::Math;
@@ -735,10 +738,297 @@ namespace TEN::Scripting::Effects
 		return Vec3(Weather.Wind());
 	}
 
+	// ========================
+	// ParticleGroup Lua API
+	// ========================
+
+	/// Create a particle group for managing collections of particles with Lua-driven behavior.
+	// @function CreateParticleGroup
+	// @tparam Objects.ObjID spriteSeqID Sprite sequence slot ID.
+	// @tparam int maxParticles Maximum number of particles in the group.
+	// @treturn ParticleGroup A new ParticleGroup object, or nil on failure.
+	static ParticleGroup* LuaCreateParticleGroup(GAME_OBJECT_ID spriteSeqID, int maxParticles)
+	{
+		if (!CheckIfSlotExists(spriteSeqID, "CreateParticleGroup"))
+			return nullptr;
+
+		int id = CreateParticleGroup(spriteSeqID, maxParticles);
+		if (id < 0)
+			return nullptr;
+
+		return &ParticleGroupList[id];
+	}
+
 	void Register(sol::state* state, sol::table& parent) 
 	{
 		auto tableEffects = sol::table(state->lua_state(), sol::create);
 		parent.set(ScriptReserved_Effects, tableEffects);
+
+		// Register ParticleGroup usertype.
+		parent.new_usertype<ParticleGroup>(
+			ScriptReserved_ParticleGroup,
+
+			/// Start emitting particles.
+			// @function ParticleGroup:Start
+			"Start", &ParticleGroup::Start,
+
+			/// Stop emitting particles. Existing particles continue until they expire.
+			// @function ParticleGroup:Stop
+			"Stop", &ParticleGroup::Stop,
+
+			/// Pause emission. Existing particles freeze.
+			// @function ParticleGroup:Pause
+			"Pause", &ParticleGroup::Pause,
+
+			/// Resume emission after pause.
+			// @function ParticleGroup:Resume
+			"Resume", &ParticleGroup::Resume,
+
+			/// Emit a burst of particles immediately.
+			// @function ParticleGroup:EmitBurst
+			// @tparam int count Number of particles to emit.
+			"EmitBurst", &ParticleGroup::EmitBurst,
+
+			/// Get number of active particles.
+			// @function ParticleGroup:GetActiveCount
+			// @treturn int Number of active particles.
+			"GetActiveCount", &ParticleGroup::GetActiveCount,
+
+			/// Set the emission rate.
+			// @function ParticleGroup:SetEmissionRate
+			// @tparam float rate Particles per second.
+			"SetEmissionRate", [](ParticleGroup& self, float rate) { self.EmissionRate = std::max(0.0f, rate); },
+
+			/// Set the emitter position.
+			// @function ParticleGroup:SetPosition
+			// @tparam Vec3 pos World position.
+			"SetPosition", [](ParticleGroup& self, const Vec3& pos)
+			{
+				self.EmitterPosition = pos.ToVector3();
+				self.RoomNumber = FindRoomNumber(Vector3i((int)pos.x, (int)pos.y, (int)pos.z));
+			},
+
+			/// Get the emitter position.
+			// @function ParticleGroup:GetPosition
+			// @treturn Vec3 World position.
+			"GetPosition", [](const ParticleGroup& self) { return Vec3(self.EmitterPosition); },
+
+			/// Set initial velocity for new particles.
+			// @function ParticleGroup:SetInitialVelocity
+			// @tparam Vec3 vel Velocity vector.
+			"SetInitialVelocity", [](ParticleGroup& self, const Vec3& vel) { self.InitVelocity = vel.ToVector3(); },
+
+			/// Set random range added to initial velocity.
+			// @function ParticleGroup:SetInitialVelocityRandom
+			// @tparam Vec3 range Random range per axis (value is +/- range).
+			"SetInitialVelocityRandom", [](ParticleGroup& self, const Vec3& range) { self.InitVelocityRandom = range.ToVector3(); },
+
+			/// Set initial acceleration for new particles.
+			// @function ParticleGroup:SetInitialAcceleration
+			// @tparam Vec3 accel Acceleration vector.
+			"SetInitialAcceleration", [](ParticleGroup& self, const Vec3& accel) { self.InitAcceleration = accel.ToVector3(); },
+
+			/// Set fixed lifetime for new particles.
+			// @function ParticleGroup:SetLifetime
+			// @tparam float seconds Lifetime in seconds.
+			"SetLifetime", [](ParticleGroup& self, float seconds)
+			{
+				seconds = std::max(0.01f, seconds);
+				self.LifetimeMin = seconds;
+				self.LifetimeMax = seconds;
+			},
+
+			/// Set lifetime range for new particles.
+			// @function ParticleGroup:SetLifetimeRange
+			// @tparam float minSeconds Minimum lifetime.
+			// @tparam float maxSeconds Maximum lifetime.
+			"SetLifetimeRange", [](ParticleGroup& self, float minSec, float maxSec)
+			{
+				self.LifetimeMin = std::max(0.01f, minSec);
+				self.LifetimeMax = std::max(self.LifetimeMin, maxSec);
+			},
+
+			/// Set fixed initial size for new particles.
+			// @function ParticleGroup:SetInitialSize
+			// @tparam float size Particle size.
+			"SetInitialSize", [](ParticleGroup& self, float size)
+			{
+				self.InitSizeMin = size;
+				self.InitSizeMax = size;
+			},
+
+			/// Set initial size range for new particles.
+			// @function ParticleGroup:SetInitialSizeRange
+			// @tparam float min Minimum size.
+			// @tparam float max Maximum size.
+			"SetInitialSizeRange", [](ParticleGroup& self, float min, float max)
+			{
+				self.InitSizeMin = min;
+				self.InitSizeMax = std::max(min, max);
+			},
+
+			/// Set initial color for new particles.
+			// @function ParticleGroup:SetInitialColor
+			// @tparam Color color Particle color.
+			"SetInitialColor", [](ParticleGroup& self, const ScriptColor& color)
+			{
+				self.InitColorMin = Color(color);
+				self.InitColorMax = Color(color);
+			},
+
+			/// Set initial color range for new particles.
+			// @function ParticleGroup:SetInitialColorRange
+			// @tparam Color min Minimum color.
+			// @tparam Color max Maximum color.
+			"SetInitialColorRange", [](ParticleGroup& self, const ScriptColor& min, const ScriptColor& max)
+			{
+				self.InitColorMin = Color(min);
+				self.InitColorMax = Color(max);
+			},
+
+			/// Set initial rotation for new particles (degrees).
+			// @function ParticleGroup:SetInitialRotation
+			// @tparam float rotation Rotation in degrees.
+			"SetInitialRotation", [](ParticleGroup& self, float rotation) { self.InitRotation = rotation * RADIAN; },
+
+			/// Set initial rotational velocity for new particles (degrees/sec).
+			// @function ParticleGroup:SetInitialRotationVelocity
+			// @tparam float rotVel Rotational velocity in degrees per second.
+			"SetInitialRotationVelocity", [](ParticleGroup& self, float rotVel) { self.InitRotationVel = rotVel * RADIAN; },
+
+			/// Set blend mode for rendering.
+			// @function ParticleGroup:SetBlendMode
+			// @tparam Effects.BlendID mode Blend mode.
+			"SetBlendMode", [](ParticleGroup& self, BlendMode mode) { self.RenderBlendMode = mode; },
+
+			/// Set sprite sequence for the group.
+			// @function ParticleGroup:SetSpriteSequence
+			// @tparam Objects.ObjID spriteSeqID Sprite sequence slot ID.
+			"SetSpriteSequence", [](ParticleGroup& self, GAME_OBJECT_ID spriteSeqID)
+			{
+				if (CheckIfSlotExists(spriteSeqID, "ParticleGroup:SetSpriteSequence"))
+					self.SpriteSeqID = spriteSeqID;
+			},
+
+			/// Set sprite index for new particles within the sprite sequence.
+			// @function ParticleGroup:SetSpriteIndex
+			// @tparam int index Sprite index.
+			"SetSpriteIndex", [](ParticleGroup& self, int index) { self.InitSpriteIndex = index; },
+
+			/// Set render distance.
+			// @function ParticleGroup:SetRenderDistance
+			// @tparam float distance Maximum render distance.
+			"SetRenderDistance", [](ParticleGroup& self, float distance) { self.RenderDistance = std::max(0.0f, distance); },
+
+			/// Get a specific particle's data as a table.
+			// @function ParticleGroup:GetParticle
+			// @tparam int index Particle index (0-based).
+			// @treturn table Particle data table with position, velocity, size, color, age, etc.
+			"GetParticle", [](ParticleGroup& self, int index, sol::this_state s) -> sol::object
+			{
+				if (index < 0 || index >= (int)self.Particles.size() || !self.Particles[index].Active)
+					return sol::nil;
+
+				const auto& p = self.Particles[index];
+				sol::state_view lua(s);
+				auto tbl = lua.create_table();
+				tbl["id"] = p.ID;
+				tbl["position"] = Vec3(p.Position);
+				tbl["velocity"] = Vec3(p.Velocity);
+				tbl["acceleration"] = Vec3(p.Acceleration);
+				tbl["size"] = p.Size;
+				tbl["rotation"] = p.Rotation;
+				tbl["age"] = p.Age;
+				tbl["lifetime"] = p.Lifetime;
+				tbl["ageNormalized"] = p.AgeNormalized;
+				tbl["spriteIndex"] = p.SpriteIndex;
+				return tbl;
+			},
+
+			/// Set a specific particle's properties from a table.
+			// @function ParticleGroup:SetParticle
+			// @tparam int index Particle index (0-based).
+			// @tparam table data Table with properties to set (position, velocity, size, color, rotation, spriteIndex, acceleration).
+			"SetParticle", [](ParticleGroup& self, int index, sol::table data)
+			{
+				if (index < 0 || index >= (int)self.Particles.size() || !self.Particles[index].Active)
+					return;
+
+				auto& p = self.Particles[index];
+
+				if (auto pos = data.get<sol::optional<Vec3>>("position"))
+					p.Position = pos->ToVector3();
+				if (auto vel = data.get<sol::optional<Vec3>>("velocity"))
+					p.Velocity = vel->ToVector3();
+				if (auto accel = data.get<sol::optional<Vec3>>("acceleration"))
+					p.Acceleration = accel->ToVector3();
+				if (auto size = data.get<sol::optional<float>>("size"))
+					p.Size = *size;
+				if (auto rot = data.get<sol::optional<float>>("rotation"))
+					p.Rotation = *rot;
+				if (auto sprite = data.get<sol::optional<int>>("spriteIndex"))
+					p.SpriteIndex = *sprite;
+				if (auto color = data.get<sol::optional<ScriptColor>>("color"))
+					p.ParticleColor = Color(*color);
+			},
+
+			/// Iterate over all active particles, calling a function for each.
+			// @function ParticleGroup:ForEachParticle
+			// @tparam function callback Function receiving (index, particleTable) for each active particle.
+			"ForEachParticle", [](ParticleGroup& self, sol::function callback, sol::this_state s)
+			{
+				sol::state_view lua(s);
+				for (int i = 0; i < (int)self.Particles.size(); i++)
+				{
+					if (!self.Particles[i].Active)
+						continue;
+
+					const auto& p = self.Particles[i];
+					auto tbl = lua.create_table();
+					tbl["id"] = p.ID;
+					tbl["position"] = Vec3(p.Position);
+					tbl["velocity"] = Vec3(p.Velocity);
+					tbl["acceleration"] = Vec3(p.Acceleration);
+					tbl["size"] = p.Size;
+					tbl["rotation"] = p.Rotation;
+					tbl["age"] = p.Age;
+					tbl["lifetime"] = p.Lifetime;
+					tbl["ageNormalized"] = p.AgeNormalized;
+					tbl["spriteIndex"] = p.SpriteIndex;
+
+					auto result = callback(i, tbl);
+
+					// If callback returns a table, apply changes back.
+					if (result.valid() && result.get_type() == sol::type::table)
+					{
+						sol::table changes = result;
+						auto& mp = self.Particles[i];
+
+						if (auto pos = changes.get<sol::optional<Vec3>>("position"))
+							mp.Position = pos->ToVector3();
+						if (auto vel = changes.get<sol::optional<Vec3>>("velocity"))
+							mp.Velocity = vel->ToVector3();
+						if (auto accel = changes.get<sol::optional<Vec3>>("acceleration"))
+							mp.Acceleration = accel->ToVector3();
+						if (auto size = changes.get<sol::optional<float>>("size"))
+							mp.Size = *size;
+						if (auto rot = changes.get<sol::optional<float>>("rotation"))
+							mp.Rotation = *rot;
+						if (auto sprite = changes.get<sol::optional<int>>("spriteIndex"))
+							mp.SpriteIndex = *sprite;
+						if (auto color = changes.get<sol::optional<ScriptColor>>("color"))
+							mp.ParticleColor = Color(*color);
+					}
+				}
+			},
+
+			/// (int) Unique group ID. Read-only.
+			// @mem id
+			"id", sol::readonly(&ParticleGroup::ID),
+
+			/// (bool) Whether the group is active. Read-only.
+			// @mem active
+			"active", sol::readonly(&ParticleGroup::Active));
 
 		// Emitters
 		tableEffects.set_function(ScriptReserved_EmitLightningArc, &EmitLightningArc);
@@ -757,6 +1047,9 @@ namespace TEN::Scripting::Effects
 		tableEffects.set_function(ScriptReserved_MakeExplosion, &MakeExplosion);
 		tableEffects.set_function(ScriptReserved_MakeEarthquake, &Earthquake);
 		tableEffects.set_function(ScriptReserved_GetWind, &GetWind);
+
+		// Particle groups
+		tableEffects.set_function(ScriptReserved_CreateParticleGroup, &LuaCreateParticleGroup);
 
 		auto handler = LuaHandler(state);
 		handler.MakeReadOnlyTable(tableEffects, ScriptReserved_BlendID, BLEND_IDS);
