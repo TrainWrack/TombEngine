@@ -35,6 +35,7 @@ static constexpr char ScriptReserved_AnimSettings[]		= "Animations";
 static constexpr char ScriptReserved_GraphicsSettings[]	= "Graphics";
 static constexpr char ScriptReserved_HairSettings[]		= "Hair";
 static constexpr char ScriptReserved_HudSettings[]		= "Hud";
+static constexpr char ScriptReserved_PFSettings[]		= "Pathfinding";
 static constexpr char ScriptReserved_PhysicsSettings[]	= "Physics";
 static constexpr char ScriptReserved_WeaponSettings[]	= "Weapons";
 
@@ -233,6 +234,7 @@ static constexpr char ScriptReserved_SetOnCollidedWithObject[]	= "SetOnCollidedW
 static constexpr char ScriptReserved_GetOnCollidedWithRoom[]	= "GetOnCollidedWithRoom";
 static constexpr char ScriptReserved_SetOnCollidedWithRoom[]	= "SetOnCollidedWithRoom";
 static constexpr char ScriptReserved_ShowInteractionHighlight[] = "ShowInteractionHighlight";
+static constexpr char ScriptReserved_HideInteractionHighlight[] = "HideInteractionHighlight";
 
 // Flow Functions
 static constexpr char ScriptReserved_AddLevel[]					= "AddLevel";
@@ -274,20 +276,21 @@ static constexpr char ScriptReserved_IsStringPresent[]		= "IsStringPresent";
 static constexpr char ScriptReserved_SetLanguageNames[]		= "SetLanguageNames";
 
 // Flow Tables
-static constexpr char ScriptReserved_WeatherType[]	  = "WeatherType";
-static constexpr char ScriptReserved_LaraType[]		  = "LaraType";
-static constexpr char ScriptReserved_WeaponType[]	  = "WeaponType";
-static constexpr char ScriptReserved_AmmoType[]		  = "AmmoType";
-static constexpr char ScriptReserved_WeaponMode[]	  = "WeaponMode";
-static constexpr char ScriptReserved_RotationAxis[]	  = "RotationAxis";
-static constexpr char ScriptReserved_ItemAction[]	  = "ItemAction";
-static constexpr char ScriptReserved_ErrorMode[]	  = "ErrorMode";
-static constexpr char ScriptReserved_FastReload[]	  = "FastReload";
-static constexpr char ScriptReserved_InventoryItem[]  = "InventoryItem";
-static constexpr char ScriptReserved_HandStatus[]	  = "HandStatus";
-static constexpr char ScriptReserved_WaterStatus[]	  = "WaterStatus";
-static constexpr char ScriptReserved_GameStatus[]	  = "GameStatus";
-static constexpr char ScriptReserved_FreezeMode[]	  = "FreezeMode";
+static constexpr char ScriptReserved_WeatherType[]		= "WeatherType";
+static constexpr char ScriptReserved_LaraType[]			= "LaraType";
+static constexpr char ScriptReserved_WeaponType[]		= "WeaponType";
+static constexpr char ScriptReserved_AmmoType[]			= "AmmoType";
+static constexpr char ScriptReserved_WeaponMode[]		= "WeaponMode";
+static constexpr char ScriptReserved_RotationAxis[]		= "RotationAxis";
+static constexpr char ScriptReserved_ItemAction[]		= "ItemAction";
+static constexpr char ScriptReserved_ErrorMode[]		= "ErrorMode";
+static constexpr char ScriptReserved_FastReload[]		= "FastReload";
+static constexpr char ScriptReserved_InventoryItem[]	= "InventoryItem";
+static constexpr char ScriptReserved_HandStatus[]		= "HandStatus";
+static constexpr char ScriptReserved_WaterStatus[]		= "WaterStatus";
+static constexpr char ScriptReserved_GameStatus[]		= "GameStatus";
+static constexpr char ScriptReserved_FreezeMode[]		= "FreezeMode";
+static constexpr char ScriptReserved_PathfindingMode[]	= "PathfindingMode";
 
 // Functions
 static constexpr char ScriptReserved_IsNameInUse[]					= "IsNameInUse";
@@ -311,10 +314,13 @@ static constexpr char ScriptReserved_SetInvItemCount[]				= "SetItemCount";
 static constexpr char ScriptReserved_GetUsedItem[]					= "GetUsedItem";
 static constexpr char ScriptReserved_SetUsedItem[]					= "SetUsedItem";
 static constexpr char ScriptReserved_ClearUsedItem[]				= "ClearUsedItem";
-static constexpr char ScriptReserved_SetOpenInv[]					= "SetEnterInventory";
-static constexpr char ScriptReserved_GetOpenInv[]					= "GetEnterInventory";
+static constexpr char ScriptReserved_UseItem[]						= "UseItem";
+static constexpr char ScriptReserved_GetFocusedItem[]				= "GetFocusedItem";
+static constexpr char ScriptReserved_SetFocusedItem[]				= "SetFocusedItem";
+static constexpr char ScriptReserved_ResetInventory[]				= "ResetToDefault";
 static constexpr char ScriptReserved_ConvertObjectToInvItem[]		= "ConvertObjectToInventoryItem";
 static constexpr char ScriptReserved_ConvertInvItemToObject[]		= "ConvertInventoryItemToObject";
+static constexpr char ScriptReserved_GetSlotName[]					= "GetSlotName";
 static constexpr char ScriptReserved_GetMoveableByName[]			= "GetMoveableByName";
 static constexpr char ScriptReserved_GetStaticByName[]				= "GetStaticByName";
 static constexpr char ScriptReserved_GetMoveablesBySlot[]			= "GetMoveablesBySlot";
@@ -331,7 +337,6 @@ static constexpr char ScriptReserved_CalculateHorizontalDistance[]	= "CalculateH
 static constexpr char ScriptReserved_PercentToScreen[]				= "PercentToScreen";
 static constexpr char ScriptReserved_ScreenToPercent[]				= "ScreenToPercent";
 static constexpr char ScriptReserved_GetAspectRatio[]				= "GetAspectRatio";
-static constexpr char ScriptReserved_UseBinoculars[]					= "UseBinoculars";
 static constexpr char ScriptReserved_HasLineOfSight[]				= "HasLineOfSight";
 
 static constexpr char ScriptReserved_AddCallback[]					= "AddCallback";
@@ -355,8 +360,8 @@ static constexpr char ScriptReserved_EmitFlow[]						= "EmitFlow";
 static constexpr char ScriptReserved_EmitStreamer[]					= "EmitStreamer";
 static constexpr char ScriptReserved_MakeExplosion[]				= "MakeExplosion";
 static constexpr char ScriptReserved_MakeEarthquake[]				= "MakeEarthquake";
-
 static constexpr char ScriptReserved_GetWind[]						= "GetWind";
+
 static constexpr char ScriptReserved_FlashScreen[]					= "FlashScreen";
 static constexpr char ScriptReserved_FadeIn[]						= "FadeIn";
 static constexpr char ScriptReserved_FadeOut[]						= "FadeOut";
@@ -417,8 +422,6 @@ static constexpr char ScriptReserved_GetLaserSight[]				= "GetLaserSight";
 static constexpr char ScriptReserved_SetLaserSight[]				= "SetLaserSight";
 static constexpr char ScriptReserved_PlayerIsTorchLit[]				= "IsTorchLit";
 static constexpr char ScriptReserved_PrintLog[]						= "PrintLog";
-static constexpr char ScriptReserved_GetObjectIDString[]			= "GetObjectIDString";
-static constexpr char ScriptReserved_OnUseItemCallBack[]			= "OnUseItemCallBack";
 static constexpr char ScriptReserved_PickMoveable[]					= "PickMoveableByDisplayPosition";
 static constexpr char ScriptReserved_PickStatic[]					= "PickStaticByDisplayPosition";
 static constexpr char ScriptReserved_GetDisplayPosition[]			= "GetDisplayPosition";
@@ -563,22 +566,17 @@ constexpr char ScriptReserved_StaticSetCollidable[]	= "SetCollidable";
 constexpr char ScriptReserved_StaticShatter[]		= "Shatter";
 
 // DrawItem
-constexpr char ScriptReserved_DrawItem[]			= "DisplayItem";
-constexpr char ScriptReserved_DrawItemRemove[]		= "Remove";
-constexpr char ScriptReserved_DrawItemExists[]		= "Exists";
-constexpr char ScriptReserved_DrawItemGetItem[]		= "GetItemByName";
-constexpr char ScriptReserved_DrawItemRemoveItem[]	= "RemoveItem";
-constexpr char ScriptReserved_DrawItemGetMeshBits[] = "GetMeshBits";
-constexpr char ScriptReserved_DrawItemSetMeshBits[] = "SetMeshBits";
-constexpr char ScriptReserved_DrawItemClearAll[]	= "ClearAllItems";
-constexpr char ScriptReserved_DrawItemIsObjectIDInUse[] = "IsObjectIDInUse";
-constexpr char ScriptReserved_DrawItemGetCamera[]	= "GetCameraPosition";
-constexpr char ScriptReserved_DrawItemSetCamera[]	= "SetCameraPosition";
-constexpr char ScriptReserved_DrawItemGetTarget[]	= "GetTargetPosition";
-constexpr char ScriptReserved_DrawItemSetTarget[]	= "SetTargetPosition";
-constexpr char ScriptReserved_DrawItemResetCamera[] = "ResetCamera";
-constexpr char ScriptReserved_DrawItemGetAmbientLight[] = "GetAmbientLight";
-constexpr char ScriptReserved_DrawItemSetAmbientLight[] = "SetAmbientLight";
+constexpr char ScriptReserved_DisplayItem[]					= "DisplayItem";
+constexpr char ScriptReserved_DisplayItemGetMeshBits[]		= "GetMeshBits";
+constexpr char ScriptReserved_DisplayItemSetMeshBits[]		= "SetMeshBits";
+constexpr char ScriptReserved_DisplayItemGetCamera[]		= "GetCameraPosition";
+constexpr char ScriptReserved_DisplayItemSetCamera[]		= "SetCameraPosition";
+constexpr char ScriptReserved_DisplayItemGetTarget[]		= "GetTargetPosition";
+constexpr char ScriptReserved_DisplayItemSetTarget[]		= "SetTargetPosition";
+constexpr char ScriptReserved_DisplayItemResetCamera[]		= "ResetCamera";
+constexpr char ScriptReserved_DisplayItemDraw[]				= "Draw";
+constexpr char ScriptReserved_DisplayItemGetAmbientLight[]	= "GetAmbientLight";
+constexpr char ScriptReserved_DisplayItemSetAmbientLight[]	= "SetAmbientLight";
 
 // 2D Context
 constexpr auto ScriptReserved_SetScreenPosition = "SetScreenPosition";
