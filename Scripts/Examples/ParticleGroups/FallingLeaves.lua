@@ -39,9 +39,9 @@ function FallingLeaves.Create(origin, spriteID)
 
     group:SetBlendMode(TEN.Effects.BlendID.ALPHA_BLEND)
 
-    -- Leaves drift downward slowly with some horizontal spread.
-    group:SetInitialVelocity(Vec3(0, 15, 0))           -- Gentle fall (positive Y = down in TEN)
-    group:SetInitialVelocityRandom(Vec3(40, 5, 40))     -- Spread horizontally
+    -- Leaves drift downward slowly with some horizontal spread (positive Y = down).
+    group:SetInitialVelocity(Vec3(0, 15, 0))
+    group:SetInitialVelocityRandom(Vec3(40, 5, 40))
     group:SetInitialAcceleration(Vec3(0, 3, 0))         -- Light gravity pull
 
     -- Gentle tumbling.
@@ -72,8 +72,12 @@ function FallingLeaves.Update()
     end
 
     -- Smoothly interpolate wind toward target (simple exponential decay).
-    local swayAmplitude = 25
-    local swayFrequency = 1.5
+    local swayAmplitude     = 25
+    local swayFrequency     = 1.5
+    local swayResponsiveness = 5    -- How quickly particles react to sway/wind
+    local horizontalDamping  = 0.95 -- Air resistance on horizontal velocity
+    local verticalDamping    = 0.98 -- Air resistance on vertical velocity
+    local gravityPull        = 3    -- Gentle downward pull each frame
 
     group:ForEachParticle(function(index, particle)
         local pos = particle.position
@@ -86,11 +90,11 @@ function FallingLeaves.Update()
         local swayZ = swayAmplitude * math.cos(swayFrequency * age + phase * 0.7)
 
         -- Apply sway and wind as velocity adjustments.
-        local newVx = vel.x * 0.95 + (swayX + windX) * dt * 5
-        local newVz = vel.z * 0.95 + (swayZ + windZ) * dt * 5
+        local newVx = vel.x * horizontalDamping + (swayX + windX) * dt * swayResponsiveness
+        local newVz = vel.z * horizontalDamping + (swayZ + windZ) * dt * swayResponsiveness
 
         -- Leaves slow their fall slightly as they sway (air resistance).
-        local newVy = vel.y * 0.98 + 3 * dt
+        local newVy = vel.y * verticalDamping + gravityPull * dt
 
         -- Shrink slightly near end of life (curling up).
         local lifeFade = 1.0 - particle.ageNormalized * 0.4

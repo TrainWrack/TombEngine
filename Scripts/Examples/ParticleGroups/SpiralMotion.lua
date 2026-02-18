@@ -45,7 +45,7 @@ function SpiralMotion.Update()
 
     local basePos = group:GetPosition()
     local radius = 80       -- Spiral radius
-    local riseSpeed = -60    -- Upward speed (negative Y = up in TEN)
+    local riseSpeed = -60    -- Upward speed (negative Y = up)
     local angularSpeed = 4.0 -- Radians per second
 
     group:ForEachParticle(function(index, particle)

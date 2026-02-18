@@ -142,9 +142,10 @@ function FlockingBoids.Update()
         local toOriginX = origin.x - boid.position.x
         local toOriginY = origin.y - boid.position.y
         local toOriginZ = origin.z - boid.position.z
-        local distToOrigin = math.sqrt(toOriginX * toOriginX + toOriginY * toOriginY + toOriginZ * toOriginZ)
+        local distSqToOrigin = toOriginX * toOriginX + toOriginY * toOriginY + toOriginZ * toOriginZ
 
-        if distToOrigin > BOUND_RADIUS then
+        if distSqToOrigin > BOUND_RADIUS * BOUND_RADIUS then
+            local distToOrigin = math.sqrt(distSqToOrigin)
             local boundForce = (distToOrigin - BOUND_RADIUS) * 0.05
             steerX = steerX + toOriginX / distToOrigin * boundForce
             steerY = steerY + toOriginY / distToOrigin * boundForce

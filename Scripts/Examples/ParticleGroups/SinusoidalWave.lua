@@ -28,7 +28,7 @@ function SinusoidalWave.Create(origin, spriteID)
     group:SetInitialColor(Color(100, 180, 255))
     group:SetBlendMode(TEN.Effects.BlendID.ADDITIVE)
 
-    -- Particles spread horizontally with slight upward drift.
+    -- Particles spread horizontally with slight upward drift (negative Y = up).
     group:SetInitialVelocity(Vec3(80, -5, 0))
     group:SetInitialVelocityRandom(Vec3(20, 5, 10))
 
@@ -41,7 +41,8 @@ end
 function SinusoidalWave.Update()
     if not group or not group.active then return end
 
-    time = time + 1 / 30 -- Advance timer (~30 FPS)
+    local dt = 1 / 30
+    time = time + dt -- Advance timer (~30 FPS)
 
     local amplitude = 64  -- Height of the wave
     local frequency = 3.0 -- Wave oscillation speed
@@ -52,7 +53,7 @@ function SinusoidalWave.Update()
 
         -- Sine wave: offset Y based on particle age and global time.
         local waveOffset = amplitude * math.sin(frequency * age + time * 2.0)
-        pos.y = pos.y + waveOffset * (1 / 30) -- Apply as incremental offset per frame
+        pos.y = pos.y + waveOffset * dt -- Apply as incremental offset per frame
 
         -- Fade out near end of life.
         local fade = 1.0 - particle.ageNormalized
