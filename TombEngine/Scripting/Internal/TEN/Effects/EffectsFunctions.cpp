@@ -910,20 +910,12 @@ namespace TEN::Scripting::Effects
 					self.SpriteSeqID = spriteSeqID;
 			},
 
-			/// Set sprite index for the group. Updates the sprite for all existing particles and future particles.
+			/// Set sprite index for newly emitted particles within the sprite sequence.
 			// @function ParticleGroup:SetSpriteIndex
 			// @tparam int index Sprite index within the sprite sequence.
-			"SetSpriteIndex", [](ParticleGroup& self, int index)
-			{
-				self.InitSpriteIndex = index;
-				for (auto& p : self.Particles)
-				{
-					if (p.Active)
-						p.SpriteIndex = index;
-				}
-			},
+			"SetSpriteIndex", [](ParticleGroup& self, int index) { self.InitSpriteIndex = index; },
 
-			/// Get the current sprite index.
+			/// Get the current sprite index used for new particles.
 			// @function ParticleGroup:GetSpriteIndex
 			// @treturn int Current sprite index.
 			"GetSpriteIndex", [](const ParticleGroup& self) { return self.InitSpriteIndex; },
