@@ -784,8 +784,8 @@ namespace TEN::Renderer
 					if (!p.Active)
 						continue;
 
-					int meshIndex = std::clamp(p.SpriteIndex, 0, Objects[group.ObjectID].nmeshes - 1);
-					auto& mesh = *GetMesh(Objects[group.ObjectID].meshIndex + meshIndex);
+					int clampedMeshIndex = std::clamp(p.SpriteIndex, 0, Objects[group.ObjectID].nmeshes - 1);
+					auto& mesh = *GetMesh(Objects[group.ObjectID].meshIndex + clampedMeshIndex);
 
 					for (auto& bucket : mesh.Buckets)
 					{
@@ -852,13 +852,13 @@ namespace TEN::Renderer
 					if (!p.Active)
 						continue;
 
-					int meshIndex = std::clamp(p.SpriteIndex, 0, Objects[group.ObjectID].nmeshes - 1);
-					const auto& mesh = *GetMesh(Objects[group.ObjectID].meshIndex + meshIndex);
+					int clampedMeshIndex = std::clamp(p.SpriteIndex, 0, Objects[group.ObjectID].nmeshes - 1);
+					const auto& mesh = *GetMesh(Objects[group.ObjectID].meshIndex + clampedMeshIndex);
 
 					_stInstancedStaticMeshBuffer.StaticMeshes[0].World = Matrix::Lerp(p.PrevTransform, p.Transform, GetInterpolationFactor());
 					_stInstancedStaticMeshBuffer.StaticMeshes[0].Color = Vector4(p.ParticleColor.R(), p.ParticleColor.G(), p.ParticleColor.B(), p.ParticleColor.A());
 					_stInstancedStaticMeshBuffer.StaticMeshes[0].Ambient = _rooms[p.RoomNumber].AmbientLight;
-					_stInstancedStaticMeshBuffer.StaticMeshes[0].LightMode = (int)moveableObj.ObjectMeshes[0]->LightMode;
+					_stInstancedStaticMeshBuffer.StaticMeshes[0].LightMode = (int)mesh.LightMode;
 
 					if (rendererPass != RendererPass::GBuffer)
 						BindInstancedStaticLights(_rooms[p.RoomNumber].LightsToDraw, 0);
