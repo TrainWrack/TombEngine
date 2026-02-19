@@ -743,16 +743,19 @@ namespace TEN::Scripting::Effects
 	// ========================
 
 	/// Create a particle group for managing collections of particles with Lua-driven behavior.
+	// If the specified object ID is a sprite sequence, particles render as sprites.
+	// If it is a mesh object (moveable), particles render as 3D meshes, and the sprite index
+	// selects which mesh within the object to draw.
 	// @function CreateParticleGroup
-	// @tparam Objects.ObjID spriteSeqID Sprite sequence slot ID.
+	// @tparam Objects.ObjID objectID Object slot ID (sprite sequence or mesh object).
 	// @tparam int maxParticles Maximum number of particles in the group.
 	// @treturn ParticleGroup A new ParticleGroup object, or nil on failure.
-	static ParticleGroup* LuaCreateParticleGroup(GAME_OBJECT_ID spriteSeqID, int maxParticles)
+	static ParticleGroup* LuaCreateParticleGroup(GAME_OBJECT_ID objectID, int maxParticles)
 	{
-		if (!CheckIfSlotExists(spriteSeqID, "CreateParticleGroup"))
+		if (!CheckIfSlotExists(objectID, "CreateParticleGroup"))
 			return nullptr;
 
-		int id = CreateParticleGroup(spriteSeqID, maxParticles);
+		int id = CreateParticleGroup(objectID, maxParticles);
 		if (id < 0)
 			return nullptr;
 
@@ -901,29 +904,50 @@ namespace TEN::Scripting::Effects
 			// @tparam Effects.BlendID mode Blend mode.
 			"SetBlendMode", [](ParticleGroup& self, BlendMode mode) { self.RenderBlendMode = mode; },
 
-			/// Set sprite sequence for the group.
+			/// Set object (sprite sequence or mesh object) for the group.
+			// For sprite sequences, the sprite index selects which sprite to draw.
+			// For mesh objects, the sprite index selects which mesh to draw.
 			// @function ParticleGroup:SetSpriteSequence
-			// @tparam Objects.ObjID spriteSeqID Sprite sequence slot ID.
-			"SetSpriteSequence", [](ParticleGroup& self, GAME_OBJECT_ID spriteSeqID)
+			// @tparam Objects.ObjID objectID Object slot ID.
+			"SetSpriteSequence", [](ParticleGroup& self, GAME_OBJECT_ID objectID)
 			{
-				if (CheckIfSlotExists(spriteSeqID, "ParticleGroup:SetSpriteSequence"))
-					self.SpriteSeqID = spriteSeqID;
+				if (CheckIfSlotExists(objectID, "ParticleGroup:SetSpriteSequence"))
+					self.ObjectID = objectID;
 			},
 
-			/// Set sprite index for newly emitted particles within the sprite sequence.
+			/// Set sprite/mesh index for newly emitted particles.
+			// For sprite sequences, this selects the sprite within the sequence.
+			// For mesh objects, this selects which mesh to draw.
 			// @function ParticleGroup:SetSpriteIndex
-			// @tparam int index Sprite index within the sprite sequence.
+			// @tparam int index Sprite or mesh index.
 			"SetSpriteIndex", [](ParticleGroup& self, int index) { self.InitSpriteIndex = index; },
 
-			/// Get the current sprite index used for new particles.
+			/// Get the current sprite/mesh index used for new particles.
 			// @function ParticleGroup:GetSpriteIndex
-			// @treturn int Current sprite index.
+			// @treturn int Current sprite or mesh index.
 			"GetSpriteIndex", [](const ParticleGroup& self) { return self.InitSpriteIndex; },
 
-			/// Get the current sprite sequence ID.
+			/// Get the current object ID.
 			// @function ParticleGroup:GetSpriteSequence
-			// @treturn Objects.ObjID Current sprite sequence slot ID.
-			"GetSpriteSequence", [](const ParticleGroup& self) { return self.SpriteSeqID; },
+			// @treturn Objects.ObjID Current object slot ID.
+			"GetSpriteSequence", [](const ParticleGroup& self) { return self.ObjectID; },
+
+			/// Check if this group renders meshes (true) or sprites (false).
+			// @function ParticleGroup:IsMeshGroup
+			// @treturn bool True if particles render as 3D meshes.
+			"IsMeshGroup", &ParticleGroup::IsMeshGroup,
+
+			/// Set initial orientation for mesh particles (radians: x=pitch, y=yaw, z=roll).
+			// Only affects mesh groups; ignored for sprite groups.
+			// @function ParticleGroup:SetInitialOrientation
+			// @tparam Vec3 orientation Orientation in radians (pitch, yaw, roll).
+			"SetInitialOrientation", [](ParticleGroup& self, const Vec3& orient) { self.InitOrientation = orient.ToVector3(); },
+
+			/// Set initial mesh scale for mesh particles.
+			// Only affects mesh groups; ignored for sprite groups.
+			// @function ParticleGroup:SetInitialMeshScale
+			// @tparam float scale Mesh scale factor.
+			"SetInitialMeshScale", [](ParticleGroup& self, float scale) { self.InitMeshScale = std::max(0.01f, scale); },
 
 			/// Set render distance.
 			// @function ParticleGroup:SetRenderDistance
@@ -933,7 +957,7 @@ namespace TEN::Scripting::Effects
 			/// Get a specific particle's data as a table.
 			// @function ParticleGroup:GetParticle
 			// @tparam int index Particle index (0-based).
-			// @treturn table Particle data table with position, velocity, size, color, age, etc.
+			// @treturn table Particle data table with position, velocity, size, color, age, orientation, meshScale, etc.
 			"GetParticle", [](ParticleGroup& self, int index, sol::this_state s) -> sol::object
 			{
 				if (index < 0 || index >= (int)self.Particles.size() || !self.Particles[index].Active)
@@ -952,13 +976,15 @@ namespace TEN::Scripting::Effects
 				tbl["lifetime"] = p.Lifetime;
 				tbl["ageNormalized"] = p.AgeNormalized;
 				tbl["spriteIndex"] = p.SpriteIndex;
+				tbl["orientation"] = Vec3(p.Orientation);
+				tbl["meshScale"] = p.MeshScale;
 				return tbl;
 			},
 
 			/// Set a specific particle's properties from a table.
 			// @function ParticleGroup:SetParticle
 			// @tparam int index Particle index (0-based).
-			// @tparam table data Table with properties to set (position, velocity, size, color, rotation, spriteIndex, acceleration).
+			// @tparam table data Table with properties to set (position, velocity, size, color, rotation, spriteIndex, acceleration, orientation, meshScale).
 			"SetParticle", [](ParticleGroup& self, int index, sol::table data)
 			{
 				if (index < 0 || index >= (int)self.Particles.size() || !self.Particles[index].Active)
@@ -980,6 +1006,10 @@ namespace TEN::Scripting::Effects
 					p.SpriteIndex = *sprite;
 				if (auto color = data.get<sol::optional<ScriptColor>>("color"))
 					p.ParticleColor = Color(*color);
+				if (auto orient = data.get<sol::optional<Vec3>>("orientation"))
+					p.Orientation = orient->ToVector3();
+				if (auto scale = data.get<sol::optional<float>>("meshScale"))
+					p.MeshScale = *scale;
 			},
 
 			/// Iterate over all active particles, calling a function for each.
@@ -1005,6 +1035,8 @@ namespace TEN::Scripting::Effects
 					tbl["lifetime"] = p.Lifetime;
 					tbl["ageNormalized"] = p.AgeNormalized;
 					tbl["spriteIndex"] = p.SpriteIndex;
+					tbl["orientation"] = Vec3(p.Orientation);
+					tbl["meshScale"] = p.MeshScale;
 
 					auto result = callback(i, tbl);
 
@@ -1028,6 +1060,10 @@ namespace TEN::Scripting::Effects
 							mp.SpriteIndex = *sprite;
 						if (auto color = changes.get<sol::optional<ScriptColor>>("color"))
 							mp.ParticleColor = Color(*color);
+						if (auto orient = changes.get<sol::optional<Vec3>>("orientation"))
+							mp.Orientation = orient->ToVector3();
+						if (auto scale = changes.get<sol::optional<float>>("meshScale"))
+							mp.MeshScale = *scale;
 					}
 				}
 			},

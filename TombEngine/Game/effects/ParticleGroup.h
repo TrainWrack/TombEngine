@@ -36,6 +36,12 @@ namespace TEN::Effects::ParticleGroups
 		float   Rotation      = 0.0f;
 		int     SpriteIndex   = 0;
 
+		// Mesh orientation (used when group renders meshes).
+		Vector3 Orientation  = Vector3::Zero;
+		float   MeshScale    = 1.0f;
+		Matrix  Transform    = Matrix::Identity;
+		Matrix  PrevTransform = Matrix::Identity;
+
 		// Lifetime
 		float Age           = 0.0f;
 		float Lifetime      = 1.0f;
@@ -51,9 +57,10 @@ namespace TEN::Effects::ParticleGroups
 
 		void StoreInterpolationData()
 		{
-			PrevPosition = Position;
-			PrevSize     = Size;
-			PrevRotation = Rotation;
+			PrevPosition  = Position;
+			PrevSize      = Size;
+			PrevRotation  = Rotation;
+			PrevTransform = Transform;
 		}
 	};
 
@@ -64,8 +71,8 @@ namespace TEN::Effects::ParticleGroups
 		int	 ID     = 0;
 		bool Active = false;
 
-		// Sprite
-		GAME_OBJECT_ID SpriteSeqID = GAME_OBJECT_ID::ID_DEFAULT_SPRITES;
+		// Object (can be sprite sequence or mesh object).
+		GAME_OBJECT_ID ObjectID = GAME_OBJECT_ID::ID_DEFAULT_SPRITES;
 		int            MaxParticles = MAX_GROUP_PARTICLES;
 
 		// Emission state
@@ -89,6 +96,10 @@ namespace TEN::Effects::ParticleGroups
 		float   InitRotation       = 0.0f;
 		float   InitRotationVel    = 0.0f;
 		int     InitSpriteIndex    = 0;
+
+		// Mesh-specific initial templates.
+		Vector3 InitOrientation      = Vector3::Zero;
+		float   InitMeshScale        = 1.0f;
 
 		// Rendering
 		BlendMode RenderBlendMode  = BlendMode::AlphaBlend;
@@ -117,7 +128,8 @@ namespace TEN::Effects::ParticleGroups
 		void Update(float dt);
 
 		// Queries
-		int GetActiveCount() const;
+		int  GetActiveCount() const;
+		bool IsMeshGroup() const;
 
 		void StoreInterpolationData();
 
@@ -131,7 +143,7 @@ namespace TEN::Effects::ParticleGroups
 	extern std::array<ParticleGroup, MAX_PARTICLE_GROUPS> ParticleGroupList;
 
 	// Management functions.
-	int  CreateParticleGroup(GAME_OBJECT_ID spriteSeqID, int maxParticles);
+	int  CreateParticleGroup(GAME_OBJECT_ID objectID, int maxParticles);
 	void UpdateParticleGroups();
 	void ClearParticleGroups();
 }

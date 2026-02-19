@@ -500,6 +500,7 @@ namespace TEN::Renderer
 		void DrawMesh(RendererItem* itemToDraw, RendererMesh* mesh, RendererObjectType type, int boneIndex, bool skinned, RenderView& view, RendererPass rendererPass);
 		void PrepareSimpleParticles(RenderView& view);
 		void PrepareParticleGroups(RenderView& view);
+		void DrawParticleGroupMeshes(RenderView& view, RendererPass rendererPass);
 		void PrepareStreamers(RenderView& view);
 		void PrepareFootprints(RenderView& view);
 		void DrawLoadingBar(float percent);

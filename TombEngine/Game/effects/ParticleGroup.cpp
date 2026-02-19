@@ -1,8 +1,11 @@
 #include "framework.h"
 #include "Game/effects/ParticleGroup.h"
 
+#include "Game/Setup.h"
 #include "Math/Math.h"
 #include "Specific/clock.h"
+#include "Specific/level.h"
+#include "Specific/trutils.h"
 
 using namespace TEN::Math;
 
@@ -10,7 +13,7 @@ namespace TEN::Effects::ParticleGroups
 {
 	std::array<ParticleGroup, MAX_PARTICLE_GROUPS> ParticleGroupList = {};
 
-	int CreateParticleGroup(GAME_OBJECT_ID spriteSeqID, int maxParticles)
+	int CreateParticleGroup(GAME_OBJECT_ID objectID, int maxParticles)
 	{
 		maxParticles = std::clamp(maxParticles, 1, MAX_GROUP_PARTICLES);
 
@@ -23,7 +26,7 @@ namespace TEN::Effects::ParticleGroups
 				group = ParticleGroup();
 				group.ID = i;
 				group.Active = true;
-				group.SpriteSeqID = spriteSeqID;
+				group.ObjectID = objectID;
 				group.MaxParticles = maxParticles;
 				group.Particles.reserve(maxParticles);
 				return i;
@@ -32,6 +35,12 @@ namespace TEN::Effects::ParticleGroups
 
 		TENLog("ParticleGroup limit reached.", LogLevel::Warning);
 		return -1;
+	}
+
+	bool ParticleGroup::IsMeshGroup() const
+	{
+		return Objects[ObjectID].loaded && Objects[ObjectID].nmeshes > 0 &&
+			   !TEN::Utils::Contains(SpriteSequencesIds, (int)ObjectID);
 	}
 
 	void ParticleGroup::Start()
@@ -127,11 +136,25 @@ namespace TEN::Effects::ParticleGroups
 		particle->Rotation = InitRotation;
 		particle->PrevRotation = InitRotation;
 
-		// Sprite.
+		// Sprite / Mesh index.
 		particle->SpriteIndex = InitSpriteIndex;
+
+		// Mesh orientation and scale.
+		particle->Orientation = InitOrientation;
+		particle->MeshScale = InitMeshScale;
 
 		// Room.
 		particle->RoomNumber = RoomNumber;
+
+		// Build initial transform for mesh particles.
+		if (IsMeshGroup())
+		{
+			auto rotMatrix = Matrix::CreateFromYawPitchRoll(
+				particle->Orientation.y, particle->Orientation.x, particle->Orientation.z);
+			auto scaleMatrix = Matrix::CreateScale(particle->MeshScale);
+			particle->Transform = scaleMatrix * rotMatrix * Matrix::CreateTranslation(particle->Position);
+			particle->PrevTransform = particle->Transform;
+		}
 	}
 
 	void ParticleGroup::Update(float dt)
@@ -147,6 +170,8 @@ namespace TEN::Effects::ParticleGroups
 				EmissionAccum -= 1.0f;
 			}
 		}
+
+		bool isMesh = IsMeshGroup();
 
 		// Update existing particles.
 		for (auto& p : Particles)
@@ -172,6 +197,15 @@ namespace TEN::Effects::ParticleGroups
 
 			// Update rotation.
 			p.Rotation += InitRotationVel * dt;
+
+			// Rebuild transform for mesh particles.
+			if (isMesh)
+			{
+				auto rotMatrix = Matrix::CreateFromYawPitchRoll(
+					p.Orientation.y, p.Orientation.x, p.Orientation.z);
+				auto scaleMatrix = Matrix::CreateScale(p.MeshScale);
+				p.Transform = scaleMatrix * rotMatrix * Matrix::CreateTranslation(p.Position);
+			}
 		}
 	}
 

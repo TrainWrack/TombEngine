@@ -1813,7 +1813,11 @@ namespace TEN::Renderer
 			if (!group.Active)
 				continue;
 
-			if (!CheckIfSlotExists(group.SpriteSeqID, "ParticleGroup rendering"))
+			if (!CheckIfSlotExists(group.ObjectID, "ParticleGroup rendering"))
+				continue;
+
+			// Mesh groups are rendered via DrawParticleGroupMeshes().
+			if (group.IsMeshGroup())
 				continue;
 
 			for (const auto& p : group.Particles)
@@ -1826,7 +1830,7 @@ namespace TEN::Renderer
 				auto interpRotation = Lerp(p.PrevRotation, p.Rotation, GetInterpolationFactor());
 
 				AddSpriteBillboard(
-					&_sprites[Objects[group.SpriteSeqID].meshIndex + p.SpriteIndex],
+					&_sprites[Objects[group.ObjectID].meshIndex + p.SpriteIndex],
 					interpPos,
 					Vector4(p.ParticleColor.R(), p.ParticleColor.G(), p.ParticleColor.B(), p.ParticleColor.A()),
 					interpRotation, 1.0f,
