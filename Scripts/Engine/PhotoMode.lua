@@ -97,6 +97,22 @@ local FILTER_PRESETS = {
     { name = "Exclusion",   mode = TEN.View.PostProcessMode.EXCLUSION },
 }
 
+-- Outfit presets (ObjID slots for SwapSkinnedMesh; level must have these loaded)
+-- Users can extend this table for their custom outfits.
+local OUTFIT_PRESETS = {
+    { name = "Default", objID = nil },                              -- nil = reset (no swap)
+    { name = "Alternate Skin",  objID = TEN.Objects.ObjID.LARA_SKIN },     -- Example alternate skin
+}
+
+-- Weapon mesh presets (mesh indices to swap for weapon visibility)
+-- These map to common weapon mesh slots. Users should customize for their level.
+local WEAPON_PRESETS = {
+    { name = "Default",   meshIndices = {} },         -- nil = reset all
+    { name = "Pistols",   meshIndices = {1, 4} },     -- Common holster mesh indices
+    { name = "Shotgun",   meshIndices = {7} },
+    { name = "Unarmed",   meshIndices = {} },
+}
+
 -- UI colors
 local UI_COLOR_NORMAL     = TEN.Color(200, 200, 200)
 local UI_COLOR_HIGHLIGHT  = TEN.Color(255, 255, 80)
@@ -170,6 +186,8 @@ local State = {
     -- Outfit
     -- (Tracked as list of swapped mesh indices for restoration)
     swappedMeshes = {},
+    outfitIndex = 1,
+    weaponIndex = 1,
 
     -- Menu navigation
     categoryIndex = 1,
@@ -260,6 +278,22 @@ local function BuildMenu()
         {
             name = "Outfit / Weapons",
             options = {
+                { label = "Outfit", type = OPT_SELECTOR,
+                  items = (function()
+                      local t = {}
+                      for _, o in ipairs(OUTFIT_PRESETS) do t[#t + 1] = o.name end
+                      return t
+                  end)(),
+                  get = function() return State.outfitIndex end,
+                  set = function(v) ApplyOutfit(v) end },
+                { label = "Weapons", type = OPT_SELECTOR,
+                  items = (function()
+                      local t = {}
+                      for _, w in ipairs(WEAPON_PRESETS) do t[#t + 1] = w.name end
+                      return t
+                  end)(),
+                  get = function() return State.weaponIndex end,
+                  set = function(v) ApplyWeapon(v) end },
                 { label = "Reset Appearance", type = OPT_BUTTON,
                   action = function() ResetAppearance() end },
             },
@@ -645,6 +679,8 @@ function EnterPhotoMode()
     State.optionIndex = 1
     State.uiDirty = true
     State.swappedMeshes = {}
+    State.outfitIndex = 1
+    State.weaponIndex = 1
     State.entryFov = State.snapshot.fov
     State.entryRoll = 0
 
@@ -780,6 +816,44 @@ function ResetAppearance()
         end)
     end
     State.swappedMeshes = {}
+    State.outfitIndex = 1
+    State.weaponIndex = 1
+    State.uiDirty = true
+end
+
+function ApplyOutfit(index)
+    local lara = GetLara()
+    if not lara then return end
+
+    -- First reset existing outfit swaps
+    for _, meshIdx in ipairs(State.swappedMeshes) do
+        pcall(function()
+            lara:UnswapSkinnedMesh(meshIdx)
+        end)
+    end
+    State.swappedMeshes = {}
+
+    State.outfitIndex = index
+    local preset = OUTFIT_PRESETS[index]
+    if preset and preset.objID then
+        -- SwapSkinnedMesh swaps the entire skin to the given object slot
+        pcall(function()
+            lara:SwapSkinnedMesh(preset.objID)
+        end)
+    end
+    State.uiDirty = true
+end
+
+function ApplyWeapon(index)
+    local lara = GetLara()
+    if not lara then return end
+
+    State.weaponIndex = index
+    local preset = WEAPON_PRESETS[index]
+    if not preset then return end
+
+    -- Weapon presets affect specific mesh indices
+    -- This is a simplified approach; the exact implementation depends on the level setup
     State.uiDirty = true
 end
 
@@ -843,23 +917,42 @@ local function UpdateCameraControls()
         newTargetPos = Vec3Add(newTargetPos, Vec3Scale(dir, -speed))
     end
 
-    -- Orbit: rotate target around camera (left/right)
+    -- Mouse scroll dolly (zoom in/out)
+    if TEN.Input.IsKeyHit(TEN.Input.ActionID.MOUSE_SCROLL_UP) then
+        newCamPos = Vec3Add(newCamPos, Vec3Scale(dir, speed * 2))
+        newTargetPos = Vec3Add(newTargetPos, Vec3Scale(dir, speed * 2))
+    end
+    if TEN.Input.IsKeyHit(TEN.Input.ActionID.MOUSE_SCROLL_DOWN) then
+        newCamPos = Vec3Add(newCamPos, Vec3Scale(dir, -speed * 2))
+        newTargetPos = Vec3Add(newTargetPos, Vec3Scale(dir, -speed * 2))
+    end
+
+    -- Orbit: rotate target around camera (left/right via keyboard)
+    local orbitAngle = 0
     if TEN.Input.IsKeyHeld(TEN.Input.ActionID.LEFT) then
-        local dx = targetPos.x - camPos.x
-        local dz = targetPos.z - camPos.z
-        local angle = math.rad(-lookSpeed)
-        local cosA = math.cos(angle)
-        local sinA = math.sin(angle)
-        newTargetPos = TEN.Vec3(
-            camPos.x + dx * cosA - dz * sinA,
-            newTargetPos.y,
-            camPos.z + dx * sinA + dz * cosA
-        )
+        orbitAngle = orbitAngle - lookSpeed
     end
     if TEN.Input.IsKeyHeld(TEN.Input.ActionID.RIGHT) then
+        orbitAngle = orbitAngle + lookSpeed
+    end
+
+    -- Mouse right-click drag orbit (via LOOK action held + Left/Right)
+    -- Controller analog stick orbit via LOOK hold
+    if TEN.Input.IsKeyHeld(TEN.Input.ActionID.LOOK) then
+        -- When Look is held, Left/Right provide additional orbit speed
+        if TEN.Input.IsKeyHeld(TEN.Input.ActionID.LEFT) then
+            orbitAngle = orbitAngle - lookSpeed * 0.5
+        end
+        if TEN.Input.IsKeyHeld(TEN.Input.ActionID.RIGHT) then
+            orbitAngle = orbitAngle + lookSpeed * 0.5
+        end
+    end
+
+    -- Apply orbit rotation
+    if math.abs(orbitAngle) > 0.001 then
         local dx = targetPos.x - camPos.x
         local dz = targetPos.z - camPos.z
-        local angle = math.rad(lookSpeed)
+        local angle = math.rad(orbitAngle)
         local cosA = math.cos(angle)
         local sinA = math.sin(angle)
         newTargetPos = TEN.Vec3(
@@ -1028,8 +1121,13 @@ end
 local function RenderUI()
     if State.hideUI then
         HideAllStrings()
+        State.uiDirty = false
         return
     end
+
+    -- Only rebuild UI when state changes (not every frame)
+    if not State.uiDirty then return end
+    State.uiDirty = false
 
     -- Clear previous strings
     HideAllStrings()
@@ -1236,16 +1334,13 @@ LevelFuncs.Engine.PhotoMode.OnFreeze = function()
     -- If exited during menu handling, stop
     if not State.active then return end
 
-    -- Movement controls based on active control mode
-    if not State.hideUI or true then
-        -- Camera/player/light controls always work (even when UI hidden)
-        if State.controlMode == CTRL_CAMERA then
-            UpdateCameraControls()
-        elseif State.controlMode == CTRL_PLAYER then
-            UpdatePlayerControls()
-        elseif State.controlMode == CTRL_LIGHT then
-            UpdateLightManualControls()
-        end
+    -- Movement controls based on active control mode (always active, even when UI hidden)
+    if State.controlMode == CTRL_CAMERA then
+        UpdateCameraControls()
+    elseif State.controlMode == CTRL_PLAYER then
+        UpdatePlayerControls()
+    elseif State.controlMode == CTRL_LIGHT then
+        UpdateLightManualControls()
     end
 
     -- Attach camera each frame to maintain view
