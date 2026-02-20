@@ -13,6 +13,7 @@
 #include "Game/effects/spark.h"
 #include "Game/effects/Streamer.h"
 #include "Game/effects/tomb4fx.h"
+#include "Game/effects/TwoPointEffect.h"
 #include "Game/effects/weather.h"
 #include "Game/Setup.h"
 #include "Math/Math.h"
@@ -46,6 +47,7 @@ using namespace TEN::Effects::Environment;
 using namespace TEN::Effects::Explosion;
 using namespace TEN::Effects::Spark;
 using namespace TEN::Effects::Streamer;
+using namespace TEN::Effects::TwoPointEffect;
 using namespace TEN::Math;
 using namespace TEN::Scripting::Types;
 
@@ -735,6 +737,143 @@ namespace TEN::Scripting::Effects
 		return Vec3(Weather.Wind());
 	}
 
+	/// Emit a two-point visual effect between two 3D positions.
+	// Uses a flexible parameter-based approach where different combinations create different visual results
+	// (ropes, light beams, lasers, chains, etc.).
+	// @function EmitTwoPointEffect
+	// @tparam Vec3 origin Start position.
+	// @tparam Vec3 target End position.
+	// @tparam table options Configuration parameters table. Accepted keys:
+	//
+	//   __Core Visual Parameters:__
+	//   color (Color, default Color(255,255,255,255)) - Primary color/tint.
+	//   colorEnd (Color, default nil) - End point color (creates gradient). If nil, uses color.
+	//   width (float, default 8.0, range [0.1, 512]) - Thickness at start in world units.
+	//   widthEnd (float, default nil, range [0.1, 512]) - Thickness at end. nil = same as width.
+	//   life (float, default 1.0, range [0, 3600]) - Lifetime in seconds (0 = infinite).
+	//   segments (int, default 16, range [2, 128]) - Number of subdivisions.
+	//   opacity (float, default 1.0, range [0.0, 1.0]) - Overall transparency.
+	//   blendMode (BlendID, default ALPHA_BLEND) - Rendering blend mode.
+	//
+	//   __Shape & Physics Parameters:__
+	//   sag (float, default 0.0, range [0.0, 5.0]) - Gravity droop (catenary curve).
+	//   sagDirection (Vec3, default Vec3(0,1,0)) - Direction of sag.
+	//   tension (float, default 1.0, range [0.1, 10.0]) - Tightness.
+	//   noise (float, default 0.0, range [0.0, 100]) - Random displacement per segment.
+	//   noiseFrequency (float, default 1.0, range [0.1, 10.0]) - Scale of noise pattern.
+	//   twist (float, default 0.0, range [-360, 360]) - Rotation along length (degrees).
+	//   coneAngle (float, default 0.0, range [0.0, 90.0]) - Expansion angle for beams.
+	//
+	//   __Animation Parameters:__
+	//   sway (float, default 0.0, range [0.0, 200]) - Horizontal oscillation amplitude.
+	//   swaySpeed (float, default 1.0, range [0.1, 10.0]) - Oscillation frequency.
+	//   swayAxis (Vec3, default Vec3(1,0,0)) - Axis of sway motion.
+	//   pulse (float, default 0.0, range [0.0, 1.0]) - Width pulsing amount.
+	//   pulseSpeed (float, default 1.0, range [0.1, 10.0]) - Pulse frequency.
+	//   flicker (float, default 0.0, range [0.0, 1.0]) - Opacity flickering amount.
+	//   flickerSpeed (float, default 2.0, range [0.1, 20.0]) - Flicker frequency.
+	//   scrollSpeed (float, default 0.0, range [-10.0, 10.0]) - Texture UV scroll rate.
+	//   waveAmplitude (float, default 0.0, range [0.0, 100]) - Sine wave displacement.
+	//   waveFrequency (float, default 1.0, range [0.1, 10.0]) - Waves per effect length.
+	//   waveSpeed (float, default 0.0, range [-10.0, 10.0]) - Wave travel speed.
+	//
+	//   __Rendering Enhancement Parameters:__
+	//   glow (bool, default false) - Enable additive glow pass.
+	//   glowIntensity (float, default 1.0, range [0.0, 5.0]) - Glow brightness multiplier.
+	//   glowWidth (float, default 2.0, range [1.0, 10.0]) - Glow width multiplier.
+	//   glowColor (Color, default nil) - Glow color (nil = use main color).
+	//
+	//   __Segmentation & Detail Parameters:__
+	//   segmented (bool, default false) - Render as distinct segments (chain links).
+	//   segmentSize (float, default 16.0, range [1.0, 128]) - Size of individual segments.
+	//   segmentGap (float, default 0.0, range [0.0, 64]) - Gap between segments.
+	//   dashed (bool, default false) - Dashed line pattern.
+	//   dashLength (float, default 16.0, range [1.0, 128]) - Visible segment length.
+	//   dashGap (float, default 8.0, range [1.0, 128]) - Gap between dashes.
+	//   dashOffset (float, default 0.0, range [0.0, 128]) - Starting offset for dash pattern.
+	static void EmitTwoPointEffect(const Vec3& origin, const Vec3& target, sol::table options)
+	{
+		auto effect = TwoPointEffectData{};
+
+		effect.Origin = origin.ToVector3();
+		effect.Target = target.ToVector3();
+
+		// Core visual parameters.
+		if (auto color = options.get<sol::optional<ScriptColor>>("color"))
+			effect.Color = Vector4(*color);
+		if (auto colorEnd = options.get<sol::optional<ScriptColor>>("colorEnd"))
+			effect.ColorEnd = Vector4(*colorEnd);
+		else
+			effect.ColorEnd = effect.Color;
+
+		float width = std::clamp(options.get_or<float>("width", 8.0f), 0.1f, 512.0f);
+		effect.Width = width;
+		if (auto widthEnd = options.get<sol::optional<float>>("widthEnd"))
+			effect.WidthEnd = std::clamp(*widthEnd, 0.1f, 512.0f);
+		else
+			effect.WidthEnd = width;
+
+		float lifeSec = std::clamp(options.get_or<float>("life", 1.0f), 0.0f, 3600.0f);
+		if (lifeSec > 0.0f)
+		{
+			effect.Life    = lifeSec * FPS;
+			effect.LifeMax = effect.Life;
+		}
+		else
+		{
+			effect.Life    = 0.0f;
+			effect.LifeMax = 0.0f; // Infinite.
+		}
+
+		effect.Segments = std::clamp(options.get_or<int>("segments", 16), 2, 128);
+		effect.Opacity  = std::clamp(options.get_or<float>("opacity", 1.0f), 0.0f, 1.0f);
+
+		if (auto blendMode = options.get<sol::optional<BlendMode>>("blendMode"))
+			effect.Blend = *blendMode;
+
+		// Shape & Physics parameters.
+		effect.Sag            = std::clamp(options.get_or<float>("sag", 0.0f), 0.0f, 5.0f);
+		if (auto sagDir = options.get<sol::optional<Vec3>>("sagDirection"))
+			effect.SagDirection = sagDir->ToVector3();
+		effect.Tension        = std::clamp(options.get_or<float>("tension", 1.0f), 0.1f, 10.0f);
+		effect.Noise          = std::clamp(options.get_or<float>("noise", 0.0f), 0.0f, 100.0f);
+		effect.NoiseFrequency = std::clamp(options.get_or<float>("noiseFrequency", 1.0f), 0.1f, 10.0f);
+		effect.Twist          = std::clamp(options.get_or<float>("twist", 0.0f), -360.0f, 360.0f);
+		effect.ConeAngle      = std::clamp(options.get_or<float>("coneAngle", 0.0f), 0.0f, 90.0f);
+
+		// Animation parameters.
+		effect.Sway          = std::clamp(options.get_or<float>("sway", 0.0f), 0.0f, 200.0f);
+		effect.SwaySpeed     = std::clamp(options.get_or<float>("swaySpeed", 1.0f), 0.1f, 10.0f);
+		if (auto swayAxis = options.get<sol::optional<Vec3>>("swayAxis"))
+			effect.SwayAxis = swayAxis->ToVector3();
+		effect.Pulse         = std::clamp(options.get_or<float>("pulse", 0.0f), 0.0f, 1.0f);
+		effect.PulseSpeed    = std::clamp(options.get_or<float>("pulseSpeed", 1.0f), 0.1f, 10.0f);
+		effect.Flicker       = std::clamp(options.get_or<float>("flicker", 0.0f), 0.0f, 1.0f);
+		effect.FlickerSpeed  = std::clamp(options.get_or<float>("flickerSpeed", 2.0f), 0.1f, 20.0f);
+		effect.ScrollSpeed   = std::clamp(options.get_or<float>("scrollSpeed", 0.0f), -10.0f, 10.0f);
+		effect.WaveAmplitude = std::clamp(options.get_or<float>("waveAmplitude", 0.0f), 0.0f, 100.0f);
+		effect.WaveFrequency = std::clamp(options.get_or<float>("waveFrequency", 1.0f), 0.1f, 10.0f);
+		effect.WaveSpeed     = std::clamp(options.get_or<float>("waveSpeed", 0.0f), -10.0f, 10.0f);
+
+		// Rendering enhancement parameters.
+		effect.Glow          = options.get_or<bool>("glow", false);
+		effect.GlowIntensity = std::clamp(options.get_or<float>("glowIntensity", 1.0f), 0.0f, 5.0f);
+		effect.GlowWidth     = std::clamp(options.get_or<float>("glowWidth", 2.0f), 1.0f, 10.0f);
+		if (auto glowColor = options.get<sol::optional<ScriptColor>>("glowColor"))
+			effect.GlowColor = Vector4(*glowColor);
+
+		// Segmentation & Detail parameters.
+		effect.Segmented  = options.get_or<bool>("segmented", false);
+		effect.SegmentSize = std::clamp(options.get_or<float>("segmentSize", 16.0f), 1.0f, 128.0f);
+		effect.SegmentGap  = std::clamp(options.get_or<float>("segmentGap", 0.0f), 0.0f, 64.0f);
+		effect.Dashed      = options.get_or<bool>("dashed", false);
+		effect.DashLength  = std::clamp(options.get_or<float>("dashLength", 16.0f), 1.0f, 128.0f);
+		effect.DashGap     = std::clamp(options.get_or<float>("dashGap", 8.0f), 1.0f, 128.0f);
+		effect.DashOffset  = std::clamp(options.get_or<float>("dashOffset", 0.0f), 0.0f, 128.0f);
+
+		TwoPointEffects.Spawn(effect);
+	}
+
 	void Register(sol::state* state, sol::table& parent) 
 	{
 		auto tableEffects = sol::table(state->lua_state(), sol::create);
@@ -754,6 +893,7 @@ namespace TEN::Scripting::Effects
 		tableEffects.set_function(ScriptReserved_EmitFire, &EmitFire);
 		tableEffects.set_function(ScriptReserved_EmitWaterfallMist, &EmitWaterfallMist);
 		tableEffects.set_function(ScriptReserved_EmitFlow, &EmitFlow);
+		tableEffects.set_function(ScriptReserved_EmitTwoPointEffect, &EmitTwoPointEffect);
 		tableEffects.set_function(ScriptReserved_MakeExplosion, &MakeExplosion);
 		tableEffects.set_function(ScriptReserved_MakeEarthquake, &Earthquake);
 		tableEffects.set_function(ScriptReserved_GetWind, &GetWind);

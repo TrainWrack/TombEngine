@@ -1838,6 +1838,7 @@ namespace TEN::Renderer
 		PrepareHelicalLasers(view);
 		PrepareRopes(view);
 		PrepareStreamers(view);
+		PrepareTwoPointEffects(view);
 		PrepareLaserBarriers(view);
 		PrepareSingleLaserBeam(view);
 		PrepareFireflies(view);

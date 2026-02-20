@@ -24,6 +24,7 @@
 #include "Game/effects/Splash.h"
 #include "Game/effects/Streamer.h"
 #include "Game/effects/tomb4fx.h"
+#include "Game/effects/TwoPointEffect.h"
 #include "Game/effects/weather.h"
 #include "Game/Gui.h"
 #include "Game/Hud/Hud.h"
@@ -81,6 +82,7 @@ using namespace TEN::Effects::Smoke;
 using namespace TEN::Effects::Spark;
 using namespace TEN::Effects::Splash;
 using namespace TEN::Effects::Streamer;
+using namespace TEN::Effects::TwoPointEffect;
 using namespace TEN::Entities::Creatures::TR3;
 using namespace TEN::Entities::Generic;
 using namespace TEN::Entities::Switches;
@@ -194,6 +196,7 @@ GameStatus GamePhase(bool insideMenu)
 
 	// Update effects.
 	StreamerEffect.Update();
+	TwoPointEffects.Update();
 	UpdateWibble();
 	UpdateSparks();
 	UpdateFireSparks();
@@ -553,6 +556,7 @@ void CleanUp()
 
 	// Clear effects.
 	StreamerEffect.Clear();
+	TwoPointEffects.Clear();
 	ClearUnderwaterBloodParticles();
 	ClearBubbles();
 	ClearAllDisplaySprites();

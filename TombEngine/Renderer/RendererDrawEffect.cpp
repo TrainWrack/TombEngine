@@ -21,6 +21,7 @@
 #include "Game/effects/Splash.h"
 #include "Game/effects/Streamer.h"
 #include "Game/effects/tomb4fx.h"
+#include "Game/effects/TwoPointEffect.h"
 #include "Game/effects/weather.h"
 #include "Game/items.h"
 #include "Game/Lara/lara.h"
@@ -49,6 +50,7 @@ using namespace TEN::Effects::Ripple;
 using namespace TEN::Effects::Splash;
 using namespace TEN::Effects::Spark;
 using namespace TEN::Effects::Streamer;
+using namespace TEN::Effects::TwoPointEffect;
 using namespace TEN::Entities::Creatures::TR5;
 using namespace TEN::Entities::Traps;
 using namespace TEN::Math;
@@ -199,6 +201,223 @@ namespace TEN::Renderer
 									streamer.GetBlendMode(), view);
 								break;
 						}
+					}
+				}
+			}
+		}
+	}
+
+	void Renderer::PrepareTwoPointEffects(RenderView& view)
+	{
+		const auto& effects = TwoPointEffects.GetEffects();
+		if (effects.empty())
+			return;
+
+		auto camPos = view.Camera.WorldPosition;
+
+		for (const auto& effect : effects)
+		{
+			if (effect.LifeMax > 0.0f && effect.Life <= 0.0f)
+				continue;
+
+			auto origin = Vector3::Lerp(effect.PrevOrigin, effect.Origin, GetInterpolationFactor());
+			auto target = Vector3::Lerp(effect.PrevTarget, effect.Target, GetInterpolationFactor());
+			float opacity = Lerp(effect.PrevOpacity, effect.Opacity, GetInterpolationFactor());
+
+			auto effectDir = target - origin;
+			float totalLength = effectDir.Length();
+			if (totalLength < 0.001f)
+				continue;
+			effectDir.Normalize();
+
+			// Calculate camera-facing perpendicular direction.
+			auto midpoint = (origin + target) * 0.5f;
+			auto toCam = camPos - midpoint;
+			toCam.Normalize();
+
+			int segCount = std::max(2, effect.Segments);
+
+			// Build segment positions along the line.
+			std::vector<Vector3> positions(segCount + 1);
+			for (int i = 0; i <= segCount; i++)
+			{
+				float t = (float)i / (float)segCount;
+				auto basePos = Vector3::Lerp(origin, target, t);
+
+				// Apply sag (catenary approximation).
+				if (effect.Sag > 0.0f)
+				{
+					float sagFactor = 4.0f * t * (1.0f - t); // Parabolic sag, max at middle.
+					float sagAmount = effect.Sag * sagFactor * totalLength / effect.Tension;
+					basePos += effect.SagDirection * sagAmount;
+				}
+
+				// Apply noise displacement.
+				if (effect.Noise > 0.0f)
+				{
+					float noisePhase = t * effect.NoiseFrequency * 6.2832f + effect.TimeElapsed * 3.0f;
+					float noiseX = sin(noisePhase * 1.3f + (float)i * 0.7f) * effect.Noise;
+					float noiseY = cos(noisePhase * 0.9f + (float)i * 1.1f) * effect.Noise;
+
+					auto perpRight = toCam.Cross(effectDir);
+					perpRight.Normalize();
+					basePos += perpRight * noiseX + toCam * noiseY;
+				}
+
+				// Apply wave displacement.
+				if (effect.WaveAmplitude > 0.0f)
+				{
+					float wavePhase = t * effect.WaveFrequency * 6.2832f - effect.TimeElapsed * effect.WaveSpeed;
+					float waveDisp = sin(wavePhase) * effect.WaveAmplitude;
+
+					auto perpRight = toCam.Cross(effectDir);
+					perpRight.Normalize();
+					basePos += perpRight * waveDisp;
+				}
+
+				// Apply sway.
+				if (effect.Sway > 0.0f)
+				{
+					float swayPhase = effect.TimeElapsed * effect.SwaySpeed * 6.2832f;
+					float swayFactor = 4.0f * t * (1.0f - t); // Max sway at middle.
+					float swayDisp = sin(swayPhase) * effect.Sway * swayFactor;
+					basePos += effect.SwayAxis * swayDisp;
+				}
+
+				positions[i] = basePos;
+			}
+
+			// Calculate animated opacity.
+			float flickerMod = 1.0f;
+			if (effect.Flicker > 0.0f)
+			{
+				float flickerPhase = effect.TimeElapsed * effect.FlickerSpeed * 6.2832f;
+				flickerMod = 1.0f - effect.Flicker * 0.5f * (1.0f + sin(flickerPhase));
+				flickerMod = std::max(0.0f, flickerMod);
+			}
+
+			float pulseMod = 1.0f;
+			if (effect.Pulse > 0.0f)
+			{
+				float pulsePhase = effect.TimeElapsed * effect.PulseSpeed * 6.2832f;
+				pulseMod = 1.0f - effect.Pulse * 0.5f * (1.0f + sin(pulsePhase));
+			}
+
+			float dashScroll = effect.TimeElapsed * effect.ScrollSpeed * totalLength;
+
+			// Render segment quads.
+			for (int i = 0; i < segCount; i++)
+			{
+				float t0 = (float)i / (float)segCount;
+				float t1 = (float)(i + 1) / (float)segCount;
+				float tMid = (t0 + t1) * 0.5f;
+
+				// Dashed line visibility check.
+				if (effect.Dashed)
+				{
+					float dashPos = fmod(tMid * totalLength + dashScroll + effect.DashOffset, effect.DashLength + effect.DashGap);
+					if (dashPos >= effect.DashLength)
+						continue;
+				}
+
+				// Segmented visibility check.
+				if (effect.Segmented)
+				{
+					float segPos = fmod(tMid * totalLength + dashScroll, effect.SegmentSize + effect.SegmentGap);
+					if (segPos >= effect.SegmentSize)
+						continue;
+				}
+
+				auto& p0 = positions[i];
+				auto& p1 = positions[i + 1];
+
+				auto segDir = p1 - p0;
+				segDir.Normalize();
+
+				auto perpDir = toCam.Cross(segDir);
+				perpDir.Normalize();
+
+				// Interpolate width.
+				float width0 = Lerp(effect.Width, effect.WidthEnd, t0) * pulseMod * 0.5f;
+				float width1 = Lerp(effect.Width, effect.WidthEnd, t1) * pulseMod * 0.5f;
+
+				// Apply cone angle expansion.
+				if (effect.ConeAngle > 0.0f)
+				{
+					float coneRad = effect.ConeAngle * 3.14159f / 180.0f;
+					width0 += t0 * totalLength * tan(coneRad);
+					width1 += t1 * totalLength * tan(coneRad);
+				}
+
+				// Apply twist rotation.
+				if (effect.Twist != 0.0f)
+				{
+					float twistAngle0 = effect.Twist * t0 * 3.14159f / 180.0f;
+					float twistAngle1 = effect.Twist * t1 * 3.14159f / 180.0f;
+
+					auto up0 = perpDir * cos(twistAngle0) + toCam * sin(twistAngle0);
+					auto up1 = perpDir * cos(twistAngle1) + toCam * sin(twistAngle1);
+
+					auto v0 = p0 - up0 * width0;
+					auto v1 = p0 + up0 * width0;
+					auto v2 = p1 + up1 * width1;
+					auto v3 = p1 - up1 * width1;
+
+					// Interpolate color.
+					auto color0 = Vector4::Lerp(effect.Color, effect.ColorEnd, t0);
+					auto color1 = Vector4::Lerp(effect.Color, effect.ColorEnd, t1);
+					color0.w *= opacity * flickerMod;
+					color1.w *= opacity * flickerMod;
+
+					AddColoredQuad(v0, v1, v2, v3, color0, color0, color1, color1, effect.Blend, view);
+
+					// Glow pass.
+					if (effect.Glow)
+					{
+						auto glowColor = (effect.GlowColor != Vector4::Zero) ? effect.GlowColor : effect.Color;
+						auto gc0 = glowColor;
+						auto gc1 = glowColor;
+						gc0.w *= opacity * flickerMod * effect.GlowIntensity * 0.5f;
+						gc1.w *= opacity * flickerMod * effect.GlowIntensity * 0.5f;
+
+						auto gv0 = p0 - up0 * (width0 * effect.GlowWidth);
+						auto gv1 = p0 + up0 * (width0 * effect.GlowWidth);
+						auto gv2 = p1 + up1 * (width1 * effect.GlowWidth);
+						auto gv3 = p1 - up1 * (width1 * effect.GlowWidth);
+
+						AddColoredQuad(gv0, gv1, gv2, gv3, gc0, gc0, gc1, gc1, BlendMode::Additive, view);
+					}
+				}
+				else
+				{
+					auto v0 = p0 - perpDir * width0;
+					auto v1 = p0 + perpDir * width0;
+					auto v2 = p1 + perpDir * width1;
+					auto v3 = p1 - perpDir * width1;
+
+					// Interpolate color.
+					auto color0 = Vector4::Lerp(effect.Color, effect.ColorEnd, t0);
+					auto color1 = Vector4::Lerp(effect.Color, effect.ColorEnd, t1);
+					color0.w *= opacity * flickerMod;
+					color1.w *= opacity * flickerMod;
+
+					AddColoredQuad(v0, v1, v2, v3, color0, color0, color1, color1, effect.Blend, view);
+
+					// Glow pass.
+					if (effect.Glow)
+					{
+						auto glowColor = (effect.GlowColor != Vector4::Zero) ? effect.GlowColor : effect.Color;
+						auto gc0 = glowColor;
+						auto gc1 = glowColor;
+						gc0.w *= opacity * flickerMod * effect.GlowIntensity * 0.5f;
+						gc1.w *= opacity * flickerMod * effect.GlowIntensity * 0.5f;
+
+						auto gv0 = p0 - perpDir * (width0 * effect.GlowWidth);
+						auto gv1 = p0 + perpDir * (width0 * effect.GlowWidth);
+						auto gv2 = p1 + perpDir * (width1 * effect.GlowWidth);
+						auto gv3 = p1 - perpDir * (width1 * effect.GlowWidth);
+
+						AddColoredQuad(gv0, gv1, gv2, gv3, gc0, gc0, gc1, gc1, BlendMode::Additive, view);
 					}
 				}
 			}
