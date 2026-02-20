@@ -255,7 +255,7 @@ namespace TEN::Renderer
 				// Apply noise displacement.
 				if (effect.Noise > 0.0f)
 				{
-					float noisePhase = t * effect.NoiseFrequency * 6.2832f + effect.TimeElapsed * 3.0f;
+					float noisePhase = t * effect.NoiseFrequency * PI_MUL_2 + effect.TimeElapsed * 3.0f;
 					float noiseX = sin(noisePhase * 1.3f + (float)i * 0.7f) * effect.Noise;
 					float noiseY = cos(noisePhase * 0.9f + (float)i * 1.1f) * effect.Noise;
 
@@ -267,7 +267,7 @@ namespace TEN::Renderer
 				// Apply wave displacement.
 				if (effect.WaveAmplitude > 0.0f)
 				{
-					float wavePhase = t * effect.WaveFrequency * 6.2832f - effect.TimeElapsed * effect.WaveSpeed;
+					float wavePhase = t * effect.WaveFrequency * PI_MUL_2 - effect.TimeElapsed * effect.WaveSpeed;
 					float waveDisp = sin(wavePhase) * effect.WaveAmplitude;
 
 					auto perpRight = toCam.Cross(effectDir);
@@ -278,7 +278,7 @@ namespace TEN::Renderer
 				// Apply sway.
 				if (effect.Sway > 0.0f)
 				{
-					float swayPhase = effect.TimeElapsed * effect.SwaySpeed * 6.2832f;
+					float swayPhase = effect.TimeElapsed * effect.SwaySpeed * PI_MUL_2;
 					float swayFactor = 4.0f * t * (1.0f - t); // Max sway at middle.
 					float swayDisp = sin(swayPhase) * effect.Sway * swayFactor;
 					basePos += effect.SwayAxis * swayDisp;
@@ -291,7 +291,7 @@ namespace TEN::Renderer
 			float flickerMod = 1.0f;
 			if (effect.Flicker > 0.0f)
 			{
-				float flickerPhase = effect.TimeElapsed * effect.FlickerSpeed * 6.2832f;
+				float flickerPhase = effect.TimeElapsed * effect.FlickerSpeed * PI_MUL_2;
 				flickerMod = 1.0f - effect.Flicker * 0.5f * (1.0f + sin(flickerPhase));
 				flickerMod = std::max(0.0f, flickerMod);
 			}
@@ -299,7 +299,7 @@ namespace TEN::Renderer
 			float pulseMod = 1.0f;
 			if (effect.Pulse > 0.0f)
 			{
-				float pulsePhase = effect.TimeElapsed * effect.PulseSpeed * 6.2832f;
+				float pulsePhase = effect.TimeElapsed * effect.PulseSpeed * PI_MUL_2;
 				pulseMod = 1.0f - effect.Pulse * 0.5f * (1.0f + sin(pulsePhase));
 			}
 
@@ -344,7 +344,7 @@ namespace TEN::Renderer
 				// Apply cone angle expansion.
 				if (effect.ConeAngle > 0.0f)
 				{
-					float coneRad = effect.ConeAngle * 3.14159f / 180.0f;
+					float coneRad = effect.ConeAngle * RADIAN;
 					width0 += t0 * totalLength * tan(coneRad);
 					width1 += t1 * totalLength * tan(coneRad);
 				}
@@ -352,8 +352,8 @@ namespace TEN::Renderer
 				// Apply twist rotation.
 				if (effect.Twist != 0.0f)
 				{
-					float twistAngle0 = effect.Twist * t0 * 3.14159f / 180.0f;
-					float twistAngle1 = effect.Twist * t1 * 3.14159f / 180.0f;
+					float twistAngle0 = effect.Twist * t0 * RADIAN;
+					float twistAngle1 = effect.Twist * t1 * RADIAN;
 
 					auto up0 = perpDir * cos(twistAngle0) + toCam * sin(twistAngle0);
 					auto up1 = perpDir * cos(twistAngle1) + toCam * sin(twistAngle1);

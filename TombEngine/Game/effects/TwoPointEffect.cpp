@@ -39,8 +39,7 @@ namespace TEN::Effects::TwoPointEffect
 				effect.Life -= 1.0f;
 
 				// Fade opacity proportional to remaining life.
-				if (effect.LifeMax > 0.0f)
-					effect.Opacity = std::max(0.0f, effect.Life / effect.LifeMax);
+				effect.Opacity = std::max(0.0f, effect.Life / effect.LifeMax);
 			}
 
 			// Advance animation time.
