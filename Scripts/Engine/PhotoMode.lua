@@ -129,8 +129,7 @@ local UI_SCALE            = 0.8
 -- Control mode enum
 local CTRL_CAMERA  = 1
 local CTRL_PLAYER  = 2
-local CTRL_LIGHT   = 3
-local CTRL_NAMES   = { "Camera", "Player", "Light" }
+local CTRL_NAMES   = { "Camera", "Player" }
 
 -- Light source enum
 local LSRC_MANUAL        = 1
@@ -345,6 +344,10 @@ local function BuildMenu()
                   items = LSRC_NAMES,
                   get = function() return State.lightSource end,
                   set = function(v) State.lightSource = v end },
+                { label = "Place at Camera", type = OPT_BUTTON,
+                  action = function() PlaceLightAtCamera() end },
+                { label = "Place at Lara", type = OPT_BUTTON,
+                  action = function() PlaceLightAtLara() end },
                 { label = "Radius", type = OPT_SLIDER,
                   min = MIN_LIGHT_RADIUS, max = MAX_LIGHT_RADIUS, step = LIGHT_RADIUS_STEP,
                   get = function() return State.lightRadius end,
@@ -807,6 +810,25 @@ function ResetLight()
     State.uiDirty = true
 end
 
+function PlaceLightAtCamera()
+    if State.cameraMesh then
+        local cp = State.cameraMesh:GetPosition()
+        State.lightPos = TEN.Vec3(cp.x, cp.y, cp.z)
+        State.lightSource = LSRC_MANUAL
+    end
+    State.uiDirty = true
+end
+
+function PlaceLightAtLara()
+    local lara = GetLara()
+    if lara then
+        local lp = lara:GetPosition()
+        State.lightPos = TEN.Vec3(lp.x, lp.y - 256, lp.z)
+        State.lightSource = LSRC_MANUAL
+    end
+    State.uiDirty = true
+end
+
 function ResetAppearance()
     local lara = GetLara()
     if not lara then return end
@@ -1030,43 +1052,6 @@ local function UpdatePlayerControls()
 end
 
 -------------------------------------------------------------------------------
--- Light Controls (Control Mode = Light)
--------------------------------------------------------------------------------
-
-local function UpdateLightManualControls()
-    -- Only when control mode is Light and source is Manual
-    if State.controlMode ~= CTRL_LIGHT then return end
-    if State.lightSource ~= LSRC_MANUAL then return end
-
-    local speed = State.moveSpeed
-    local pos = State.lightPos
-
-    -- Use camera direction for forward/back reference
-    local dir = GetCameraDirection()
-    local rightX = dir.z
-    local rightZ = -dir.x
-
-    if TEN.Input.IsKeyHeld(TEN.Input.ActionID.FORWARD) then
-        State.lightPos = Vec3Add(pos, Vec3Scale(dir, speed))
-    end
-    if TEN.Input.IsKeyHeld(TEN.Input.ActionID.BACK) then
-        State.lightPos = Vec3Add(pos, Vec3Scale(dir, -speed))
-    end
-    if TEN.Input.IsKeyHeld(TEN.Input.ActionID.LEFT) then
-        State.lightPos = Vec3Add(State.lightPos, TEN.Vec3(-rightX * speed, 0, -rightZ * speed))
-    end
-    if TEN.Input.IsKeyHeld(TEN.Input.ActionID.RIGHT) then
-        State.lightPos = Vec3Add(State.lightPos, TEN.Vec3(rightX * speed, 0, rightZ * speed))
-    end
-    if TEN.Input.IsKeyHeld(TEN.Input.ActionID.JUMP) then
-        State.lightPos = TEN.Vec3(State.lightPos.x, State.lightPos.y - speed, State.lightPos.z)
-    end
-    if TEN.Input.IsKeyHeld(TEN.Input.ActionID.CROUCH) then
-        State.lightPos = TEN.Vec3(State.lightPos.x, State.lightPos.y + speed, State.lightPos.z)
-    end
-end
-
--------------------------------------------------------------------------------
 -- Light Emission
 -------------------------------------------------------------------------------
 
@@ -1199,7 +1184,7 @@ local function RenderUI()
 
     -- Help text at bottom
     y = y + UI_LINE_HEIGHT * 0.5
-    ShowUIString("help", "Up/Down=Navigate  Left/Right=Adjust  Action=Confirm  Inventory=Back/Exit",
+    ShowUIString("help", "Up/Down=Navigate  Left/Right=Adjust  Action=Confirm  Look=Move Mode  Inventory=Exit",
         UI_LEFT_X, y, UI_COLOR_DIMMED, UI_SCALE * 0.65)
 end
 
@@ -1285,11 +1270,6 @@ local function HandleMenuInput()
             State.uiDirty = true
         end
     end
-
-    -- Exit with Inventory
-    if TEN.Input.IsKeyHit(TEN.Input.ActionID.INVENTORY) then
-        ExitPhotoMode()
-    end
 end
 
 -------------------------------------------------------------------------------
@@ -1322,26 +1302,35 @@ end
 LevelFuncs.Engine.PhotoMode.OnFreeze = function()
     if not State.active then return end
 
-    -- Consume/clear gameplay inputs
+    -- Consume/clear gameplay inputs so normal gameplay actions do not fire
     TEN.Input.ClearAllKeys()
 
-    -- Re-read input for this frame (keys will be populated fresh by engine)
-    -- Note: ClearAllKeys prevents gameplay from acting, but input polling still works
+    -- Toggle UI visibility with LOOK key (always available)
+    if TEN.Input.IsKeyHit(TEN.Input.ActionID.LOOK) then
+        State.hideUI = not State.hideUI
+        State.uiDirty = true
+    end
 
-    -- Menu navigation
-    HandleMenuInput()
+    -- Exit with Inventory key (always available)
+    if TEN.Input.IsKeyHit(TEN.Input.ActionID.INVENTORY) then
+        ExitPhotoMode()
+        return
+    end
+
+    if State.hideUI then
+        -- UI hidden: process movement controls only (no menu fighting)
+        if State.controlMode == CTRL_CAMERA then
+            UpdateCameraControls()
+        elseif State.controlMode == CTRL_PLAYER then
+            UpdatePlayerControls()
+        end
+    else
+        -- UI visible: process menu input only (no movement fighting)
+        HandleMenuInput()
+    end
 
     -- If exited during menu handling, stop
     if not State.active then return end
-
-    -- Movement controls based on active control mode (always active, even when UI hidden)
-    if State.controlMode == CTRL_CAMERA then
-        UpdateCameraControls()
-    elseif State.controlMode == CTRL_PLAYER then
-        UpdatePlayerControls()
-    elseif State.controlMode == CTRL_LIGHT then
-        UpdateLightManualControls()
-    end
 
     -- Attach camera each frame to maintain view
     AttachCamera()
