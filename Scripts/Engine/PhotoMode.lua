@@ -402,11 +402,6 @@ local function Round(val, decimals)
     return math.floor(val * mult + 0.5) / mult
 end
 
---- Get Lara moveable.
-local function GetLara()
-    return TEN.Objects.GetMoveableByName("Lara")
-end
-
 --- Compute a forward direction vector from a Y-axis rotation angle (degrees).
 local function ForwardFromYaw(yawDeg)
     local rad = math.rad(yawDeg)
@@ -468,19 +463,17 @@ end
 -------------------------------------------------------------------------------
 
 local function CaptureSnapshot()
-    local lara = GetLara()
-    if not lara then return nil end
 
     local snap = {}
 
     -- Lara state
-    snap.laraPos = lara:GetPosition()
-    snap.laraRot = lara:GetRotation()
-    snap.laraVelocity = lara:GetVelocity()
-    snap.laraAnim = lara:GetAnim()
-    snap.laraAnimSlot = lara:GetAnimSlot()
-    snap.laraFrame = lara:GetFrame()
-    snap.laraState = lara:GetState()
+    snap.laraPos = Lara:GetPosition()
+    snap.laraRot = Lara:GetRotation()
+    snap.laraVelocity = Lara:GetVelocity()
+    snap.laraAnim = Lara:GetAnim()
+    snap.laraAnimSlot = Lara:GetAnimSlot()
+    snap.laraFrame = Lara:GetFrame()
+    snap.laraState = Lara:GetState()
 
     -- View
     snap.fov = TEN.View.GetFOV()
@@ -517,28 +510,26 @@ local function RestoreSnapshot()
     local snap = State.snapshot
     if not snap then return end
 
-    local lara = GetLara()
-    if lara then
-        lara:SetPosition(snap.laraPos)
-        lara:SetRotation(snap.laraRot)
-        lara:SetVelocity(snap.laraVelocity)
-        -- Restore animation with slot
-        pcall(function()
-            lara:SetAnim(snap.laraAnim, snap.laraAnimSlot)
-        end)
-        pcall(function()
-            lara:SetFrame(snap.laraFrame)
-        end)
-        pcall(function()
-            lara:SetState(snap.laraState)
-        end)
+   
+    Lara:SetPosition(snap.laraPos)
+    Lara:SetRotation(snap.laraRot)
+    Lara:SetVelocity(snap.laraVelocity)
+    -- Restore animation with slot
+    pcall(function()
+        Lara:SetAnim(snap.laraAnim, snap.laraAnimSlot)
+    end)
+    pcall(function()
+        Lara:SetFrame(snap.laraFrame)
+    end)
+    pcall(function()
+        Lara:SetState(snap.laraState)
+    end)
 
-        -- Restore swapped meshes
-        for _, meshIdx in ipairs(State.swappedMeshes) do
-            pcall(function()
-                lara:UnswapSkinnedMesh(meshIdx)
-            end)
-        end
+    -- Restore swapped meshes
+    for _, meshIdx in ipairs(State.swappedMeshes) do
+        pcall(function()
+            Lara:UnswapSkinnedMesh(meshIdx)
+        end)
     end
 
     -- Restore FOV
@@ -557,16 +548,14 @@ end
 -------------------------------------------------------------------------------
 
 local function GetOrCreateMoveable(name)
-    local mov = TEN.Objects.GetMoveableByName(name)
-    if mov then return mov, false end
+    
+    local mov = TEN.Objects.IsNameInUse(name)
+    if mov then return TEN.Objects.GetMoveableByName(name), false end
 
     -- Create a CAMERA_TARGET type moveable at Lara's position
-    local lara = GetLara()
-    if not lara then return nil, false end
-
-    local pos = lara:GetPosition()
+    local pos = Lara:GetPosition()
     local rot = TEN.Rotation(0, 0, 0)
-    local room = lara:GetRoomNumber()
+    local room = Lara:GetRoomNumber()
 
     local ok, newMov = pcall(TEN.Objects.Moveable,
         TEN.Objects.ObjID.CAMERA_TARGET, name, pos, rot, room)
@@ -595,11 +584,10 @@ local function InitCameraObjects()
 end
 
 local function PlaceCameraInitial()
-    local lara = GetLara()
-    if not lara or not State.cameraMesh or not State.cameraTarget then return end
+    if not State.cameraMesh or not State.cameraTarget then return end
 
-    local laraPos = lara:GetPosition()
-    local laraRot = lara:GetRotation()
+    local laraPos = Lara:GetPosition()
+    local laraRot = Lara:GetRotation()
     local yaw = laraRot.y
 
     local fwd = ForwardFromYaw(yaw)
@@ -706,7 +694,7 @@ function EnterPhotoMode()
     Menu = BuildMenu()
 
     -- Freeze the game
-    TEN.Flow.SetFreezeMode(TEN.Flow.FreezeMode.FULL)
+    TEN.Flow.SetFreezeMode(TEN.Flow.FreezeMode.SPECTATOR)
 
     -- Attach camera
     AttachCamera()
@@ -771,14 +759,12 @@ end
 
 function ResetPose()
     if not State.snapshot then return end
-    local lara = GetLara()
-    if not lara then return end
 
     pcall(function()
-        lara:SetAnim(State.snapshot.laraAnim, State.snapshot.laraAnimSlot)
+        Lara:SetAnim(State.snapshot.laraAnim, State.snapshot.laraAnimSlot)
     end)
     pcall(function()
-        lara:SetFrame(State.snapshot.laraFrame)
+        Lara:SetFrame(State.snapshot.laraFrame)
     end)
 
     State.animIndex = State.snapshot.laraAnim
@@ -820,21 +806,17 @@ function PlaceLightAtCamera()
 end
 
 function PlaceLightAtLara()
-    local lara = GetLara()
-    if lara then
-        local lp = lara:GetPosition()
-        State.lightPos = TEN.Vec3(lp.x, lp.y - 256, lp.z)
-        State.lightSource = LSRC_MANUAL
-    end
+
+    local lp = Lara:GetPosition()
+    State.lightPos = TEN.Vec3(lp.x, lp.y - 256, lp.z)
+    State.lightSource = LSRC_MANUAL
     State.uiDirty = true
 end
 
 function ResetAppearance()
-    local lara = GetLara()
-    if not lara then return end
     for _, meshIdx in ipairs(State.swappedMeshes) do
         pcall(function()
-            lara:UnswapSkinnedMesh(meshIdx)
+            Lara:UnswapSkinnedMesh(meshIdx)
         end)
     end
     State.swappedMeshes = {}
@@ -844,13 +826,10 @@ function ResetAppearance()
 end
 
 function ApplyOutfit(index)
-    local lara = GetLara()
-    if not lara then return end
-
     -- First reset existing outfit swaps
     for _, meshIdx in ipairs(State.swappedMeshes) do
         pcall(function()
-            lara:UnswapSkinnedMesh(meshIdx)
+            Lara:UnswapSkinnedMesh(meshIdx)
         end)
     end
     State.swappedMeshes = {}
@@ -860,15 +839,13 @@ function ApplyOutfit(index)
     if preset and preset.objID then
         -- SwapSkinnedMesh swaps the entire skin to the given object slot
         pcall(function()
-            lara:SwapSkinnedMesh(preset.objID)
+            Lara:SwapSkinnedMesh(preset.objID)
         end)
     end
     State.uiDirty = true
 end
 
 function ApplyWeapon(index)
-    local lara = GetLara()
-    if not lara then return end
 
     State.weaponIndex = index
     local preset = WEAPON_PRESETS[index]
@@ -884,21 +861,17 @@ end
 -------------------------------------------------------------------------------
 
 function SetPoseAnim(index)
-    local lara = GetLara()
-    if not lara then return end
     State.animIndex = index
     pcall(function()
-        lara:SetAnim(index)
+        Lara:SetAnim(index)
     end)
     State.uiDirty = true
 end
 
 function SetPoseFrame(frame)
-    local lara = GetLara()
-    if not lara then return end
     State.animFrame = frame
     pcall(function()
-        lara:SetFrame(frame)
+        Lara:SetFrame(frame)
     end)
     State.uiDirty = true
 end
@@ -1014,11 +987,9 @@ end
 -------------------------------------------------------------------------------
 
 local function UpdatePlayerControls()
-    local lara = GetLara()
-    if not lara then return end
 
-    local laraPos = lara:GetPosition()
-    local laraRot = lara:GetRotation()
+    local laraPos = Lara:GetPosition()
+    local laraRot = Lara:GetRotation()
     local fwd = ForwardFromYaw(laraRot.y)
     local right = RightFromYaw(laraRot.y)
     local speed = PLAYER_MOVE_SPEED
@@ -1034,12 +1005,12 @@ local function UpdatePlayerControls()
     if TEN.Input.IsKeyHeld(TEN.Input.ActionID.LEFT) then
         -- Rotate Lara left
         local newRot = TEN.Rotation(laraRot.x, laraRot.y - 2, laraRot.z)
-        lara:SetRotation(newRot)
+        Lara:SetRotation(newRot)
     end
     if TEN.Input.IsKeyHeld(TEN.Input.ActionID.RIGHT) then
         -- Rotate Lara right
         local newRot = TEN.Rotation(laraRot.x, laraRot.y + 2, laraRot.z)
-        lara:SetRotation(newRot)
+        Lara:SetRotation(newRot)
     end
     if TEN.Input.IsKeyHeld(TEN.Input.ActionID.JUMP) then
         newPos = TEN.Vec3(newPos.x, newPos.y - speed, newPos.z)
@@ -1048,7 +1019,7 @@ local function UpdatePlayerControls()
         newPos = TEN.Vec3(newPos.x, newPos.y + speed, newPos.z)
     end
 
-    lara:SetPosition(newPos)
+    Lara:SetPosition(newPos)
 end
 
 -------------------------------------------------------------------------------
@@ -1064,11 +1035,8 @@ local function UpdateLightEmission()
     if State.lightSource == LSRC_FOLLOW_CAMERA and State.cameraMesh then
         lightPos = State.cameraMesh:GetPosition()
     elseif State.lightSource == LSRC_FOLLOW_LARA then
-        local lara = GetLara()
-        if lara then
-            local lp = lara:GetPosition()
-            lightPos = TEN.Vec3(lp.x, lp.y - 256, lp.z)
-        end
+        local lp = Lara:GetPosition()
+        lightPos = TEN.Vec3(lp.x, lp.y - 256, lp.z)
     end
 
     local lightColor = COLOR_PRESETS[State.lightColorIndex].color
@@ -1098,7 +1066,7 @@ local function ShowUIString(key, text, x, y, color, scale)
     local flags = { TEN.Strings.DisplayStringOption.SHADOW }
 
     local ds = TEN.Strings.DisplayString(text, pos, scale or UI_SCALE, color or UI_COLOR_NORMAL, false, flags)
-    TEN.Strings.ShowString(ds, 1 / 30)
+    TEN.Strings.ShowString(ds)
 
     State.displayStrings[key] = ds
 end
@@ -1283,7 +1251,7 @@ LevelFuncs.Engine.PhotoMode.OnLoop = function()
     local walkHeld = TEN.Input.IsKeyHeld(TEN.Input.ActionID.WALK)
     local invHeld = TEN.Input.IsKeyHeld(TEN.Input.ActionID.INVENTORY)
 
-    if walkHeld and invHeld then
+    if walkHeld or invHeld then
         State.entryHoldCount = State.entryHoldCount + 1
         if State.entryHoldCount >= ENTRY_HOLD_FRAMES then
             State.entryHoldCount = 0
@@ -1303,7 +1271,7 @@ LevelFuncs.Engine.PhotoMode.OnFreeze = function()
     if not State.active then return end
 
     -- Consume/clear gameplay inputs so normal gameplay actions do not fire
-    TEN.Input.ClearAllKeys()
+    --TEN.Input.ClearAllKeys()
 
     -- Toggle UI visibility with LOOK key (always available)
     if TEN.Input.IsKeyHit(TEN.Input.ActionID.LOOK) then
