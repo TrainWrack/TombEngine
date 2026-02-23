@@ -76,20 +76,15 @@ end
 
 function ItemMenu.Create(item)
     local menuActions = {}
-    local itemData = InventoryData.GetInventoryItem(item)
     
-    if not itemData then
-        return
-    end
-    
-    local itemMenuActions = itemData:GetMenuActions()
+    local itemMenuActions = item:GetMenuActions()
 
     for _, entry in ipairs(PickupData.ItemActionFlags) do
         if HasItemAction(itemMenuActions, entry.bit) then
             local allowInsert = true
             
             if entry.bit == ItemAction.COMBINE then
-                local itemCount = InventoryData.GetCombineItemsCount(itemData:GetObjectID())
+                local itemCount = InventoryData.GetCombineItemsCount(item:GetObjectID())
                 allowInsert = (itemCount ~= 0)
             end
             

@@ -359,6 +359,8 @@ function InventoryData.OpenAtItem(itemID, repositionRings)
         return
     end
     
+    InventoryData.SwitchToRing(ringType)
+    
     -- Set selected item
     ring:SetSelectedItemByID(itemID)
     

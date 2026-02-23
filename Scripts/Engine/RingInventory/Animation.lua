@@ -123,6 +123,7 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
         {key = "ringRadius", start = 0, finish = Ring.RING_RADIUS},
         {key = "ringAngle", start = -360, finish = selectedRing:GetCurrentAngle()},
         {key = "ringFade", start = Constants.ALPHA_MIN, finish = Constants.ALPHA_MAX},
+        {key = "ringCenter", start = selectedRing:GetPosition(), finish = selectedRing:GetPosition()},
         {key = "camera", start = Constants.CAMERA_START, finish = Constants.CAMERA_END},
         {key = "target", start = Constants.TARGET_START, finish = Constants.TARGET_END},
     }
@@ -179,11 +180,13 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
         local allMotionComplete = true
         
         local rings = InventoryData.GetAllRings()
-        for ringType, ring in pairs(rings) do
+        for ringType, ring in pairs(rings) do   
+
+            local targetAngle  = ring:GetCurrentAngle()
 
             local ringChange = 
             {
-            {key = "ringAngle", start = -360, finish = 0},
+            {key = "ringAngle", start = targetAngle, finish = targetAngle + 360 },
             {key = "ringCenter", start = ring:GetPreviousPosition(), finish = ring:GetPosition()},
             }
             if not Animation.PerformBatchMotion("RingChange"..ringType, ringChange, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, ring) then

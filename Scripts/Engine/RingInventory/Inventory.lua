@@ -79,10 +79,10 @@ local function UpdateInventory()
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_OPEN)
         InventoryData.Construct()
-        InventoryData.OpenAtItem(InventoryData.GetChosenItem(), true)
-        ItemSpin.Initialize(RING.MAIN)
+        InventoryData.OpenAtItem(InventoryData.GetOpenAtItem(), true)
         local selectedRing = InventoryData.GetSelectedRing()
         local selectedItem = selectedRing:GetSelectedItem()
+        ItemSpin.Initialize(selectedRing:GetType())
         Text.Setup()
         InventoryStates.UpdateItem(selectedItem)
         ItemLight.SetOriginalColor(selectedItem, COLOR_MAP.ITEM_DESELECTED)
@@ -126,6 +126,8 @@ local function RunInventory()
        isNotUsingBinoculars then
         inventoryOpen = true
         InventoryData.SetOpenAtItem(TEN.Objects.ObjID.PC_SAVE_INV_ITEM)
+        local Save = require("Engine.RingInventory.Save")
+        Save.SetSaveMenu()
         inventoryDelay = 0
     end
     
@@ -133,6 +135,8 @@ local function RunInventory()
        not inventoryOpen and 
        isNotUsingBinoculars then
         inventoryOpen = true
+        local Save = require("Engine.RingInventory.Save")
+        Save.SetLoadMenu()
         InventoryData.SetOpenAtItem(TEN.Objects.ObjID.PC_LOAD_INV_ITEM)
         inventoryDelay = 0
     end

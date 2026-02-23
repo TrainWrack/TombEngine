@@ -13,18 +13,18 @@ local quickSave = false --checks if quicksave is enabled
 local saveSelected = false --checks if saveslot has been selected
 local saveSlotSelected = 1 --index of save slot selected
 
-function Save.DoSave()
+local function DoSave()
     local slot = Menu.Get("SaveMenu2"):getCurrentItemIndex()
     saveSlotSelected = slot
     Flow.SaveGame(slot - 1)
     saveSelected = true
-    for index = 1, 4 do
-        Menu.Delete("SaveMenu"..index)
-    end
+    Save.Hide()
+    local InventoryStates = require("Engine.RingInventory.InventoryStates")
+    InventoryStates.SetMode(InventoryStates.MODE.SAVE_CLOSE)
     return true
 end
 
-function Save.DoLoad()
+local function DoLoad()
 
     local slot = Menu.Get("SaveMenu2"):getCurrentItemIndex()
 
@@ -32,9 +32,9 @@ function Save.DoLoad()
         saveSlotSelected = slot
         Flow.LoadGame(slot - 1)
         saveSelected = true
-        for index = 1, 4 do
-            Menu.Delete("SaveMenu"..index)
-        end
+        Save.Hide()
+        local InventoryStates = require("Engine.RingInventory.InventoryStates")
+        InventoryStates.SetMode(InventoryStates.MODE.SAVE_CLOSE)
         return true
     else
         TEN.Sound.PlaySound(SOUND_MAP.PLAYER_NO)
@@ -163,6 +163,10 @@ function Save.IsSaveSelected()
     return saveSelected == true
 end
 
+function Save.ClearSaveSelected()
+    return saveSelected == false
+end
+
 --Set quick save status. True means menu is in quick save mode.
 function Save.SetQuickSaveStatus(status)
     quickSave = status
@@ -178,7 +182,7 @@ end
 -- PUBLIC API (LevelFuncs.Engine.RingInventory)
 -- ============================================================================
 LevelFuncs.Engine.RingInventory = LevelFuncs.Engine.RingInventory or {}
-LevelFuncs.Engine.RingInventory.DoSave = Save.DoSave
-LevelFuncs.Engine.RingInventory.DoLoad = Save.DoLoad
+LevelFuncs.Engine.RingInventory.DoSave = DoSave
+LevelFuncs.Engine.RingInventory.DoLoad = DoLoad
 
 return Save
