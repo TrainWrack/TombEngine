@@ -109,7 +109,7 @@ function Inputs.Update(timeInMenu)
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             Animation.EnableSaveItemData()
             if ItemMenu.IsSingleItemAction(selectedItem) then
-                ItemMenu.ParseAction(selectedItem)
+                ItemMenu.ParseAction(selectedItem:GetMenuActions())
             else
                 InventoryStates.SetMode(INVENTORY_MODE.ITEM_SELECT)
             end

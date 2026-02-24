@@ -4,8 +4,6 @@
 --External Modules
 local Menu = require("Engine.RingInventory.Menu")
 local PickupData = require("Engine.RingInventory.PickupData")
-local Save = require("Engine.RingInventory.Save")
-local InventoryData = require("Engine.RingInventory.InventoryData")
 local InventoryStates= require("Engine.RingInventory.InventoryStates")
 local Settings = require("Engine.RingInventory.Settings")
 
@@ -33,15 +31,27 @@ function ItemMenu.IsSingleItemAction(item)
     
     local flags = item:GetMenuActions()
 
-    return flags ~= 0 and (flags & (flags - 1)) == 0
+    if flags == 0 then return false end
+
+    -- Single flag set
+    if (flags & (flags - 1)) == 0 then return true end
+
+    -- Two flags set, one is COMBINE, and no combine items available
+    local twoFlagsSet = (flags & (flags - 1)) ~= 0 and (flags & (flags - 2)) == 0
+    if twoFlagsSet and HasItemAction(flags, ItemAction.COMBINE) then
+        local InventoryData = require("Engine.RingInventory.InventoryData")
+        local combineItemCount = InventoryData.GetCombineItemsCount(item:GetObjectID())
+        if combineItemCount == 0 then return true end
+    end
+
+    return false
 
 end
 
-function ItemMenu.ParseAction(item)
-
-    local menuActions = item:GetMenuActions()
+function ItemMenu.ParseAction(menuActions)
 
     if HasItemAction(menuActions, ItemAction.USE) or HasItemAction(menuActions, ItemAction.EQUIP) then
+        ItemMenu.Hide()
         InventoryStates.SetMode(INVENTORY_MODE.ITEM_USE)
     elseif HasItemAction(menuActions, ItemAction.EXAMINE) then
         InventoryStates.SetMode(INVENTORY_MODE.EXAMINE_OPEN)
@@ -50,9 +60,11 @@ function ItemMenu.ParseAction(item)
     elseif HasItemAction(menuActions, ItemAction.STATISTICS) then
         InventoryStates.SetMode(INVENTORY_MODE.STATISTICS_SETUP)
     elseif HasItemAction(menuActions, ItemAction.SAVE) then
+        local Save = require("Engine.RingInventory.Save")
         Save.SetSaveMenu()
         InventoryStates.SetMode(INVENTORY_MODE.SAVE_SETUP)
     elseif HasItemAction(menuActions, ItemAction.LOAD) then
+        local Save = require("Engine.RingInventory.Save")
         Save.SetLoadMenu()
         InventoryStates.SetMode(INVENTORY_MODE.SAVE_SETUP)
     elseif HasItemAction(menuActions, ItemAction.SEPARATE) then
@@ -65,10 +77,11 @@ function ItemMenu.ParseAction(item)
 end
 
 function ItemMenu.DoItemAction()
-    local menu = LevelVars.Engine.Menus["menuActions"]
+
+    local menu = Menu.Get("menuActions")
     if not menu then return end
-    
-    local selectedItem = menu.items[menu.currentItem]
+
+    local selectedItem = menu:GetCurrentItem()
     if selectedItem and selectedItem.actionBit then
         ItemMenu.ParseAction(selectedItem.actionBit)
     end
@@ -84,6 +97,7 @@ function ItemMenu.Create(item)
             local allowInsert = true
             
             if entry.bit == ItemAction.COMBINE then
+                local InventoryData = require("Engine.RingInventory.InventoryData")
                 local itemCount = InventoryData.GetCombineItemsCount(item:GetObjectID())
                 allowInsert = (itemCount ~= 0)
             end
@@ -106,7 +120,6 @@ function ItemMenu.Create(item)
     itemMenu:SetLineSpacing(5.3)
     itemMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9)
     itemMenu:SetItemsTranslate(true)
-    itemMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, 1.5, nil, true)
     itemMenu:SetTitlePosition(Vec2(50, 4))
 end
 

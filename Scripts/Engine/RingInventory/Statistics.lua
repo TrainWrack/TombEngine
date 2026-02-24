@@ -140,6 +140,10 @@ function Stats.ToggleType()
     Stats.UpdateStatistics()
 end
 
+function Stats.GetType()
+    return statisticsType
+end
+
 function Stats.CreateStatisticsMenu()
     local statItems = {}
     local items = {"statistics_level", "statistics_game"}
@@ -167,38 +171,6 @@ function Stats.CreateStatisticsMenu()
     statisticsMenu:SetOnOptionChangeFunction("Blank", "Engine.RingInventory.ChangeStatistics")
     statisticsMenu:SetWrapAroundOptions(true)
     statisticsMenu:EnableInputs(true)
-end
---Move out from Statistics
-local function CalculateCompassAngle(timeCount)
-    local needleOrient = Rotation(0, -Lara:GetRotation().y, 0)
-    local wibble = math.sin((timeCount % 0x40) / 0x3F * (2 * math.pi))
-    needleOrient.y = needleOrient.y + wibble
-    return needleOrient
-end
-
-local function CalculateStopWatchRotation()
-    local angles = {}
-    local levelTime = Flow.GetStatistics(statisticsType).timeTaken
-    angles.hour_hand_angle = Rotation(0, 0, -(levelTime.h / 12) * 360)
-    angles.minute_hand_angle = Rotation(0, 0, -(levelTime.m / 60) * 360)
-    angles.second_hand_angle = Rotation(0, 0, -(levelTime.s / 60) * 360)
-    return angles
-end
-
-function Stats.SetItemRotations(timeCount)
-
-    local angles = CalculateStopWatchRotation()
-    local stopwatch
-    if stopwatch then
-        stopwatch:SetJointRotation(4, angles.hour_hand_angle)
-        stopwatch:SetJointRotation(5, angles.minute_hand_angle)
-        stopwatch:SetJointRotation(6, angles.second_hand_angle)
-    end
-
-    local compass
-    if compass then
-        compass:SetJointRotation(1, CalculateCompassAngle(timeCount))
-    end
 end
 
 -- ============================================================================

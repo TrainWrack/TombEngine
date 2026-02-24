@@ -489,6 +489,13 @@ function InventoryData.IsChosenItem(objectID)
 
 end
 
+--Check if an item is chosen
+function InventoryData.IsItemChosen()
+
+    return chosenItem ~= nil
+
+end
+
 --Get open at item objectID
 function InventoryData.GetOpenAtItem()
 
@@ -502,6 +509,39 @@ function InventoryData.SetOpenAtItem(objectID)
     openAtItem = objectID
     return true
 
+end
+
+local function CalculateCompassAngle(timeCount)
+    local needleOrient = Rotation(0, -Lara:GetRotation().y, 0)
+    local wibble = math.sin((timeCount % 0x40) / 0x3F * (2 * math.pi))
+    needleOrient.y = needleOrient.y + wibble
+    return needleOrient
+end
+
+local function CalculateStopWatchRotation()
+    local angles = {}
+    local Stats = require("Engine.RingInventory.Statistics")
+    local levelTime = Flow.GetStatistics(Stats.GetType()).timeTaken
+    angles.hour_hand_angle = Rotation(0, 0, -(levelTime.h / 12) * 360)
+    angles.minute_hand_angle = Rotation(0, 0, -(levelTime.m / 60) * 360)
+    angles.second_hand_angle = Rotation(0, 0, -(levelTime.s / 60) * 360)
+    return angles
+end
+
+function InventoryData.SetItemRotations(timeCount)
+
+    local angles = CalculateStopWatchRotation()
+    local stopwatch = InventoryData.FindItem(TEN.Objects.ObjID.STOPWATCH_ITEM):GetDisplayItem()
+    if stopwatch then
+        stopwatch:SetJointRotation(4, angles.hour_hand_angle)
+        stopwatch:SetJointRotation(5, angles.minute_hand_angle)
+        stopwatch:SetJointRotation(6, angles.second_hand_angle)
+    end
+
+    local compass = InventoryData.FindItem(TEN.Objects.ObjID.COMPASS_ITEM):GetDisplayItem()
+    if compass then
+        compass:SetJointRotation(1, CalculateCompassAngle(timeCount))
+    end
 end
 
 return InventoryData

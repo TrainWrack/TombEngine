@@ -3,6 +3,7 @@
 -- ============================================================================
 
 --External Modules
+
 local Menu = require("Engine.RingInventory.Menu")
 local Settings = require("Engine.RingInventory.Settings")
 
@@ -13,8 +14,11 @@ local COLOR_MAP = Settings.COLOR_MAP
 local WeaponMode = {}
 
 function WeaponMode.ChangeWeaponMode()
-    local index = Menu.Get("WeaponModeMenu"):getCurrentItemIndex()
+    local index = Menu.Get("WeaponModeMenu"):GetCurrentItemIndex()
     Lara:SetWeaponMode(index)
+
+    local InventoryStates = require("Engine.RingInventory.InventoryStates")
+    InventoryStates.SetMode(InventoryStates.MODE.WEAPON_MODE_CLOSE)
 end
 
 function WeaponMode.CreateWeaponModeMenu(itemData)
@@ -42,7 +46,7 @@ function WeaponMode.CreateWeaponModeMenu(itemData)
     weaponModeMenu:SetLineSpacing(5.3)
     weaponModeMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9)
     weaponModeMenu:SetItemsTranslate(true)
-    weaponModeMenu:setCurrentItem(modeIndex)
+    weaponModeMenu:SetCurrentItem(modeIndex)
     weaponModeMenu:SetTitle(nil, COLOR_MAP.HEADER_FONT, nil, nil, true)
 end
 

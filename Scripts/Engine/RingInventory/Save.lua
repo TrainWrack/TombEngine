@@ -123,7 +123,7 @@ function Save.CreateSaveMenu()
         saveList:SetSelectedItemFlags(selectedFlags[index])
         saveList:SetItemsTranslate(translate)
         saveList:SetSoundEffects(soundMap[index].select, soundMap[index].choose)
-        saveList:setCurrentItem(saveSlotSelected)
+        saveList:SetCurrentItem(saveSlotSelected)
     end
 end
 

@@ -248,21 +248,15 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
             return true
         end
     elseif mode == INVENTORY_MODE.ITEM_USE then
-        if combineItem1 then
-            if not Animation.PerformBatchMotion("ItemDeselect", useAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, false, selectedRing, selectedItem, true) then
+        
+        if InventoryData.IsItemChosen() then
+            if not Animation.PerformBatchMotion("ItemDeselect", useAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing, selectedItem, true) then
                 return false
             end
         end
         
-        InventoryData.FadeAll(false, true)
-        
-        if Animation.PerformBatchMotion("RingClosing", ringAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
-            if combineItem1 then
-                Animation.ClearBatchMotionProgress("ItemDeselect", useAnimation)
-            end
-            return true
-        end
-        return false
+        return true
+
     elseif mode == INVENTORY_MODE.AMMO_SELECT_CLOSE then
         if Animation.PerformBatchMotion("AmmoRingClosing", combineRingAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
             return true

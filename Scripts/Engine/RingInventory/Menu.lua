@@ -160,11 +160,11 @@ Menu.Status = function(value)
 
     if Menus then
         if value == true then
-            TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.Menu.DrawAllMenus)
-            TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.Menu.UpdateAllMenus)
+            TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_FREEZE, LevelFuncs.Engine.Menu.DrawAllMenus)
+            TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_FREEZE, LevelFuncs.Engine.Menu.UpdateAllMenus)
         elseif value == false then
-            TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.Menu.DrawAllMenus)
-            TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.Menu.UpdateAllMenus)
+            TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PRE_FREEZE, LevelFuncs.Engine.Menu.DrawAllMenus)
+            TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PRE_FREEZE, LevelFuncs.Engine.Menu.UpdateAllMenus)
         end
     end
 
@@ -425,21 +425,28 @@ function Menu:EnableInputs(inputs)
 end
 
 -- Getter Methods
-function Menu:getCurrentItem()
+function Menu:GetCurrentItem()
+    -- Returns the currently selected item
+    local menu = Menus[self.name]
+    local item = menu.items[menu.currentItem]
+    return item and item or nil
+end
+
+function Menu:GetCurrentItemName()
     -- Returns the currently selected item
     local menu = Menus[self.name]
     local item = menu.items[menu.currentItem]
     return item and item.itemName or nil
 end
 
-function Menu:getCurrentOption()
+function Menu:GetCurrentOption()
     -- Returns the currently selected option for the current item
     local menu = Menus[self.name]
     local item = menu.items[menu.currentItem]
     return (item and item.options and item.options[item.currentOption]) or nil
 end
 
-function Menu:getOptionForItem(itemIndex)
+function Menu:GetOptionForItem(itemIndex)
     -- Returns the currently selected option for a specific item by index
     local menu = Menus[self.name]
    if debug and (not menu.items or not menu.items[itemIndex]) then
@@ -453,19 +460,19 @@ function Menu:getOptionForItem(itemIndex)
 end
 
 -- Returns the index of the currently selected item
-function Menu:getCurrentItemIndex()
+function Menu:GetCurrentItemIndex()
     local menu = Menus[self.name]
     return menu.currentItem
 end
 
 -- Returns the index of the currently selected option for the current item
-function Menu:getCurrentOptionIndex()
+function Menu:GetCurrentOptionIndex()
     local menu = Menus[self.name]
     local item = menu.items[menu.currentItem]
     return item.currentOption or 1
 end
 
-function Menu:getOptionIndexForItem(itemIndex)
+function Menu:GetOptionIndexForItem(itemIndex)
     local menu = Menus[self.name]
     if debug and (not menu.items or not menu.items[itemIndex]) then
         error("Invalid item index: " .. tostring(itemIndex))
@@ -478,7 +485,7 @@ function Menu:getOptionIndexForItem(itemIndex)
 
 end
 
-function Menu:setOptionIndexForItem(itemIndex, optionIndex)
+function Menu:SetOptionIndexForItem(itemIndex, optionIndex)
     local menu = Menus[self.name]
     if debug and (not menu.items or not menu.items[itemIndex]) then
         error("Invalid item index: " .. tostring(itemIndex))
@@ -498,7 +505,7 @@ function Menu:setOptionIndexForItem(itemIndex, optionIndex)
 
 end
 
-function Menu:setCurrentItem(itemIndex)
+function Menu:SetCurrentItem(itemIndex)
     local menu = Menus[self.name]
 
     if debug and not menu.items then

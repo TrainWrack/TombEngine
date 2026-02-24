@@ -56,7 +56,6 @@ end
 -- Create and store DisplayItem for this item
 function InventoryItem:CreateDisplayItem(defaultPosition)
     self.displayItem = TEN.View.DisplayItem(
-        tostring(self.objectID),
         self.objectID,
         defaultPosition,
         self.rotation,

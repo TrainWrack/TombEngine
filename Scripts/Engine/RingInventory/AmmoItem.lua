@@ -19,6 +19,9 @@ local AmmoItem = {}
 --Constants
 local AMMO_LOCATION = Vec3(0, 300, 512)
 
+--DisplayItem Storage
+AmmoItem.ammoItem = nil
+
 local function GetChosenAmmo(weaponItem)
 
     if not weaponItem or weaponItem:GetType() ~= TYPE.WEAPON then
@@ -47,30 +50,27 @@ local function GetChosenAmmo(weaponItem)
     
     local base  = PickupData.GetProperties(objectID)
     local data = InventoryData.BuildItem(base)
-    
+    local displayItem = data:CreateDisplayItem(AMMO_LOCATION)
+    displayItem:SetColor(COLOR_MAP.ITEM_HIDDEN)
     return data
 
 end
 --Update this function to make sure item is drawn somewhere else, Maybe add ammoselected ring
 function AmmoItem.Show(weaponItem, textOnly)
 
-    local item = GetChosenAmmo(weaponItem)
+    AmmoItem.ammoItem = GetChosenAmmo(weaponItem)
     
-    if item then
+    if AmmoItem.ammoItem then
 
         if not textOnly then
-            local displayItem = TEN.View.DisplayItem("ChosenAmmo", item:GetObjectID(), AMMO_LOCATION, item:GetRotation(), Vec3(item:GetScale()), item:GetMeshBits())
-            displayItem:SetColor(COLOR_MAP.ITEM_HIDDEN)
-
-            ItemLight.FadeIn("ChosenAmmo", COLOR_MAP.ITEM_SELECTED)
-            ItemSpin.RotateItem("ChosenAmmo")
-
+            ItemLight.FadeIn(AmmoItem.ammoItem, COLOR_MAP.ITEM_SELECTED)
+            ItemSpin.RotateItem(AmmoItem.ammoItem)
         end
 
-        Text.SetItemSubLabel(item)
+        Text.SetItemSubLabel(AmmoItem.ammoItem)
     end
 
-    if not item then
+    if not AmmoItem.ammoItem then
         
         Text.Hide("ITEM_LABEL_SECONDARY")
 
@@ -80,7 +80,7 @@ end
 
 function AmmoItem.Hide()
 
-    --ItemLight.FadeOut("ChosenAmmo", COLOR_MAP.ITEM_HIDDEN)
+    ItemLight.FadeOut(AmmoItem.ammoItem, COLOR_MAP.ITEM_HIDDEN)
     Text.Hide("ITEM_LABEL_SECONDARY")
     ItemSpin.StopItem()
 
