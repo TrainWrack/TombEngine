@@ -80,6 +80,8 @@ end
 
 function AmmoItem.Hide()
 
+    if not AmmoItem.ammoItem then return end
+    
     ItemLight.FadeOut(AmmoItem.ammoItem, COLOR_MAP.ITEM_HIDDEN)
     Text.Hide("ITEM_LABEL_SECONDARY")
     ItemSpin.StopItem()

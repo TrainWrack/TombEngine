@@ -14,7 +14,7 @@ local saveSelected = false --checks if saveslot has been selected
 local saveSlotSelected = 1 --index of save slot selected
 
 local function DoSave()
-    local slot = Menu.Get("SaveMenu2"):getCurrentItemIndex()
+    local slot = Menu.Get("SaveMenu2"):GetCurrentItemIndex()
     saveSlotSelected = slot
     Flow.SaveGame(slot - 1)
     saveSelected = true
@@ -26,7 +26,7 @@ end
 
 local function DoLoad()
 
-    local slot = Menu.Get("SaveMenu2"):getCurrentItemIndex()
+    local slot = Menu.Get("SaveMenu2"):GetCurrentItemIndex()
 
     if Flow.DoesSaveGameExist(slot - 1) then
         saveSlotSelected = slot

@@ -128,15 +128,14 @@ function InventoryData.SetupSecondaryRing(ringType, item)
     previousRingType = selectedRingType
     
     local currentRing = InventoryData.GetSelectedRing()
-    chosenItem = item or (currentRing and currentRing:GetSelectedItem().objectID)
+    chosenItem = item and item or (currentRing and currentRing:GetSelectedItem())
     
     -- Get or create the new ring
     local newRing = InventoryData.GetRing(ringType)
     
-    -- You can implement ConstructObjectList here if needed
-    -- InventoryData.ConstructObjectList(ringType, chosenItem)
+    InventoryData.Construct(ringType, chosenItem)
     
-    selectedRingType = ringType
+    InventoryData.SwitchToRing(ringType)
     
     -- Special handling for ammo ring
     if ringType == RING.AMMO then
@@ -475,17 +474,17 @@ function InventoryData.GetChosenItem()
 end
 
 --Set item selected objectID
-function InventoryData.SetChosenItem(objectID)
+function InventoryData.SetChosenItem(item)
 
-    chosenItem = objectID
+    chosenItem = item
     return true
 
 end
 
 --Check item selected objectID
-function InventoryData.IsChosenItem(objectID)
+function InventoryData.IsChosenItem(item)
 
-    return chosenItem == objectID
+    return chosenItem == item
 
 end
 

@@ -228,8 +228,8 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
     elseif mode == INVENTORY_MODE.COMBINE_CLOSE then
         local allMotionComplete = true
         local rings = InventoryData.GetAllRings()
-        for index in pairs(rings) do
-            if not Animation.PerformBatchMotion("combineCloseSuccess"..index, combineClose, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, index) then
+        for ringType, ring in pairs(rings) do
+            if not Animation.PerformBatchMotion("combineCloseSuccess"..ringType, combineClose, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, ring) then
                 allMotionComplete = false
             end
         end
@@ -239,8 +239,8 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
     elseif mode == INVENTORY_MODE.COMBINE_COMPLETE then
         local allMotionComplete = true
         local rings = InventoryData.GetAllRings()
-        for index in pairs(rings) do
-            if not Animation.PerformBatchMotion("combineCloseSuccess"..index, combineClose, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, index, nil, true) then
+        for ringType, ring in pairs(rings) do
+            if not Animation.PerformBatchMotion("combineCloseSuccess"..ringType, combineClose, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, ring, nil, true) then
                 allMotionComplete = false
             end
         end
@@ -264,8 +264,8 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
     elseif mode == INVENTORY_MODE.SEPARATE then
         local allMotionComplete = true
         local rings = InventoryData.GetAllRings()
-        for index in pairs(rings) do
-            if not Animation.PerformBatchMotion("combineCloseSuccess"..index, combineClose, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, index) then
+        for ringType, ring  in pairs(rings) do
+            if not Animation.PerformBatchMotion("combineCloseSuccess"..ringType, combineClose, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, ring) then
                 allMotionComplete = false
             end
         end
@@ -275,8 +275,8 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
     elseif mode == INVENTORY_MODE.SEPARATE_COMPLETE then
         local allMotionComplete = true
         local rings = InventoryData.GetAllRings()
-        for index in pairs(rings) do
-            if not Animation.PerformBatchMotion("combineCloseSuccess"..index, combineClose, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, index, nil, true) then
+        for ringType, ring   in pairs(rings) do
+            if not Animation.PerformBatchMotion("combineCloseSuccess"..ringType, combineClose, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, ring, nil, true) then
                 allMotionComplete = false
             end
         end
