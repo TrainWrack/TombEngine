@@ -19,6 +19,7 @@ local function DoSave()
     Flow.SaveGame(slot - 1)
     saveSelected = true
     Save.Hide()
+    Save.SetQuickSaveStatus(false)
     local InventoryStates = require("Engine.RingInventory.InventoryStates")
     InventoryStates.SetMode(InventoryStates.MODE.SAVE_CLOSE)
     return true
@@ -33,6 +34,7 @@ local function DoLoad()
         Flow.LoadGame(slot - 1)
         saveSelected = true
         Save.Hide()
+        Save.SetQuickSaveStatus(false)
         local InventoryStates = require("Engine.RingInventory.InventoryStates")
         InventoryStates.SetMode(InventoryStates.MODE.SAVE_CLOSE)
         return true

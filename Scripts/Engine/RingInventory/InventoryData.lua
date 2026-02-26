@@ -287,7 +287,7 @@ function InventoryData.Construct(ringType, selectedWeapon)
             if data.combine == true then
                 data.ringName = RING.COMBINE
                 
-                if chosenItem == data.objectID then
+                if chosenItem.objectID == data.objectID then
                     goto continue
                 end
                 
@@ -530,16 +530,18 @@ end
 function InventoryData.SetItemRotations(timeCount)
 
     local angles = CalculateStopWatchRotation()
-    local stopwatch = InventoryData.FindItem(TEN.Objects.ObjID.STOPWATCH_ITEM):GetDisplayItem()
+    local stopwatch = InventoryData.FindItem(TEN.Objects.ObjID.STOPWATCH_ITEM)
     if stopwatch then
-        stopwatch:SetJointRotation(4, angles.hour_hand_angle)
-        stopwatch:SetJointRotation(5, angles.minute_hand_angle)
-        stopwatch:SetJointRotation(6, angles.second_hand_angle)
+        local displayItem = stopwatch:GetDisplayItem()
+        displayItem:SetJointRotation(4, angles.hour_hand_angle)
+        displayItem:SetJointRotation(5, angles.minute_hand_angle)
+        displayItem:SetJointRotation(6, angles.second_hand_angle)
     end
 
-    local compass = InventoryData.FindItem(TEN.Objects.ObjID.COMPASS_ITEM):GetDisplayItem()
+    local compass = InventoryData.FindItem(TEN.Objects.ObjID.COMPASS_ITEM)
     if compass then
-        compass:SetJointRotation(1, CalculateCompassAngle(timeCount))
+        local displayItem = compass:GetDisplayItem()
+        displayItem:SetJointRotation(1, CalculateCompassAngle(timeCount))
     end
 end
 

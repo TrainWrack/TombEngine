@@ -2,94 +2,38 @@
 
 --External Modules
 local Constants = require("Engine.RingInventory.Constants")
-local Menu = require("Engine.RingInventory.Menu")
-local Interpolate = require("Engine.RingInventory.Interpolate")
 local InventoryData = require("Engine.RingInventory.InventoryData")
-local InventoryStates -- Delayed require to break circular dependency
-local ItemLight = require("Engine.RingInventory.ItemLight")
-local ItemSpin= require("Engine.RingInventory.ItemSpin")
+local InventoryStates
 local Settings = require("Engine.RingInventory.Settings")
-local Statistics -- Delayed require to break circular dependency
 local Strings = require("Engine.RingInventory.Strings")
-local Text = require("Engine.RingInventory.Text")
-local Ring      = require("Engine.RingInventory.Ring")
 
 --Pointers to tables
-local RING = Ring.TYPE
-local SOUND_MAP = Settings.SOUND_MAP
 local COLOR_MAP = Settings.COLOR_MAP
 
---Variables
-local timeInMenu = 0
+--Local Variables
 local inventoryDelay = 0
 
 local inventorySetup = true
-local inventorySetupFreeze = false
 local inventoryOpen = false
 local inventoryClosed = false
 local inventoryRunning = false
-
 
 LevelFuncs.Engine.RingInventory = {}
 
 -- ============================================================================
 -- MAIN FUNCTIONS
 -- ============================================================================
-local function ExitInventory()
-    if not InventoryStates then
-        InventoryStates = require("Engine.RingInventory.InventoryStates")
-    end
-    local INVENTORY_MODE = InventoryStates.MODE
-    InventoryData.Reset()
-    TEN.Inventory.SetFocusedItem(Constants.NO_VALUE)
-    Interpolate.ClearAll()
-    Menu.DeleteAll()
-    InventoryStates.SetMode(INVENTORY_MODE.INVENTORY_OPENING)
-    InventoryData.SwitchToRing(RING.MAIN)
-    TEN.View.DisplayItem.ResetCamera()
-    Text.DestroyAll()
-    timeInMenu = 0
-    saveList = false
-    InventoryData.SetChosenItem()
-    inventoryClosed = true
-    Flow.SetFreezeMode(Flow.FreezeMode.NONE)
-end
-
 local function UpdateInventory()
     if not inventoryRunning then
         return
     end
-    
-    -- Lazy load InventoryStates to break circular dependency
+
     if not InventoryStates then
         InventoryStates = require("Engine.RingInventory.InventoryStates")
     end
 
-    if not Statistics then
-        Statistics = require("Engine.RingInventory.Statistics")
-    end 
-    
-    timeInMenu = timeInMenu + 1
-    
-    InventoryData.DrawAllRings()
-    Text.Update()
-    Text.DrawAll()
+    InventoryStates.Update()
 
-    if inventoryOpen then
-        TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
-        TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_OPEN)
-        InventoryData.Construct()
-        InventoryData.OpenAtItem(InventoryData.GetOpenAtItem(), true)
-        local selectedRing = InventoryData.GetSelectedRing()
-        local selectedItem = selectedRing:GetSelectedItem()
-        ItemSpin.Initialize(selectedRing:GetType())
-        Text.Setup()
-        InventoryStates.UpdateItem(selectedItem)
-        ItemLight.SetOriginalColor(selectedItem, COLOR_MAP.ITEM_DESELECTED)
-        inventoryOpen = false
-    else
-        InventoryStates.Update(timeInMenu)
-    end
 end
 
 local function RunInventory()
@@ -127,6 +71,7 @@ local function RunInventory()
         inventoryOpen = true
         InventoryData.SetOpenAtItem(TEN.Objects.ObjID.PC_SAVE_INV_ITEM)
         local Save = require("Engine.RingInventory.Save")
+        Save.SetQuickSaveStatus(true)
         Save.SetSaveMenu()
         inventoryDelay = 0
     end
@@ -136,6 +81,7 @@ local function RunInventory()
        isNotUsingBinoculars then
         inventoryOpen = true
         local Save = require("Engine.RingInventory.Save")
+        Save.SetQuickSaveStatus(true)
         Save.SetLoadMenu()
         InventoryData.SetOpenAtItem(TEN.Objects.ObjID.PC_LOAD_INV_ITEM)
         inventoryDelay = 0
@@ -172,7 +118,6 @@ end
 LevelFuncs.Engine.RingInventory = LevelFuncs.Engine.RingInventory or {}
 LevelFuncs.Engine.RingInventory.UpdateInventory = UpdateInventory
 LevelFuncs.Engine.RingInventory.RunInventory = RunInventory
-LevelFuncs.Engine.RingInventory.ExitInventory = ExitInventory
 
 -- ============================================================================
 -- CALLBACKS
