@@ -173,6 +173,15 @@ function Stats.CreateStatisticsMenu()
     statisticsMenu:EnableInputs(true)
 end
 
+function Stats.UpdateStatistics()
+    
+    if Settings.ANIMATION.PROGRESS_TIME then
+        Flow.GetStatistics(true).timeTaken = Flow.GetStatistics(true).timeTaken + 1
+        Flow.GetStatistics(false).timeTaken = Flow.GetStatistics(false).timeTaken + 1
+    end
+
+end
+
 -- ============================================================================
 -- PUBLIC API (LevelFuncs.Engine.CustomInventory)
 -- ============================================================================

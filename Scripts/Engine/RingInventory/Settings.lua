@@ -46,7 +46,8 @@ Settings.ANIMATION =
     INVENTORY_ANIM_TIME = .5,
     ITEM_ANIM_TIME = .125,
     ROTATION_SPEED = 4,
-    SKIP_RING_CLOSE = false
+    SKIP_RING_CLOSE = false,
+    PROGRESS_TIME = true
 }
 
 

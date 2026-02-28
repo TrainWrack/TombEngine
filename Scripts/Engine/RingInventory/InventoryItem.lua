@@ -45,6 +45,10 @@ function InventoryItem:GetMenuActions()
     return self.menuActions
 end
 
+function InventoryItem:GetRingType()
+    return self.ringName
+end
+
 function InventoryItem:GetDisplayItem()
     return self.displayItem
 end

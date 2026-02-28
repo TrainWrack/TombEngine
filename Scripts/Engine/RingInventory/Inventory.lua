@@ -15,7 +15,6 @@ local inventoryDelay = 0
 
 local inventorySetup = true
 local inventoryOpen = false
-local inventoryClosed = false
 local inventoryRunning = false
 
 LevelFuncs.Engine.RingInventory = {}
@@ -37,10 +36,15 @@ local function UpdateInventory()
 end
 
 local function RunInventory()
+
+    if not InventoryStates then
+        InventoryStates = require("Engine.RingInventory.InventoryStates")
+    end
+
     if inventorySetup then
         LevelVars.Engine.RingInventory = {}
         inventoryOpen = false
-        inventoryClosed = false
+        InventoryStates.SetInventoryClosed(false)
         inventoryRunning = false
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         TEN.View.SetPostProcessStrength(1)
@@ -98,15 +102,16 @@ local function RunInventory()
             TEN.View.DisplayItem.SetFOV(80)
             TEN.View.DisplayItem.SetAmbientLight(COLOR_MAP.INVENTORY_AMBIENT)
             inventoryRunning = true
+            inventoryOpen = false
             Flow.SetFreezeMode(Flow.FreezeMode.FULL)
         end
     end
     
-    if inventoryClosed then
+    if InventoryStates.GetInventoryClosed() then
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         TEN.View.SetPostProcessStrength(1)
         TEN.View.SetPostProcessTint(COLOR_MAP.ITEM_SELECTED)
-        inventoryClosed = false
+        InventoryStates.SetInventoryClosed(false)
         inventoryRunning = false
     end
 end

@@ -24,6 +24,10 @@ ANIM_SETTINGS = Settings.ANIMATION
 COLOR_MAP = Settings.COLOR_MAP
 SOUND_MAP = Settings.SOUND_MAP
 
+
+--Variables
+local inventoryClosed = false
+
 local InventoryStates = {}
 
 InventoryStates.MODE = 
@@ -85,6 +89,18 @@ function InventoryStates.SetActionCheck(check)
 
 end
 
+function InventoryStates.SetInventoryClosed(status)
+
+    inventoryClosed = status
+
+end
+
+function InventoryStates.GetInventoryClosed()
+
+    return inventoryClosed
+
+end
+
 function InventoryStates.SetMode(mode)
 
     previousMode = inventoryMode
@@ -123,6 +139,8 @@ function InventoryStates.Update()
     if not Inputs then
         Inputs = require("Engine.RingInventory.Input")
     end
+
+    Statistics.UpdateStatistics()
 
     Menu.DrawActiveMenus()
     Menu.UpdateActiveMenus()
@@ -436,7 +454,7 @@ function InventoryStates.Update()
         Text.DestroyAll()
         timeInMenu = 0
         InventoryData.SetChosenItem()
-        inventoryClosed = true
+        InventoryStates.SetInventoryClosed(true)
         Flow.SetFreezeMode(Flow.FreezeMode.NONE)
     end
 end
