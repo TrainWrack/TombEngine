@@ -116,11 +116,15 @@ Menu.Delete = function (menuName)
 end
 
 Menu.DeleteAll = function()
-    if LevelVars.Engine and Menus then
+
+    Menu.Active = {}
+
+    if Menus then
         for name, _ in pairs(Menus) do
             Menus[name] = nil
         end
     end
+    
 end
 
 Menu.AddActive = function(menuName)

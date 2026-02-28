@@ -18,10 +18,9 @@ local function DoSave()
     saveSlotSelected = slot
     Flow.SaveGame(slot - 1)
     saveSelected = true
-    Save.Hide()
-    Save.SetQuickSaveStatus(false)
     local InventoryStates = require("Engine.RingInventory.InventoryStates")
     InventoryStates.SetMode(InventoryStates.MODE.SAVE_CLOSE)
+    Save.Hide()
     return true
 end
 
@@ -33,10 +32,9 @@ local function DoLoad()
         saveSlotSelected = slot
         Flow.LoadGame(slot - 1)
         saveSelected = true
-        Save.Hide()
-        Save.SetQuickSaveStatus(false)
         local InventoryStates = require("Engine.RingInventory.InventoryStates")
         InventoryStates.SetMode(InventoryStates.MODE.SAVE_CLOSE)
+        Save.Hide()
         return true
     else
         TEN.Sound.PlaySound(SOUND_MAP.PLAYER_NO)
@@ -158,6 +156,14 @@ end
 --Sets the menu to Load menu
 function Save.SetLoadMenu()
     saveMenu = false
+end
+
+function Save.IsLoadMenu()
+    return not saveMenu
+end
+
+function Save.IsSaveMenu()
+    return saveMenu
 end
 
 --Check if a save has been selected

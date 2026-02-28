@@ -64,7 +64,7 @@ local function RunInventory()
        playerHp and 
        isNotUsingBinoculars then
         inventoryOpen = true
-        InventoryData.SetOpenAtItem(TEN.Inventory.GetFocusedItem()) --Line 141
+        InventoryData.SetOpenAtItem(TEN.Inventory.GetFocusedItem())
         inventoryDelay = 0
     end
     
@@ -73,10 +73,10 @@ local function RunInventory()
        playerHp and 
        isNotUsingBinoculars then
         inventoryOpen = true
-        InventoryData.SetOpenAtItem(TEN.Objects.ObjID.PC_SAVE_INV_ITEM)
         local Save = require("Engine.RingInventory.Save")
         Save.SetQuickSaveStatus(true)
         Save.SetSaveMenu()
+        InventoryData.SetOpenAtItem(TEN.Objects.ObjID.PC_SAVE_INV_ITEM)
         inventoryDelay = 0
     end
     
