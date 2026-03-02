@@ -23,9 +23,6 @@ local previousRingType = RING.MAIN
 local chosenItem = nil
 local openAtItem = nil
 
-local saveList = false
-local saveSelected = false
-
 --Variables
 local gameflowOverrides = nil
 
@@ -105,6 +102,7 @@ function InventoryData.SwitchToRing(ringType)
     previousRingType = selectedRingType
     selectedRingType = ringType
     ItemSpin.Initialize(ringType, 0)
+    ItemSpin.StartSpin(ringType)
     return true
 end
 
@@ -124,25 +122,34 @@ function InventoryData.ReturnToPreviousRing()
 end
 
 -- Setup secondary ring (combine, ammo, etc.)
-function InventoryData.SetupSecondaryRing(ringType, item)
-    previousRingType = selectedRingType
+function InventoryData.SetupSecondaryRing(ringType, item, keepCurrentRing)
     
     local currentRing = InventoryData.GetSelectedRing()
-    chosenItem = item and item or (currentRing and currentRing:GetSelectedItem())
+    item = item or (currentRing and currentRing:GetSelectedItem())
     
     -- Get or create the new ring
     local newRing = InventoryData.GetRing(ringType)
     
-    InventoryData.Construct(ringType, chosenItem)
+    InventoryData.Construct(ringType, item)
     
-    InventoryData.SwitchToRing(ringType)
-    
+    if not keepCurrentRing then
+        InventoryData.SwitchToRing(ringType)
+    end
+
     -- Special handling for ammo ring
     if ringType == RING.AMMO then
-        local weaponSlot = PickupData.WEAPON_SET[chosenItem].slot
+        local weaponSlot = PickupData.WEAPON_SET[item:GetObjectID()].slot
         local ammoType = Lara:GetAmmoType(weaponSlot)
         local objectID = PickupData.AMMO_TYPE_TO_OBJECT[ammoType]
+
         newRing:SetSelectedItemByID(objectID)
+
+        local slice = newRing:GetSlice()
+        local itemIndex = newRing:GetSelectedItemIndex()
+        local angle = -slice * (itemIndex - 1)
+    
+        newRing:SetCurrentAngle(angle)
+        newRing:SetTargetAngle(angle)
     end
     
     return newRing
@@ -173,22 +180,11 @@ function InventoryData.RemoveRing(ringType)
     return false
 end
 
--- Fade all rings
-function InventoryData.FadeAll(visible, omitSelectedRing)
-    local fadeValue = visible and CONSTANTS.ALPHA_MAX or CONSTANTS.ALPHA_MIN
-    
-    for ringType, ring in pairs(rings) do
-        if not (omitSelectedRing and ringType == selectedRingType) then
-            ring:Fade(fadeValue)
-        end
-    end
-end
-
 -- Color all rings
-function InventoryData.ColorAll(color, omitSelectedRing)
+function InventoryData.ColorAll(color, selectedItemColor, omitSelectedRing)
     for ringType, ring in pairs(rings) do
         if not (omitSelectedRing and ringType == selectedRingType) then
-            ring:Color(color)
+            ring:SetColor(color, selectedItemColor)
         end
     end
 end
@@ -252,6 +248,7 @@ end
 -- Construct rings with items from game data
 function InventoryData.Construct(ringType, selectedWeapon)
     
+    local selectedWeaponID = selectedWeapon and selectedWeapon:GetObjectID()
     local items = PickupData.CONSTANTS
     
     if ringType == RING.AMMO or ringType == RING.COMBINE then
@@ -300,7 +297,7 @@ function InventoryData.Construct(ringType, selectedWeapon)
                 goto continue
             end
         elseif ringType == RING.AMMO then
-            if data.type == TYPE.AMMO and PickupData.WEAPON_AMMO_LOOKUP[selectedWeapon] and Utilities.Contains(PickupData.WEAPON_AMMO_LOOKUP[selectedWeapon], data.objectID) then
+            if data.type == TYPE.AMMO and PickupData.WEAPON_AMMO_LOOKUP[selectedWeaponID] and Utilities.Contains(PickupData.WEAPON_AMMO_LOOKUP[selectedWeaponID], data.objectID) then
                 data.ringName = RING.AMMO
                 ammoRing = true
                 shouldInsert = true
@@ -328,7 +325,7 @@ function InventoryData.Construct(ringType, selectedWeapon)
             displayItem:SetColor(COLOR_MAP.ITEM_HIDDEN)
             -- Add item to ring
             ring:AddItem(data)
-            
+            print("added item to ring: " .. data.name)
         end
         
         ::continue::

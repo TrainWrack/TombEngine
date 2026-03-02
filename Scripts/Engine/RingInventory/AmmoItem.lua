@@ -3,7 +3,7 @@
 -- ============================================================================
 
 --External Modules
-local ItemLight = require("Engine.RingInventory.ItemLight")
+local RingLight = require("Engine.RingInventory.RingLight")
 local ItemSpin= require("Engine.RingInventory.ItemSpin")
 local PickupData = require("Engine.RingInventory.PickupData")
 local Settings = require("Engine.RingInventory.Settings")
@@ -58,33 +58,33 @@ end
 --Update this function to make sure item is drawn somewhere else, Maybe add ammoselected ring
 function AmmoItem.Show(weaponItem, textOnly)
 
-    AmmoItem.ammoItem = GetChosenAmmo(weaponItem)
+    -- AmmoItem.ammoItem = GetChosenAmmo(weaponItem)
     
-    if AmmoItem.ammoItem then
+    -- if AmmoItem.ammoItem then
 
-        if not textOnly then
-            ItemLight.FadeIn(AmmoItem.ammoItem, COLOR_MAP.ITEM_SELECTED)
-            ItemSpin.RotateItem(AmmoItem.ammoItem)
-        end
+    --     if not textOnly then
+    --         ItemLight.FadeIn(AmmoItem.ammoItem, COLOR_MAP.ITEM_SELECTED)
+    --         ItemSpin.RotateItem(AmmoItem.ammoItem)
+    --     end
 
-        Text.SetItemSubLabel(AmmoItem.ammoItem)
-    end
+    --     Text.SetItemSubLabel(AmmoItem.ammoItem)
+    -- end
 
-    if not AmmoItem.ammoItem then
+    -- if not AmmoItem.ammoItem then
         
-        Text.Hide("ITEM_LABEL_SECONDARY")
+    --     Text.Hide("ITEM_LABEL_SECONDARY")
 
-    end
+    -- end
 
 end
 
 function AmmoItem.Hide()
 
-    if not AmmoItem.ammoItem then return end
+    -- if not AmmoItem.ammoItem then return end
     
-    ItemLight.FadeOut(AmmoItem.ammoItem, COLOR_MAP.ITEM_HIDDEN)
-    Text.Hide("ITEM_LABEL_SECONDARY")
-    ItemSpin.StopItem()
+    -- RingLight.FadeOut(AmmoItem.ammoItem, COLOR_MAP.ITEM_HIDDEN)
+    -- Text.Hide("ITEM_LABEL_SECONDARY")
+    -- ItemSpin.StopItem()
 
 end
 

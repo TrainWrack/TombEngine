@@ -4,6 +4,7 @@
 -- ============================================================================
 
 --External Modules
+local RingLight = require("Engine.RingInventory.RingLight")
 local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointer to tables
@@ -177,7 +178,8 @@ function Ring:Translate(center, radius, rotationOffset, alpha)
     if itemCount == 0 then return end
     
     local ItemSpin  = require("Engine.RingInventory.ItemSpin")
-    ItemSpin.Initialize(self.type, rotationOffset)
+    ItemSpin.SetRotationOffset(self.type, rotationOffset)
+    --ItemSpin.Initialize(self.type, rotationOffset)
 
     for i = 1, itemCount do
         local currentItem = self.items[i].objectID
@@ -190,44 +192,11 @@ function Ring:Translate(center, radius, rotationOffset, alpha)
     end
 end
 
--- Fade items (except optionally the selected one)
-function Ring:Fade(fadeValue, omitItem)
+-- Color items in the ring
+function Ring:Color(color, selectedItemColor)
     
-    for i = 1, #self.items do
-        local currentItem = self.items[i].objectID
-        
-        if omitItem and omitItem:GetObjectID() == currentItem then
-            goto continue
-        end
-        
-        local currentDisplayItem = self.items[i]:GetDisplayItem()
-        if currentDisplayItem then
-            local itemColor = currentDisplayItem:GetColor()
-            currentDisplayItem:SetColor(Utilities.ColorCombine(itemColor, fadeValue))
-        end
-        
-        ::continue::
-    end
-end
+    RingLight.SetRingColors(self, color, selectedItemColor)
 
--- Color items (except optionally the selected one)
-function Ring:Color(color, omitItem)
-    
-    for i = 1, #self.items do
-        local currentItem = self.items[i].objectID
-        
-        if omitItem and omitItem.objectID == currentItem then
-            goto continue
-        end
-        
-        local currentDisplayItem = self.items[i]:GetDisplayItem()
-        if currentDisplayItem then
-            local itemColor = currentDisplayItem:GetColor()
-            currentDisplayItem:SetColor(Utilities.ColorCombine(color, itemColor.a))
-        end
-        
-        ::continue::
-    end
 end
 
 -- Set ring position
