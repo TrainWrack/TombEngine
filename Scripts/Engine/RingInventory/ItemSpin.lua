@@ -3,11 +3,12 @@ local Interpolate = require("Engine.RingInventory.Interpolate")
 
 local ItemSpin = {}
 
-ItemSpin.ROTATION_SPEED = 5
-ItemSpin.ALIGNMENT_SPEED = Settings.ANIMATION.ITEM_ANIM_TIME
+ItemSpin.ROTATION_SPEED = 5       -- Degrees per frame, continuous spin for selected item
+ItemSpin.SPINBACK_SPEED = 5      -- Degrees per frame, spinback for just-deselected item
+ItemSpin.ALIGNMENT_SPEED = Settings.ANIMATION.ITEM_ANIM_TIME  -- Seconds, for ring rotation alignment
 
 ItemSpin.rings = {}
-ItemSpin.itemStates = {}  -- { [objectID] = { startAngle, angleDiff, lastTarget } }
+ItemSpin.itemStates = {}  -- { [objectID] = { startAngle, angleDiff, lastTarget, isSpinback } }
 
 --- Initialize spinning for a ring
 function ItemSpin.Initialize(ring)
@@ -75,6 +76,12 @@ function ItemSpin.Update()
     end
 end
 
+local function CalcAngleDiff(from, to)
+    local diff = (to - from) % 360
+    if diff > 180 then diff = diff - 360 end
+    return diff
+end
+
 --- Update spinning for a single ring
 function ItemSpin.UpdateRing(ringState)
     local ring = ringState.ring
@@ -84,6 +91,7 @@ function ItemSpin.UpdateRing(ringState)
     if not items or #items == 0 then return end
 
     local selectedItem = ring:GetSelectedItem()
+    local previousItem = ring:GetPreviousItem()
     local ringAngle = ring:GetTargetAngle()
     local itemCount = #items
 
@@ -99,7 +107,7 @@ function ItemSpin.UpdateRing(ringState)
                 if selectedItem and item == selectedItem then
                     -- Clear state and interpolation so next deselection starts fresh
                     ItemSpin.itemStates[id] = nil
-                    Interpolate.Clear(spinKey)
+                    LevelVars.Engine.InterpolateProgress[spinKey] = nil
 
                     -- Selected item spins continuously
                     if ringState.selectedItemEnabled then
@@ -108,35 +116,61 @@ function ItemSpin.UpdateRing(ringState)
                     end
                 else
                     local targetAngle = CalculateRingAngle(i, itemCount, ringAngle)
+                    local isJustDeselected = previousItem and item == previousItem
 
                     -- Initialize state on first frame
                     if not ItemSpin.itemStates[id] then
-                        local angleDiff = (targetAngle - currentRotation.y) % 360
-                        if angleDiff > 180 then angleDiff = angleDiff - 360 end
+                        local angleDiff = CalcAngleDiff(currentRotation.y, targetAngle)
                         ItemSpin.itemStates[id] = {
                             startAngle = currentRotation.y,
                             angleDiff = angleDiff,
-                            lastTarget = targetAngle
+                            lastTarget = targetAngle,
+                            isSpinback = isJustDeselected
                         }
                     end
 
                     local state = ItemSpin.itemStates[id]
 
-                    -- If target changed (ring rotated), restart from current position
+                    -- If target changed (ring rotated), restart animation from current position
                     if math.abs(targetAngle - state.lastTarget) > 0.1 then
-                        local angleDiff = (targetAngle - currentRotation.y) % 360
-                        if angleDiff > 180 then angleDiff = angleDiff - 360 end
+                        local spinbackFinished = state.isSpinback and 
+                            math.abs(CalcAngleDiff(currentRotation.y, targetAngle)) <= ItemSpin.SPINBACK_SPEED
+
+                        -- Keep spinback if still in progress, otherwise re-evaluate
+                        local isSpinback = (state.isSpinback and not spinbackFinished) or isJustDeselected
+
+                        local angleDiff = CalcAngleDiff(currentRotation.y, targetAngle)
                         state.startAngle = currentRotation.y
                         state.angleDiff = angleDiff
                         state.lastTarget = targetAngle
-                        Interpolate.Clear(spinKey)
+                        state.isSpinback = isSpinback
+
+                        if not isSpinback then
+                            LevelVars.Engine.InterpolateProgress[spinKey] = nil
+                        end
                     end
 
-                    -- Use Interpolate for progress tracking and easing
-                    local result = Interpolate.Calculate(spinKey, 0, 1, ItemSpin.ALIGNMENT_SPEED, Interpolate.Easing.Smoothstep)
+                    if state.isSpinback then
+                        -- Rotation speed based spinback - degrees per frame toward target
+                        local angleDiff = CalcAngleDiff(currentRotation.y, targetAngle)
 
-                    local newAngle = state.startAngle + state.angleDiff * result.output
-                    displayItem:SetRotation(Rotation(currentRotation.x, newAngle, currentRotation.z))
+                        if math.abs(angleDiff) > ItemSpin.SPINBACK_SPEED then
+                            local newAngle = currentRotation.y + (angleDiff > 0 and ItemSpin.SPINBACK_SPEED or -ItemSpin.SPINBACK_SPEED)
+                            displayItem:SetRotation(Rotation(currentRotation.x, newAngle, currentRotation.z))
+                        else
+                            -- Reached target, switch to alignment mode
+                            state.isSpinback = false
+                            state.startAngle = targetAngle
+                            state.angleDiff = 0
+                            LevelVars.Engine.InterpolateProgress[spinKey] = nil
+                            displayItem:SetRotation(Rotation(currentRotation.x, targetAngle, currentRotation.z))
+                        end
+                    else
+                        -- Time based alignment via Interpolate
+                        local result = Interpolate.Calculate(spinKey, 0, 1, ItemSpin.ALIGNMENT_SPEED, Interpolate.Easing.Smoothstep)
+                        local newAngle = state.startAngle + state.angleDiff * result.output
+                        displayItem:SetRotation(Rotation(currentRotation.x, newAngle, currentRotation.z))
+                    end
                 end
             end
         end
