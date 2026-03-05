@@ -12,7 +12,6 @@ local ItemMenu
 local Inputs
 local ItemSpin = require("Engine.RingInventory.ItemSpin")
 local Ring = require("Engine.RingInventory.Ring")
-local RingLight = require("Engine.RingInventory.RingLight")
 local Settings = require("Engine.RingInventory.Settings")
 local Statistics = require("Engine.RingInventory.Statistics")
 local Save = require("Engine.RingInventory.Save")
@@ -127,7 +126,6 @@ function InventoryStates.UpdateItem(selectedItem)
     
     AmmoItem.Show(selectedItem, true)
     Text.SetItemLabel(selectedItem)
-    --ItemSpin.StartSpin(selectedItem)
 
 end
 
@@ -148,13 +146,13 @@ function InventoryStates.Update()
         
         if onEnter then
             selectedRing:Color(COLOR_MAP.ITEM_DESELECTED, COLOR_MAP.ITEM_SELECTED)
+            ItemSpin.StartSpin(selectedRing)
             onEnter = false
          end
         
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             local selectedRing = InventoryData.GetSelectedRing()
             local selectedItem = selectedRing:GetSelectedItem()
-            ItemSpin.Initialize(selectedRing:GetType())
             InventoryStates.UpdateItem(selectedItem)
             onEnter = true
             InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
@@ -184,7 +182,7 @@ function InventoryStates.Update()
         end
     elseif inventoryMode == InventoryStates.MODE.RING_CHANGE then
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
-            ItemSpin.Initialize(selectedRing:GetType(), 0)
+            ItemSpin.Initialize(selectedRing)
             InventoryStates.UpdateItem(selectedItem)
             InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
         end
@@ -216,13 +214,13 @@ function InventoryStates.Update()
         end
     elseif inventoryMode == InventoryStates.MODE.ITEM_SELECT then
         if onEnter then
-            ItemSpin.StopSelectedItemSpin(selectedRing:GetType())
+            ItemSpin.StopSelectedItemSpin(selectedRing)
             Animation.SaveItemData(selectedItem)
             InventoryData.SetChosenItem(selectedItem)
             selectedRing:Color(COLOR_MAP.ITEM_HIDDEN, COLOR_MAP.ITEM_SELECTED)
             local ammoRing = InventoryData.SetupSecondaryRing(Ring.TYPE.AMMO, InventoryData.GetChosenItem(), true)
             ammoRing:Color(COLOR_MAP.ITEM_HIDDEN, COLOR_MAP.ITEM_SELECTED)
-            ItemSpin.Initialize(ammoRing:GetType())
+            ItemSpin.Initialize(ammoRing)
             onEnter = false
         end
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
@@ -245,12 +243,13 @@ function InventoryStates.Update()
             InventoryStates.UpdateItem(selectedItem)
             onEnter = false
             selectedRing:Color(COLOR_MAP.ITEM_DESELECTED, COLOR_MAP.ITEM_SELECTED)
-            ItemSpin.StopSpin(Ring.TYPE.AMMO)
-            InventoryData.GetRing(Ring.TYPE.AMMO):Color(COLOR_MAP.ITEM_HIDDEN, COLOR_MAP.ITEM_HIDDEN)
+            local ammoRing = InventoryData.GetRing(Ring.TYPE.AMMO)
+            ItemSpin.StopSpin(ammoRing)
+            ammoRing:Color(COLOR_MAP.ITEM_HIDDEN, COLOR_MAP.ITEM_HIDDEN)
         end
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             InventoryData.SetChosenItem(nil)
-            ItemSpin.StartSelectedItemSpin(selectedRing:GetType())
+            ItemSpin.StartSelectedItemSpin(selectedRing)
             onEnter = true
             InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
         end
@@ -279,7 +278,7 @@ function InventoryStates.Update()
     elseif inventoryMode == InventoryStates.MODE.STATISTICS_OPEN then
         if InventoryData.IsItemChosen() or Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             inventoryMode = InventoryStates.MODE.STATISTICS
-            ItemSpin.StopSelectedItemSpin(selectedRing:GetType())
+            ItemSpin.StopSelectedItemSpin(selectedRing)
         end
     elseif inventoryMode == InventoryStates.MODE.STATISTICS then
         
@@ -292,7 +291,7 @@ function InventoryStates.Update()
         end
         if InventoryData.IsItemChosen() or Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             onEnter = true
-            ItemSpin.StartSelectedItemSpin(selectedRing:GetType())
+            ItemSpin.StartSelectedItemSpin(selectedRing)
             inventoryMode = InventoryData.IsItemChosen() and InventoryStates.MODE.ITEM_SELECTED or InventoryStates.MODE.INVENTORY
         end
     elseif inventoryMode == InventoryStates.MODE.SAVE_SETUP then
@@ -394,7 +393,7 @@ function InventoryStates.Update()
         Animation.SaveItemData(selectedItem)
         AmmoItem.Hide()
         InventoryData.GetRing(Ring.TYPE.AMMO):Color(COLOR_MAP.ITEM_DESELECTED, COLOR_MAP.ITEM_SELECTED)
-        InventoryData.SwitchToRing(Ring.TYPE.AMMO)
+        InventoryData.SwitchToRingType(Ring.TYPE.AMMO)
         inventoryMode = InventoryStates.MODE.AMMO_SELECT_OPEN
     elseif inventoryMode == InventoryStates.MODE.AMMO_SELECT_OPEN then
         -- if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
@@ -460,7 +459,7 @@ function InventoryStates.Update()
         Interpolate.ClearAll()
         Menu.DeleteAll()
         InventoryStates.SetMode(InventoryStates.MODE.INVENTORY_OPENING)
-        InventoryData.SwitchToRing(Ring.TYPE.MAIN)
+        InventoryData.SwitchToRingType(Ring.TYPE.MAIN)
         TEN.View.DisplayItem.ResetCamera()
         Text.DestroyAll()
         timeInMenu = 0
@@ -473,8 +472,6 @@ function InventoryStates.Update()
     
     Menu.UpdateActiveMenus()
     Menu.DrawActiveMenus()
-    RingLight.Update()
-    ItemSpin.Update()
     InventoryData.SetItemRotations(timeInMenu)
     Inputs.Update(timeInMenu)
     InventoryData.DrawAllRings()

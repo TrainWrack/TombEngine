@@ -4,6 +4,8 @@
 local Constants = require("Engine.RingInventory.Constants")
 local InventoryData = require("Engine.RingInventory.InventoryData")
 local InventoryStates
+local ItemSpin = require("Engine.RingInventory.ItemSpin")
+local RingLight = require("Engine.RingInventory.RingLight")
 local Settings = require("Engine.RingInventory.Settings")
 local Strings = require("Engine.RingInventory.Strings")
 
@@ -31,6 +33,8 @@ local function UpdateInventory()
         InventoryStates = require("Engine.RingInventory.InventoryStates")
     end
 
+    RingLight.Update()
+    ItemSpin.Update()
     InventoryStates.Update()
 
 end

@@ -84,7 +84,7 @@ function InventoryData.GetPreviousRingType()
 end
 
 -- Switch to a different ring
-function InventoryData.SwitchToRing(ringType)
+function InventoryData.SwitchToRingType(ringType)
     local isValid = false
     for _, value in pairs(RING_TYPE) do
         if value == ringType then
@@ -101,8 +101,21 @@ function InventoryData.SwitchToRing(ringType)
     
     previousRingType = selectedRingType
     selectedRingType = ringType
-    ItemSpin.Initialize(ringType, 0)
-    ItemSpin.StartSpin(ringType)
+
+    local ring = InventoryData.GetRing(ringType)
+
+    ItemSpin.StartSpin(ring)
+    return true
+end
+
+-- Switch to a different ring
+function InventoryData.SwitchToRing(ring)
+
+    local ItemSpin = require("Engine.RingInventory.ItemSpin")
+    
+    previousRingType = selectedRingType
+    selectedRingType = ring:GetType()
+    ItemSpin.StartSpin(ring)
     return true
 end
 
@@ -114,7 +127,8 @@ function InventoryData.ReturnToPreviousRing()
 
         local temp = selectedRingType
         selectedRingType = previousRingType
-        ItemSpin.Initialize(previousRingType, 0)
+        local previousRing = InventoryData.GetRing(previousRingType)
+        ItemSpin.Initialize(previousRing)
         previousRingType = temp
         return true
     end
@@ -133,7 +147,7 @@ function InventoryData.SetupSecondaryRing(ringType, item, keepCurrentRing)
     InventoryData.Construct(ringType, item)
     
     if not keepCurrentRing then
-        InventoryData.SwitchToRing(ringType)
+        InventoryData.SwitchToRingType(ringType)
     end
 
     -- Special handling for ammo ring
@@ -355,7 +369,7 @@ function InventoryData.OpenAtItem(itemID, repositionRings)
         return
     end
     
-    InventoryData.SwitchToRing(ringType)
+    InventoryData.SwitchToRingType(ringType)
     
     -- Set selected item
     ring:SetSelectedItemByID(itemID)

@@ -43,6 +43,7 @@ function Ring.Create(ringType, centerPosition, inventory)
     self.type = ringType
     self.items = {}
     self.selectedItemIndex = 1
+    self.previousItemIndex = 1
     self.position = centerPosition or Vec3(0, 0, 0)
     self.previousPosition = centerPosition or Vec3(0, 0, 0)
     self.slice = 0
@@ -127,9 +128,16 @@ function Ring:GetSelectedItem()
     return self.items[self.selectedItemIndex]
 end
 
+-- Get selected item
+function Ring:GetPreviousItem()
+    if #self.items == 0 then return nil end
+    return self.items[self.previousItemIndex]
+end
+
 -- Set selected item by index
 function Ring:SetSelectedItemIndex(index)
     if index >= 1 and index <= #self.items then
+        self.previousItemIndex = self.selectedItemIndex
         self.selectedItemIndex = index
         return true
     end
@@ -140,6 +148,7 @@ end
 function Ring:SetSelectedItemByID(objectID)
     for i, item in ipairs(self.items) do
         if item.objectID == objectID then
+            self.previousItemIndex = self.selectedItemIndex
             self.selectedItemIndex = i
             return true
         end
@@ -152,15 +161,22 @@ function Ring:GetSelectedItemIndex()
     return self.selectedItemIndex
 end
 
+-- Get previous item index
+function Ring:GetPreviousItemIndex()
+    return self.previousItemIndex
+end
+
 -- Navigate to next item
 function Ring:SelectNext()
     if #self.items == 0 then return end
+    self.previousItemIndex = self.selectedItemIndex
     self.selectedItemIndex = (self.selectedItemIndex % #self.items) + 1
 end
 
 -- Navigate to previous item
 function Ring:SelectPrevious()
     if #self.items == 0 then return end
+    self.previousItemIndex = self.selectedItemIndex
     self.selectedItemIndex = self.selectedItemIndex - 1
     if self.selectedItemIndex < 1 then
         self.selectedItemIndex = #self.items
@@ -176,10 +192,6 @@ function Ring:Translate(center, radius, rotationOffset, alpha)
     
     local itemCount = #self.items
     if itemCount == 0 then return end
-    
-    local ItemSpin  = require("Engine.RingInventory.ItemSpin")
-    ItemSpin.SetRotationOffset(self.type, rotationOffset)
-    --ItemSpin.Initialize(self.type, rotationOffset)
 
     for i = 1, itemCount do
         local currentItem = self.items[i].objectID
@@ -190,6 +202,7 @@ function Ring:Translate(center, radius, rotationOffset, alpha)
             currentDisplayItem:SetPosition(Utilities.OffsetY(position, self.items[i].yOffset))
         end
     end
+    
 end
 
 -- Color items in the ring

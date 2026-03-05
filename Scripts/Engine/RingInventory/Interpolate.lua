@@ -123,7 +123,7 @@ end
 
 -- Clear motion progress by name
 function Interpolate.Clear(name)
-    if LevelVars.Engine.InterpolateProgress[name] and LevelVars.Engine.InterpolateProgress[name] >= 1 then
+    if LevelVars.Engine.InterpolateProgress[name] then
         LevelVars.Engine.InterpolateProgress[name] = nil
     end
 end
