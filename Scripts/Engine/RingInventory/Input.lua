@@ -51,63 +51,59 @@ local function GuiIsPulsed(actionID)
     return TEN.Input.IsKeyPulsed(actionID, DELAY, INITIAL_DELAY)
 end
 
-local function DoLeftKey()
+local function DoLeftKey(ring)
 
-    local selectedRing = InventoryData.GetSelectedRing()
-
-    selectedRing:SelectNext()
-    selectedRing:CalculateRotation(-1)
+    ring:SelectNext()
+    ring:CalculateRotation(-1)
 
     InventoryStates.SetMode(INVENTORY_MODE.RING_ROTATE)
     TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+
 end
 
-local function DoRightKey()
+local function DoRightKey(ring)
 
-    local selectedRing = InventoryData.GetSelectedRing()
-
-    selectedRing:SelectPrevious()
-    selectedRing:CalculateRotation(1)
+    ring:SelectPrevious()
+    ring:CalculateRotation(1)
 
     InventoryStates.SetMode(INVENTORY_MODE.RING_ROTATE)
     TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+
 end
 
 function Inputs.Update(timeInMenu)
     
     timer = timeInMenu
 
-    local selectedRing = InventoryData.GetSelectedRingType()
-    local previousRing = InventoryData.GetPreviousRingType()
-    local selectedRingData = InventoryData.GetSelectedRing()
-    local selectedItem  = selectedRingData:GetSelectedItem()
+    local selectedRing = InventoryData.GetSelectedRing()
+    local selectedRingType = InventoryData.GetSelectedRingType()
+    local selectedItem  = selectedRing:GetSelectedItem()
     local mode = InventoryStates.GetMode()
 
     if mode == INVENTORY_MODE.INVENTORY then
         if GuiIsPulsed(TEN.Input.ActionID.LEFT) then
-            DoLeftKey()
+            DoLeftKey(selectedRing)
         elseif GuiIsPulsed(TEN.Input.ActionID.RIGHT) then
-            DoRightKey()
-        elseif GuiIsPulsed(TEN.Input.ActionID.FORWARD) and selectedRing < RING.COMBINE then
-            local targetRing = math.max(RING.PUZZLE, selectedRing - 1)
-            if targetRing ~= selectedRing then
-                InventoryData.SwitchToRing(targetRing)
+            DoRightKey(selectedRing)
+        elseif GuiIsPulsed(TEN.Input.ActionID.FORWARD) and selectedRingType < RING.COMBINE then
+            local targetRing = math.max(RING.PUZZLE, selectedRingType - 1)
+            if targetRing ~= selectedRingType then
+                InventoryData.SwitchToRingType(targetRing)
                 InventoryData.OffsetAll(1)
                 InventoryStates.SetMode(INVENTORY_MODE.RING_CHANGE)
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
             end
-        elseif GuiIsPulsed(TEN.Input.ActionID.BACK) and selectedRing < RING.COMBINE then
+        elseif GuiIsPulsed(TEN.Input.ActionID.BACK) and selectedRingType < RING.COMBINE then
             --add check for the options ring here to skip it if it empty
-            local targetRing = math.min(RING.OPTIONS, selectedRing + 1)
-            if targetRing ~= selectedRing then
-                InventoryData.SwitchToRing(targetRing)
+            local targetRing = math.min(RING.OPTIONS, selectedRingType + 1)
+            if targetRing ~= selectedRingType then
+                InventoryData.SwitchToRingType(targetRing)
                 InventoryData.OffsetAll(-1)
                 InventoryStates.SetMode(INVENTORY_MODE.RING_CHANGE)
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
             end
         elseif GuiIsPulsed(TEN.Input.ActionID.ACTION) or GuiIsPulsed(TEN.Input.ActionID.SELECT) then
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
-            Animation.EnableSaveItemData()
             if ItemMenu.IsSingleItemAction(selectedItem) then
                 ItemMenu.ParseAction(selectedItem:GetMenuActions())
             else
@@ -119,9 +115,9 @@ function Inputs.Update(timeInMenu)
         end
     elseif mode == INVENTORY_MODE.COMBINE then
         if GuiIsPulsed(TEN.Input.ActionID.LEFT) then
-            DoLeftKey()
+            DoLeftKey(selectedRing)
         elseif GuiIsPulsed(TEN.Input.ActionID.RIGHT) then
-            DoRightKey()
+            DoRightKey(selectedRing)
         elseif GuiIsPulsed(TEN.Input.ActionID.ACTION) or GuiIsPulsed(TEN.Input.ActionID.SELECT) then
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             InventoryStates.SetActionCheck(true)
@@ -151,9 +147,9 @@ function Inputs.Update(timeInMenu)
         end
     elseif mode == INVENTORY_MODE.AMMO_SELECT then
         if GuiIsPulsed(TEN.Input.ActionID.LEFT) then
-            DoLeftKey()
+            DoLeftKey(selectedRing)
         elseif GuiIsPulsed(TEN.Input.ActionID.RIGHT) then
-            DoRightKey()
+            DoRightKey(selectedRing)
         elseif GuiIsPulsed(TEN.Input.ActionID.ACTION) or GuiIsPulsed(TEN.Input.ActionID.SELECT) then
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             InventoryStates.SetActionCheck(true)

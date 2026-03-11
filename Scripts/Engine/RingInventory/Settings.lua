@@ -44,7 +44,7 @@ Settings.BACKGROUND =
 Settings.ANIMATION = 
 {
     INVENTORY_ANIM_TIME = .5,
-    ITEM_ANIM_TIME = .5,
+    ITEM_ANIM_TIME = .2,
     SKIP_RING_CLOSE = false,
     PROGRESS_TIME = true
 }

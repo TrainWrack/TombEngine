@@ -128,7 +128,7 @@ function InventoryData.ReturnToPreviousRing()
         local temp = selectedRingType
         selectedRingType = previousRingType
         local previousRing = InventoryData.GetRing(previousRingType)
-        ItemSpin.Initialize(previousRing)
+        ItemSpin.StartSpin(previousRing)
         previousRingType = temp
         return true
     end
@@ -198,7 +198,7 @@ end
 function InventoryData.ColorAll(color, selectedItemColor, omitSelectedRing)
     for ringType, ring in pairs(rings) do
         if not (omitSelectedRing and ringType == selectedRingType) then
-            ring:SetColor(color, selectedItemColor)
+            ring:Color(color, selectedItemColor)
         end
     end
 end
@@ -339,7 +339,6 @@ function InventoryData.Construct(ringType, selectedWeapon)
             displayItem:SetColor(COLOR_MAP.ITEM_HIDDEN)
             -- Add item to ring
             ring:AddItem(data)
-            print("added item to ring: " .. data.name)
         end
         
         ::continue::
@@ -392,12 +391,6 @@ function InventoryData.OpenAtItem(itemID, repositionRings)
             r:SetPosition(position)
             r:Translate(position, Ring.RING_RADIUS, angle)
         end
-    end
-    
-    if itemID == TEN.Objects.ObjID.PC_SAVE_INV_ITEM or itemID == TEN.Objects.ObjID.PC_LOAD_INV_ITEM then
-        -- Handle save/load UI state
-        saveList = (itemID == TEN.Objects.ObjID.PC_SAVE_INV_ITEM)
-        saveSelected = true
     end
 end
 

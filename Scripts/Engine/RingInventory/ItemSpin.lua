@@ -10,8 +10,13 @@ ItemSpin.ALIGNMENT_SPEED = Settings.ANIMATION.ITEM_ANIM_TIME  -- Seconds, for ri
 ItemSpin.rings = {}
 ItemSpin.itemStates = {}  -- { [objectID] = { startAngle, angleDiff, lastTarget, isSpinback } }
 
---- Initialize spinning for a ring
-function ItemSpin.Initialize(ring)
+local function CalculateRingAngle(itemIndex, itemCount, ringAngle)
+    return (360 / itemCount) * (itemIndex - 1) + ringAngle
+end
+
+--- Start spinning for a ring
+function ItemSpin.StartSpin(ring)
+    
     if not ring then return end
 
     local ringName = ring:GetType()
@@ -26,18 +31,6 @@ function ItemSpin.Initialize(ring)
         ItemSpin.rings[ringName].enabled = true
         ItemSpin.rings[ringName].selectedItemEnabled = true
     end
-end
-
-local function CalculateRingAngle(itemIndex, itemCount, ringAngle)
-    return (360 / itemCount) * (itemIndex - 1) + ringAngle
-end
-
---- Start spinning for a ring
-function ItemSpin.StartSpin(ring)
-    if not ring then return end
-    ItemSpin.Initialize(ring)
-    local ringName = ring:GetType()
-    ItemSpin.rings[ringName].enabled = true
 end
 
 --- Stop spinning for a ring

@@ -11,28 +11,20 @@ local Ring = require("Engine.RingInventory.Ring")
 local Settings = require("Engine.RingInventory.Settings")
 local Utilities = require("Engine.RingInventory.Utilities")
 
---Variables
+--Variables to be cleaned up
 local itemRotation = Rotation(0, 0, 0)
 local itemRotationOld = Rotation(0, 0, 0)
-local itemStoreRotations = false
 local menuAlpha = 0
 
 --Animation functions
 local Animation = {}
 
 function Animation.SaveItemData(selectedItem)
-    if itemStoreRotations then
-        local displayItem = selectedItem:GetDisplayItem()
-        itemRotationOld = displayItem:GetRotation()
-        itemRotation = selectedItem:GetRotation()
-        Examine.SetRotation(selectedItem:GetRotation())
-        Examine.SetScale(selectedItem:GetScale())
-        itemStoreRotations = false
-    end
-end
-
-function Animation.EnableSaveItemData()
-    itemStoreRotations = true
+    local displayItem = selectedItem:GetDisplayItem()
+    itemRotationOld = displayItem:GetRotation()
+    itemRotation = selectedItem:GetRotation()
+    Examine.SetRotation(selectedItem:GetRotation())
+    Examine.SetScale(selectedItem:GetScale())
 end
 
 function Animation.Clear(prefix, motionTable)
@@ -75,14 +67,6 @@ function Animation.PerformBatchMotion(prefix, motionTable, time, clearProgress, 
         selectedRing:Color(interpolated.ringColor.output, item)
     end
     
-    -- if selectedRing and interpolated.ringFade then
-    --     selectedRing:Fade(interpolated.ringFade.output, item)
-    -- end
-    
-    if interpolated.menuFade then
-        menuAlpha = interpolated.menuFade.output
-    end
-    
     if interpolated.camera then
         TEN.View.DisplayItem.SetCameraPosition(interpolated.camera.output, false)
     end
@@ -122,7 +106,6 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
     local ringAnimation = {
         {key = "ringRadius", start = 0, finish = Ring.RING_RADIUS},
         {key = "ringAngle", start = -360, finish = selectedRing:GetCurrentAngle()},
-        {key = "ringFade", start = Constants.ALPHA_MIN, finish = Constants.ALPHA_MAX},
         {key = "ringCenter", start = selectedRing:GetPosition(), finish = selectedRing:GetPosition()},
         {key = "camera", start = Constants.CAMERA_START, finish = Constants.CAMERA_END},
         {key = "target", start = Constants.TARGET_START, finish = Constants.TARGET_END},
@@ -148,16 +131,7 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
     
     local combineRingAnimation = {
         ringAnimation[1],
-        ringAnimation[2],
-        ringAnimation[3]
-    }
-    
-    local combineClose = {
-        {key = "ringFade", start = Constants.ALPHA_MAX, finish = Constants.ALPHA_MIN}
-    }
-    
-    local menuFade = {
-        {key = "menuFade", start = Constants.ALPHA_MIN, finish = Constants.ALPHA_MAX}
+        ringAnimation[2]
     }
 
     local ringRotate = {
@@ -242,30 +216,8 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
         if Animation.PerformBatchMotion("ExamineReset", examineReset, Settings.ANIMATION.ITEM_ANIM_TIME, true, selectedRing, selectedItem, true) then
             return true
         end
-    elseif mode == INVENTORY_MODE.COMBINE_RING_OPENING or mode == INVENTORY_MODE.AMMO_SELECT_OPEN then
+    elseif mode == INVENTORY_MODE.COMBINE_RING_OPENING then
         if Animation.PerformBatchMotion("CombineRingOpening", combineRingAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing) then
-            return true
-        end
-    elseif mode == INVENTORY_MODE.COMBINE_CLOSE then
-        local allMotionComplete = true
-        local rings = InventoryData.GetAllRings()
-        for ringType, ring in pairs(rings) do
-            if not Animation.PerformBatchMotion("combineCloseSuccess"..ringType, combineClose, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, ring) then
-                allMotionComplete = false
-            end
-        end
-        if allMotionComplete then
-            return true
-        end
-    elseif mode == INVENTORY_MODE.COMBINE_COMPLETE then
-        local allMotionComplete = true
-        local rings = InventoryData.GetAllRings()
-        for ringType, ring in pairs(rings) do
-            if not Animation.PerformBatchMotion("combineCloseSuccess"..ringType, combineClose, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, ring, nil, true) then
-                allMotionComplete = false
-            end
-        end
-        if allMotionComplete then
             return true
         end
     elseif mode == INVENTORY_MODE.ITEM_USE then
@@ -277,33 +229,6 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
         end
         
         return true
-
-    elseif mode == INVENTORY_MODE.AMMO_SELECT_CLOSE then
-        if Animation.PerformBatchMotion("AmmoRingClosing", combineRingAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
-            return true
-        end
-    elseif mode == INVENTORY_MODE.SEPARATE then
-        local allMotionComplete = true
-        local rings = InventoryData.GetAllRings()
-        for ringType, ring  in pairs(rings) do
-            if not Animation.PerformBatchMotion("combineCloseSuccess"..ringType, combineClose, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, ring) then
-                allMotionComplete = false
-            end
-        end
-        if allMotionComplete then
-            return true
-        end
-    elseif mode == INVENTORY_MODE.SEPARATE_COMPLETE then
-        local allMotionComplete = true
-        local rings = InventoryData.GetAllRings()
-        for ringType, ring   in pairs(rings) do
-            if not Animation.PerformBatchMotion("combineCloseSuccess"..ringType, combineClose, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, ring, nil, true) then
-                allMotionComplete = false
-            end
-        end
-        if allMotionComplete then
-            return true
-        end
     end
 end
 

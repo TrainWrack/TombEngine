@@ -80,7 +80,6 @@ local function RunInventory()
         local Save = require("Engine.RingInventory.Save")
         Save.SetQuickSaveStatus(true)
         Save.SetSaveMenu()
-        InventoryData.SetOpenAtItem(TEN.Objects.ObjID.PC_SAVE_INV_ITEM)
         inventoryDelay = 0
     end
     
@@ -91,7 +90,6 @@ local function RunInventory()
         local Save = require("Engine.RingInventory.Save")
         Save.SetQuickSaveStatus(true)
         Save.SetLoadMenu()
-        InventoryData.SetOpenAtItem(TEN.Objects.ObjID.PC_LOAD_INV_ITEM)
         inventoryDelay = 0
     end
     

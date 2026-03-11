@@ -173,7 +173,7 @@ function Stats.CreateStatisticsMenu()
     statisticsMenu:EnableInputs(true)
 end
 
-function Stats.UpdateStatistics()
+function Stats.UpdateIngameTime()
     
     if Settings.ANIMATION.PROGRESS_TIME then
         Flow.GetStatistics(true).timeTaken = Flow.GetStatistics(true).timeTaken + 1

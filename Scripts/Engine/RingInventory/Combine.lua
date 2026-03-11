@@ -141,5 +141,11 @@ function Combine.GetResults()
 
 end
 
+function Combine.ClearResults()
+
+    combineResult = nil
+
+end
+
 
 return Combine

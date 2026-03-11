@@ -100,6 +100,9 @@ end
 function Ring:Clear()
     self.items = {}
     self.selectedItemIndex = 1
+    self.currentAngle = 0
+    self.previousAngle = 0
+    self.targetAngle = 0
 end
 
 -- Get item by object ID
