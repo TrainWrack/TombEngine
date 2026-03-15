@@ -40,7 +40,7 @@ PICKUP_DATA.TYPE = {
 PICKUP_DATA.CONSTANTS = {
 	{ TEN.Objects.ObjID.STOPWATCH_ITEM, 2, 0.8, Rotation(0, 180, 0), ItemAction.STATISTICS, "statistics", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.TOOL, false, RING_TYPE.MAIN},
 	-- Weapons
-	{ TEN.Objects.ObjID.PISTOLS_ITEM, 6, 0.5, Rotation(244.0, 90.0, 276.0), ItemAction.EQUIP, "pistols", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, false, RING_TYPE.MAIN},
+	{ TEN.Objects.ObjID.PISTOLS_ITEM, 6, 0.5, Rotation(244.0, 90.0, 276.0), ItemAction.EQUIP | ItemAction.CHOOSE_AMMO_PISTOLS |ItemAction.EXAMINE | ItemAction.STATISTICS | ItemAction.SAVE | ItemAction.LOAD, "pistols", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, false, RING_TYPE.MAIN},
 	{ TEN.Objects.ObjID.UZI_ITEM, -4, 0.5, Rotation(135.0, -90.0, 90.0), ItemAction.EQUIP, "uzis" , NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, false, RING_TYPE.MAIN },
 	{ TEN.Objects.ObjID.SHOTGUN_ITEM, -6, 0.8, Rotation(270.0, -20.0, 45), ItemAction.EQUIP | ItemAction.CHOOSE_AMMO_SHOTGUN, "shotgun", 0x01, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, false, RING_TYPE.MAIN },
 	{ TEN.Objects.ObjID.REVOLVER_ITEM, 0, 0.5, Rotation(60.0, -90.0, 85.0), ItemAction.EQUIP | ItemAction.COMBINE, "revolver" , 0x01, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, true, RING_TYPE.MAIN },

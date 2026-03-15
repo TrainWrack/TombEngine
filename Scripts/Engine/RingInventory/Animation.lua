@@ -14,12 +14,14 @@ local Utilities = require("Engine.RingInventory.Utilities")
 --Variables to be cleaned up
 local itemRotation = Rotation(0, 0, 0)
 local itemRotationOld = Rotation(0, 0, 0)
-local menuAlpha = 0
 
 --Animation functions
 local Animation = {}
 
 function Animation.SaveItemData(selectedItem)
+
+    if not selectedItem then return end
+
     local displayItem = selectedItem:GetDisplayItem()
     itemRotationOld = displayItem:GetRotation()
     itemRotation = selectedItem:GetRotation()

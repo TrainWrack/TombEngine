@@ -16,7 +16,7 @@ local Sprites = {}
 
 local function DrawArrows(list, alpha)
     for _, entry in ipairs(list) do
-        local entrySprite = DisplaySprite(
+        local entrySprite = TEN.View.DisplaySprite(
             TEN.Objects.ObjID.MISC_SPRITES,
             3,
             entry[2],
@@ -70,7 +70,7 @@ function Sprites.Background(alpha)
     if Settings.BACKGROUND.ENABLE then
         local bgAlpha = math.min(alpha, Settings.BACKGROUND.ALPHA)
         local bgColor = Utilities.ColorCombine(Settings.BACKGROUND.COLOR, bgAlpha)
-        local bgSprite = TEN.DisplaySprite(
+        local bgSprite = TEN.View.DisplaySprite(
             Settings.BACKGROUND.OBJECTID,
             Settings.BACKGROUND.SPRITEID,
             Settings.BACKGROUND.POSITION,

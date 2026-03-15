@@ -275,19 +275,21 @@ function InventoryData.Construct(ringType, selectedWeapon)
         local itemData = PickupData.ConvertRowData(itemRow)
         itemData.rotation = Utilities.CopyRotation(itemData.rotation)
         local data = InventoryData.BuildItem(itemData)
+
+        local objectID = data:GetObjectID()
         
-        if data.type == TYPE.AMMO and ringType ~= RING.AMMO then
-            local weaponPresent = TEN.Inventory.GetItemCount(PickupData.AMMO_SET[data.objectID].weapon)
+        if data:GetType() == TYPE.AMMO and ringType ~= RING.AMMO then
+            local weaponPresent = TEN.Inventory.GetItemCount(PickupData.AMMO_SET[objectID].weapon)
             if weaponPresent ~= 0 then
                 goto continue
             end
         end
         
         if data.type == TYPE.WEAPON then
-            if Lara:GetLaserSight(PickupData.WEAPON_SET[data.objectID].slot) then
-                data.meshBits = PickupData.WEAPON_LASERSIGHT_DATA[data.objectID].MESHBITS
-                data.name = PickupData.WEAPON_LASERSIGHT_DATA[data.objectID].NAME
-                data.menuActions = PickupData.WEAPON_LASERSIGHT_DATA[data.objectID].FLAGS
+            if Lara:GetLaserSight(PickupData.WEAPON_SET[objectID].slot) then
+                data.meshBits = PickupData.WEAPON_LASERSIGHT_DATA[objectID].MESHBITS
+                data.name = PickupData.WEAPON_LASERSIGHT_DATA[objectID].NAME
+                data.menuActions = PickupData.WEAPON_LASERSIGHT_DATA[objectID].FLAGS
             end
         end
         
@@ -298,20 +300,20 @@ function InventoryData.Construct(ringType, selectedWeapon)
             if data.combine == true then
                 data.ringName = RING.COMBINE
                 
-                if chosenItem.objectID == data.objectID then
+                if chosenItem:GetObjectID() == objectID then
                     goto continue
                 end
                 
-                if data.type == TYPE.WEAPON and Lara:GetLaserSight(PickupData.WEAPON_SET[data.objectID].slot) then
+                if data:GetType() == TYPE.WEAPON and Lara:GetLaserSight(PickupData.WEAPON_SET[objectID].slot) then
                     goto continue
                 end
                 
-                shouldInsert = (data.count ~= 0)
+                shouldInsert = (data:GetCount() ~= 0)
             else
                 goto continue
             end
         elseif ringType == RING.AMMO then
-            if data.type == TYPE.AMMO and PickupData.WEAPON_AMMO_LOOKUP[selectedWeaponID] and Utilities.Contains(PickupData.WEAPON_AMMO_LOOKUP[selectedWeaponID], data.objectID) then
+            if data.type == TYPE.AMMO and PickupData.WEAPON_AMMO_LOOKUP[selectedWeaponID] and Utilities.Contains(PickupData.WEAPON_AMMO_LOOKUP[selectedWeaponID], objectID) then
                 data.ringName = RING.AMMO
                 ammoRing = true
                 shouldInsert = true
@@ -322,7 +324,7 @@ function InventoryData.Construct(ringType, selectedWeapon)
             shouldInsert = (data.count ~= 0)
         end
         
-        if (data.objectID == TEN.Objects.ObjID.LASERSIGHT_ITEM) then
+        if (objectID == TEN.Objects.ObjID.LASERSIGHT_ITEM) then
             if Lara:GetLaserSight(TEN.Objects.WeaponType.CROSSBOW) or 
                Lara:GetLaserSight(TEN.Objects.WeaponType.REVOLVER) or 
                Lara:GetLaserSight(TEN.Objects.WeaponType.HK) then

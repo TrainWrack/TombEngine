@@ -3,7 +3,6 @@
 -- ============================================================================
 
 --External Modules
-local Animation = require("Engine.RingInventory.Animation")
 local Examine =  require("Engine.RingInventory.Examine")
 local ItemMenu = require("Engine.RingInventory.ItemMenu")
 local InventoryData= require("Engine.RingInventory.InventoryData")

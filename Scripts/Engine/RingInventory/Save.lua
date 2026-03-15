@@ -139,15 +139,6 @@ function Save.Hide()
     end
 end
 
-function Save.SetTransparency(alpha)
-
-    for index = 1, 4 do
-        local saveMenu = Menu.Get("SaveMenu"..index)
-        saveMenu:SetTransparency(alpha)
-    end
-
-end
-
 --Sets the menu to Save menu
 function Save.SetSaveMenu()
     saveMenu = true

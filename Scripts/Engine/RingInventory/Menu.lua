@@ -562,7 +562,7 @@ local Input = function(menuName)
 
     if itemCount == 0 then return end
 
-    if Input.KeyIsHit(ActionID.FORWARD) then
+    if Input.IsKeyHit(ActionID.FORWARD) then
         if menu.sounds then PlaySoundEffect(menu.name, menu.sounds.menuSelect) end
         if menu.wrapAroundItems then
             menu.currentItem = (menu.currentItem - 2) % itemCount + 1
@@ -576,7 +576,7 @@ local Input = function(menuName)
             PerformFunction(menu.itemChangeFunction)
         end
         
-    elseif Input.KeyIsHit(ActionID.BACK) then
+    elseif Input.IsKeyHit(ActionID.BACK) then
         PlaySoundEffect(menu.name, menu.sounds.menuSelect)
         if menu.wrapAroundItems then
             menu.currentItem = menu.currentItem % itemCount + 1
@@ -589,7 +589,7 @@ local Input = function(menuName)
         if previousItem ~= menu.currentItem and menu.itemChangeFunction then
             PerformFunction(menu.itemChangeFunction)
         end
-    elseif Input.KeyIsHit(ActionID.LEFT) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
+    elseif Input.IsKeyHit(ActionID.LEFT) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
         PlaySoundEffect(menu.name, menu.sounds.menuSelect)
         local currentItem = menu.items[menu.currentItem]
         if currentItem.options and #currentItem.options > 1 then
@@ -603,7 +603,7 @@ local Input = function(menuName)
                 PerformFunction(currentItem.onOptionChange)
 		    end
         end
-    elseif Input.KeyIsHit(ActionID.RIGHT) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
+    elseif Input.IsKeyHit(ActionID.RIGHT) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
         PlaySoundEffect(menu.name, menu.sounds.menuSelect)
         local currentItem = menu.items[menu.currentItem]
         if currentItem.options and #currentItem.options > 1 then
@@ -617,12 +617,12 @@ local Input = function(menuName)
                 PerformFunction(currentItem.onOptionChange)
 		    end
         end
-    elseif Input.KeyIsHit(ActionID.ACTION) or Input.KeyIsHit(ActionID.SELECT) then
+    elseif Input.IsKeyHit(ActionID.ACTION) or Input.IsKeyHit(ActionID.SELECT) then
         if menu.acceptFunction then 
             PlaySoundEffect(menu.name, menu.sounds.menuChoose)
             PerformFunction(menu.acceptFunction)
         end
-    elseif Input.KeyIsHit(ActionID.INVENTORY) or Input.KeyIsHit(ActionID.DESELECT) then
+    elseif Input.IsKeyHit(ActionID.INVENTORY) or Input.IsKeyHit(ActionID.DESELECT) then
         if menu.exitFunction then 
             PlaySoundEffect(menu.name, menu.sounds.menuSelect)
             PerformFunction(menu.exitFunction) end
@@ -705,7 +705,9 @@ function Menu.DrawMenu(menuName)
         local translate = menu.titleTranslate
         if menu.titleString == "" then translate = false end
 
-        local titleNode = DisplayString(menu.titleString, Utilities.PercentPos(menu.titlePosition.x, menu.titlePosition.y), menu.titleTextScale, Utilities.ColorCombine(menu.titleTextColor, actualTransparency) , translate, menu.titleTextFlags)
+        local position = TEN.Vec2(menu.titlePosition.x, menu.titlePosition.y)
+
+        local titleNode = DisplayString(menu.titleString, TEN.Util.PercentToScreen(position), menu.titleTextScale, Utilities.ColorCombine(menu.titleTextColor, actualTransparency) , translate, menu.titleTextFlags)
         TEN.Strings.ShowString(titleNode, 1 / 30)
     end
 
@@ -727,7 +729,9 @@ function Menu.DrawMenu(menuName)
             local translate = menu.itemsTranslate
             if item.itemName == "" then translate = false end
 
-            local itemNode = DisplayString(item.itemName, Utilities.PercentPos(menu.itemsPosition.x, yItems), menu.itemsTextScale, Utilities.ColorCombine(menu.itemsTextColor, actualTransparency), translate)
+            local position = TEN.Vec2(menu.itemsPosition.x, yItems)
+
+            local itemNode = DisplayString(item.itemName, TEN.Util.PercentToScreen(position), menu.itemsTextScale, Utilities.ColorCombine(menu.itemsTextColor, actualTransparency), translate)
             if menu.menuType == Menu.Type.ITEMS_ONLY and i == menu.currentItem then
                 itemNode:SetFlags(menu.itemsSelectedFlags)
             else
@@ -741,7 +745,10 @@ function Menu.DrawMenu(menuName)
             local baseYOptions = menu.optionsPosition.y
             local yOptions = baseYOptions + (i - 1) * offset - menu.scrollY
             local selectedOption = item.options and item.options[item.currentOption] or ""
-            local optNode = DisplayString(selectedOption, Utilities.PercentPos(menu.optionsPosition.x, yOptions), menu.optionsTextScale, Utilities.ColorCombine(menu.optionsTextColor, actualTransparency), menu.optionsTranslate)
+
+            local position = TEN.Vec2(menu.optionsPosition.x, yOptions)
+
+            local optNode = DisplayString(selectedOption, TEN.Util.PercentToScreen(position), menu.optionsTextScale, Utilities.ColorCombine(menu.optionsTextColor, actualTransparency), menu.optionsTranslate)
             if i == menu.currentItem then
                 optNode:SetFlags(menu.optionsSelectedFlags)
             else

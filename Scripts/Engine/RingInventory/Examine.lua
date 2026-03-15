@@ -52,9 +52,7 @@ end
 
 function Examine.SetupText(itemData)
 
-    Text.Create(EXAMINE_TEXT) --Create Examine Text Channel
-    
-    local item = itemData.objectID
+    local item = itemData:GetObjectID()
 
     examineShowString = false
     local objectName = Objects.GetSlotName(item)
@@ -62,6 +60,7 @@ function Examine.SetupText(itemData)
     local localizedString = Flow.IsStringPresent(stringKey) and Flow.GetString(stringKey) or nil
 
     if localizedString then
+        Text.Create(EXAMINE_TEXT)
         Text.SetText("EXAMINE_TEXT", localizedString, false)
     end
 

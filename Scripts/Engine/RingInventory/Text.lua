@@ -244,7 +244,7 @@ function TextChannels.Draw(channelName)
         return
     end
     
-    local position = Utilities.PercentPos(state.position.x, state.position.y)
+    local position = TEN.Util.PercentToScreen(state.position)
     
     -- Draw current text (fading out)
     if state.currentAlpha > 0 and state.currentText ~= "" then  -- ADD CHECK

@@ -1,9 +1,8 @@
 -- ============================================================================
--- WeaponMode - Handles weapon mode functions and data for ring inventory
+-- WeaponMode - Handles weapon mode functions for ring inventory
 -- ============================================================================
 
 --External Modules
-
 local Menu = require("Engine.RingInventory.Menu")
 local Settings = require("Engine.RingInventory.Settings")
 

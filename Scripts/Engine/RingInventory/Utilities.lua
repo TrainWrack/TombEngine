@@ -16,11 +16,6 @@ Utilities.OffsetY = function(position, offsetY)
 
 end
 
-Utilities.PercentPos = function(x, y)
-
-    return TEN.Vec2(TEN.Util.PercentToScreen(x, y))
-
-end
 
 Utilities.CopyRotation = function(r)
 
