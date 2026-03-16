@@ -4,6 +4,10 @@
 #include <d3d11.h>
 #include <string>
 
+#include "Specific/trutils.h"
+
+using namespace TEN::Utils;
+
 namespace TEN::Renderer::Graphics
 {
 	enum class VRAMCategory
@@ -25,38 +29,36 @@ namespace TEN::Renderer::Graphics
 			return instance;
 		}
 
-		void Add(VRAMCategory category, int bytes)
+		void Add(VRAMCategory category, unsigned long long bytes)
 		{
-			_categories[static_cast<int>(category)] += bytes;
+			_categories[(int)category] += bytes;
 			_total += bytes;
 		}
 
-		void Remove(VRAMCategory category, int bytes)
+		void Remove(VRAMCategory category, unsigned long long bytes)
 		{
-			_categories[static_cast<int>(category)] -= bytes;
+			_categories[(int)category] -= bytes;
 			_total -= bytes;
 		}
 
-		int GetTotal() const
+		unsigned long long GetTotal() const
 		{
 			return _total.load();
 		}
 
-		int GetCategory(VRAMCategory category) const
+		unsigned long long GetCategory(VRAMCategory category) const
 		{
-			return _categories[static_cast<int>(category)].load();
+			return _categories[(int)category].load();
 		}
 
 		std::string GetSummary() const
 		{
-			auto toMB = [](int bytes) { return static_cast<float>(bytes) / (1024.0f * 1024.0f); };
-
-			return "VRAM usage: " +
-				std::to_string(toMB(GetTotal())) + " MB total | " +
-				"Textures: " + std::to_string(toMB(GetCategory(VRAMCategory::Texture))) + " MB | " +
-				"RenderTargets: " + std::to_string(toMB(GetCategory(VRAMCategory::RenderTarget))) + " MB | " +
-				"VB: " + std::to_string(toMB(GetCategory(VRAMCategory::VertexBuffer))) + " MB | " +
-				"IB: " + std::to_string(toMB(GetCategory(VRAMCategory::IndexBuffer))) + " MB";
+			return fmt::format("VRAM usage: {:.1f} MB total, textures: {:.1f} MB, RT: {:.1f} MB, VB: {:.1f} MB, IB: {:.1f} MB.",
+				ToMegabytes(GetTotal()),
+				ToMegabytes(GetCategory(VRAMCategory::Texture)),
+				ToMegabytes(GetCategory(VRAMCategory::RenderTarget)),
+				ToMegabytes(GetCategory(VRAMCategory::VertexBuffer)),
+				ToMegabytes(GetCategory(VRAMCategory::IndexBuffer)));
 		}
 
 		static int GetDXGIFormatBytesPerPixel(DXGI_FORMAT format)
@@ -235,7 +237,7 @@ namespace TEN::Renderer::Graphics
 	private:
 		VRAMTracker() = default;
 
-		std::atomic<int> _total = 0;
-		std::atomic<int> _categories[static_cast<int>(VRAMCategory::Count)] = {};
+		std::atomic<unsigned long long> _total = 0;
+		std::atomic<unsigned long long> _categories[static_cast<int>(VRAMCategory::Count)] = {};
 	};
 }
