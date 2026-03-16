@@ -15,6 +15,7 @@ local Ring = require("Engine.RingInventory.Ring")
 local Settings = require("Engine.RingInventory.Settings")
 local Statistics = require("Engine.RingInventory.Statistics")
 local Save = require("Engine.RingInventory.Save")
+local Sprites = require("Engine.RingInventory.Sprites")
 local Text = require("Engine.RingInventory.Text")
 local WeaponMode =  require("Engine.RingInventory.WeaponMode")
 
@@ -176,6 +177,8 @@ function InventoryStates.Update()
     elseif inventoryMode == InventoryStates.MODE.INVENTORY_OPENING then
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         Text.Setup()
+        Sprites.ShowBackground()
+        Sprites.ShowArrows()
         if Save.IsQuickSaveEnabled() then
             InventoryStates.SetMode(InventoryStates.MODE.SAVE_SETUP)
         else
@@ -187,6 +190,7 @@ function InventoryStates.Update()
         end
     elseif inventoryMode == InventoryStates.MODE.INVENTORY_EXIT then
         InventoryData.Reset()
+        Sprites.Clear()
         TEN.Inventory.SetFocusedItem(Constants.NO_VALUE)
         Interpolate.ClearAll()
         ItemSpin.Reset()
@@ -221,6 +225,8 @@ function InventoryStates.Update()
             Text.Hide("HEADER")
             Text.Hide("SUB_HEADER")
             InventoryData.ColorAll(COLOR_MAP.ITEM_HIDDEN, COLOR_MAP.ITEM_HIDDEN)
+            Sprites.HideBackground()
+            Sprites.HideArrows()
             onEnter = false
         end
         if ANIM_SETTINGS.SKIP_RING_CLOSE or Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
@@ -289,9 +295,10 @@ function InventoryStates.Update()
             selectedRing:Color(COLOR_MAP.ITEM_HIDDEN, COLOR_MAP.ITEM_SELECTED)
             Text.SetText("HEADER", selectedItem:GetName(), true)
             Text.Hide("ITEM_LABEL_SECONDARY")
+            Text.Hide("ITEM_LABEL_PRIMARY")
             ItemMenu.Create(selectedItem)
             ItemMenu.Show()
-
+            Sprites.HideArrows()
             if PickupData.WEAPON_SET[selectedItem:GetObjectID()] then
                 local ammoRing = InventoryData.SetupSecondaryRing(Ring.TYPE.AMMO, InventoryData.GetChosenItem(), true)
                 ammoRing:Color(COLOR_MAP.ITEM_HIDDEN, COLOR_MAP.ITEM_SELECTED)
@@ -314,9 +321,11 @@ function InventoryStates.Update()
             Text.SetItemLabel(selectedItem)
             onEnter = false
             selectedRing:Color(COLOR_MAP.ITEM_DESELECTED, COLOR_MAP.ITEM_SELECTED)
+            ShowSelectedAmmoName(selectedItem)
             local ammoRing = InventoryData.GetRing(Ring.TYPE.AMMO)
             ItemSpin.StopSpin(ammoRing)
             ammoRing:Color(COLOR_MAP.ITEM_HIDDEN, COLOR_MAP.ITEM_HIDDEN)
+            Sprites.ShowArrows()
         end
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             InventoryData.SetChosenItem(nil)
@@ -346,6 +355,7 @@ function InventoryStates.Update()
         Text.SetText("HEADER", "statistics", true)
         ItemSpin.StopSelectedItemSpin(selectedRing)
         Statistics.Show()
+        Sprites.HideArrows()
         if InventoryData.IsItemChosen() then
             ItemMenu.Hide()
             if PickupData.WEAPON_SET[selectedItem:GetObjectID()] then
@@ -385,6 +395,7 @@ function InventoryStates.Update()
                 
                 InventoryStates.SetMode(InventoryStates.MODE.ITEM_SELECTED)
             else
+                Sprites.ShowArrows()
                 ItemSpin.StartSelectedItemSpin(selectedRing)
                 Text.SetText("HEADER", "actions_inventory", true)
                 InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
@@ -403,7 +414,7 @@ function InventoryStates.Update()
             Text.Hide("ITEM_LABEL_SECONDARY")
             Animation.SaveItemData(selectedItem)
             ItemSpin.StopSelectedItemSpin(selectedRing)
-
+            Sprites.HideArrows()
             if InventoryData.IsItemChosen() then
                 ItemMenu.Hide()
                 if PickupData.WEAPON_SET[selectedItem:GetObjectID()] then
@@ -452,6 +463,7 @@ function InventoryStates.Update()
                 Text.SetText("HEADER", "actions_inventory", true)
                 ItemSpin.StartSelectedItemSpin(selectedRing)
                 onEnter = true
+                Sprites.ShowArrows()
                 inventoryMode = InventoryStates.MODE.INVENTORY
             end
         end
@@ -459,6 +471,9 @@ function InventoryStates.Update()
         if onEnter then
             ItemMenu.Hide()
             Animation.SaveItemData(selectedItem)
+            ItemSpin.StopSelectedItemSpin(selectedRing)
+            selectedRing:Color(COLOR_MAP.ITEM_HIDDEN, COLOR_MAP.ITEM_SELECTED)
+            Sprites.HideArrows()
             onEnter = false
         end
         if InventoryData.IsItemChosen() or Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
@@ -483,6 +498,7 @@ function InventoryStates.Update()
         
             if Combine.CombineItems(InventoryData.GetChosenItem(), selectedItem) then
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_COMBINE)
+                Animation.SaveItemData(selectedItem)
                 inventoryMode = InventoryStates.MODE.COMBINE_SUCCESS
             else
                 TEN.Sound.PlaySound(SOUND_MAP.PLAYER_NO)
@@ -536,7 +552,6 @@ function InventoryStates.Update()
             Text.SetItemLabel(selectedItem)
             inventoryMode = InventoryStates.MODE.ITEM_SELECTED
     elseif inventoryMode == InventoryStates.MODE.WEAPON_MODE_SETUP then
-        Text.SetText("SUB_HEADER", "choose_ammo", true)
         WeaponMode.CreateWeaponModeMenu(selectedItem)
         WeaponMode.Show()
         ItemMenu.Hide()
@@ -546,7 +561,6 @@ function InventoryStates.Update()
     elseif inventoryMode == InventoryStates.MODE.WEAPON_MODE_CLOSE then
         WeaponMode.Hide()
         ItemMenu.Show()
-        Text.Hide("SUB_HEADER")
         inventoryMode = InventoryStates.MODE.ITEM_SELECTED
     end
 
@@ -559,6 +573,8 @@ function InventoryStates.Update()
     InventoryData.DrawAllRings()
     Text.Update()
     Text.DrawAll()
+    Sprites.Update(selectedRing:GetType())
+    Sprites.Draw()
     
 end
 

@@ -23,8 +23,8 @@ function Animation.SaveItemData(selectedItem)
     if not selectedItem then return end
 
     local displayItem = selectedItem:GetDisplayItem()
-    itemRotationOld = displayItem:GetRotation()
-    itemRotation = selectedItem:GetRotation()
+    itemRotationOld = Utilities.CopyRotation(displayItem:GetRotation())
+    itemRotation = Utilities.CopyRotation(selectedItem:GetRotation())
     Examine.SetRotation(selectedItem:GetRotation())
     Examine.SetScale(selectedItem:GetScale())
 end
@@ -115,10 +115,9 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
     
     local useAnimation = {
         {key = "itemPosition", start = Constants.ITEM_START, finish = Constants.ITEM_END},
-        {key = "itemScale", start = Examine.GetPreviousScale(), finish = Examine.GetScale()},
-        {key = "itemRotation", start = itemRotationOld, finish = itemRotation},
+        {key = "itemRotation", start = itemRotationOld, finish = itemRotation}
     }
-    
+    --{key = "itemScale", start = Examine.GetPreviousScale(), finish = Examine.GetScale()},
     local examineReset = {
         useAnimation[2],
         {key = "itemRotation", start = itemRotation, finish = Examine.GetRotation()},

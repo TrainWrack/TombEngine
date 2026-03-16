@@ -122,13 +122,8 @@ end
 -- Return to previous ring
 function InventoryData.ReturnToPreviousRing()
     if previousRingType then
-
-        local ItemSpin = require("Engine.RingInventory.ItemSpin")
-
         local temp = selectedRingType
         selectedRingType = previousRingType
-        local previousRing = InventoryData.GetRing(previousRingType)
-        ItemSpin.StartSpin(previousRing)
         previousRingType = temp
         return true
     end

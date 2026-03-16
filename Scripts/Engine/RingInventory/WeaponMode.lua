@@ -37,7 +37,7 @@ function WeaponMode.CreateWeaponModeMenu(itemData)
         end
     end
     
-    local modeIndex = Lara:GetWeaponMode()
+    local modeIndex = Lara:GetWeaponMode(TEN.Objects.WeaponType.HK)
     local weaponModeMenu = Menu.Create("WeaponModeMenu", nil, weaponModes, "Engine.RingInventory.ChangeWeaponMode", nil, Menu.Type.ITEMS_ONLY)
     
     weaponModeMenu:SetItemsPosition(Vec2(50, 35))

@@ -363,7 +363,7 @@ PICKUP_DATA.WEAPON_SET = {
 }
 
 PICKUP_DATA.WEAPON_LASERSIGHT_DATA = {
-    [TEN.Objects.ObjID.REVOLVER_ITEM] = {MESHBITS = 0x0B, NAME = "revolver_lasersight", FLAGS = ItemAction.EQUIP | ItemAction.SEPARATE | ItemAction.CHOOSE_AMMO_REVOLVER},                            
+    [TEN.Objects.ObjID.REVOLVER_ITEM] = {MESHBITS = 0x0B, NAME = "revolver_lasersight", FLAGS = ItemAction.EQUIP | ItemAction.SEPARATE},                            
     [TEN.Objects.ObjID.CROSSBOW_ITEM] = {MESHBITS = 0x03, NAME = "crossbow_lasersight", FLAGS = ItemAction.EQUIP | ItemAction.SEPARATE | ItemAction.CHOOSE_AMMO_CROSSBOW},                          
     [TEN.Objects.ObjID.HK_ITEM]       = {MESHBITS = 0, NAME = "hk_lasersight", FLAGS = ItemAction.EQUIP | ItemAction.SEPARATE | ItemAction.CHOOSE_AMMO_HK},
 }
