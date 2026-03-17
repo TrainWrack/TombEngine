@@ -130,15 +130,6 @@ end
 --  Update
 -- ============================================================
 
-local function StepAlpha(current, target)
-    if current < target then
-        return math.min(current + ALPHA_SPEED, target)
-    elseif current > target then
-        return math.max(current - ALPHA_SPEED, target)
-    end
-    return current
-end
-
 function Sprites.Update(selectedRing)
     
     if not Ring then
@@ -165,9 +156,9 @@ function Sprites.Update(selectedRing)
         end
     end
     
-    bgAlpha        = StepAlpha(bgAlpha,        bgTarget)
-    arrowUpAlpha   = StepAlpha(arrowUpAlpha,   arrowUpTarget)
-    arrowDownAlpha = StepAlpha(arrowDownAlpha, arrowDownTarget)
+    bgAlpha        = Utilities.StepAlpha(bgAlpha, bgTarget, ALPHA_SPEED)
+    arrowUpAlpha   = Utilities.StepAlpha(arrowUpAlpha, arrowUpTarget, ALPHA_SPEED)
+    arrowDownAlpha = Utilities.StepAlpha(arrowDownAlpha, arrowDownTarget, ALPHA_SPEED)
 end
 
 -- ============================================================

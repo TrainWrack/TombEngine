@@ -256,14 +256,16 @@ function InventoryStates.Update()
             Animation.SaveItemData(selectedItem)
             ItemMenu.Hide()
             Text.SetText("HEADER", "examine", true)
+            selectedRing:Color(COLOR_MAP.ITEM_HIDDEN, COLOR_MAP.ITEM_HIDDEN)
             onEnter = false
+            Examine.Show(selectedItem)
         end
         if InventoryData.IsItemChosen() or Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             onEnter = true
             InventoryStates.SetMode(InventoryStates.MODE.EXAMINE)
         end
     elseif inventoryMode == InventoryStates.MODE.EXAMINE then
-        Examine.Item(selectedItem)
+        
     elseif inventoryMode == InventoryStates.MODE.EXAMINE_RESET then
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             InventoryStates.SetMode(InventoryStates.MODE.EXAMINE_CLOSE)
@@ -279,11 +281,14 @@ function InventoryStates.Update()
 
         if isItemChosen or Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             onEnter = true
+            Examine.Hide()
             if isItemChosen then
                 ItemMenu.Show()
                 Text.SetText("HEADER", selectedItem:GetName(), true)
+                selectedRing:Color(COLOR_MAP.ITEM_HIDDEN, COLOR_MAP.ITEM_SELECTED)
                 InventoryStates.SetMode(InventoryStates.MODE.ITEM_SELECTED)
             else
+                selectedRing:Color(COLOR_MAP.ITEM_DESELECTED, COLOR_MAP.ITEM_SELECTED)
                 InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
             end
         end
@@ -566,6 +571,8 @@ function InventoryStates.Update()
 
     Statistics.UpdateIngameTime()
     
+    Examine.Update()
+    Examine.Draw()
     Menu.UpdateActiveMenus()
     Menu.DrawActiveMenus()
     InventoryData.SetItemRotations(timeInMenu)
