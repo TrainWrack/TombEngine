@@ -575,8 +575,12 @@ void LaraObject::SetWeaponMode(LaraWeaponType weaponType, PlayerWeaponMode weapo
 			player.Weapons[(int)LaraWeaponType::HK].WeaponMode = LaraWeaponTypeCarried::WTYPE_AMMO_2;
 			break;
 
-		default:
+		case PlayerWeaponMode::Sniper:
 			player.Weapons[(int)LaraWeaponType::HK].WeaponMode = LaraWeaponTypeCarried::WTYPE_AMMO_3;
+			break;
+
+		default:
+			TENLog("SetWeaponMode() error; unsupported weapon mode for HK weapon type.", LogLevel::Warning, LogConfig::All);
 			break;
 		}
 		break;
