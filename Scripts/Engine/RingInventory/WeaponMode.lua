@@ -14,7 +14,7 @@ local WeaponMode = {}
 
 function WeaponMode.ChangeWeaponMode()
     local index = Menu.Get("WeaponModeMenu"):GetCurrentItemIndex()
-    Lara:SetWeaponMode(index)
+    Lara:SetWeaponMode(TEN.Objects.WeaponType.HK, index)
 
     local InventoryStates = require("Engine.RingInventory.InventoryStates")
     InventoryStates.SetMode(InventoryStates.MODE.WEAPON_MODE_CLOSE)

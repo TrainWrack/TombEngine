@@ -205,6 +205,15 @@ function InventoryData.OffsetAll(direction)
     end
 end
 
+-- Hide all rings
+function InventoryData.SetVisibility(visible, omitSelectedRing)
+    for ringType, ring in pairs(rings) do
+        if not (omitSelectedRing and ringType == selectedRingType) then
+            ring:SetVisibility(visible)
+        end
+    end
+end
+
 -- Iterator for all rings
 function InventoryData.IterateRings()
     return pairs(rings)
@@ -544,6 +553,19 @@ function InventoryData.SetItemRotations(timeCount)
         local displayItem = compass:GetDisplayItem()
         displayItem:SetJointRotation(1, CalculateCompassAngle(timeCount))
     end
+
+    local Examine = require("Engine.RingInventory.Examine")
+    if Examine.item and (Examine.item:GetObjectID() == TEN.Objects.ObjID.STOPWATCH_ITEM or Examine.item:GetObjectID() == TEN.Objects.ObjID.COMPASS_ITEM) then
+        local displayItem = Examine.item
+        if Examine.item:GetObjectID() == TEN.Objects.ObjID.STOPWATCH_ITEM then
+            displayItem:SetJointRotation(4, angles.hour_hand_angle)
+            displayItem:SetJointRotation(5, angles.minute_hand_angle)
+            displayItem:SetJointRotation(6, angles.second_hand_angle)
+        else
+            displayItem:SetJointRotation(1, CalculateCompassAngle(timeCount))
+        end
+    end
+
 end
 
 return InventoryData

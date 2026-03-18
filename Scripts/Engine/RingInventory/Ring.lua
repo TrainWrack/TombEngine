@@ -48,6 +48,7 @@ function Ring.Create(ringType, centerPosition, inventory)
     self.previousPosition = centerPosition or Vec3(0, 0, 0)
     self.slice = 0
     self.inventory = inventory  -- Reference to parent inventory
+    self.visible = true
     
     self.currentAngle = 0
     self.previousAngle = 0
@@ -347,8 +348,15 @@ function Ring:FindItemIndex(objectID)
     return nil
 end
 
+function Ring:SetVisibility(visible)
+    self.visible = visible
+end
+
 --Draw items in the ring
 function Ring:Draw()
+
+    if not self.visible then return end
+
     for i = 1, #self.items do
         local item = self.items[i]
         item:Draw()

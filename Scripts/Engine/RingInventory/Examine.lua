@@ -13,7 +13,7 @@ local COLOR_MAP = Settings.COLOR_MAP
 --Examine functions
 local Examine = {}
 
-local EXAMINE_POSITION = Vec3(0, 200, 512)
+local EXAMINE_POSITION = Vec3(0, 100, 0)
 local EXAMINE_DEFAULT_SCALE = 1
 local EXAMINE_MIN_SCALE = 0.3
 local EXAMINE_MAX_SCALE = 1.6
@@ -43,7 +43,7 @@ local examineScaler = EXAMINE_DEFAULT_SCALE
 local examineShowString = false
 local alpha  = 0
 local targetAlpha = 0
-local examineItem = nil
+Examine.item = nil
 
 function Examine.Item(itemData)
 
@@ -137,20 +137,20 @@ function Examine.Show(item)
     Examine.SetRotation(item:GetRotation())
     Examine.SetScale(item:GetScale())
     targetAlpha = 255
-    examineItem = TEN.View.DisplayItem(item:GetObjectID(), EXAMINE_POSITION, examineRotation, Vec3(examineScaler), item:GetMeshBits())
+    Examine.item  = TEN.View.DisplayItem(item:GetObjectID(), EXAMINE_POSITION, examineRotation, Vec3(examineScaler), item:GetMeshBits())
 
 end
 
 function Examine.Draw()
 
-    if not examineItem then return end
+    if not Examine.item  then return end
 
     examineScaler = math.max(EXAMINE_MIN_SCALE, math.min(EXAMINE_MAX_SCALE, examineScaler))
-    local color = examineItem:GetColor()
-    examineItem:SetRotation(examineRotation)
-    examineItem:SetScale(Vec3(examineScaler))
-    examineItem:SetColor(Utilities.ColorCombine(color, alpha))
-    examineItem:Draw()
+    local color = Examine.item :GetColor()
+    Examine.item :SetRotation(examineRotation)
+    Examine.item :SetScale(Vec3(examineScaler))
+    Examine.item :SetColor(Utilities.ColorCombine(color, alpha))
+    Examine.item :Draw()
 
 end
 
@@ -162,15 +162,15 @@ end
 
 function Examine.Update()
 
-    if not examineItem then return end
+    if not Examine.item  then return end
 
-    local color = examineItem:GetColor()
+    local color = Examine.item :GetColor()
     alpha = Utilities.StepAlpha(alpha, targetAlpha, Constants.TEXT_ALPHA_SPEED)
     local targetColor = Utilities.ColorCombine(color, alpha)
-    examineItem:SetColor(targetColor)
+    Examine.item :SetColor(targetColor)
 
     if alpha == 0 then
-        examineItem = nil
+        Examine.item  = nil
     end
 
 end

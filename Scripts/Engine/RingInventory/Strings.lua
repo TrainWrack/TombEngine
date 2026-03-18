@@ -5,6 +5,7 @@ local strings =
     pickups = {"Pickups"},
     kills = {"Kills"},
     pistols_item_text = {"Pistols are great, I like them a lot, they go pew pew pew"},
+    compass = {"Compass"}
 }
 
 TEN.Flow.SetStrings(strings)

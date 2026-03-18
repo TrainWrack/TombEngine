@@ -70,14 +70,13 @@ local function DoRightKey(ring)
 
 end
 
-function Inputs.Update(timeInMenu)
+function Inputs.Update(mode, timeInMenu)
     
     timer = timeInMenu
 
     local selectedRing = InventoryData.GetSelectedRing()
     local selectedRingType = InventoryData.GetSelectedRingType()
     local selectedItem  = selectedRing:GetSelectedItem()
-    local mode = InventoryStates.GetMode()
 
     if mode == INVENTORY_MODE.INVENTORY then
         if GuiIsPulsed(TEN.Input.ActionID.LEFT) then
