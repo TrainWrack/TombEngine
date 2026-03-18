@@ -4,7 +4,6 @@ local Settings = require("Engine.RingInventory.Settings")
 local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointer to tables
-
 local COLOR_MAP = Settings.COLOR_MAP
 local PICKUP_DATA = require("Engine.RingInventory.PickupData")
 

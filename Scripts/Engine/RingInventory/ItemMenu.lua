@@ -11,7 +11,6 @@ local Settings = require("Engine.RingInventory.Settings")
 local COLOR_MAP = Settings.COLOR_MAP
 local INVENTORY_MODE = InventoryStates.MODE
 
-
 local ItemMenu = {}
 
 local function HasItemAction(packedFlags, flag)

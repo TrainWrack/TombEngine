@@ -11,7 +11,7 @@ local STRING_LOAD_GAME = "load_game"
 local INV_ROT_Y = 1
 
 
-PICKUP_DATA = {}
+local PICKUP_DATA = {}
 
 local COL = {
     OBJECT_ID = 1,

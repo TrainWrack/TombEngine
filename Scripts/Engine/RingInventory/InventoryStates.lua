@@ -20,10 +20,9 @@ local Text = require("Engine.RingInventory.Text")
 local WeaponMode =  require("Engine.RingInventory.WeaponMode")
 
 --Pointers to tables
-ANIM_SETTINGS = Settings.ANIMATION
-COLOR_MAP = Settings.COLOR_MAP
-SOUND_MAP = Settings.SOUND_MAP
-
+local ANIM_SETTINGS = Settings.ANIMATION
+local COLOR_MAP = Settings.COLOR_MAP
+local SOUND_MAP = Settings.SOUND_MAP
 
 --Variables
 local inventoryClosed = false
@@ -556,7 +555,7 @@ function InventoryStates.Update()
             inventoryMode = InventoryStates.MODE.AMMO_SELECT
     elseif inventoryMode == InventoryStates.MODE.AMMO_SELECT then
         if InventoryStates.GetActionCheck() then
-            local ammo = PICKUP_DATA.AMMO_SET[selectedItem.objectID]
+            local ammo = PickupData.AMMO_SET[selectedItem.objectID]
             Lara:SetAmmoType(ammo.slot)
             inventoryMode = InventoryStates.MODE.AMMO_SELECT_CLOSE
         end

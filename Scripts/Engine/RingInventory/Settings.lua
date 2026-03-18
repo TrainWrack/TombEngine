@@ -1,4 +1,4 @@
-Settings = {}
+local Settings = {}
 
 Settings.SOUND_MAP =
 {

@@ -40,9 +40,10 @@ translate = false,
 
 local examineRotation = Rotation(0, 0, 0)
 local examineScaler = EXAMINE_DEFAULT_SCALE
-local examineShowString = false
+local examineShowString = true
 local alpha  = 0
 local targetAlpha = 0
+
 Examine.item = nil
 
 function Examine.Item(itemData)
@@ -59,7 +60,7 @@ function Examine.SetupText(itemData)
 
     local item = itemData:GetObjectID()
 
-    examineShowString = false
+    examineShowString = true
     local objectName = Objects.GetSlotName(item)
     local stringKey = objectName:lower().."_text"
     local localizedString = Flow.IsStringPresent(stringKey) and Flow.GetString(stringKey) or nil
@@ -67,6 +68,7 @@ function Examine.SetupText(itemData)
     if localizedString then
         Text.Create(EXAMINE_TEXT)
         Text.SetText("EXAMINE_TEXT", localizedString, false)
+        Text.Show("EXAMINE_TEXT")
     end
 
 end
@@ -134,6 +136,7 @@ function Examine.Show(item)
     if not item then return end 
 
     Examine.ResetExamine()
+    Examine.SetupText(item)
     Examine.SetRotation(item:GetRotation())
     Examine.SetScale(item:GetScale())
     targetAlpha = 255
@@ -156,6 +159,7 @@ end
 
 function Examine.Hide()
 
+    Text.Hide("EXAMINE_TEXT")
     targetAlpha = 0
 
 end
@@ -171,6 +175,7 @@ function Examine.Update()
 
     if alpha == 0 then
         Examine.item  = nil
+        Text.Destroy("EXAMINE_TEXT")
     end
 
 end
