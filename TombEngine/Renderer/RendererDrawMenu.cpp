@@ -979,7 +979,7 @@ namespace TEN::Renderer
 
 	void Renderer::DrawObjectIn3DSpace(const DisplayItem& item)
 	{
-		if (!item.GetVisible() || item.GetColor().A() == 0)
+		if (!item.GetVisible())
 			return;
 
 		float alpha = GetInterpolationFactor();
@@ -989,6 +989,11 @@ namespace TEN::Renderer
 		auto orient = item.GetInterpolatedOrientation(alpha);
 		auto scale = item.GetInterpolatedScale(alpha);
 		auto color = item.GetInterpolatedColor(alpha);
+
+		constexpr float ALPHA_EPSILON = 1e-5f;
+		if (color.w <= ALPHA_EPSILON)
+			return;
+
 		int meshBits = item.GetMeshBits();
 
 		unsigned int stride = sizeof(Vertex);
