@@ -979,7 +979,7 @@ namespace TEN::Renderer
 
 	void Renderer::DrawObjectIn3DSpace(const DisplayItem& item)
 	{
-		if (!item.GetVisible())
+		if (!item.GetVisible() || item.GetColor().A() == 0)
 			return;
 
 		float alpha = GetInterpolationFactor();
