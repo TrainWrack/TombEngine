@@ -173,7 +173,7 @@ function Inputs.Update(mode, timeInMenu)
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
         elseif GuiIsPulsed(TEN.Input.ActionID.INVENTORY) then
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
-            InventoryStates.SetMode(INVENTORY_MODE.EXAMINE_RESET)
+            InventoryStates.SetMode(INVENTORY_MODE.EXAMINE_CLOSE)
         end
     end
 end

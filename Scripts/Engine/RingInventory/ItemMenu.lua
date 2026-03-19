@@ -13,13 +13,13 @@ local INVENTORY_MODE = InventoryStates.MODE
 
 local ItemMenu = {}
 
-local function HasItemAction(packedFlags, flag)
+function ItemMenu.HasItemAction(packedFlags, flag)
     return (packedFlags & flag) ~= 0
 end
 
 local function HasChooseAmmo(menuActions)
     for _, flag in ipairs(PickupData.CHOOSE_AMMO_FLAGS) do
-        if HasItemAction(menuActions, flag) then
+        if ItemMenu.HasItemAction(menuActions, flag) then
             return true
         end
     end
@@ -37,7 +37,7 @@ function ItemMenu.IsSingleItemAction(item)
 
     -- Two flags set, one is COMBINE, and no combine items available
     local twoFlagsSet = (flags & (flags - 1)) ~= 0 and (flags & (flags - 2)) == 0
-    if twoFlagsSet and HasItemAction(flags, ItemAction.COMBINE) then
+    if twoFlagsSet and ItemMenu.HasItemAction(flags, ItemAction.COMBINE) then
         local InventoryData = require("Engine.RingInventory.InventoryData")
         local combineItemCount = InventoryData.GetCombineItemsCount(item:GetObjectID())
         if combineItemCount == 0 then return true end
@@ -49,29 +49,29 @@ end
 
 function ItemMenu.ParseAction(menuActions)
 
-    if HasItemAction(menuActions, ItemAction.USE) or HasItemAction(menuActions, ItemAction.EQUIP) then
+    if ItemMenu.HasItemAction(menuActions, ItemAction.USE) or ItemMenu.HasItemAction(menuActions, ItemAction.EQUIP) then
         ItemMenu.Hide()
         InventoryStates.SetMode(INVENTORY_MODE.ITEM_USE)
-    elseif HasItemAction(menuActions, ItemAction.EXAMINE) then
+    elseif ItemMenu.HasItemAction(menuActions, ItemAction.EXAMINE) then
         InventoryStates.SetMode(INVENTORY_MODE.EXAMINE_OPEN)
-    elseif HasItemAction(menuActions, ItemAction.COMBINE) then
+    elseif ItemMenu.HasItemAction(menuActions, ItemAction.COMBINE) then
         InventoryStates.SetMode(INVENTORY_MODE.COMBINE_SETUP)
-    elseif HasItemAction(menuActions, ItemAction.STATISTICS) then
-        InventoryStates.SetMode(INVENTORY_MODE.STATISTICS_SETUP)
-    elseif HasItemAction(menuActions, ItemAction.SAVE) then
+    elseif ItemMenu.HasItemAction(menuActions, ItemAction.STATISTICS) then
+        InventoryStates.SetMode(INVENTORY_MODE.STATISTICS_OPEN)
+    elseif ItemMenu.HasItemAction(menuActions, ItemAction.SAVE) then
         local Save = require("Engine.RingInventory.Save")
         Save.SetSaveMenu()
         InventoryStates.SetMode(INVENTORY_MODE.SAVE_SETUP)
-    elseif HasItemAction(menuActions, ItemAction.LOAD) then
+    elseif ItemMenu.HasItemAction(menuActions, ItemAction.LOAD) then
         local Save = require("Engine.RingInventory.Save")
         Save.SetLoadMenu()
         InventoryStates.SetMode(INVENTORY_MODE.SAVE_SETUP)
-    elseif HasItemAction(menuActions, ItemAction.SEPARATE) then
+    elseif ItemMenu.HasItemAction(menuActions, ItemAction.SEPARATE) then
         InventoryStates.SetMode(INVENTORY_MODE.SEPARATE)
-    elseif HasItemAction(menuActions, ItemAction.CHOOSE_AMMO_HK) then
+    elseif ItemMenu.HasItemAction(menuActions, ItemAction.CHOOSE_AMMO_HK) then
         InventoryStates.SetMode(INVENTORY_MODE.WEAPON_MODE_SETUP)
     elseif HasChooseAmmo(menuActions) then
-        InventoryStates.SetMode(INVENTORY_MODE.AMMO_SELECT_SETUP)
+        InventoryStates.SetMode(INVENTORY_MODE.AMMO_SELECT_OPEN)
     end
 end
 
@@ -92,7 +92,7 @@ function ItemMenu.Create(item)
     local itemMenuActions = item:GetMenuActions()
 
     for _, entry in ipairs(PickupData.ItemActionFlags) do
-        if HasItemAction(itemMenuActions, entry.bit) then
+        if ItemMenu.HasItemAction(itemMenuActions, entry.bit) then
             local allowInsert = true
             
             if entry.bit == ItemAction.COMBINE then

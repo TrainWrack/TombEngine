@@ -457,6 +457,35 @@ TextChannels.CONFIGS = {
             Strings.DisplayStringOption.SHADOW
         },
         translate = false,
+    },
+        CONTROLS_SELECT = 
+    {
+        name = "CONTROLS_SELECT",                 
+        text = "",               
+        position = Vec2(5, 85),              
+        scale = 0.8,                          
+        color = COLOR_MAP.NORMAL_FONT,    
+        visible = false,                     
+        flags = 
+        {
+            Strings.DisplayStringOption.SHADOW
+        },
+        translate = false,
+    },
+        CONTROLS_BACK = 
+    {
+        name = "CONTROLS_BACK",                 
+        text =  Flow.GetString("back")..": "..Input.GetActionBinding(ActionID.DESELECT),               
+        position = Vec2(95, 85),              
+        scale = 0.8,                          
+        color = COLOR_MAP.NORMAL_FONT,    
+        visible = false,                  
+        flags = 
+        {
+            Strings.DisplayStringOption.RIGHT,
+            Strings.DisplayStringOption.SHADOW
+        },
+        translate = false,
     }
 }
 
@@ -465,10 +494,14 @@ function TextChannels.Setup()
     TextChannels.Create(TextChannels.CONFIGS.SUB_HEADER)
     TextChannels.Create(TextChannels.CONFIGS.ITEM_LABEL_PRIMARY)
     TextChannels.Create(TextChannels.CONFIGS.ITEM_LABEL_SECONDARY)
+    TextChannels.Create(TextChannels.CONFIGS.CONTROLS_SELECT)
+    TextChannels.Create(TextChannels.CONFIGS.CONTROLS_BACK)
     TextChannels.AddToGroup("INVENTORY_UI", "HEADER")
     TextChannels.AddToGroup("INVENTORY_UI", "SUB_HEADER")
     TextChannels.AddToGroup("INVENTORY_UI", "ITEM_LABEL_PRIMARY")
     TextChannels.AddToGroup("INVENTORY_UI", "ITEM_LABEL_SECONDARY")
+    TextChannels.AddToGroup("INVENTORY_UI", "CONTROLS_SELECT")
+    TextChannels.AddToGroup("INVENTORY_UI", "CONTROLS_BACK")
 end
 
 

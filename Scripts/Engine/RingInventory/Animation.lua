@@ -213,10 +213,6 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
         if Animation.PerformBatchMotion("ExamineClose", examineAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing, selectedItem, true) then
             return true
         end
-    elseif mode == INVENTORY_MODE.EXAMINE_RESET then
-        if Animation.PerformBatchMotion("ExamineReset", examineReset, Settings.ANIMATION.ITEM_ANIM_TIME, true, selectedRing, selectedItem, true) then
-            return true
-        end
     elseif mode == INVENTORY_MODE.COMBINE_RING_OPENING then
         if Animation.PerformBatchMotion("CombineRingOpening", combineRingAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing) then
             return true
