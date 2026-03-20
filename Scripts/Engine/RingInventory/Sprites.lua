@@ -1,5 +1,6 @@
 --External Modules
 local Constants = require("Engine.RingInventory.Constants")
+local InventoryData
 local Ring
 local Settings = require("Engine.RingInventory.Settings")
 local Utilities = require("Engine.RingInventory.Utilities")
@@ -131,31 +132,41 @@ end
 -- ============================================================
 
 function Sprites.Update(selectedRing)
-    
+
     if not Ring then
         Ring = require("Engine.RingInventory.Ring")
     end
 
+    if not InventoryData then
+        InventoryData = require("Engine.RingInventory.InventoryData")
+    end
+
     if arrowVisible then
-        -- Up arrows hide on PUZZLE, COMBINE, AMMO
-        if selectedRing == Ring.TYPE.PUZZLE or
-        selectedRing == Ring.TYPE.COMBINE or
-        selectedRing == Ring.TYPE.AMMO then
-            arrowUpTarget = 0
-        else
+
+        local isPuzzle  = selectedRing == Ring.TYPE.PUZZLE
+        local isMain    = selectedRing == Ring.TYPE.MAIN
+        local isOptions = selectedRing == Ring.TYPE.OPTIONS
+ 
+        -- Up arrow: visible only from MAIN (if PUZZLE has items) or OPTIONS
+        if isOptions then
             arrowUpTarget = 255
+        elseif isMain then
+            arrowUpTarget = InventoryData.GetRing(Ring.TYPE.PUZZLE):IsEmpty() and 0 or 255
+        else
+            arrowUpTarget = 0
         end
 
-        -- Down arrows hide on OPTIONS, COMBINE, AMMO
-        if selectedRing == Ring.TYPE.OPTIONS or
-        selectedRing == Ring.TYPE.COMBINE or
-        selectedRing == Ring.TYPE.AMMO then
-            arrowDownTarget = 0
-        else
+        -- Down arrow: visible only from MAIN (if OPTIONS has items) or PUZZLE
+        if isPuzzle then
             arrowDownTarget = 255
+        elseif isMain then
+            arrowDownTarget = InventoryData.GetRing(Ring.TYPE.OPTIONS):IsEmpty() and 0 or 255
+        else
+            arrowDownTarget = 0
         end
+
     end
-    
+  
     bgAlpha        = Utilities.StepAlpha(bgAlpha, bgTarget, ALPHA_SPEED)
     arrowUpAlpha   = Utilities.StepAlpha(arrowUpAlpha, arrowUpTarget, ALPHA_SPEED)
     arrowDownAlpha = Utilities.StepAlpha(arrowDownAlpha, arrowDownTarget, ALPHA_SPEED)
@@ -166,6 +177,7 @@ end
 -- ============================================================
 
 function Sprites.Draw()
+    
     if bgAlpha > 0 then
         DrawBackground(bgAlpha)
     end

@@ -85,7 +85,7 @@ function Inputs.Update(mode, timeInMenu)
             DoRightKey(selectedRing)
         elseif GuiIsPulsed(TEN.Input.ActionID.FORWARD) and selectedRingType < RING.COMBINE then
             local targetRing = math.max(RING.PUZZLE, selectedRingType - 1)
-            if targetRing ~= selectedRingType then
+            if targetRing ~= selectedRingType and not InventoryData.GetRing(targetRing):IsEmpty() then
                 InventoryData.SwitchToRingType(targetRing)
                 InventoryData.OffsetAll(1)
                 InventoryStates.SetMode(INVENTORY_MODE.RING_CHANGE)
@@ -94,7 +94,7 @@ function Inputs.Update(mode, timeInMenu)
         elseif GuiIsPulsed(TEN.Input.ActionID.BACK) and selectedRingType < RING.COMBINE then
             --add check for the options ring here to skip it if it empty
             local targetRing = math.min(RING.OPTIONS, selectedRingType + 1)
-            if targetRing ~= selectedRingType then
+            if targetRing ~= selectedRingType and not InventoryData.GetRing(targetRing):IsEmpty() then
                 InventoryData.SwitchToRingType(targetRing)
                 InventoryData.OffsetAll(-1)
                 InventoryStates.SetMode(INVENTORY_MODE.RING_CHANGE)

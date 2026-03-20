@@ -35,14 +35,6 @@ function ItemMenu.IsSingleItemAction(item)
     -- Single flag set
     if (flags & (flags - 1)) == 0 then return true end
 
-    -- Two flags set, one is COMBINE, and no combine items available
-    local twoFlagsSet = (flags & (flags - 1)) ~= 0 and (flags & (flags - 2)) == 0
-    if twoFlagsSet and ItemMenu.HasItemAction(flags, ItemAction.COMBINE) then
-        local InventoryData = require("Engine.RingInventory.InventoryData")
-        local combineItemCount = InventoryData.GetCombineItemsCount(item:GetObjectID())
-        if combineItemCount == 0 then return true end
-    end
-
     return false
 
 end
@@ -55,7 +47,13 @@ function ItemMenu.ParseAction(menuActions)
     elseif ItemMenu.HasItemAction(menuActions, ItemAction.EXAMINE) then
         InventoryStates.SetMode(INVENTORY_MODE.EXAMINE_OPEN)
     elseif ItemMenu.HasItemAction(menuActions, ItemAction.COMBINE) then
-        InventoryStates.SetMode(INVENTORY_MODE.COMBINE_SETUP)
+        local InventoryData = require("Engine.RingInventory.InventoryData")
+        local combineItemCount = InventoryData.GetCombineItemsCount()
+        if combineItemCount > 1 then 
+            InventoryStates.SetMode(INVENTORY_MODE.COMBINE_SETUP)
+        else
+            TEN.Sound.PlaySound(Settings.SOUND_MAP.PLAYER_NO)
+        end
     elseif ItemMenu.HasItemAction(menuActions, ItemAction.STATISTICS) then
         InventoryStates.SetMode(INVENTORY_MODE.STATISTICS_OPEN)
     elseif ItemMenu.HasItemAction(menuActions, ItemAction.SAVE) then
@@ -97,8 +95,8 @@ function ItemMenu.Create(item)
             
             if entry.bit == ItemAction.COMBINE then
                 local InventoryData = require("Engine.RingInventory.InventoryData")
-                local itemCount = InventoryData.GetCombineItemsCount(item:GetObjectID())
-                allowInsert = (itemCount ~= 0)
+                local itemCount = InventoryData.GetCombineItemsCount()
+                allowInsert = (itemCount > 1)
             end
             
             if allowInsert then

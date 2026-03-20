@@ -22,6 +22,7 @@ local selectedRingType = RING.MAIN
 local previousRingType = RING.MAIN
 local chosenItem = nil
 local openAtItem = nil
+local combineCount = 0
 
 --Variables
 local gameflowOverrides = nil
@@ -345,6 +346,11 @@ function InventoryData.Construct(ringType, selectedWeapon)
             displayItem:SetColor(COLOR_MAP.ITEM_HIDDEN)
             -- Add item to ring
             ring:AddItem(data)
+
+            if not ringType and data.combine then
+                combineCount = combineCount + 1
+            end
+
         end
         
         ::continue::
@@ -400,38 +406,9 @@ function InventoryData.OpenAtItem(itemID, repositionRings)
     end
 end
 
--- Get count of combinable items (excluding selected item)
-function InventoryData.GetCombineItemsCount(selectedItem)
-    local itemCount = 0
-    local items = PickupData.CONSTANTS
-    
-    for _, itemRow in ipairs(items) do
-        local itemData = PickupData.ConvertRowData(itemRow)
-        local data = InventoryData.BuildItem(itemData)
-        local shouldInsert = false
-        
-        if data.combine == true then
-            if selectedItem == data.objectID then
-                goto continue
-            end
-            
-            if data.type == TYPE.WEAPON and Lara:GetLaserSight(PickupData.WEAPON_SET[data.objectID].slot) then
-                goto continue
-            end
-            
-            shouldInsert = (data.count ~= 0)
-        else
-            goto continue
-        end
-        
-        if shouldInsert then
-            itemCount = itemCount + 1
-        end
-        
-        ::continue::
-    end
-    
-    return itemCount
+-- Get count of combinable items present
+function InventoryData.GetCombineItemsCount()
+    return combineCount
 end
 
 -- Clear a specific ring or all rings
@@ -456,6 +433,8 @@ function InventoryData.ClearAll()
     for ringType, ring in pairs(rings) do
         ring:Clear()
     end
+
+    combineCount = 0
 
 end
 

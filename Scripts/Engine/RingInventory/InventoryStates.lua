@@ -255,6 +255,7 @@ function InventoryStates.Update()
         timeInMenu = 0
         InventoryData.SetChosenItem()
         InventoryStates.SetInventoryClosed(true)
+        InventoryData.ClearAll()
         Flow.SetFreezeMode(Flow.FreezeMode.NONE)       
     elseif inventoryMode == InventoryStates.MODE.RING_OPENING then
         if onEnter then
@@ -355,6 +356,7 @@ function InventoryStates.Update()
             Text.SetText("HEADER", selectedItem:GetName(), true)
             Text.Hide("ITEM_LABEL_SECONDARY")
             Text.Hide("ITEM_LABEL_PRIMARY")
+            UpdateActionLabel(selectedItem)
             ItemMenu.Create(selectedItem)
             ItemMenu.Show()
             Sprites.HideArrows()
