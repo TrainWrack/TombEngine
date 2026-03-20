@@ -119,28 +119,44 @@ function InventoryStates.IsMode(mode)
     
 end
 
-local function UpdateActionLabel(item)
+local function UpdateActionLabel(item, override)
 
-    local itemActions = item:GetMenuActions()
     local string = nil
 
-    if ItemMenu.IsSingleItemAction(item) then
-
+    if  item and ItemMenu.IsSingleItemAction(item) then
+        local itemActions = item:GetMenuActions()
         for _, entry in ipairs(PickupData.ItemActionFlags) do
             if ItemMenu.HasItemAction(itemActions, entry.bit) then
                 string = Flow.GetString(entry.string)
             end
         end
-
+    elseif override then
+        string = Flow.GetString(override)
     else
         string = Flow.GetString("actions_select")
     end
 
-    local actionString = string..": "..Input.GetActionBinding(ActionID.SELECT)
+    local actionString = Input.GetActionBinding(ActionID.SELECT)..": "..string
 
     Text.SetText("CONTROLS_SELECT", actionString, true)
 
 end
+
+local function UpdateBackLabel(label)
+    
+    local backstring
+
+    if label then
+        backstring = label
+    else
+        backstring = "close"
+    end
+
+    local string = Input.GetActionBinding(ActionID.DESELECT)..": "..Flow.GetString(backstring)
+    Text.SetText("CONTROLS_BACK", string, true)
+end
+
+
 
 local function ShowSelectedAmmoName(weaponItem)
 
@@ -268,8 +284,8 @@ function InventoryStates.Update()
             local selectedItem = selectedRing:GetSelectedItem()
             Text.SetItemLabel(selectedItem)
             Text.SetText("HEADER", "actions_inventory", true)
-            Text.Show("CONTROLS_BACK")
             UpdateActionLabel(selectedItem)
+            UpdateBackLabel()
             ShowSelectedAmmoName(selectedItem)
             onEnter = true
             InventoryData.ColorAll(COLOR_MAP.ITEM_DESELECTED, COLOR_MAP.ITEM_SELECTED, true)
@@ -357,6 +373,7 @@ function InventoryStates.Update()
             Text.Hide("ITEM_LABEL_SECONDARY")
             Text.Hide("ITEM_LABEL_PRIMARY")
             UpdateActionLabel(selectedItem)
+            UpdateBackLabel("actions_deselect")
             ItemMenu.Create(selectedItem)
             ItemMenu.Show()
             Sprites.HideArrows()
@@ -382,6 +399,7 @@ function InventoryStates.Update()
             ItemSpin.StopSpin(ammoRing)
             ammoRing:Color(COLOR_MAP.ITEM_HIDDEN, COLOR_MAP.ITEM_HIDDEN)
             Sprites.ShowArrows()
+            UpdateBackLabel()
         end
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             InventoryData.SetChosenItem(nil)
@@ -408,8 +426,9 @@ function InventoryStates.Update()
             Text.Hide("ITEM_LABEL_PRIMARY")
             Animation.SaveItemData(selectedItem)
             Statistics.SetupStats()
-            Statistics.CreateStatisticsMenu()
             Text.SetText("HEADER", "statistics", true)
+            UpdateActionLabel(nil, "choose_type")
+            UpdateBackLabel("back")
             ItemSpin.StopSelectedItemSpin(selectedRing)
             Statistics.Show()
             Sprites.HideArrows()
@@ -426,6 +445,10 @@ function InventoryStates.Update()
         end
     elseif inventoryMode == InventoryStates.MODE.STATISTICS then
         
+        if InventoryStates.GetActionCheck() then
+            Statistics.ToggleType()
+            InventoryStates.SetActionCheck(false)
+        end
     elseif inventoryMode == InventoryStates.MODE.STATISTICS_CLOSE then
         
         local isItemChosen = InventoryData.IsItemChosen()
@@ -439,6 +462,8 @@ function InventoryStates.Update()
             selectedRing:Color(COLOR_MAP.ITEM_DESELECTED, COLOR_MAP.ITEM_SELECTED)
             Text.SetText("HEADER", "actions_inventory", true)
             Sprites.ShowArrows()
+            UpdateActionLabel(selectedItem)
+            UpdateBackLabel()
             ItemSpin.StartSelectedItemSpin(selectedRing)
         end
 
@@ -452,8 +477,7 @@ function InventoryStates.Update()
             else
                 InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
             end
-        end
-        
+        end 
     elseif inventoryMode == InventoryStates.MODE.SAVE_SETUP then
         if onEnter then
             if Save.IsLoadMenu() then

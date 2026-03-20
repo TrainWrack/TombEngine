@@ -1,7 +1,6 @@
 local strings =
 {
-	statistics_level = {"Level Statistics"},
-	statistics_game = {"Game Statistics"},
+	choose_type = {"Choose Type"},
     pickups = {"Pickups"},
     kills = {"Kills"},
     compass = {"Compass"}

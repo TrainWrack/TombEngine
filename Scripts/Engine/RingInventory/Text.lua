@@ -475,7 +475,7 @@ TextChannels.CONFIGS = {
         CONTROLS_BACK = 
     {
         name = "CONTROLS_BACK",                 
-        text =  Flow.GetString("back")..": "..Input.GetActionBinding(ActionID.DESELECT),               
+        text =  "",               
         position = Vec2(95, 85),              
         scale = 0.8,                          
         color = COLOR_MAP.NORMAL_FONT,    

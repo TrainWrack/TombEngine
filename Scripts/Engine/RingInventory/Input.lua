@@ -124,7 +124,10 @@ function Inputs.Update(mode, timeInMenu)
             InventoryStates.SetMode(INVENTORY_MODE.COMBINE_CLOSE)
         end
     elseif mode == INVENTORY_MODE.STATISTICS then
-        if (GuiIsPulsed(TEN.Input.ActionID.INVENTORY) or GuiIsPulsed(TEN.Input.ActionID.DESELECT)) then
+        if GuiIsPulsed(TEN.Input.ActionID.ACTION) or GuiIsPulsed(TEN.Input.ActionID.SELECT) then
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            InventoryStates.SetActionCheck(true)
+        elseif GuiIsPulsed(TEN.Input.ActionID.INVENTORY) or GuiIsPulsed(TEN.Input.ActionID.DESELECT) then
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             InventoryStates.SetMode(INVENTORY_MODE.STATISTICS_CLOSE)
         end

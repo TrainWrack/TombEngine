@@ -3,7 +3,6 @@
 -- ============================================================================
 
 --External Modules
-local Menu = require("Engine.RingInventory.Menu")
 local Settings = require("Engine.RingInventory.Settings")
 local Text = require("Engine.RingInventory.Text")
 
@@ -12,6 +11,7 @@ local COLOR_MAP = Settings.COLOR_MAP
 
 --Variables
 local oneTimeCheck = true
+
 local Stats = {}
 
 local statisticsType = false
@@ -114,7 +114,6 @@ end
 function Stats.Show()
 
     Text.ShowGroup("STATISTICS")
-    Menu.AddActive("StatisticsMenu")
     oneTimeCheck = true
 end
 
@@ -122,7 +121,6 @@ function Stats.Hide()
     
     if oneTimeCheck then
         Text.HideGroup("STATISTICS")
-        Menu.RemoveActive("StatisticsMenu")
         oneTimeCheck = false
     end
 
@@ -144,35 +142,6 @@ function Stats.GetType()
     return statisticsType
 end
 
-function Stats.CreateStatisticsMenu()
-    local statItems = {}
-    local items = {"statistics_level", "statistics_game"}
-    
-    if items then
-        for _, itemData in ipairs(items) do
-            local text = "< " .. Flow.GetString(itemData) .. " >"
-            table.insert(statItems, text)
-        end
-    end
-    
-    local table = {
-        {
-            itemName = "Blank",
-            options = statItems,
-            currentOption = 1
-        }
-    }
-    
-    local statisticsMenu = Menu.Create("StatisticsMenu", nil, table, nil, nil, Menu.Type.OPTIONS_ONLY)
-    
-    statisticsMenu:SetOptionsPosition(Vec2(50, 24.7))
-    statisticsMenu:SetLineSpacing(5.3)
-    statisticsMenu:SetOptionsFont(COLOR_MAP.NORMAL_FONT, 0.9)
-    statisticsMenu:SetOnOptionChangeFunction("Blank", "Engine.RingInventory.ChangeStatistics")
-    statisticsMenu:SetWrapAroundOptions(true)
-    statisticsMenu:EnableInputs(true)
-end
-
 function Stats.UpdateIngameTime()
     
     if Settings.ANIMATION.PROGRESS_TIME then
@@ -181,11 +150,5 @@ function Stats.UpdateIngameTime()
     end
 
 end
-
--- ============================================================================
--- PUBLIC API (LevelFuncs.Engine.CustomInventory)
--- ============================================================================
-LevelFuncs.Engine.RingInventory = LevelFuncs.Engine.RingInventory or {}
-LevelFuncs.Engine.RingInventory.ChangeStatistics = Stats.ToggleType
 
 return Stats
