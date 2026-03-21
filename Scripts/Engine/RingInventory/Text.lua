@@ -16,7 +16,7 @@ local TextChannelStates = {}
 
 -- Configuration
 local TEXT_CONFIG = {
-    FADE_SPEED = Constants.TEXT_ALPHA_SPEED,  -- Global fade speed
+    FADE_SPEED = Settings.ANIMATION.TEXT_ALPHA_SPEED,  -- Global fade speed
     MIN_ALPHA = Constants.ALPHA_MIN,
     MAX_ALPHA = Constants.ALPHA_MAX
 }

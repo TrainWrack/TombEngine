@@ -15,6 +15,11 @@ local Utilities = require("Engine.RingInventory.Utilities")
 local itemRotation = Rotation(0, 0, 0)
 local itemRotationOld = Rotation(0, 0, 0)
 
+--Constants
+local ITEM_START = Vec3(0, 200, 512)
+local ITEM_END = Vec3(0, 0, 400)
+local PROGRESS_COMPLETE = 1
+
 --Animation functions
 local Animation = {}
 
@@ -43,7 +48,7 @@ function Animation.PerformBatchMotion(prefix, motionTable, time, clearProgress, 
     
     for _, motion in ipairs(motionTable) do
         local id = prefix..motion.key
-        local interp = {output = motion.start, progress = Constants.PROGRESS_COMPLETE}
+        local interp = {output = motion.start, progress = PROGRESS_COMPLETE}
         
         if motion.start ~= motion.finish then
             local startVal = reverse and motion.finish or motion.start
@@ -53,7 +58,7 @@ function Animation.PerformBatchMotion(prefix, motionTable, time, clearProgress, 
         
         interpolated[motion.key] = interp
         
-        if interp.progress < Constants.PROGRESS_COMPLETE then
+        if interp.progress < PROGRESS_COMPLETE then
             allComplete = false
         end
     end
@@ -114,7 +119,7 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
     }
     
     local useAnimation = {
-        {key = "itemPosition", start = Constants.ITEM_START, finish = Constants.ITEM_END},
+        {key = "itemPosition", start = ITEM_START, finish = ITEM_END},
         {key = "itemRotation", start = itemRotationOld, finish = itemRotation}
     }
     --{key = "itemScale", start = Examine.GetPreviousScale(), finish = Examine.GetScale()},

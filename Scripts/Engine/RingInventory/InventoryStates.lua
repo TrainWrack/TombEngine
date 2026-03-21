@@ -427,7 +427,7 @@ function InventoryStates.Update()
             Animation.SaveItemData(selectedItem)
             Statistics.SetupStats()
             Text.SetText("HEADER", "statistics", true)
-            UpdateActionLabel(nil, "choose_type")
+            
             UpdateBackLabel("back")
             ItemSpin.StopSelectedItemSpin(selectedRing)
             Statistics.Show()
@@ -436,6 +436,12 @@ function InventoryStates.Update()
             if InventoryData.IsItemChosen() then
                 ItemMenu.Hide()
                 HideAmmoRing(selectedItem)
+            end
+
+            if Settings.STATISTICS.GAME_STATS then
+                UpdateActionLabel(nil, "choose_type")
+            else
+                Text.Hide("CONTROLS_SELECT")
             end
             onEnter = false
         end

@@ -87,7 +87,7 @@ function Inputs.Update(mode, timeInMenu)
             local targetRing = math.max(RING.PUZZLE, selectedRingType - 1)
             if targetRing ~= selectedRingType and not InventoryData.GetRing(targetRing):IsEmpty() then
                 InventoryData.SwitchToRingType(targetRing)
-                InventoryData.OffsetAll(1)
+                InventoryData.OffsetAll(-1)
                 InventoryStates.SetMode(INVENTORY_MODE.RING_CHANGE)
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
             end
@@ -96,7 +96,7 @@ function Inputs.Update(mode, timeInMenu)
             local targetRing = math.min(RING.OPTIONS, selectedRingType + 1)
             if targetRing ~= selectedRingType and not InventoryData.GetRing(targetRing):IsEmpty() then
                 InventoryData.SwitchToRingType(targetRing)
-                InventoryData.OffsetAll(-1)
+                InventoryData.OffsetAll(1)
                 InventoryStates.SetMode(INVENTORY_MODE.RING_CHANGE)
                 TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
             end
@@ -125,8 +125,10 @@ function Inputs.Update(mode, timeInMenu)
         end
     elseif mode == INVENTORY_MODE.STATISTICS then
         if GuiIsPulsed(TEN.Input.ActionID.ACTION) or GuiIsPulsed(TEN.Input.ActionID.SELECT) then
-            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
-            InventoryStates.SetActionCheck(true)
+            if Settings.STATISTICS.GAME_STATS then
+                TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+                InventoryStates.SetActionCheck(true)
+            end
         elseif GuiIsPulsed(TEN.Input.ActionID.INVENTORY) or GuiIsPulsed(TEN.Input.ActionID.DESELECT) then
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             InventoryStates.SetMode(INVENTORY_MODE.STATISTICS_CLOSE)

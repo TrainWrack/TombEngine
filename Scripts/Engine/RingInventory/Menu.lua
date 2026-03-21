@@ -38,7 +38,7 @@ local LINE_SPACING = 6
 local TEXT_FLAGS_SELECT = {Strings.DisplayStringOption.BLINK, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
 local TEXT_FLAGS_NORMAL = {Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
 local SCROLL_SPEED = 0.2
-local FADE_SPEED = Constants.TEXT_ALPHA_SPEED  -- Speed of fade animation (higher = faster)
+local FADE_SPEED = Settings.ANIMATION.TEXT_ALPHA_SPEED  -- Speed of fade animation (higher = faster)
 
 Menu.Create = function(menuName, title, items, acceptFunction, exitFunction, menuType)
     local self = { name = menuName }

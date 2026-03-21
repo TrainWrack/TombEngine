@@ -1,9 +1,10 @@
 local strings =
 {
 	choose_type = {"Choose Type"},
-    pickups = {"Pickups"},
+    compass = {"Compass"},
+    game_title = {"INSERT GAME TITLE HERE"},
     kills = {"Kills"},
-    compass = {"Compass"}
+    pickups = {"Pickups"}
 }
 
 TEN.Flow.SetStrings(strings)

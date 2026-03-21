@@ -10,7 +10,7 @@ local COLOR_MAP = Settings.COLOR_MAP
 
 --CONSTANTS
 local BG_LAYER = 0
-local ALPHA_SPEED = Constants.TEXT_ALPHA_SPEED
+local ALPHA_SPEED = Settings.ANIMATION.TEXT_ALPHA_SPEED
 
 -- Background state
 local bgAlpha  = 0

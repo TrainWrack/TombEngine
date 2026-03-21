@@ -225,7 +225,7 @@ end
 function Ring:OffsetPosition(direction)
 
     self.previousPosition = self.position 
-    self.position = Vec3(self.previousPosition.x, self.previousPosition.y + direction * RING_POSITION_OFFSET, self.previousPosition.z)
+    self.position = Vec3(self.previousPosition.x, self.previousPosition.y - direction * RING_POSITION_OFFSET, self.previousPosition.z)
 
 end
 

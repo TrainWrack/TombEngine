@@ -10,7 +10,6 @@ local NO_JOINT_BITS = 0
 local STRING_LOAD_GAME = "load_game"
 local INV_ROT_Y = 1
 
-
 local PICKUP_DATA = {}
 
 local COL = {
@@ -401,11 +400,6 @@ PICKUP_DATA.AMMO_SET = {
     [TEN.Objects.ObjID.GRENADE_AMMO3_ITEM] = {slot = TEN.Objects.AmmoType.GRENADE_FLASH, weapon = TEN.Objects.ObjID.GRENADE_GUN_ITEM},
     [TEN.Objects.ObjID.HARPOON_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.HARPOON, weapon = TEN.Objects.ObjID.HARPOON_ITEM},
     [TEN.Objects.ObjID.ROCKET_LAUNCHER_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.ROCKET, weapon = TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM}
-}
-
-PICKUP_DATA.HEALTH_SET = {
-    [TEN.Objects.ObjID.BIGMEDI_ITEM] = Constants.HEALTH_MAX,
-    [TEN.Objects.ObjID.SMALLMEDI_ITEM] = Constants.HEALTH_MAX / 2
 }
 
 PICKUP_DATA.ItemActionFlags = {

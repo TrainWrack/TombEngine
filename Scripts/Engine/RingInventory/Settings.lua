@@ -17,8 +17,7 @@ Settings.COLOR_MAP =
 {
     NORMAL_FONT = Flow.GetSettings().UI.plainTextColor,
     HEADER_FONT = Flow.GetSettings().UI.headerTextColor,
-    YELLOW_FONT = Flow.GetSettings().UI.optionTextColor,
-    BLACK = Flow.GetSettings().UI.shadowTextColor,
+    OPTION_FONT = Flow.GetSettings().UI.optionTextColor,
     BACKGROUND = Color(64, 64, 64, 128),
     INVENTORY_AMBIENT = Color(255, 255, 128),
     ITEM_HIDDEN = Color(0, 0, 0, 0),
@@ -46,8 +45,16 @@ Settings.ANIMATION =
     INVENTORY_ANIM_TIME = .5,
     ITEM_ANIM_TIME = .2,
     SKIP_RING_CLOSE = false,
-    PROGRESS_TIME = true
+    TEXT_ALPHA_SPEED = 255 / 10
 }
+
+Settings.STATISTICS = 
+{
+    PROGRESS_TIME = true,
+    GAME_STATS = true
+}
+
+
 
 
 return Settings

@@ -9,9 +9,7 @@ local Text = require("Engine.RingInventory.Text")
 --Pointers to tables
 local COLOR_MAP = Settings.COLOR_MAP
 
---Variables
-local oneTimeCheck = true
-
+--Class Start
 local Stats = {}
 
 local statisticsType = false
@@ -67,12 +65,12 @@ flags =
 translate = false,
 }
 
-local GetStatistics = function()
+local GetStatistics = function(type)
 
-    local level = Flow.GetCurrentLevel()
-    local levelStats = Flow.GetStatistics(statisticsType)
+    local secretCount = type and Flow.GetTotalSecretCount() or TEN.Flow.GetCurrentLevel().secrets
+    local levelStats = Flow.GetStatistics(type)
     local statistics = tostring(levelStats.timeTaken):sub(1, -4) .. "\n" ..
-        tostring(Flow.GetSecretCount()) .. " / " .. tostring(level.secrets) .. "\n" ..
+        tostring(levelStats.secrets) .. " / " .. tostring(secretCount) .. "\n" ..
         tostring(levelStats.pickups) .. "\n" ..
         tostring(levelStats.kills) .. "\n" ..
         tostring(levelStats.ammoUsed) .. "\n" ..
@@ -80,6 +78,23 @@ local GetStatistics = function()
         string.format("%.1f", levelStats.distanceTraveled / 420) .. " m"
 
     return statistics
+
+end
+
+local GetLabels = function(type)
+
+    local secretsText = type and Flow.GetString("total_secrets_found") or Flow.GetString("level_secrets_found")
+
+    local headings = 
+        Flow.GetString("time_taken").."\n"..
+        secretsText.."\n"..
+        Flow.GetString("pickups").."\n"..
+        Flow.GetString("kills").."\n"..
+        Flow.GetString("ammo_used").."\n"..
+        Flow.GetString("used_medipacks").."\n"..
+        Flow.GetString("distance_travelled")
+
+    return headings
 
 end
 
@@ -94,16 +109,9 @@ function Stats.SetupStats()
 
     local level = Flow.GetCurrentLevel()
     local levelHeader = Flow.GetString(level.nameKey)
-    local headings = 
-        Flow.GetString("time_taken").."\n"..
-        Flow.GetString("total_secrets_found").."\n"..
-        Flow.GetString("pickups").."\n"..
-        Flow.GetString("kills").."\n"..
-        Flow.GetString("ammo_used").."\n"..
-        Flow.GetString("used_medipacks").."\n"..
-        Flow.GetString("distance_travelled")
     
-    local statistics = GetStatistics()
+    local headings = GetLabels(statisticsType)
+    local statistics = GetStatistics(statisticsType)
     
     Text.SetText("LEVEL_HEADER_TEXT", levelHeader, false)
     Text.SetText("HEADER_TEXT", headings, false)
@@ -112,30 +120,31 @@ function Stats.SetupStats()
 end
 
 function Stats.Show()
-
     Text.ShowGroup("STATISTICS")
-    oneTimeCheck = true
 end
 
 function Stats.Hide()
-    
-    if oneTimeCheck then
-        Text.HideGroup("STATISTICS")
-        oneTimeCheck = false
-    end
-
+    Text.HideGroup("STATISTICS")
 end
 
-function Stats.UpdateStatistics()
+function Stats.UpdateStatistics(type)
 
-    local statistics = GetStatistics()
+    if type then
+        Text.SetText("LEVEL_HEADER_TEXT", Flow.GetString("game_title"), true)
+    else
+        local level = Flow.GetCurrentLevel()
+        Text.SetText("LEVEL_HEADER_TEXT", Flow.GetString(level.nameKey), true)
+    end
+
+    local statistics = GetStatistics(type)
+    local headings = GetLabels(type)
+    Text.SetText("HEADER_TEXT", headings, true)
     Text.SetText("STATS_TEXT", statistics, true)
-
 end
 
 function Stats.ToggleType()
     statisticsType = not statisticsType
-    Stats.UpdateStatistics()
+    Stats.UpdateStatistics(statisticsType)
 end
 
 function Stats.GetType()
@@ -144,7 +153,7 @@ end
 
 function Stats.UpdateIngameTime()
     
-    if Settings.ANIMATION.PROGRESS_TIME then
+    if Settings.STATISTICS.PROGRESS_TIME then
         Flow.GetStatistics(true).timeTaken = Flow.GetStatistics(true).timeTaken + 1
         Flow.GetStatistics(false).timeTaken = Flow.GetStatistics(false).timeTaken + 1
     end

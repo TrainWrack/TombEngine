@@ -118,6 +118,65 @@ local function RunInventory()
     end
 end
 
+---Global engine settings which don't fall into particular category or can't be assigned to a specific object.
+-- Flow.Settings is composed of several sub-tables, and each section of the Flow.Settings documentation corresponds to one of these sub-tables.
+-- These configuration groups are located in *settings.lua* script file.
+--
+-- It is possible to change settings on a per-level basis via @{Flow.GetSettings} and @{Flow.SetSettings} functions, but keep in mind that
+-- _settings.lua is reread every time the level is reloaded_. Therefore, you need to implement custom settings management in your level script
+-- if you want to override global settings.
+-- @tenclass Flow.Settings
+-- @pragma nostrip
+
+local InventoryModule = {}
+
+InventoryModule.SetBackground = function(background)
+    for setting, value in pairs(background) do
+        if Settings.BACKGROUND[setting] ~= nil then
+            Settings.BACKGROUND[setting] = value
+        end
+    end
+end
+
+InventoryModule.SetSoundEffects = function(soundEffects)
+    for setting, value in pairs(soundEffects) do
+        if Settings.SOUND_MAP[setting] ~= nil then
+            Settings.SOUND_MAP[setting] = value
+        end
+    end
+end
+
+InventoryModule.SetColors = function(colors)
+    for setting, value in pairs(colors) do
+        if Settings.COLOR_MAP[setting] ~= nil then
+            Settings.COLOR_MAP[setting] = value
+        end
+    end
+end
+
+--- Animations
+-- @section Animations
+-- These settings determine whether a specific moveset is available in-game.
+-- @usage
+-- -- Example of enabling crawlspace roll
+-- -- In Settings.lua
+-- settings.Animations.crouchRoll = true
+--
+-- -- In the level's lua file
+-- local settings = TEN.Flow.GetSettings()
+-- settings.Animations.crouchRoll = false
+-- TEN.Flow.SetSettings(settings)
+
+
+--Sprint jump.
+--@tfield[opt=false] bool sprintJump If enabled, player will be able to perform extremely long jump when sprinting.
+InventoryModule.SetAnimation = function(animation)
+    for setting, value in pairs(animation) do
+        if Settings.ANIMATION[setting] ~= nil then
+            Settings.ANIMATION[setting] = value
+        end
+    end
+end
 
 -- ============================================================================
 -- PUBLIC API (LevelFuncs.Engine.RingInventory)
@@ -131,3 +190,5 @@ LevelFuncs.Engine.RingInventory.RunInventory = RunInventory
 -- ============================================================================
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_FREEZE, LevelFuncs.Engine.RingInventory.UpdateInventory)
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.Engine.RingInventory.RunInventory)
+
+return InventoryModule
