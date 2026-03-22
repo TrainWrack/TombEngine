@@ -3,6 +3,7 @@
 -- ============================================================================
 
 local Interpolate = require("Engine.RingInventory.Interpolate")
+local Settings = require("Engine.RingInventory.Settings")
 
 local RingLighting = {}
 

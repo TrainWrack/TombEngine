@@ -141,11 +141,13 @@ function Sprites.Update(selectedRing)
         InventoryData = require("Engine.RingInventory.InventoryData")
     end
 
+    local selectedRingType = selectedRing:GetType()
+
     if arrowVisible then
 
-        local isPuzzle  = selectedRing == Ring.TYPE.PUZZLE
-        local isMain    = selectedRing == Ring.TYPE.MAIN
-        local isOptions = selectedRing == Ring.TYPE.OPTIONS
+        local isPuzzle  = selectedRingType == Ring.TYPE.PUZZLE
+        local isMain    = selectedRingType == Ring.TYPE.MAIN
+        local isOptions = selectedRingType == Ring.TYPE.OPTIONS
  
         -- Up arrow: visible only from MAIN (if PUZZLE has items) or OPTIONS
         if isOptions then

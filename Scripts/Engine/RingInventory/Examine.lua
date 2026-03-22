@@ -40,7 +40,7 @@ translate = false,
 
 local examineRotation = Rotation(0, 0, 0)
 local examineScaler = EXAMINE_DEFAULT_SCALE
-local examineShowString = true
+local examineShowString = false
 local alpha  = 0
 local targetAlpha = 0
 
@@ -60,12 +60,12 @@ function Examine.SetupText(itemData)
 
     local item = itemData:GetObjectID()
 
-    examineShowString = true
     local objectName = Objects.GetSlotName(item)
     local stringKey = objectName:lower().."_text"
     local localizedString = Flow.IsStringPresent(stringKey) and Flow.GetString(stringKey) or nil
 
     if localizedString then
+        examineShowString = true
         Text.Create(EXAMINE_TEXT)
         Text.SetText("EXAMINE_TEXT", localizedString, false)
         Text.Show("EXAMINE_TEXT")
@@ -83,6 +83,10 @@ function Examine.ToggleText()
         Text.Hide("EXAMINE_TEXT")
     end
 
+end
+
+function Examine.TextStatus()
+    return examineShowString
 end
 
 function Examine.ModifyRotation(dirX, dirY, dirZ)
@@ -124,10 +128,10 @@ function Examine.SetScale(scaleValue)
     
 end
 
-function Examine.ResetExamine()
+function Examine.ResetExamine(item)
 
-    examineRotation = Rotation(0, 0, 0)
-    examineScaler = EXAMINE_DEFAULT_SCALE
+    Examine.SetRotation(item:GetRotation())
+    Examine.SetScale(item:GetScale())
 
 end
 
@@ -135,10 +139,8 @@ function Examine.Show(item)
 
     if not item then return end 
 
-    Examine.ResetExamine()
+    Examine.ResetExamine(item)
     Examine.SetupText(item)
-    Examine.SetRotation(item:GetRotation())
-    Examine.SetScale(item:GetScale())
     targetAlpha = 255
     Examine.item  = TEN.View.DisplayItem(item:GetObjectID(), EXAMINE_POSITION, examineRotation, Vec3(examineScaler), item:GetMeshBits())
 
@@ -160,6 +162,7 @@ end
 function Examine.Hide()
 
     Text.Hide("EXAMINE_TEXT")
+    examineShowString = false
     targetAlpha = 0
 
 end

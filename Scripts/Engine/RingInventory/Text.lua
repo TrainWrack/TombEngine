@@ -462,8 +462,8 @@ TextChannels.CONFIGS = {
     {
         name = "CONTROLS_SELECT",                 
         text = "",               
-        position = Vec2(5, 85),              
-        scale = 0.8,                          
+        position = Vec2(3, 87),              
+        scale = 0.7,                          
         color = COLOR_MAP.NORMAL_FONT,    
         visible = false,                     
         flags = 
@@ -476,8 +476,8 @@ TextChannels.CONFIGS = {
     {
         name = "CONTROLS_BACK",                 
         text =  "",               
-        position = Vec2(95, 85),              
-        scale = 0.8,                          
+        position = Vec2(97, 87),              
+        scale = 0.7,                          
         color = COLOR_MAP.NORMAL_FONT,    
         visible = false,                  
         flags = 

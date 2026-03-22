@@ -120,7 +120,6 @@ function Inputs.Update(mode, timeInMenu)
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
             InventoryStates.SetActionCheck(true)
         elseif (GuiIsPulsed(TEN.Input.ActionID.INVENTORY) or GuiIsPulsed(TEN.Input.ActionID.DESELECT)) then
-            TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
             InventoryStates.SetMode(INVENTORY_MODE.COMBINE_CLOSE)
         end
     elseif mode == INVENTORY_MODE.STATISTICS then
@@ -173,6 +172,9 @@ function Inputs.Update(mode, timeInMenu)
             Examine.ModifyScale(1)
         elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.CROUCH) then
             Examine.ModifyScale(-1)
+        elseif GuiIsPulsed(TEN.Input.ActionID.JUMP) then
+            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            InventoryStates.SetActionCheck(true)
         elseif GuiIsPulsed(TEN.Input.ActionID.ACTION) then
             Examine.ToggleText()
             TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
