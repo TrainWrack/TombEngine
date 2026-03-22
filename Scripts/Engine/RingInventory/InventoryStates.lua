@@ -157,24 +157,6 @@ local function UpdateBackLabel(label)
     Text.SetText("CONTROLS_BACK", string, true)
 end
 
-local function ExamineLabel(showText)
-
-    local string = ""
-
-    if showText then
-        string = string..Input.GetActionBinding(ActionID.ACTION)..": "..Flow.GetString("toggle_text")
-    end
-
-    string = string.." "..
-            Input.GetActionBinding(ActionID.JUMP)..": "..Flow.GetString("reset").."\n"..
-            Input.GetActionBinding(ActionID.SPRINT)..": "..Flow.GetString("zoom_in").." "..
-            Input.GetActionBinding(ActionID.CROUCH)..": "..Flow.GetString("zoom_out")
-            
-    return string
-
-end
-
-
 local function ShowSelectedAmmoName(weaponItem)
 
     if not weaponItem or weaponItem:GetType() ~= PickupData.TYPE.WEAPON then
@@ -353,7 +335,7 @@ function InventoryStates.Update()
             Text.Hide("ITEM_LABEL_PRIMARY")
             selectedRing:Color(COLOR_MAP.ITEM_HIDDEN, COLOR_MAP.ITEM_HIDDEN)
             Examine.Show(selectedItem)
-            Text.SetText("CONTROLS_SELECT", ExamineLabel(Examine.TextStatus()), true)
+            Text.Hide("CONTROLS_SELECT")
             UpdateBackLabel("back")
             Sprites.HideArrows()
             HideAmmoRing(selectedItem)

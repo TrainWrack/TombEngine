@@ -22,21 +22,36 @@ local ROTATION_MULTIPLIER = 2
 local ZOOM_MULTIPLIER = 0.3
 
 local EXAMINE_TEXT = 
-{
-name = "EXAMINE_TEXT",                 
-text = "",               
-position = EXAMINE_TEXT_POS,                   
-scale = 1,                             
-color = COLOR_MAP.NORMAL_FONT,        
-visible = false,                           
-flags = 
-{
-    Strings.DisplayStringOption.VERTICAL_CENTER,
-    Strings.DisplayStringOption.CENTER,
-    Strings.DisplayStringOption.SHADOW
-},
-translate = false,
-}
+    {
+        name = "EXAMINE_TEXT",                 
+        text = "",               
+        position = EXAMINE_TEXT_POS,                   
+        scale = 1,                             
+        color = COLOR_MAP.NORMAL_FONT,        
+        visible = false,                           
+        flags = 
+        {
+            Strings.DisplayStringOption.VERTICAL_CENTER,
+            Strings.DisplayStringOption.CENTER,
+            Strings.DisplayStringOption.SHADOW
+        },
+        translate = false,
+    }
+
+local EXAMINE_CONTROLS = 
+    {
+        name = "EXAMINE_CONTROLS",                 
+        text = "",               
+        position = Vec2(3, 80),              
+        scale = 0.7,                          
+        color = COLOR_MAP.NORMAL_FONT,    
+        visible = false,                     
+        flags = 
+        {
+            Strings.DisplayStringOption.SHADOW
+        },
+        translate = false,
+    }
 
 local examineRotation = Rotation(0, 0, 0)
 local examineScaler = EXAMINE_DEFAULT_SCALE
@@ -45,6 +60,24 @@ local alpha  = 0
 local targetAlpha = 0
 
 Examine.item = nil
+
+local function ExamineLabel(showText)
+
+    local string = ""
+
+    if showText then
+        string = string..Input.GetActionBinding(ActionID.ACTION)..": "..Flow.GetString("toggle_text")
+    end
+
+    string = string.."\n"..
+            
+            Input.GetActionBinding(ActionID.JUMP)..": "..Flow.GetString("reset").."\n"..
+            Input.GetActionBinding(ActionID.SPRINT)..": "..Flow.GetString("zoom_in").."\n"..
+            Input.GetActionBinding(ActionID.CROUCH)..": "..Flow.GetString("zoom_out")
+            
+    return string
+
+end
 
 function Examine.Item(itemData)
 
@@ -64,12 +97,15 @@ function Examine.SetupText(itemData)
     local stringKey = objectName:lower().."_text"
     local localizedString = Flow.IsStringPresent(stringKey) and Flow.GetString(stringKey) or nil
 
+    
     if localizedString then
         examineShowString = true
         Text.Create(EXAMINE_TEXT)
-        Text.SetText("EXAMINE_TEXT", localizedString, false)
-        Text.Show("EXAMINE_TEXT")
+        Text.SetText("EXAMINE_TEXT", localizedString, true)
     end
+
+    Text.Create(EXAMINE_CONTROLS)
+    Text.SetText("EXAMINE_CONTROLS", ExamineLabel(examineShowString), true)
 
 end
 
@@ -161,6 +197,7 @@ end
 
 function Examine.Hide()
 
+    Text.Hide("EXAMINE_CONTROLS")
     Text.Hide("EXAMINE_TEXT")
     examineShowString = false
     targetAlpha = 0
