@@ -54,6 +54,8 @@ function Ring.Create(ringType, centerPosition, inventory)
     self.previousAngle = 0
     self.targetAngle = 0
     
+    Ring.RING_RADIUS = -512 * Utilities.GetAspectRatioMultiplier()
+
     return self
 end
 

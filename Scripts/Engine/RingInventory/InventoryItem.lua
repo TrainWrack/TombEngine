@@ -1,6 +1,7 @@
 -- ============================================================================
 -- INVENTORY ITEM METHODS
 -- ============================================================================
+local Utilities = require("Engine.RingInventory.Utilities")
 
 local InventoryItem = {}
 InventoryItem.__index = InventoryItem
@@ -60,7 +61,7 @@ end
 -- Create and store DisplayItem for this item
 function InventoryItem:CreateDisplayItem(defaultPosition)
 
-    local scaleFactor = (View.GetAspectRatio() > 1.7) and 1 or 0.8
+    local scaleFactor = Utilities.GetAspectRatioMultiplier()
     local finalScale = scaleFactor * self.scale
     self.displayItem = TEN.View.DisplayItem(
         self.objectID,
