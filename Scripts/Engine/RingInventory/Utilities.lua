@@ -44,13 +44,14 @@ Utilities.StepAlpha = function(current, target, alphaSpeed)
 end
 
 Utilities.GetAspectRatioMultiplier = function()
-    local BASELINE_ASPECT = 16 / 9  -- ~1.778
-    local currentAspect = View.GetAspectRatio()
-    
-    if currentAspect >= BASELINE_ASPECT then
+    local THRESHOLD = 16 / 10
+    local BASELINE  = 16 / 9
+    local current = View.GetAspectRatio()
+
+    if current >= THRESHOLD then
         return 1.0
     else
-        return currentAspect / BASELINE_ASPECT
+        return current / BASELINE
     end
 end
 
