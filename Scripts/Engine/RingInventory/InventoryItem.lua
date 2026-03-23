@@ -59,11 +59,14 @@ end
 
 -- Create and store DisplayItem for this item
 function InventoryItem:CreateDisplayItem(defaultPosition)
+
+    local scaleFactor = (View.GetAspectRatio() > 1.7) and 1 or 0.8
+    local finalScale = scaleFactor * self.scale
     self.displayItem = TEN.View.DisplayItem(
         self.objectID,
         defaultPosition,
         self.rotation,
-        Vec3(self.scale),
+        Vec3(finalScale),
         self.meshBits
     )
     return self.displayItem

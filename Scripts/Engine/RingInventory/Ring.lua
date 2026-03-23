@@ -15,7 +15,7 @@ Ring.__index = Ring
 
 -- Class Constants
 local RING_POSITION_OFFSET = 1000
-Ring.RING_RADIUS = (View.GetAspectRatio() > 1.7) and -512 or -450
+Ring.RING_RADIUS = -512
 
 Ring.TYPE =
 {

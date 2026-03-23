@@ -103,6 +103,8 @@ local function RunInventory()
             TEN.View.DisplayItem.SetTargetPosition(Constants.TARGET_START)
             TEN.View.DisplayItem.SetFOV(80)
             TEN.View.DisplayItem.SetAmbientLight(COLOR_MAP.INVENTORY_AMBIENT)
+            local Ring = require("Engine.RingInventory.Ring")
+            Ring.RING_RADIUS = (View.GetAspectRatio() > 1.7) and -512 or -450
             inventoryRunning = true
             inventoryOpen = false
             Flow.SetFreezeMode(Flow.FreezeMode.FULL)
