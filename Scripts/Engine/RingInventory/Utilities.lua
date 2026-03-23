@@ -34,15 +34,6 @@ Utilities.Contains = function(tbl, value)
     return false
 end
 
-Utilities.StepAlpha = function(current, target, alphaSpeed)
-    if current < target then
-        return math.min(current + alphaSpeed, target)
-    elseif current > target then
-        return math.max(current - alphaSpeed, target)
-    end
-    return current
-end
-
 Utilities.GetAspectRatioMultiplier = function()
     local THRESHOLD = 16 / 10
     local BASELINE  = 16 / 9

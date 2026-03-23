@@ -1,5 +1,6 @@
 --External Modules
 local Constants = require("Engine.RingInventory.Constants")
+local Interpolate = require("Engine.RingInventory.Interpolate")
 local InventoryData
 local Ring
 local Settings = require("Engine.RingInventory.Settings")
@@ -169,9 +170,9 @@ function Sprites.Update(selectedRing)
 
     end
   
-    bgAlpha        = Utilities.StepAlpha(bgAlpha, bgTarget, ALPHA_SPEED)
-    arrowUpAlpha   = Utilities.StepAlpha(arrowUpAlpha, arrowUpTarget, ALPHA_SPEED)
-    arrowDownAlpha = Utilities.StepAlpha(arrowDownAlpha, arrowDownTarget, ALPHA_SPEED)
+    bgAlpha        = Interpolate.StepAlpha(bgAlpha, bgTarget, ALPHA_SPEED)
+    arrowUpAlpha   = Interpolate.StepAlpha(arrowUpAlpha, arrowUpTarget, ALPHA_SPEED)
+    arrowDownAlpha = Interpolate.StepAlpha(arrowDownAlpha, arrowDownTarget, ALPHA_SPEED)
 end
 
 -- ============================================================

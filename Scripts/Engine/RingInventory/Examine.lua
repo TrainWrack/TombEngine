@@ -3,6 +3,7 @@
 -- ============================================================================
 --External Modules
 local Constants = require("Engine.RingInventory.Constants")
+local Interpolate = require("Engine.RingInventory.Interpolate")
 local Settings = require("Engine.RingInventory.Settings")
 local Text = require("Engine.RingInventory.Text")
 local Utilities = require("Engine.RingInventory.Utilities")
@@ -209,7 +210,7 @@ function Examine.Update()
     if not Examine.item  then return end
 
     local color = Examine.item :GetColor()
-    alpha = Utilities.StepAlpha(alpha, targetAlpha, Settings.ANIMATION.TEXT_ALPHA_SPEED)
+    alpha = Interpolate.StepAlpha(alpha, targetAlpha, Settings.ANIMATION.TEXT_ALPHA_SPEED)
     local targetColor = Utilities.ColorCombine(color, alpha)
     Examine.item :SetColor(targetColor)
 

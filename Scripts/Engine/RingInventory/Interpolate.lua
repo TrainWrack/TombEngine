@@ -139,4 +139,13 @@ function Interpolate.GetProgress(motionName)
     
 end
 
+function Interpolate.StepAlpha(current, target, alphaSpeed)
+    if current < target then
+        return math.min(current + alphaSpeed, target)
+    elseif current > target then
+        return math.max(current - alphaSpeed, target)
+    end
+    return current
+end
+
 return Interpolate
