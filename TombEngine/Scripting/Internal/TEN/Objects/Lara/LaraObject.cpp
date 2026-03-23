@@ -365,8 +365,8 @@ int LaraObject::GetAmmoType(TypeOrNil<LaraWeaponType> weaponType) const
 	const auto& player = GetLaraInfo(*_moveable);
 
 	auto weapon = ValueOr<LaraWeaponType>(weaponType, player.Control.Weapon.GunType);
-
 	auto ammoType = std::optional<PlayerAmmoType>(std::nullopt);
+
 	switch (weapon)
 	{
 		case::LaraWeaponType::Pistol:
@@ -519,7 +519,6 @@ int LaraObject::GetWeaponMode(TypeOrNil<LaraWeaponType> weaponType) const
 	const auto& player = GetLaraInfo(*_moveable);
 
 	auto weapon = ValueOr<LaraWeaponType>(weaponType, player.Control.Weapon.GunType);
-
 	auto weaponMode = std::optional<PlayerWeaponMode>(std::nullopt);
 
 	switch (weapon)
@@ -541,13 +540,14 @@ int LaraObject::GetWeaponMode(TypeOrNil<LaraWeaponType> weaponType) const
 			break;
 		}
 		break;
+
 	default:
 		break;
 	}
 
 	if (!weaponMode.has_value())
 	{
-		TENLog("GetWeaponMode() error; no weapon mode type.", LogLevel::Warning, LogConfig::All);
+		TENLog("GetWeaponMode: no weapon mode is available for specified weapon.", LogLevel::Warning, LogConfig::All);
 		weaponMode = PlayerWeaponMode::None;
 	}
 
@@ -580,12 +580,13 @@ void LaraObject::SetWeaponMode(LaraWeaponType weaponType, PlayerWeaponMode weapo
 			break;
 
 		default:
-			TENLog("SetWeaponMode() error; unsupported weapon mode for HK weapon type.", LogLevel::Warning, LogConfig::All);
+			TENLog("SetWeaponMode: unsupported weapon mode for HK weapon type.", LogLevel::Warning, LogConfig::All);
 			break;
 		}
 		break;
+
 	default:
-		TENLog("SetWeaponMode() error; no weapon mode supported for weapon type.", LogLevel::Warning, LogConfig::All);
+		TENLog("SetWeaponMode: no weapon mode supported for weapon type.", LogLevel::Warning, LogConfig::All);
 		break;
 	}
 }
