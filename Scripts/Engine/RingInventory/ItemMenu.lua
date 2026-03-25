@@ -1,3 +1,7 @@
+--- Internal file used by the RingInventory module.
+-- @module RingInventory.ItemMenu
+-- @local
+
 -- ============================================================================
 -- MENU FUNCTIONS
 -- ============================================================================

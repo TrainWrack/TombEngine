@@ -1,3 +1,7 @@
+--- Internal file used by the RingInventory module.
+-- @module RingInventory.Interpolate
+-- @local
+
 local Interpolate = {}
 
 -- Internal motion progress tracker

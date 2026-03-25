@@ -1,3 +1,7 @@
+--- Internal file used by the RingInventory module.
+-- @module RingInventory.Sprites
+-- @local
+
 --External Modules
 local Constants = require("Engine.RingInventory.Constants")
 local Interpolate = require("Engine.RingInventory.Interpolate")

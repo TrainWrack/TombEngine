@@ -1,3 +1,7 @@
+--- Internal file used by the RingInventory module.
+-- @module RingInventory.Combine
+-- @local
+
 -- ============================================================================
 -- Combine - Handles combine functions and data for ring inventory
 -- ============================================================================

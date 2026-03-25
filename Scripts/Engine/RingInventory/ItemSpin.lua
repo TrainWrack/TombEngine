@@ -1,3 +1,7 @@
+--- Internal file used by the RingInventory module.
+-- @module RingInventory.ItemSpin
+-- @local
+
 local Settings = require("Engine.RingInventory.Settings")
 local Interpolate = require("Engine.RingInventory.Interpolate")
 
@@ -14,7 +18,7 @@ local function CalculateRingAngle(itemIndex, itemCount, ringAngle)
     return (360 / itemCount) * (itemIndex - 1) + ringAngle
 end
 
---- Start spinning for a ring
+-- Start spinning for a ring
 function ItemSpin.StartSpin(ring)
     
     if not ring then return end
@@ -33,7 +37,7 @@ function ItemSpin.StartSpin(ring)
     end
 end
 
---- Stop spinning for a ring
+-- Stop spinning for a ring
 function ItemSpin.StopSpin(ring)
     if not ring then return end
     local ringName = ring:GetType()
@@ -42,7 +46,7 @@ function ItemSpin.StopSpin(ring)
     end
 end
 
---- Start spinning the selected item
+-- Start spinning the selected item
 function ItemSpin.StartSelectedItemSpin(ring)
     if not ring then return end
     local ringName = ring:GetType()
@@ -51,7 +55,7 @@ function ItemSpin.StartSelectedItemSpin(ring)
     end
 end
 
---- Stop spinning the selected item
+-- Stop spinning the selected item
 function ItemSpin.StopSelectedItemSpin(ring)
     if not ring then return end
     local ringName = ring:GetType()
@@ -60,7 +64,7 @@ function ItemSpin.StopSelectedItemSpin(ring)
     end
 end
 
---- Update all spinning items - call once per frame
+-- Update all spinning items - call once per frame
 function ItemSpin.Update()
     for _, ringState in pairs(ItemSpin.rings) do
         if ringState.enabled then
@@ -75,7 +79,7 @@ local function CalcAngleDiff(from, to)
     return diff
 end
 
---- Update spinning for a single ring
+-- Update spinning for a single ring
 function ItemSpin.UpdateRing(ringState)
     local ring = ringState.ring
     if not ring then return end
@@ -170,7 +174,7 @@ function ItemSpin.UpdateRing(ringState)
     end
 end
 
---- Check if a ring is currently spinning
+-- Check if a ring is currently spinning
 function ItemSpin.IsSpinning(ring)
     if not ring then return false end
     local ringName = ring:GetType()
@@ -178,7 +182,7 @@ function ItemSpin.IsSpinning(ring)
     return ringState and ringState.enabled
 end
 
---- Reset all spinning state
+-- Reset all spinning state
 function ItemSpin.Reset()
     ItemSpin.rings = {}
     ItemSpin.itemStates = {}

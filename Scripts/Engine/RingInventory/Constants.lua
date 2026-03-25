@@ -1,11 +1,15 @@
-local CONSTANTS = {}
+--- Internal constants used by the RingInventory module.
+-- @module RingInventory.Constants
+-- @local
 
-CONSTANTS.NO_VALUE = -1
-CONSTANTS.CAMERA_START = Vec3(0, -2500, 200)
-CONSTANTS.CAMERA_END = Vec3(0, -36, -1151)
-CONSTANTS.TARGET_START = Vec3(0, 0, 1000)
-CONSTANTS.TARGET_END = Vec3(0, 110, 0)
-CONSTANTS.ALPHA_MAX = 255
-CONSTANTS.ALPHA_MIN = 0
+local Constants = {}
 
-return CONSTANTS
+Constants.NO_VALUE = -1
+Constants.CAMERA_START = Vec3(0, -2500, 200)
+Constants.CAMERA_END = Vec3(0, -36, -1151)
+Constants.TARGET_START = Vec3(0, 0, 1000)
+Constants.TARGET_END = Vec3(0, 110, 0)
+Constants.ALPHA_MAX = 255
+Constants.ALPHA_MIN = 0
+
+return Constants

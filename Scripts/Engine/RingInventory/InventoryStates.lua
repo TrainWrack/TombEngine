@@ -1,3 +1,6 @@
+--- Internal file used by the RingInventory module.
+-- @module RingInventory.InventoryStates
+-- @local
 
 --External Modules
 local Animation = require("Engine.RingInventory.Animation")

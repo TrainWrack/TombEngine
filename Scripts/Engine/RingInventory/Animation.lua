@@ -1,3 +1,7 @@
+--- Internal file used by the RingInventory module.
+-- @module RingInventory.Animation
+-- @local
+
 -- ============================================================================
 -- ANIMATION FUNCTIONS
 -- ============================================================================

@@ -1,3 +1,7 @@
+--- Internal file used by the RingInventory module.
+-- @module RingInventory.Input
+-- @local
+
 -- ============================================================================
 -- INPUT HANDLING
 -- ============================================================================

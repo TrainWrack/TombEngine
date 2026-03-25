@@ -1,3 +1,7 @@
+--- Internal file used by the RingInventory module.
+-- @module RingInventory.Save
+-- @local
+
 --External Modules
 local Menu = require("Engine.RingInventory.Menu")
 local Settings = require("Engine.RingInventory.Settings")

@@ -1,3 +1,7 @@
+--- Internal file used by the RingInventory module.
+-- @module RingInventory.Text
+-- @local
+
 --External Modules
 local Constants = require("Engine.RingInventory.Constants")
 local Settings = require("Engine.RingInventory.Settings")

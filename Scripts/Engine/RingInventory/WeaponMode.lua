@@ -1,3 +1,7 @@
+--- Internal file used by the RingInventory module.
+-- @module RingInventory.WeaponMode
+-- @local
+
 -- ============================================================================
 -- WeaponMode - Handles weapon mode functions for ring inventory
 -- ============================================================================

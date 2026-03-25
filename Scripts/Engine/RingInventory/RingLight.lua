@@ -1,9 +1,11 @@
+--- Internal file used by the RingInventory module.
+-- @module RingInventory.RingLight
+-- @local
+
 -- ============================================================================
 -- RingLighting Module - Manages ring lighting with selection tracking
 -- ============================================================================
-
 local Interpolate = require("Engine.RingInventory.Interpolate")
-local Settings = require("Engine.RingInventory.Settings")
 
 local RingLighting = {}
 
@@ -16,10 +18,7 @@ RingLighting.rings = {}
 -- Item fade states: { itemID = { item, targetColor, isFading } }
 RingLighting.itemStates = {}
 
---- Initialize a ring for lighting management
--- @param ring: The ring object
--- @param color: Default color for non-selected items
--- @param selectedItemColor: Color for the selected item
+-- Initialize a ring for lighting management
 function RingLighting.InitializeRing(ring, color, selectedItemColor)
     if not ring then return end
     
@@ -33,7 +32,7 @@ function RingLighting.InitializeRing(ring, color, selectedItemColor)
     }
 end
 
---- Update all rings - check for selection changes and update colors
+-- Update all rings - check for selection changes and update colors
 function RingLighting.Update()
     for ringType, ringState in pairs(RingLighting.rings) do
         if not ringState.ring then goto continue end
@@ -55,7 +54,7 @@ function RingLighting.Update()
     RingLighting.ProcessItemFades()
 end
 
---- Update colors when selection changes in a ring
+-- Update colors when selection changes in a ring
 function RingLighting.UpdateRingSelection(ringState)
     if not ringState.ring then return end
     
@@ -84,7 +83,7 @@ function RingLighting.UpdateRingSelection(ringState)
     end
 end
 
---- Queue an item for fading
+-- Queue an item for fading
 function RingLighting.FadeItem(item, targetColor)
     if not item or not item:GetDisplayItem() then return end
     
@@ -97,7 +96,7 @@ function RingLighting.FadeItem(item, targetColor)
     }
 end
 
---- Process all item fades for one frame
+-- Process all item fades for one frame
 function RingLighting.ProcessItemFades()
     for itemID, state in pairs(RingLighting.itemStates) do
         if not state.item or not state.item:GetDisplayItem() then
@@ -126,7 +125,7 @@ function RingLighting.ProcessItemFades()
     end
 end
 
---- Set colors for a ring (call once when ring colors change)
+-- Set colors for a ring (call once when ring colors change)
 function RingLighting.SetRingColors(ring, color, selectedItemColor)
     
     if not ring then return end
@@ -140,7 +139,7 @@ function RingLighting.SetRingColors(ring, color, selectedItemColor)
     
 end
 
---- Reset all lighting
+-- Reset all lighting
 function RingLighting.Reset()
     RingLighting.rings = {}
     RingLighting.itemStates = {}

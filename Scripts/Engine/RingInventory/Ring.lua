@@ -1,3 +1,6 @@
+--- Internal file used by the RingInventory module.
+-- @module RingInventory.Ring
+-- @local
 
 -- ============================================================================
 -- Ring Class - Manage Rings and items stored in them

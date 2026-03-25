@@ -1,3 +1,7 @@
+--- Internal file used by the RingInventory module.
+-- @module RingInventory.Statistics
+-- @local
+
 -- ============================================================================
 -- Statistics - Handles statistics function and data for ring inventory
 -- ============================================================================

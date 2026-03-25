@@ -1,3 +1,7 @@
+--- Internal file used by the RingInventory module.
+-- @module RingInventory.Examine
+-- @local
+
 -- ============================================================================
 -- Examine - Handles examine functions and data for ring inventory
 -- ============================================================================
