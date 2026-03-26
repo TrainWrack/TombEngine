@@ -218,7 +218,7 @@ end
 -- -- Example of overriding the inventory open sound
 -- -- In the level's lua file
 -- local settings = RingInventory.GetSettings()
--- settings.SoundMap.INVENTORY_OPEN = 42
+-- settings.SoundMap.inventoryOpen = 42
 -- RingInventory.SetSettings(settings)
 
 --- Sound played when Lara has no item available.

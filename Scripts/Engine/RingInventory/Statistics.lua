@@ -157,7 +157,7 @@ end
 
 function Stats.UpdateIngameTime()
     
-    if Settings.STATISTICS.PROGRESS_TIME then
+    if Settings.Statistics.progressTime then
         TEN.Flow.GetStatistics(true).timeTaken = TEN.Flow.GetStatistics(true).timeTaken + 1
         TEN.Flow.GetStatistics(false).timeTaken = TEN.Flow.GetStatistics(false).timeTaken + 1
     end

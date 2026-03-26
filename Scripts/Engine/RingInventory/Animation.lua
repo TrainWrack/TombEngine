@@ -34,8 +34,7 @@ function Animation.SaveItemData(selectedItem)
     local displayItem = selectedItem:GetDisplayItem()
     itemRotationOld = Utilities.CopyRotation(displayItem:GetRotation())
     itemRotation = Utilities.CopyRotation(selectedItem:GetRotation())
-    Examine.SetRotation(selectedItem:GetRotation())
-    Examine.SetScale(selectedItem:GetScale())
+
 end
 
 function Animation.Clear(prefix, motionTable)
@@ -122,20 +121,9 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
         {key = "target", start = Constants.TARGET_START, finish = Constants.TARGET_END},
     }
     
-    local useAnimation = {
-        {key = "itemPosition", start = ITEM_START, finish = ITEM_END},
-        {key = "itemRotation", start = itemRotationOld, finish = itemRotation}
-    }
-    --{key = "itemScale", start = Examine.GetPreviousScale(), finish = Examine.GetScale()},
-    local examineReset = {
-        useAnimation[2],
-        {key = "itemRotation", start = itemRotation, finish = Examine.GetRotation()},
-    }
-    
     local examineAnimation = {
-        useAnimation[1],
-        useAnimation[2],
-        useAnimation[3],
+        {key = "itemPosition", start = ITEM_START, finish = ITEM_END},
+        {key = "itemRotation", start = itemRotationOld, finish = itemRotation},
         {key = "ringFade", start = Constants.ALPHA_MAX, finish = Constants.ALPHA_MIN},
     }
     
@@ -219,7 +207,7 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
            mode == INVENTORY_MODE.STATISTICS_CLOSE or 
            mode == INVENTORY_MODE.SAVE_CLOSE or 
            mode == INVENTORY_MODE.ITEM_DESELECT then
-        if Animation.PerformBatchMotion("ExamineClose", examineAnimation, Settings.Animation.inventoryAnimTimeE, true, selectedRing, selectedItem, true) then
+        if Animation.PerformBatchMotion("ExamineClose", examineAnimation, Settings.Animation.inventoryAnimTime, true, selectedRing, selectedItem, true) then
             return true
         end
     elseif mode == INVENTORY_MODE.COMBINE_RING_OPENING then
@@ -229,7 +217,7 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
     elseif mode == INVENTORY_MODE.ITEM_USE then
         
         if InventoryData.IsItemChosen() then
-            if not Animation.PerformBatchMotion("ItemDeselect", useAnimation, Settings.Animation.inventoryAnimTime, true, selectedRing, selectedItem, true) then
+            if not Animation.PerformBatchMotion("ItemDeselect", examineAnimation, Settings.Animation.inventoryAnimTime, true, selectedRing, selectedItem, true) then
                 return false
             end
         end

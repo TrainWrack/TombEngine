@@ -32,7 +32,7 @@ local EXAMINE_TEXT =
         text = "",               
         position = EXAMINE_TEXT_POS,                   
         scale = 1,                             
-        color = COLOR_MAP.NORMAL_FONT,        
+        color = COLOR_MAP.plainText,        
         visible = false,                           
         flags = 
         {
@@ -49,7 +49,7 @@ local EXAMINE_CONTROLS =
         text = "",               
         position = Vec2(3, 80),              
         scale = 0.7,                          
-        color = COLOR_MAP.NORMAL_FONT,    
+        color = COLOR_MAP.plainText,    
         visible = false,                     
         flags = 
         {
