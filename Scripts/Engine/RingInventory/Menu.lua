@@ -1,17 +1,14 @@
---- Internal file used by the RingInventory module.
+--- Internal file used by the RingInventory module. Creates custom menus for ring inventory.
 -- @module RingInventory.Menu
 -- @local
 
--- ============================================================================
--- Menu Module - Creates custom menus for ring inventory
--- ============================================================================
 --External Modules
 local Constants = require("Engine.RingInventory.Constants")
 local Settings = require("Engine.RingInventory.Settings")
 local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointer to tables
-local COLOR_MAP = Settings.COLOR_MAP
+local COLOR_MAP = Settings.ColorMap
 
 local Menu = {}
 local debug = false
@@ -34,15 +31,15 @@ local Menus = {} --table to store all menus
 LevelFuncs.Engine.Menu = {}
 
 
-local NORMAL_FONT_COLOR = COLOR_MAP.NORMAL_FONT
-local HEADER_FONT_COLOR = COLOR_MAP.HEADER_FONT
+local NORMAL_FONT_COLOR = COLOR_MAP.plainText
+local HEADER_FONT_COLOR = COLOR_MAP.headerText
 local HEADER_FONT_SCALE = 1.6
 local NORMAL_FONT_SCALE = 1
 local LINE_SPACING = 6
 local TEXT_FLAGS_SELECT = {Strings.DisplayStringOption.BLINK, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
 local TEXT_FLAGS_NORMAL = {Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
 local SCROLL_SPEED = 0.2
-local FADE_SPEED = Settings.ANIMATION.TEXT_ALPHA_SPEED  -- Speed of fade animation (higher = faster)
+local FADE_SPEED = Settings.Animation.textAlphaSpeed  -- Speed of fade animation (higher = faster)
 
 Menu.Create = function(menuName, title, items, acceptFunction, exitFunction, menuType)
     local self = { name = menuName }

@@ -2,28 +2,24 @@
 -- @module RingInventory.Utilities
 -- @local
 
--- ============================================================================
--- UTILITY FUNCTIONS
--- ============================================================================
-
 local Utilities = {}
 
 Utilities.ColorCombine = function(color, transparency)
 
-    return Color(color.r, color.g, color.b, transparency)
+    return TEN.Color(color.r, color.g, color.b, transparency)
 
 end
 
 Utilities.OffsetY = function(position, offsetY)
 
-    return Vec3(position.x, position.y + offsetY, position.z)
+    return TEN.Vec3(position.x, position.y + offsetY, position.z)
 
 end
 
 
 Utilities.CopyRotation = function(r)
 
-    return Rotation(r.x, r.y, r.z)
+    return TEN.Rotation(r.x, r.y, r.z)
 
 end
 
@@ -41,7 +37,7 @@ end
 Utilities.GetAspectRatioMultiplier = function()
     local THRESHOLD = 16 / 10
     local BASELINE  = 16 / 9
-    local current = View.GetAspectRatio()
+    local current = TEN.View.GetAspectRatio()
 
     if current >= THRESHOLD then
         return 1.0

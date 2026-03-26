@@ -7,8 +7,8 @@ local Menu = require("Engine.RingInventory.Menu")
 local Settings = require("Engine.RingInventory.Settings")
 
 --Pointers to tables
-local SOUND_MAP = Settings.SOUND_MAP
-local COLOR_MAP = Settings.COLOR_MAP
+local SOUND_MAP = Settings.SoundMap
+local COLOR_MAP = Settings.ColorMap
 
 local Save = {}
 
@@ -41,7 +41,7 @@ local function DoLoad()
         Save.Hide()
         return true
     else
-        TEN.Sound.PlaySound(SOUND_MAP.PLAYER_NO)
+        TEN.Sound.PlaySound(SOUND_MAP.playerNo)
         return false
     end
 end
@@ -59,7 +59,7 @@ function Save.CreateSaveMenu()
     
     local soundMap = {
         [1] = {select = nil, choose = nil},
-        [2] = {select = SOUND_MAP.MENU_SELECT, choose = SOUND_MAP.MENU_CHOOSE},
+        [2] = {select = SOUND_MAP.menuSelect, choose = SOUND_MAP.menuChoose},
         [3] = {select = nil, choose = nil},
         [4] = {select = nil, choose = nil}
     }
@@ -123,7 +123,7 @@ function Save.CreateSaveMenu()
         saveList:SetItemsPosition(textPosition[index])
         saveList:SetVisibility(true)
         saveList:SetLineSpacing(5.3)
-        saveList:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9, itemFlags[index])
+        saveList:SetItemsFont(COLOR_MAP.plainText, 0.9, itemFlags[index])
         saveList:SetSelectedItemFlags(selectedFlags[index])
         saveList:SetItemsTranslate(translate)
         saveList:SetSoundEffects(soundMap[index].select, soundMap[index].choose)

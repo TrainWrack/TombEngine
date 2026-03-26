@@ -1,10 +1,8 @@
---- Internal file used by the RingInventory module.
+--- Internal file used by the RingInventory module. Manages ring lighting with selection tracking.
 -- @module RingInventory.RingLight
 -- @local
 
--- ============================================================================
--- RingLighting Module - Manages ring lighting with selection tracking
--- ============================================================================
+--External Modules
 local Interpolate = require("Engine.RingInventory.Interpolate")
 
 local RingLighting = {}

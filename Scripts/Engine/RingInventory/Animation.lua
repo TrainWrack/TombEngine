@@ -16,12 +16,12 @@ local Settings = require("Engine.RingInventory.Settings")
 local Utilities = require("Engine.RingInventory.Utilities")
 
 --Variables to be cleaned up
-local itemRotation = Rotation(0, 0, 0)
-local itemRotationOld = Rotation(0, 0, 0)
+local itemRotation = TEN.Rotation(0, 0, 0)
+local itemRotationOld = TEN.Rotation(0, 0, 0)
 
 --Constants
-local ITEM_START = Vec3(0, 200, 512)
-local ITEM_END = Vec3(0, 0, 400)
+local ITEM_START = TEN.Vec3(0, 200, 512)
+local ITEM_END = TEN.Vec3(0, 0, 400)
 local PROGRESS_COMPLETE = 1
 
 --Animation functions
@@ -150,12 +150,12 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
     }
 
     if mode == INVENTORY_MODE.RING_OPENING then
-        if Animation.PerformBatchMotion("RingOpening", ringAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing) then
+        if Animation.PerformBatchMotion("RingOpening", ringAnimation, Settings.Animation.inventoryAnimTime, true, selectedRing) then
             LevelVars.Engine.RingInventory.InventoryOpenFreeze = true
             return true
         end
     elseif mode == INVENTORY_MODE.RING_CLOSING then
-        if Animation.PerformBatchMotion("RingClosing", ringAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing, nil, true) then
+        if Animation.PerformBatchMotion("RingClosing", ringAnimation, Settings.Animation.inventoryAnimTime, true, selectedRing, nil, true) then
             return true
         end
     elseif mode == INVENTORY_MODE.RING_CHANGE then
@@ -171,7 +171,7 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
             {key = "ringAngle", start = targetAngle, finish = targetAngle + 360 },
             {key = "ringCenter", start = ring:GetPreviousPosition(), finish = ring:GetPosition()},
             }
-            if not Animation.PerformBatchMotion("RingChange"..ringType, ringChange, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, ring) then
+            if not Animation.PerformBatchMotion("RingChange"..ringType, ringChange, Settings.Animation.inventoryAnimTime, true, ring) then
                 allMotionComplete = false
             end
         end
@@ -180,7 +180,7 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
             return true
         end
     elseif mode == INVENTORY_MODE.RING_ROTATE then
-        if Animation.PerformBatchMotion("RingRotate", ringRotate, Settings.ANIMATION.ITEM_ANIM_TIME, true, selectedRing) then
+        if Animation.PerformBatchMotion("RingRotate", ringRotate, Settings.Animation.inventoryAnimTime, true, selectedRing) then
             return true
         end
     elseif mode == INVENTORY_MODE.EXAMINE_OPEN or 
@@ -188,13 +188,13 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
            mode == INVENTORY_MODE.SAVE_SETUP or 
            mode == INVENTORY_MODE.COMBINE_SETUP or 
            mode == INVENTORY_MODE.COMBINE_SUCCESS then
-        if Animation.PerformBatchMotion("ExamineOpen", examineAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing, selectedItem) then
+        if Animation.PerformBatchMotion("ExamineOpen", examineAnimation, Settings.Animation.inventoryAnimTime, true, selectedRing, selectedItem) then
             return true
         end
     elseif mode == INVENTORY_MODE.ITEM_SELECT then
         local allMotionComplete = true
         
-        if not Animation.PerformBatchMotion("ExamineOpen", examineAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, false, selectedRing, selectedItem) then
+        if not Animation.PerformBatchMotion("ExamineOpen", examineAnimation, Settings.Animation.inventoryAnimTime, false, selectedRing, selectedItem) then
             allMotionComplete = false
         end
 
@@ -205,7 +205,7 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
         {key = "ringCenter", start = ammoRing:GetPosition(), finish = ammoRing:GetPosition()},
         }
 
-        if not Animation.PerformBatchMotion("CombineRingOpening", ringAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, ammoRing) then
+        if not Animation.PerformBatchMotion("CombineRingOpening", ringAnimation, Settings.Animation.inventoryAnimTime, true, ammoRing) then
             allMotionComplete = false
         end
 
@@ -219,17 +219,17 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
            mode == INVENTORY_MODE.STATISTICS_CLOSE or 
            mode == INVENTORY_MODE.SAVE_CLOSE or 
            mode == INVENTORY_MODE.ITEM_DESELECT then
-        if Animation.PerformBatchMotion("ExamineClose", examineAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing, selectedItem, true) then
+        if Animation.PerformBatchMotion("ExamineClose", examineAnimation, Settings.Animation.inventoryAnimTimeE, true, selectedRing, selectedItem, true) then
             return true
         end
     elseif mode == INVENTORY_MODE.COMBINE_RING_OPENING then
-        if Animation.PerformBatchMotion("CombineRingOpening", combineRingAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing) then
+        if Animation.PerformBatchMotion("CombineRingOpening", combineRingAnimation, Settings.Animation.inventoryAnimTime, true, selectedRing) then
             return true
         end
     elseif mode == INVENTORY_MODE.ITEM_USE then
         
         if InventoryData.IsItemChosen() then
-            if not Animation.PerformBatchMotion("ItemDeselect", useAnimation, Settings.ANIMATION.INVENTORY_ANIM_TIME, true, selectedRing, selectedItem, true) then
+            if not Animation.PerformBatchMotion("ItemDeselect", useAnimation, Settings.Animation.inventoryAnimTime, true, selectedRing, selectedItem, true) then
                 return false
             end
         end

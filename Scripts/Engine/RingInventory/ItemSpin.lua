@@ -9,7 +9,7 @@ local ItemSpin = {}
 
 ItemSpin.ROTATION_SPEED = 5       -- Degrees per frame, continuous spin for selected item
 ItemSpin.SPINBACK_SPEED = 5      -- Degrees per frame, spinback for just-deselected item
-ItemSpin.ALIGNMENT_SPEED = Settings.ANIMATION.ITEM_ANIM_TIME  -- Seconds, for ring rotation alignment
+ItemSpin.ALIGNMENT_SPEED = Settings.Animation.itemAnimTime  -- Seconds, for ring rotation alignment
 
 ItemSpin.rings = {}
 ItemSpin.itemStates = {}  -- { [objectID] = { startAngle, angleDiff, lastTarget, isSpinback } }

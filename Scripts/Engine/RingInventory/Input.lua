@@ -17,7 +17,7 @@ local Settings = require("Engine.RingInventory.Settings")
 --Pointers to tables
 local INVENTORY_MODE = InventoryStates.MODE
 local RING = Ring.TYPE
-local SOUND_MAP = Settings.SOUND_MAP
+local SOUND_MAP = Settings.SoundMap
 
 local timer = 0
 
@@ -60,7 +60,7 @@ local function DoLeftKey(ring)
     ring:CalculateRotation(-1)
 
     InventoryStates.SetMode(INVENTORY_MODE.RING_ROTATE)
-    TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+    TEN.Sound.PlaySound(SOUND_MAP.menuRotate)
 
 end
 
@@ -70,7 +70,7 @@ local function DoRightKey(ring)
     ring:CalculateRotation(1)
 
     InventoryStates.SetMode(INVENTORY_MODE.RING_ROTATE)
-    TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+    TEN.Sound.PlaySound(SOUND_MAP.menuRotate)
 
 end
 
@@ -93,7 +93,7 @@ function Inputs.Update(mode, timeInMenu)
                 InventoryData.SwitchToRingType(targetRing)
                 InventoryData.OffsetAll(-1)
                 InventoryStates.SetMode(INVENTORY_MODE.RING_CHANGE)
-                TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+                TEN.Sound.PlaySound(SOUND_MAP.menuRotate)
             end
         elseif GuiIsPulsed(TEN.Input.ActionID.BACK) and selectedRingType < RING.COMBINE then
             --add check for the options ring here to skip it if it empty
@@ -102,17 +102,17 @@ function Inputs.Update(mode, timeInMenu)
                 InventoryData.SwitchToRingType(targetRing)
                 InventoryData.OffsetAll(1)
                 InventoryStates.SetMode(INVENTORY_MODE.RING_CHANGE)
-                TEN.Sound.PlaySound(SOUND_MAP.MENU_ROTATE)
+                TEN.Sound.PlaySound(SOUND_MAP.menuRotate)
             end
         elseif GuiIsPulsed(TEN.Input.ActionID.ACTION) or GuiIsPulsed(TEN.Input.ActionID.SELECT) then
-            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            TEN.Sound.PlaySound(SOUND_MAP.menuChoose)
             if ItemMenu.IsSingleItemAction(selectedItem) then
                 ItemMenu.ParseAction(selectedItem:GetMenuActions())
             else
                 InventoryStates.SetMode(INVENTORY_MODE.ITEM_SELECT)
             end
         elseif (GuiIsPulsed(TEN.Input.ActionID.INVENTORY) or GuiIsPulsed(TEN.Input.ActionID.DESELECT)) and LevelVars.Engine.RingInventory.InventoryOpenFreeze then
-            TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
+            TEN.Sound.PlaySound(SOUND_MAP.inventoryClose)
             InventoryStates.SetMode(INVENTORY_MODE.RING_CLOSING)
         end
     elseif mode == INVENTORY_MODE.COMBINE then
@@ -121,34 +121,34 @@ function Inputs.Update(mode, timeInMenu)
         elseif GuiIsPulsed(TEN.Input.ActionID.RIGHT) then
             DoRightKey(selectedRing)
         elseif GuiIsPulsed(TEN.Input.ActionID.ACTION) or GuiIsPulsed(TEN.Input.ActionID.SELECT) then
-            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            TEN.Sound.PlaySound(SOUND_MAP.menuChoose)
             InventoryStates.SetActionCheck(true)
         elseif (GuiIsPulsed(TEN.Input.ActionID.INVENTORY) or GuiIsPulsed(TEN.Input.ActionID.DESELECT)) then
-            InventoryStates.SetMode(INVENTORY_MODE.COMBINE_CLOSE)
+            InventoryStates.SetMode(SOUND_MAP.combineClose)
         end
     elseif mode == INVENTORY_MODE.STATISTICS then
         if GuiIsPulsed(TEN.Input.ActionID.ACTION) or GuiIsPulsed(TEN.Input.ActionID.SELECT) then
-            if Settings.STATISTICS.GAME_STATS then
-                TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            if Settings.Statistics.gameStats then
+                TEN.Sound.PlaySound(SOUND_MAP.menuChoose)
                 InventoryStates.SetActionCheck(true)
             end
         elseif GuiIsPulsed(TEN.Input.ActionID.INVENTORY) or GuiIsPulsed(TEN.Input.ActionID.DESELECT) then
-            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            TEN.Sound.PlaySound(SOUND_MAP.menuChoose)
             InventoryStates.SetMode(INVENTORY_MODE.STATISTICS_CLOSE)
         end
     elseif mode == INVENTORY_MODE.WEAPON_MODE then
         if (GuiIsPulsed(TEN.Input.ActionID.INVENTORY) or GuiIsPulsed(TEN.Input.ActionID.DESELECT)) then
-            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            TEN.Sound.PlaySound(SOUND_MAP.menuChoose)
             InventoryStates.SetMode(INVENTORY_MODE.WEAPON_MODE_CLOSE)
         end
     elseif mode == INVENTORY_MODE.SAVE_MENU then
         if (GuiIsPulsed(TEN.Input.ActionID.INVENTORY) or GuiIsPulsed(TEN.Input.ActionID.DESELECT)) then
-            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            TEN.Sound.PlaySound(SOUND_MAP.menuChoose)
             InventoryStates.SetMode(INVENTORY_MODE.SAVE_CLOSE)
         end
     elseif mode == INVENTORY_MODE.ITEM_SELECTED then
         if (GuiIsPulsed(TEN.Input.ActionID.INVENTORY) or GuiIsPulsed(TEN.Input.ActionID.DESELECT)) then
-            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            TEN.Sound.PlaySound(SOUND_MAP.menuChoose)
             InventoryStates.SetMode(INVENTORY_MODE.ITEM_DESELECT)
         end
     elseif mode == INVENTORY_MODE.AMMO_SELECT then
@@ -157,10 +157,10 @@ function Inputs.Update(mode, timeInMenu)
         elseif GuiIsPulsed(TEN.Input.ActionID.RIGHT) then
             DoRightKey(selectedRing)
         elseif GuiIsPulsed(TEN.Input.ActionID.ACTION) or GuiIsPulsed(TEN.Input.ActionID.SELECT) then
-            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            TEN.Sound.PlaySound(SOUND_MAP.menuChoose)
             InventoryStates.SetActionCheck(true)
         elseif (GuiIsPulsed(TEN.Input.ActionID.INVENTORY) or GuiIsPulsed(TEN.Input.ActionID.DESELECT)) then
-            TEN.Sound.PlaySound(SOUND_MAP.INVENTORY_CLOSE)
+            TEN.Sound.PlaySound(SOUND_MAP.inventoryClose)
             InventoryStates.SetMode(INVENTORY_MODE.AMMO_SELECT_CLOSE)
         end
     elseif mode == INVENTORY_MODE.EXAMINE then     
@@ -177,13 +177,13 @@ function Inputs.Update(mode, timeInMenu)
         elseif TEN.Input.IsKeyHeld(TEN.Input.ActionID.CROUCH) then
             Examine.ModifyScale(-1)
         elseif GuiIsPulsed(TEN.Input.ActionID.JUMP) then
-            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            TEN.Sound.PlaySound(SOUND_MAP.menuChoose)
             InventoryStates.SetActionCheck(true)
         elseif GuiIsPulsed(TEN.Input.ActionID.ACTION) then
             Examine.ToggleText()
-            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            TEN.Sound.PlaySound(SOUND_MAP.menuChoose)
         elseif GuiIsPulsed(TEN.Input.ActionID.INVENTORY) then
-            TEN.Sound.PlaySound(SOUND_MAP.MENU_CHOOSE)
+            TEN.Sound.PlaySound(SOUND_MAP.menuChoose)
             InventoryStates.SetMode(INVENTORY_MODE.EXAMINE_CLOSE)
         end
     end

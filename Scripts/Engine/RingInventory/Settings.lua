@@ -4,58 +4,56 @@
 
 local Settings = {}
 
-Settings.SOUND_MAP =
+Settings.SoundMap =
 {
-    PLAYER_NO = 2,
-    MENU_ROTATE = 108,
-    MENU_SELECT = 109,
-    MENU_CHOOSE = 111,
-    MENU_COMBINE = 114,
-    TR4_MENU_MEDI = 116,
-    INVENTORY_OPEN = 109,
-    INVENTORY_CLOSE = 109,
-    EMPTY = 110
+    playerNo = 2,
+    menuRotate = 108,
+    menuSelect = 109,
+    menuChoose = 111,
+    menuCombine = 114,
+    inventoryOpen = 109,
+    inventoryClose = 109,
 }
 
-Settings.COLOR_MAP =
+Settings.ColorMap =
 {
-    NORMAL_FONT = Flow.GetSettings().UI.plainTextColor,
-    HEADER_FONT = Flow.GetSettings().UI.headerTextColor,
-    OPTION_FONT = Flow.GetSettings().UI.optionTextColor,
-    BACKGROUND = Color(64, 64, 64, 128),
-    INVENTORY_AMBIENT = Color(255, 255, 128),
-    ITEM_HIDDEN = Color(0, 0, 0, 0),
-    ITEM_DESELECTED = Color(32, 32, 32, 255),
-    ITEM_SELECTED = Color(128, 128, 128, 255)
+    plainText = Flow.GetSettings().UI.plainTextColor,
+    headerText = Flow.GetSettings().UI.headerTextColor,
+    optionText = Flow.GetSettings().UI.optionTextColor,
+    background = Color(64, 64, 64, 128),
+    inventoryAmbient = Color(255, 255, 128),
+    itemHidden = Color(0, 0, 0, 0),
+    itemDeselected = Color(32, 32, 32, 255),
+    itemSelected = Color(128, 128, 128, 255)
 }
 
-Settings.BACKGROUND = 
+Settings.Background = 
 {
-    ENABLE = true,
-    OBJECTID = TEN.Objects.ObjID.DIARY_ENTRY_SPRITES,
-    SPRITEID = 0,
-    COLOR = TEN.Color(255, 255, 255),
-    POSITION = TEN.Vec2(50,50),
-    ROTATION = 0,
-    SCALE = TEN.Vec2(100,100),
-    ALIGN_MODE = TEN.View.AlignMode.CENTER,
-    SCALE_MODE = TEN.View.ScaleMode.STRETCH,
-    BLEND_MODE = TEN.Effects.BlendID.ALPHA_BLEND,
-    ALPHA = 255
+    enable = true,
+    objectID = TEN.Objects.ObjID.DIARY_ENTRY_SPRITES,
+    spriteID = 0,
+    color = TEN.Color(255, 255, 255),
+    position = TEN.Vec2(50,50),
+    rotation = 0,
+    scale = TEN.Vec2(100,100),
+    alignMode = TEN.View.AlignMode.CENTER,
+    scaleMode = TEN.View.ScaleMode.STRETCH,
+    blendMode = TEN.Effects.BlendID.ALPHA_BLEND,
+    alpha = 255
 }
 
-Settings.ANIMATION = 
+Settings.Animation = 
 {
-    INVENTORY_ANIM_TIME = .5,
-    ITEM_ANIM_TIME = .2,
-    SKIP_RING_CLOSE = false,
-    TEXT_ALPHA_SPEED = 255 / 10
+    inventoryAnimTime = .5,
+    itemAnimTime = .2,
+    skipRingClose = false,
+    textAlphaSpeed = 255 / 10
 }
 
-Settings.STATISTICS = 
+Settings.Statistics = 
 {
-    PROGRESS_TIME = true,
-    GAME_STATS = true
+    progressTime = true,
+    gameStats = true
 }
 
 

@@ -1,10 +1,6 @@
---- Internal file used by the RingInventory module.
+--- Internal file used by the RingInventory module. Manage Rings and items stored in them.
 -- @module RingInventory.Ring
 -- @local
-
--- ============================================================================
--- Ring Class - Manage Rings and items stored in them
--- ============================================================================
 
 --External Modules
 local RingLight = require("Engine.RingInventory.RingLight")

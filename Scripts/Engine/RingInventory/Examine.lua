@@ -13,7 +13,7 @@ local Text = require("Engine.RingInventory.Text")
 local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointer to tables
-local COLOR_MAP = Settings.COLOR_MAP
+local COLOR_MAP = Settings.ColorMap
 
 --Examine functions
 local Examine = {}
@@ -214,7 +214,7 @@ function Examine.Update()
     if not Examine.item  then return end
 
     local color = Examine.item :GetColor()
-    alpha = Interpolate.StepAlpha(alpha, targetAlpha, Settings.ANIMATION.TEXT_ALPHA_SPEED)
+    alpha = Interpolate.StepAlpha(alpha, targetAlpha, Settings.Animation.textAlphaSpeed)
     local targetColor = Utilities.ColorCombine(color, alpha)
     Examine.item :SetColor(targetColor)
 

@@ -3,7 +3,6 @@
 -- @local
 
 --External Modules
-local Constants = require("Engine.RingInventory.Constants")
 local Interpolate = require("Engine.RingInventory.Interpolate")
 local InventoryData
 local Ring
@@ -11,11 +10,11 @@ local Settings = require("Engine.RingInventory.Settings")
 local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointers to tables
-local COLOR_MAP = Settings.COLOR_MAP
+local COLOR_MAP = Settings.ColorMap
 
 --CONSTANTS
 local BG_LAYER = 0
-local ALPHA_SPEED = Settings.ANIMATION.TEXT_ALPHA_SPEED
+local ALPHA_SPEED = Settings.Animation.textAlphaSpeed
 
 -- Background state
 local bgAlpha  = 0
@@ -42,7 +41,7 @@ local function DrawArrow(list, alpha)
             entry[2],
             entry[1],
             Vec2(3, 3),
-            Utilities.ColorCombine(COLOR_MAP.NORMAL_FONT, alpha)
+            Utilities.ColorCombine(COLOR_MAP.plainText, alpha)
         )
         entrySprite:Draw(-8, View.AlignMode.CENTER, View.ScaleMode.FIT, TEN.Effects.BlendID.ALPHA_BLEND)
     end
@@ -72,18 +71,18 @@ end
 
 local function DrawBackground(alpha)
 
-    if Settings.BACKGROUND.ENABLE then
-        local capped    = math.min(alpha, Settings.BACKGROUND.ALPHA)
-        local bgColor   = Utilities.ColorCombine(Settings.BACKGROUND.COLOR, capped)
+    if Settings.Background.enable then
+        local capped    = math.min(alpha, Settings.Background.alpha)
+        local bgColor   = Utilities.ColorCombine(Settings.Background.color, capped)
         local bgSprite  = TEN.View.DisplaySprite(
-            Settings.BACKGROUND.OBJECTID,
-            Settings.BACKGROUND.SPRITEID,
-            Settings.BACKGROUND.POSITION,
-            Settings.BACKGROUND.ROTATION,
-            Settings.BACKGROUND.SCALE,
+            Settings.Background.objectID,
+            Settings.Background.spriteID,
+            Settings.Background.position,
+            Settings.Background.rotation,
+            Settings.Background.scale,
             bgColor
         )
-        bgSprite:Draw(BG_LAYER, Settings.BACKGROUND.ALIGN_MODE, Settings.BACKGROUND.SCALE_MODE, Settings.BACKGROUND.BLEND_MODE)
+        bgSprite:Draw(BG_LAYER, Settings.Background.alignMode, Settings.Background.scaleMode, Settings.Background.blendMode)
     end
 
 end

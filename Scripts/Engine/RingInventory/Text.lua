@@ -8,7 +8,7 @@ local Settings = require("Engine.RingInventory.Settings")
 local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointer to tables
-local COLOR_MAP = Settings.COLOR_MAP
+local COLOR_MAP = Settings.ColorMap
 local PICKUP_DATA = require("Engine.RingInventory.PickupData")
 
 -- ============================================================================
@@ -63,10 +63,10 @@ function TextChannels.Create(config)
     -- Initialize channel state
     TextChannelStates[config.name] = {
         -- Configuration (immutable during lifetime)
-        position = config.position or Vec2(50, 50),
+        position = config.position or TEN.Vec2(50, 50),
         scale = config.scale or 1.0,
-        color = config.color or Color(255, 255, 255, 255),
-        flags = config.flags or {Strings.DisplayStringOption.CENTER, Strings.DisplayStringOption.SHADOW},
+        color = config.color or TEN.Color(255, 255, 255, 255),
+        flags = config.flags or {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW},
         translate = config.translate ~= false,  -- Default true
         fadeSpeed = config.fadeSpeed or TEXT_CONFIG.FADE_SPEED,
         
@@ -131,12 +131,7 @@ function TextChannels.SetText(channelName, newText, shouldShow)
         state.isTransitioning = true
         state.nextAlpha = TEXT_CONFIG.MIN_ALPHA
     end
-    -- elseif visibilityChanged and not state.visible and state.currentAlpha > 0 then
-    --     -- Just hiding (no text change), fade out current text
-    --     state.isTransitioning = true
-    --     state.nextText = state.currentText
-    --     state.nextAlpha = TEXT_CONFIG.MIN_ALPHA
-    -- end
+
 end
 
 function TextChannels.Show(channelName)
@@ -159,12 +154,6 @@ function TextChannels.Hide(channelName)
             state.onHide()
         end
         
-        -- -- Start fade out transition
-        -- if state.currentAlpha > 0 then
-        --     state.isTransitioning = true
-        --     state.nextText = state.currentText
-        --     state.nextAlpha = TEXT_CONFIG.MIN_ALPHA
-        -- end
     end
 end
 
@@ -406,14 +395,14 @@ TextChannels.CONFIGS = {
     {
         name = "HEADER",                 -- Unique identifier
         text = "",               -- Current display text
-        position = Vec2(50, 4),                   -- Screen position (percentage)
+        position = TEN.Vec2(50, 4),                   -- Screen position (percentage)
         scale = 1.5,                              -- Text scale
-        color = COLOR_MAP.HEADER_FONT,        -- Base color
+        color = COLOR_MAP.headerText,        -- Base color
         visible = false,                           -- Visibility flag
         flags = 
         {                                 -- Display flags
-            Strings.DisplayStringOption.CENTER,
-            Strings.DisplayStringOption.SHADOW
+            TEN.Strings.DisplayStringOption.CENTER,
+            TEN.Strings.DisplayStringOption.SHADOW
         },
         translate = true,                         -- Use GetString() for localization
     },
@@ -421,14 +410,14 @@ TextChannels.CONFIGS = {
     {
         name = "SUB_HEADER",                 
         text = "",               
-        position = Vec2(50, 40.3),                   
+        position = TEN.Vec2(50, 40.3),                   
         scale = 0.9,                             
-        color = COLOR_MAP.HEADER_FONT,        
+        color = COLOR_MAP.headerText,        
         visible = false,                           
         flags = 
         {                                
-            Strings.DisplayStringOption.CENTER,
-            Strings.DisplayStringOption.SHADOW
+            TEN.Strings.DisplayStringOption.CENTER,
+            TEN.Strings.DisplayStringOption.SHADOW
         },
         translate = true,
     },
@@ -436,14 +425,14 @@ TextChannels.CONFIGS = {
     {
         name = "ITEM_LABEL_PRIMARY",                 
         text = "",               
-        position = Vec2(50, 80),                   
+        position = TEN.Vec2(50, 80),                   
         scale = 1.5,                             
-        color = COLOR_MAP.NORMAL_FONT,        
+        color = COLOR_MAP.plainText,        
         visible = false,                           
         flags = 
         {                                
-            Strings.DisplayStringOption.CENTER,
-            Strings.DisplayStringOption.SHADOW
+            TEN.Strings.DisplayStringOption.CENTER,
+            TEN.Strings.DisplayStringOption.SHADOW
         },
         translate = false,
     },
@@ -451,14 +440,14 @@ TextChannels.CONFIGS = {
     {
         name = "ITEM_LABEL_SECONDARY",                 
         text = "",               
-        position = Vec2(50, 90),              
+        position = TEN.Vec2(50, 90),              
         scale = 1,                          
-        color = COLOR_MAP.NORMAL_FONT,    
+        color = COLOR_MAP.plainText,    
         visible = false,                     
         flags = 
         {
-            Strings.DisplayStringOption.CENTER,
-            Strings.DisplayStringOption.SHADOW
+            TEN.Strings.DisplayStringOption.CENTER,
+            TEN.Strings.DisplayStringOption.SHADOW
         },
         translate = false,
     },
@@ -466,13 +455,13 @@ TextChannels.CONFIGS = {
     {
         name = "CONTROLS_SELECT",                 
         text = "",               
-        position = Vec2(3, 87),              
+        position = TEN.Vec2(3, 87),              
         scale = 0.7,                          
-        color = COLOR_MAP.NORMAL_FONT,    
+        color = COLOR_MAP.plainText,    
         visible = false,                     
         flags = 
         {
-            Strings.DisplayStringOption.SHADOW
+            TEN.Strings.DisplayStringOption.SHADOW
         },
         translate = false,
     },
@@ -480,14 +469,14 @@ TextChannels.CONFIGS = {
     {
         name = "CONTROLS_BACK",                 
         text =  "",               
-        position = Vec2(97, 87),              
+        position = TEN.Vec2(97, 87),              
         scale = 0.7,                          
-        color = COLOR_MAP.NORMAL_FONT,    
+        color = COLOR_MAP.plainText,    
         visible = false,                  
         flags = 
         {
-            Strings.DisplayStringOption.RIGHT,
-            Strings.DisplayStringOption.SHADOW
+            TEN.Strings.DisplayStringOption.RIGHT,
+            TEN.Strings.DisplayStringOption.SHADOW
         },
         translate = false,
     }

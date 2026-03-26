@@ -2,9 +2,6 @@
 -- @module RingInventory.ItemMenu
 -- @local
 
--- ============================================================================
--- MENU FUNCTIONS
--- ============================================================================
 --External Modules
 local Menu = require("Engine.RingInventory.Menu")
 local PickupData = require("Engine.RingInventory.PickupData")
@@ -12,7 +9,7 @@ local InventoryStates= require("Engine.RingInventory.InventoryStates")
 local Settings = require("Engine.RingInventory.Settings")
 
 --Pointers to tables
-local COLOR_MAP = Settings.COLOR_MAP
+local COLOR_MAP = Settings.ColorMap
 local INVENTORY_MODE = InventoryStates.MODE
 
 local ItemMenu = {}
@@ -119,7 +116,7 @@ function ItemMenu.Create(item)
     itemMenu:SetItemsPosition(Vec2(50, 35))
     itemMenu:SetVisibility(true)
     itemMenu:SetLineSpacing(5.3)
-    itemMenu:SetItemsFont(COLOR_MAP.NORMAL_FONT, 0.9)
+    itemMenu:SetItemsFont(COLOR_MAP.plainText, 0.9)
     itemMenu:SetItemsTranslate(true)
     itemMenu:SetTitlePosition(Vec2(50, 4))
 end

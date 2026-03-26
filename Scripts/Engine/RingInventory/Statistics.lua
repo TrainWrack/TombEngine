@@ -11,16 +11,16 @@ local Settings = require("Engine.RingInventory.Settings")
 local Text = require("Engine.RingInventory.Text")
 
 --Pointers to tables
-local COLOR_MAP = Settings.COLOR_MAP
+local COLOR_MAP = Settings.ColorMap
 
 --Class Start
 local Stats = {}
 
 local statisticsType = false
 
-local LEVEL_HEADER_POS = Vec2(50, 33.3)
-local HEADER_TEXT_POS = Vec2(22.4, 41.7)
-local STATS_TEXT_POS = Vec2(65, 41.7)
+local LEVEL_HEADER_POS = TEN.Vec2(50, 33.3)
+local HEADER_TEXT_POS = TEN.Vec2(22.4, 41.7)
+local STATS_TEXT_POS = TEN.Vec2(65, 41.7)
 local STATS_TEXT_SCALE = 1
 
 local LEVEL_HEADER_TEXT = 
@@ -29,12 +29,12 @@ name = "LEVEL_HEADER_TEXT",
 text = "",               
 position = LEVEL_HEADER_POS,                   
 scale = STATS_TEXT_SCALE,                             
-color = COLOR_MAP.HEADER_FONT,        
+color = COLOR_MAP.headerText,        
 visible = false,                           
 flags = 
 {
-    Strings.DisplayStringOption.CENTER,
-    Strings.DisplayStringOption.SHADOW
+    TEN.Strings.DisplayStringOption.CENTER,
+    TEN.Strings.DisplayStringOption.SHADOW
 },
 translate = false,
 }
@@ -45,11 +45,11 @@ name = "HEADER_TEXT",
 text = "",               
 position = HEADER_TEXT_POS,                   
 scale = STATS_TEXT_SCALE,                             
-color = COLOR_MAP.NORMAL_FONT,        
+color = COLOR_MAP.plainText,        
 visible = false,                           
 flags = 
 {
-    Strings.DisplayStringOption.SHADOW
+    TEN.Strings.DisplayStringOption.SHADOW
 },
 translate = false,
 }
@@ -60,19 +60,19 @@ name = "STATS_TEXT",
 text = "",               
 position = STATS_TEXT_POS,                   
 scale = STATS_TEXT_SCALE,                             
-color = COLOR_MAP.NORMAL_FONT,        
+color = COLOR_MAP.plainText,        
 visible = false,                           
 flags = 
 {
-    Strings.DisplayStringOption.SHADOW
+    TEN.Strings.DisplayStringOption.SHADOW
 },
 translate = false,
 }
 
 local GetStatistics = function(type)
 
-    local secretCount = type and Flow.GetTotalSecretCount() or TEN.Flow.GetCurrentLevel().secrets
-    local levelStats = Flow.GetStatistics(type)
+    local secretCount = type and TEN.Flow.GetTotalSecretCount() or TEN.Flow.GetCurrentLevel().secrets
+    local levelStats = TEN.Flow.GetStatistics(type)
     local statistics = tostring(levelStats.timeTaken):sub(1, -4) .. "\n" ..
         tostring(levelStats.secrets) .. " / " .. tostring(secretCount) .. "\n" ..
         tostring(levelStats.pickups) .. "\n" ..
@@ -87,16 +87,16 @@ end
 
 local GetLabels = function(type)
 
-    local secretsText = type and Flow.GetString("total_secrets_found") or Flow.GetString("level_secrets_found")
+    local secretsText = type and TEN.Flow.GetString("total_secrets_found") or TEN.Flow.GetString("level_secrets_found")
 
     local headings = 
-        Flow.GetString("time_taken").."\n"..
+        TEN.Flow.GetString("time_taken").."\n"..
         secretsText.."\n"..
-        Flow.GetString("pickups").."\n"..
-        Flow.GetString("kills").."\n"..
-        Flow.GetString("ammo_used").."\n"..
-        Flow.GetString("used_medipacks").."\n"..
-        Flow.GetString("distance_travelled")
+        TEN.Flow.GetString("pickups").."\n"..
+        TEN.Flow.GetString("kills").."\n"..
+        TEN.Flow.GetString("ammo_used").."\n"..
+        TEN.Flow.GetString("used_medipacks").."\n"..
+        TEN.Flow.GetString("distance_travelled")
 
     return headings
 
@@ -111,8 +111,8 @@ function Stats.SetupStats()
     Text.AddToGroup("STATISTICS", "HEADER_TEXT")
     Text.AddToGroup("STATISTICS", "STATS_TEXT")
 
-    local level = Flow.GetCurrentLevel()
-    local levelHeader = Flow.GetString(level.nameKey)
+    local level = TEN.Flow.GetCurrentLevel()
+    local levelHeader = TEN.Flow.GetString(level.nameKey)
     
     local headings = GetLabels(statisticsType)
     local statistics = GetStatistics(statisticsType)
@@ -134,10 +134,10 @@ end
 function Stats.UpdateStatistics(type)
 
     if type then
-        Text.SetText("LEVEL_HEADER_TEXT", Flow.GetString("game_title"), true)
+        Text.SetText("LEVEL_HEADER_TEXT", TEN.Flow.GetString("game_title"), true)
     else
-        local level = Flow.GetCurrentLevel()
-        Text.SetText("LEVEL_HEADER_TEXT", Flow.GetString(level.nameKey), true)
+        local level = TEN.Flow.GetCurrentLevel()
+        Text.SetText("LEVEL_HEADER_TEXT", TEN.Flow.GetString(level.nameKey), true)
     end
 
     local statistics = GetStatistics(type)
@@ -158,8 +158,8 @@ end
 function Stats.UpdateIngameTime()
     
     if Settings.STATISTICS.PROGRESS_TIME then
-        Flow.GetStatistics(true).timeTaken = Flow.GetStatistics(true).timeTaken + 1
-        Flow.GetStatistics(false).timeTaken = Flow.GetStatistics(false).timeTaken + 1
+        TEN.Flow.GetStatistics(true).timeTaken = TEN.Flow.GetStatistics(true).timeTaken + 1
+        TEN.Flow.GetStatistics(false).timeTaken = TEN.Flow.GetStatistics(false).timeTaken + 1
     end
 
 end

@@ -11,7 +11,7 @@ local PickupData = require("Engine.RingInventory.PickupData")
 local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointers to tables
-local COLOR_MAP = Settings.COLOR_MAP
+local COLOR_MAP = Settings.ColorMap
 local RING_CENTER = Ring.CENTERS
 local RING_TYPE = Ring.TYPE
 local TYPE = PickupData.TYPE
@@ -347,7 +347,7 @@ function InventoryData.Construct(ringType, selectedWeapon)
             
             -- Create display item
             local displayItem = data:CreateDisplayItem(Ring.CENTERS[data.ringName])
-            displayItem:SetColor(COLOR_MAP.ITEM_HIDDEN)
+            displayItem:SetColor(COLOR_MAP.itemHidden)
             -- Add item to ring
             ring:AddItem(data)
 

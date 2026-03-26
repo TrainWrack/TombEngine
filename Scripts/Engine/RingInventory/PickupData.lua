@@ -3,7 +3,6 @@
 -- @local
 
 --External Modules
-local Constants = require("Engine.RingInventory.Constants")
 local Ring = require("Engine.RingInventory.Ring")
 
 --Pointer to tables
