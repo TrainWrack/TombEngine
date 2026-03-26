@@ -187,16 +187,16 @@ end
 -- @tfield[opt=0] int spriteID Sprite ID from the specified object for the background's sprite.
 
 --- Tint color applied to the background sprite.
--- @tfield[opt=TEN.Color(255, 255, 255)] Color color Color of background's sprite.
+-- @tfield[opt=TEN.Color(255&#44; 255&#44; 255)] Color color Color of background's sprite.
 
 --- Screen position of the background sprite's anchor point, in percent.
--- @tfield[opt=TEN.Vec2(50, 50)] Vec2 position X,Y position of the background sprite in screen percent (0-100).
+-- @tfield[opt=TEN.Vec2(50&#44; 50)] Vec2 position X,Y position of the background sprite in screen percent (0-100).
 
 --- Rotation of the background sprite in degrees.
 -- @tfield[opt=0] float rotation Rotation of the background's sprite (0-360), in degrees.
 
 --- Scale of the background sprite as a percentage of screen size.
--- @tfield[opt=TEN.Vec2(100, 100)] Vec2 scale X,Y Scaling factor for the background's sprite.
+-- @tfield[opt=TEN.Vec2(100&#44; 100)] Vec2 scale X,Y Scaling factor for the background's sprite.
 
 --- Alignment mode used when positioning the background sprite.
 -- @tfield[opt=TEN.View.AlignMode.CENTER] View.AlignMode alignMode Alignment for the background's sprite.
@@ -263,19 +263,19 @@ end
 -- @tfield[opt=Flow.GetSettings().UI.optionTextColor] Color optionText Applied to text entries.
 
 --- Background tint color for the inventory panel.
--- @tfield[opt=Color(64, 64, 64, 128)] Color background Semi-transparent overlay color drawn behind inventory content.
+-- @tfield[opt=Color(64&#44; 64&#44; 64&#44; 128)] Color background Semi-transparent overlay color drawn behind inventory content.
 
 --- Ambient light color cast on inventory item models.
--- @tfield[opt=Color(255, 255, 128)] Color inventoryAmbient Light applied to Inventory items.
+-- @tfield[opt=Color(255&#44; 255&#44; 128)] Color inventoryAmbient Light applied to Inventory items.
 
 --- Color used to render hidden inventory items.
--- @tfield[opt=Color(0, 0, 0, 0)] Color itemHidden Fully transparent; items with this color are invisible in the ring.
+-- @tfield[opt=Color(0&#44; 0&#44; 0&#44; 0)] Color itemHidden Fully transparent; items with this color are invisible in the ring.
 
 --- Color used to render unselected inventory items.
--- @tfield[opt=Color(32, 32, 32, 255)] Color itemDeselected Tint applied to items that are not currently highlighted.
+-- @tfield[opt=Color(32&#44; 32&#44; 32&#44; 255)] Color itemDeselected Tint applied to items that are not currently highlighted.
 
 --- Color used to render the currently selected inventory item.
--- @tfield[opt=Color(128, 128, 128, 255)] Color itemSelected Tint applied to the item the player has focused on.
+-- @tfield[opt=Color(128&#44; 128&#44; 128&#44; 255)] Color itemSelected Tint applied to the item the player has focused on.
 
 --- Animation
 -- @section Animation
