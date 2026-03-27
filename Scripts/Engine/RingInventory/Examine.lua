@@ -6,7 +6,6 @@
 -- Examine - Handles examine functions and data for ring inventory
 -- ============================================================================
 --External Modules
-local Constants = require("Engine.RingInventory.Constants")
 local Interpolate = require("Engine.RingInventory.Interpolate")
 local Settings = require("Engine.RingInventory.Settings")
 local Text = require("Engine.RingInventory.Text")

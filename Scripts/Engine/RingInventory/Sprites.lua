@@ -41,7 +41,7 @@ local function DrawArrow(list, alpha)
             entry[2],
             entry[1],
             Vec2(3, 3),
-            Utilities.ColorCombine(COLOR_MAP.plainText, alpha)
+            Utilities.ColorCombine(COLOR_MAP.neutral, alpha)
         )
         entrySprite:Draw(-8, View.AlignMode.CENTER, View.ScaleMode.FIT, TEN.Effects.BlendID.ALPHA_BLEND)
     end

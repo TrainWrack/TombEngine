@@ -24,7 +24,8 @@ Settings.ColorMap =
     inventoryAmbient = Color(255, 255, 128),
     itemHidden = Color(0, 0, 0, 0),
     itemDeselected = Color(32, 32, 32, 255),
-    itemSelected = Color(128, 128, 128, 255)
+    itemSelected = Color(128, 128, 128, 255),
+    neutral =  Color(128, 128, 128, 255)
 }
 
 Settings.Background = 

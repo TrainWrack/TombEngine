@@ -21,6 +21,7 @@ local ItemSpin = require("Engine.RingInventory.ItemSpin")
 local RingLight = require("Engine.RingInventory.RingLight")
 local Settings = require("Engine.RingInventory.Settings")
 local Strings = require("Engine.RingInventory.Strings")
+local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointers to tables
 local COLOR_MAP = Settings.ColorMap
@@ -134,23 +135,11 @@ end
 
 local InventoryModule = {}
 
-local function deepCopy(original)
-    local copy = {}
-    for k, v in pairs(original) do
-        if type(v) == "table" then
-            copy[k] = deepCopy(v)
-        else
-            copy[k] = v
-        end
-    end
-    return copy
-end
-
 ---Get settings tables for RingInventory.
 -- @function RingInventory.GetSettings
 -- @treturn Settings Current settings table
 InventoryModule.GetSettings = function()
-    return deepCopy(Settings)
+    return Utilities.CopyTable(Settings)
 end
 
 ---Set settings tables for RingInventory.
@@ -276,6 +265,9 @@ end
 
 --- Color used to render the currently selected inventory item.
 -- @tfield[opt=Color(128&#44; 128&#44; 128&#44; 255)] Color itemSelected Tint applied to the item the player has focused on.
+
+--- Color used to render the neutral sprites.
+-- @tfield[opt=Color(128&#44; 128&#44; 128&#44; 255)] Color neutral Tint applied to the sprites.
 
 --- Animation
 -- @section Animation

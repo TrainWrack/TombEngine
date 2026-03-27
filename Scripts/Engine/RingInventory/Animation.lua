@@ -8,7 +8,6 @@
 
 --External Modules
 local Constants = require("Engine.RingInventory.Constants")
-local Examine = require("Engine.RingInventory.Examine")
 local Interpolate = require("Engine.RingInventory.Interpolate")
 local InventoryData = require("Engine.RingInventory.InventoryData")
 local Ring = require("Engine.RingInventory.Ring")
@@ -171,8 +170,7 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
         if Animation.PerformBatchMotion("RingRotate", ringRotate, Settings.Animation.inventoryAnimTime, true, selectedRing) then
             return true
         end
-    elseif mode == INVENTORY_MODE.EXAMINE_OPEN or 
-           mode == INVENTORY_MODE.STATISTICS_OPEN or 
+    elseif mode == INVENTORY_MODE.STATISTICS_OPEN or 
            mode == INVENTORY_MODE.SAVE_SETUP or 
            mode == INVENTORY_MODE.COMBINE_SETUP or 
            mode == INVENTORY_MODE.COMBINE_SUCCESS then
@@ -203,8 +201,7 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
             return true
         end
 
-    elseif mode == INVENTORY_MODE.EXAMINE_CLOSE or 
-           mode == INVENTORY_MODE.STATISTICS_CLOSE or 
+    elseif mode == INVENTORY_MODE.STATISTICS_CLOSE or 
            mode == INVENTORY_MODE.SAVE_CLOSE or 
            mode == INVENTORY_MODE.ITEM_DESELECT then
         if Animation.PerformBatchMotion("ExamineClose", examineAnimation, Settings.Animation.inventoryAnimTime, true, selectedRing, selectedItem, true) then

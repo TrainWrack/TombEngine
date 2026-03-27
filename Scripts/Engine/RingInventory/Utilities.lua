@@ -46,4 +46,16 @@ Utilities.GetAspectRatioMultiplier = function()
     end
 end
 
+Utilities.CopyTable = function(original)
+    local copy = {}
+    for k, v in pairs(original) do
+        if type(v) == "table" then
+            copy[k] = Utilities.CopyTable(v)
+        else
+            copy[k] = v
+        end
+    end
+    return copy
+end
+
 return Utilities
