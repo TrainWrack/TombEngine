@@ -251,8 +251,8 @@ end
 --- Color used for selectable option text.
 -- @tfield[opt=Flow.GetSettings().UI.optionTextColor] Color optionText Applied to text entries.
 
---- Background tint color for the inventory panel.
--- @tfield[opt=Color(64&#44; 64&#44; 64&#44; 128)] Color background Semi-transparent overlay color drawn behind inventory content.
+--- Background tint color for the inventory.
+-- @tfield[opt=Color(64&#44; 64&#44; 64&#44; 128)] Color background Semi-transparent overlay color drawn behind inventory content. The alpha channel determines the strenght of the effect.
 
 --- Ambient light color cast on inventory item models.
 -- @tfield[opt=Color(255&#44; 255&#44; 128)] Color inventoryAmbient Light applied to Inventory items.
@@ -267,7 +267,7 @@ end
 -- @tfield[opt=Color(128&#44; 128&#44; 128&#44; 255)] Color itemSelected Tint applied to the item the player has focused on.
 
 --- Color used to render the neutral sprites.
--- @tfield[opt=Color(128&#44; 128&#44; 128&#44; 255)] Color neutral Tint applied to the sprites.
+-- @tfield[opt=Color(255&#44; 255&#44; 255&#44; 255)] Color neutral Tint applied to the sprites.
 
 --- Animation
 -- @section Animation

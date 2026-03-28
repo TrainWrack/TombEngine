@@ -53,7 +53,7 @@ function ItemMenu.ParseAction(menuActions)
         if combineItemCount > 1 then 
             InventoryStates.SetMode(INVENTORY_MODE.COMBINE_SETUP)
         else
-            TEN.Sound.PlaySound(Settings.SOUND_MAP.PLAYER_NO)
+            TEN.Sound.PlaySound(Settings.SoundMap.playerNo)
         end
     elseif ItemMenu.HasItemAction(menuActions, ItemAction.STATISTICS) then
         InventoryStates.SetMode(INVENTORY_MODE.STATISTICS_OPEN)

@@ -233,7 +233,7 @@ end
 
 function Menu:SetFadeSpeed(speed)
     if Menus[self.name] then
-        Menus[self.name].fadeSpeed = math.max(0.01, math.min(1.0, speed))
+        Menus[self.name].fadeSpeed = math.max(Constants.ALPHA_MIN, math.min(Constants.ALPHA_MAX, speed))
     end
 end
 

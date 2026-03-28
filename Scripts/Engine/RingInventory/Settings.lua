@@ -25,7 +25,7 @@ Settings.ColorMap =
     itemHidden = Color(0, 0, 0, 0),
     itemDeselected = Color(32, 32, 32, 255),
     itemSelected = Color(128, 128, 128, 255),
-    neutral =  Color(128, 128, 128, 255)
+    neutral =  Color(255, 255, 255, 255)
 }
 
 Settings.Background = 

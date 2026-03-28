@@ -167,7 +167,7 @@ function Save.IsSaveSelected()
 end
 
 function Save.ClearSaveSelected()
-    return saveSelected == false
+    saveSelected = false
 end
 
 --Set quick save status. True means menu is in quick save mode.
