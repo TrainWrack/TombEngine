@@ -16,6 +16,7 @@
 #include "Math/Math.h"
 #include "Scripting/Internal/TEN/Flow//Level/FlowLevel.h"
 #include "Specific/configuration.h"
+#include "Specific/clock.h"
 #include "Specific/Input/InputAction.h"
 #include "Specific/level.h"
 #include "Specific/trutils.h"
@@ -982,7 +983,7 @@ namespace TEN::Renderer
 		if (!item.GetVisible())
 			return;
 
-		float alpha = GetInterpolationFactor();
+		float alpha = GetInterpolationFactor(true);
 
 		auto objectNumber = item.GetObjectID();
 		auto pos = item.GetInterpolatedPosition(alpha);
@@ -1370,6 +1371,8 @@ namespace TEN::Renderer
 
 	void Renderer::RenderFreezeMode(float interpFactor, bool staticBackground)
 	{
+		_interpolationFactor = interpFactor;
+
 		if (staticBackground)
 		{
 			// Set basic render states.
