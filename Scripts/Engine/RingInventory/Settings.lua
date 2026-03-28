@@ -48,7 +48,7 @@ Settings.Animation =
     inventoryAnimTime = .5,
     itemAnimTime = .2,
     skipRingClose = false,
-    textAlphaSpeed = 255 / 10
+    textAlphaSpeed = 255 / 5
 }
 
 Settings.Statistics = 

@@ -18,12 +18,50 @@ local PICKUP_DATA = require("Engine.RingInventory.PickupData")
 local TextChannels = {}
 local TextChannelStates = {}
 
+TextChannels.TRANSITION = {
+    CROSSFADE = "crossfade",
+    SWIPE_LEFT = "swipe_left",
+    SWIPE_RIGHT = "swipe_right"
+}
+
 -- Configuration
 local TEXT_CONFIG = {
     FADE_SPEED = Settings.Animation.textAlphaSpeed,  -- Global fade speed
+    SWIPE_DISTANCE = 2,
     MIN_ALPHA = Constants.ALPHA_MIN,
     MAX_ALPHA = Constants.ALPHA_MAX
 }
+
+local function ClampTransitionType(transitionType)
+    if transitionType == TextChannels.TRANSITION.SWIPE_LEFT or transitionType == TextChannels.TRANSITION.SWIPE_RIGHT then
+        return transitionType
+    end
+
+    return TextChannels.TRANSITION.CROSSFADE
+end
+
+local function GetTransitionPosition(position, transitionType, progress, isNext)
+    local direction = 0
+
+    if transitionType == TextChannels.TRANSITION.SWIPE_LEFT then
+        direction = -1
+    elseif transitionType == TextChannels.TRANSITION.SWIPE_RIGHT then
+        direction = 1
+    end
+
+    if direction == 0 then
+        return position
+    end
+
+    local offsetX
+    if isNext then
+        offsetX = -direction * TEXT_CONFIG.SWIPE_DISTANCE * (1 - progress)
+    else
+        offsetX = direction * TEXT_CONFIG.SWIPE_DISTANCE * progress
+    end
+
+    return TEN.Vec2(position.x + offsetX, position.y)
+end
 
 -- ============================================================================
 -- TEXT CHANNEL STRUCTURE
@@ -69,6 +107,7 @@ function TextChannels.Create(config)
         flags = config.flags or {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW},
         translate = config.translate ~= false,  -- Default true
         fadeSpeed = config.fadeSpeed or TEXT_CONFIG.FADE_SPEED,
+        transitionType = ClampTransitionType(config.transitionType),
         
         -- Current state (mutable)
         currentText = config.text or "",
@@ -77,6 +116,8 @@ function TextChannels.Create(config)
         nextAlpha = TEXT_CONFIG.MIN_ALPHA,
         visible = config.visible or false,
         isTransitioning = false,
+        activeTransition = ClampTransitionType(config.transitionType),
+        transitionProgress = 0,
     }
     
     return config.name
@@ -86,12 +127,14 @@ end
 -- UPDATE TEXT CHANNEL
 -- ============================================================================
 
-function TextChannels.SetText(channelName, newText, shouldShow)
+function TextChannels.SetText(channelName, newText, shouldShow, transitionType)
     local state = TextChannelStates[channelName]
     if not state then
         print("WARNING: Text channel '" .. channelName .. "' does not exist")
         return
     end
+
+    transitionType = ClampTransitionType(transitionType or state.transitionType)
     
      -- Normalize text (treat nil as empty string)
     newText = newText or ""
@@ -103,7 +146,7 @@ function TextChannels.SetText(channelName, newText, shouldShow)
     local textChanged = (newText ~= "" and newText ~= state.currentText and newText ~= state.nextText)
 
     --check to prevent restarting mid-transition
-    if state.isTransitioning and newText == state.nextText and not visibilityChanged then
+    if state.isTransitioning and newText == state.nextText and not visibilityChanged and transitionType == state.activeTransition then
         return
     end
     
@@ -129,6 +172,8 @@ function TextChannels.SetText(channelName, newText, shouldShow)
         -- Text is actually different, start crossfade
         state.nextText = newText
         state.isTransitioning = true
+        state.activeTransition = transitionType
+        state.transitionProgress = 0
         state.nextAlpha = TEXT_CONFIG.MIN_ALPHA
     end
 
@@ -193,7 +238,13 @@ function TextChannels.Update()
     for channelName, state in pairs(TextChannelStates) do
         if state.isTransitioning then
             state.currentAlpha = math.max(state.currentAlpha - state.fadeSpeed, TEXT_CONFIG.MIN_ALPHA)
-            state.nextAlpha = math.min(state.nextAlpha + state.fadeSpeed, TEXT_CONFIG.MAX_ALPHA)
+            if state.visible then
+                state.nextAlpha = math.min(state.nextAlpha + state.fadeSpeed, TEXT_CONFIG.MAX_ALPHA)
+                state.transitionProgress = state.nextAlpha / TEXT_CONFIG.MAX_ALPHA
+            else
+                state.nextAlpha = TEXT_CONFIG.MIN_ALPHA
+                state.transitionProgress = 0
+            end
 
             if state.currentAlpha <= TEXT_CONFIG.MIN_ALPHA and state.nextAlpha >= TEXT_CONFIG.MAX_ALPHA then
                 -- Normal completion
@@ -201,6 +252,7 @@ function TextChannels.Update()
                 state.currentAlpha = state.visible and TEXT_CONFIG.MAX_ALPHA or TEXT_CONFIG.MIN_ALPHA
                 state.nextAlpha = TEXT_CONFIG.MIN_ALPHA
                 state.isTransitioning = false
+                state.transitionProgress = 0
                 
                 if state.onTransitionComplete then
                     state.onTransitionComplete(state.currentText)
@@ -211,6 +263,7 @@ function TextChannels.Update()
                 state.currentAlpha = TEXT_CONFIG.MIN_ALPHA
                 state.nextAlpha = TEXT_CONFIG.MIN_ALPHA
                 state.isTransitioning = false
+                state.transitionProgress = 0
             end
         else
             -- Not transitioning, just handle visibility fade
@@ -236,13 +289,14 @@ function TextChannels.Draw(channelName)
         return
     end
     
-    local position = TEN.Util.PercentToScreen(state.position)
+    local currentPosition = TEN.Util.PercentToScreen(GetTransitionPosition(state.position, state.activeTransition, state.transitionProgress, false))
+    local nextPosition = TEN.Util.PercentToScreen(GetTransitionPosition(state.position, state.activeTransition, state.transitionProgress, true))
     
     -- Draw current text (fading out)
     if state.currentAlpha > 0 and state.currentText ~= "" then  -- ADD CHECK
         local textObj = TEN.Strings.DisplayString(
             state.currentText,
-            position,
+            currentPosition,
             state.scale,
             Utilities.ColorCombine(state.color, state.currentAlpha),
             state.translate,
@@ -255,7 +309,7 @@ function TextChannels.Draw(channelName)
     if state.isTransitioning and state.nextAlpha > 0 and state.nextText ~= "" then  -- ADD CHECK
         local textObj = TEN.Strings.DisplayString(
             state.nextText,
-            position,
+            nextPosition,
             state.scale,
             Utilities.ColorCombine(state.color, state.nextAlpha),
             state.translate,
@@ -520,17 +574,17 @@ function TextChannels.CreateItemLabel(item)
 
 end
 
-function TextChannels.SetItemLabel(item)
+function TextChannels.SetItemLabel(item, transitionType)
 
     local text = TextChannels.CreateItemLabel(item)
-    TextChannels.SetText("ITEM_LABEL_PRIMARY", text, true)
+    TextChannels.SetText("ITEM_LABEL_PRIMARY", text, true, transitionType)
 
 end
 
-function TextChannels.SetItemSubLabel(item)
+function TextChannels.SetItemSubLabel(item, transitionType)
 
     local text = TextChannels.CreateItemLabel(item)
-    TextChannels.SetText("ITEM_LABEL_SECONDARY", text, true)
+    TextChannels.SetText("ITEM_LABEL_SECONDARY", text, true, transitionType)
 
 end
 

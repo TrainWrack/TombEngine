@@ -293,7 +293,13 @@ end
 function Ring:CalculateRotation(direction)
     
     self.previousAngle = self.currentAngle
-    self.targetAngle = self.currentAngle + direction * self.slice
+
+    local baseAngle = self.targetAngle
+    if math.abs(self.targetAngle - self.currentAngle) <= 0.1 then
+        baseAngle = self.currentAngle
+    end
+
+    self.targetAngle = baseAngle + direction * self.slice
 
 end
 

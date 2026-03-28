@@ -131,11 +131,6 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
         ringAnimation[2]
     }
 
-    local ringRotate = {
-        {key = "ringAngle", start = selectedRing:GetCurrentAngle(), finish = selectedRing:GetTargetAngle()},
-        {key = "ringCenter", start = selectedRing:GetPosition(), finish = selectedRing:GetPosition()}
-    }
-
     if mode == INVENTORY_MODE.RING_OPENING then
         if Animation.PerformBatchMotion("RingOpening", ringAnimation, Settings.Animation.inventoryAnimTime, true, selectedRing) then
             LevelVars.Engine.RingInventory.InventoryOpenFreeze = true
@@ -167,7 +162,16 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
             return true
         end
     elseif mode == INVENTORY_MODE.RING_ROTATE then
-        if Animation.PerformBatchMotion("RingRotate", ringRotate, Settings.Animation.inventoryAnimTime, true, selectedRing) then
+        
+        local ringRotate = Interpolate.Calculate("RingRotateAngle",
+            selectedRing:GetPreviousAngle(), selectedRing:GetTargetAngle(),
+            Settings.Animation.inventoryAnimTime / 1.5, Interpolate.Easing.Smoothstep)
+
+        selectedRing:SetCurrentAngle(ringRotate.output)
+        selectedRing:Translate(selectedRing:GetPosition(), Ring.RING_RADIUS, ringRotate.output)
+
+        if ringRotate.progress >= PROGRESS_COMPLETE then
+            Interpolate.Clear("RingRotateAngle")
             return true
         end
     elseif mode == INVENTORY_MODE.STATISTICS_OPEN or 

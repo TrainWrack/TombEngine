@@ -160,7 +160,7 @@ local function UpdateBackLabel(label)
     Text.SetText("CONTROLS_BACK", string, true)
 end
 
-local function ShowSelectedAmmoName(weaponItem)
+local function ShowSelectedAmmoName(weaponItem, transitionType)
 
     if not weaponItem or weaponItem:GetType() ~= PickupData.TYPE.WEAPON then
         Text.Hide("ITEM_LABEL_SECONDARY")
@@ -190,7 +190,7 @@ local function ShowSelectedAmmoName(weaponItem)
     local base  = PickupData.GetProperties(objectID)
     local data = InventoryData.BuildItem(base)
  
-    Text.SetItemSubLabel(data)
+    Text.SetItemSubLabel(data, transitionType)
 
 end
 
@@ -226,6 +226,32 @@ local function HideAmmoRing(item)
 
 end
 
+function InventoryStates.StartRingNavigation(ring, direction)
+    if not ring then
+        return
+    end
+
+    if direction < 0 then
+        ring:SelectNext()
+    else
+        ring:SelectPrevious()
+    end
+
+    ring:CalculateRotation(direction)
+    Interpolate.Clear("RingRotateAngle")
+
+    local transitionType = direction < 0 and Text.TRANSITION.SWIPE_RIGHT or Text.TRANSITION.SWIPE_LEFT
+    local selectedItem = ring:GetSelectedItem()
+
+    Text.SetItemLabel(selectedItem, transitionType)
+    UpdateActionLabel(selectedItem, nil, Text.TRANSITION.CROSSFADE)
+    ShowSelectedAmmoName(selectedItem, transitionType)
+
+    if inventoryMode ~= InventoryStates.MODE.RING_ROTATE then
+        InventoryStates.SetMode(InventoryStates.MODE.RING_ROTATE)
+    end
+end
+
 function InventoryStates.Update()
 
     timeInMenu = timeInMenu + 1
@@ -246,8 +272,6 @@ function InventoryStates.Update()
     elseif inventoryMode == InventoryStates.MODE.INVENTORY_OPENING then
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         Text.Setup()
-        Sprites.ShowBackground()
-        Sprites.ShowArrows()
         if Save.IsQuickSaveEnabled() then
             InventoryStates.SetMode(InventoryStates.MODE.SAVE_SETUP)
         else
@@ -275,6 +299,8 @@ function InventoryStates.Update()
         Flow.SetFreezeMode(Flow.FreezeMode.NONE)       
     elseif inventoryMode == InventoryStates.MODE.RING_OPENING then
         if onEnter then
+            Sprites.ShowBackground()
+            Sprites.ShowArrows()
             selectedRing:Color(COLOR_MAP.itemDeselected, COLOR_MAP.itemSelected)
             ItemSpin.StartSpin(selectedRing)
             onEnter = false
@@ -312,9 +338,6 @@ function InventoryStates.Update()
     elseif inventoryMode == InventoryStates.MODE.RING_ROTATE then
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             selectedRing:SetCurrentAngle(selectedRing:GetTargetAngle())
-            Text.SetItemLabel(selectedItem)
-            UpdateActionLabel(selectedItem)
-            ShowSelectedAmmoName(selectedItem)
             if previousMode then
                 inventoryMode = previousMode
             else
@@ -502,6 +525,7 @@ function InventoryStates.Update()
         end 
     elseif inventoryMode == InventoryStates.MODE.SAVE_SETUP then
         if onEnter then
+            Sprites.ShowBackground()
             if Save.IsLoadMenu() then
                 Text.SetText("HEADER", "load_game", true)
             else

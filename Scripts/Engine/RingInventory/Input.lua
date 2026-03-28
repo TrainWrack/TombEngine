@@ -11,6 +11,7 @@ local Examine =  require("Engine.RingInventory.Examine")
 local ItemMenu = require("Engine.RingInventory.ItemMenu")
 local InventoryData= require("Engine.RingInventory.InventoryData")
 local InventoryStates = require("Engine.RingInventory.InventoryStates")
+local Interpolate = require("Engine.RingInventory.Interpolate")
 local Ring = require("Engine.RingInventory.Ring")
 local Settings = require("Engine.RingInventory.Settings")
 
@@ -20,8 +21,24 @@ local RING = Ring.TYPE
 local SOUND_MAP = Settings.SoundMap
 
 local timer = 0
+local continuousSpinQueued = false
 
 local Inputs = {}
+
+local function GetHeldHorizontalDirection()
+    local isLeftHeld = TEN.Input.IsKeyHeld(TEN.Input.ActionID.LEFT)
+    local isRightHeld = TEN.Input.IsKeyHeld(TEN.Input.ActionID.RIGHT)
+
+    if isLeftHeld and not isRightHeld then
+        return -1
+    end
+
+    if isRightHeld and not isLeftHeld then
+        return 1
+    end
+
+    return 0
+end
 
 local function GuiIsPulsed(actionID)
     local DELAY = 0.25
@@ -55,21 +72,13 @@ local function GuiIsPulsed(actionID)
 end
 
 local function DoLeftKey(ring)
-
-    ring:SelectNext()
-    ring:CalculateRotation(-1)
-
-    InventoryStates.SetMode(INVENTORY_MODE.RING_ROTATE)
+    InventoryStates.StartRingNavigation(ring, -1)
     TEN.Sound.PlaySound(SOUND_MAP.menuRotate)
 
 end
 
 local function DoRightKey(ring)
-
-    ring:SelectPrevious()
-    ring:CalculateRotation(1)
-
-    InventoryStates.SetMode(INVENTORY_MODE.RING_ROTATE)
+    InventoryStates.StartRingNavigation(ring, 1)
     TEN.Sound.PlaySound(SOUND_MAP.menuRotate)
 
 end
@@ -81,6 +90,32 @@ function Inputs.Update(mode, timeInMenu)
     local selectedRing = InventoryData.GetSelectedRing()
     local selectedRingType = InventoryData.GetSelectedRingType()
     local selectedItem  = selectedRing:GetSelectedItem()
+
+    if mode == INVENTORY_MODE.RING_ROTATE then
+        local heldDirection = GetHeldHorizontalDirection()
+        local rotationProgress = Interpolate.GetProgress("RingRotateAngle")
+
+        if heldDirection ~= 0 and rotationProgress >= 0.75 and not continuousSpinQueued then
+            if heldDirection < 0 then
+                DoLeftKey(selectedRing)
+            else
+                DoRightKey(selectedRing)
+            end
+            continuousSpinQueued = true
+        elseif GuiIsPulsed(TEN.Input.ActionID.LEFT) then
+            DoLeftKey(selectedRing)
+        elseif GuiIsPulsed(TEN.Input.ActionID.RIGHT) then
+            DoRightKey(selectedRing)
+        end
+
+        if Interpolate.GetProgress("RingRotateAngle") < 0.75 or heldDirection == 0 then
+            continuousSpinQueued = false
+        end
+
+        return
+    end
+
+    continuousSpinQueued = false
 
     if mode == INVENTORY_MODE.INVENTORY then
         if GuiIsPulsed(TEN.Input.ActionID.LEFT) then
