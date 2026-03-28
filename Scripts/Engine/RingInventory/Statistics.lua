@@ -131,24 +131,24 @@ function Stats.Hide()
     Text.HideGroup("STATISTICS")
 end
 
-function Stats.UpdateStatistics(type)
+function Stats.UpdateStatistics(type, transitionType)
 
     if type then
-        Text.SetText("LEVEL_HEADER_TEXT", TEN.Flow.GetString("game_title"), true)
+        Text.SetText("LEVEL_HEADER_TEXT", TEN.Flow.GetString("game_title"), true, transitionType)
     else
         local level = TEN.Flow.GetCurrentLevel()
-        Text.SetText("LEVEL_HEADER_TEXT", TEN.Flow.GetString(level.nameKey), true)
+        Text.SetText("LEVEL_HEADER_TEXT", TEN.Flow.GetString(level.nameKey), true, transitionType)
     end
 
     local statistics = GetStatistics(type)
     local headings = GetLabels(type)
-    Text.SetText("HEADER_TEXT", headings, true)
-    Text.SetText("STATS_TEXT", statistics, true)
+    Text.SetText("HEADER_TEXT", headings, true, transitionType)
+    Text.SetText("STATS_TEXT", statistics, true, transitionType)
 end
 
-function Stats.ToggleType()
+function Stats.ToggleType(transitionType)
     statisticsType = not statisticsType
-    Stats.UpdateStatistics(statisticsType)
+    Stats.UpdateStatistics(statisticsType, transitionType)
 end
 
 function Stats.GetType()

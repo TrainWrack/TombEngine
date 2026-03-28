@@ -79,6 +79,11 @@ local function CalcAngleDiff(from, to)
     return diff
 end
 
+local function CalculateSpinbackDuration(angleDiff)
+    local duration = math.abs(angleDiff) / (ItemSpin.SPINBACK_SPEED * 30)
+    return math.max(duration, 1 / 30)
+end
+
 -- Update spinning for a single ring
 function ItemSpin.UpdateRing(ringState)
     local ring = ringState.ring
@@ -122,7 +127,8 @@ function ItemSpin.UpdateRing(ringState)
                             startAngle = currentRotation.y,
                             angleDiff = angleDiff,
                             lastTarget = targetAngle,
-                            isSpinback = isJustDeselected
+                            isSpinback = isJustDeselected,
+                            spinbackDuration = CalculateSpinbackDuration(angleDiff)
                         }
                     end
 
@@ -141,21 +147,18 @@ function ItemSpin.UpdateRing(ringState)
                         state.angleDiff = angleDiff
                         state.lastTarget = targetAngle
                         state.isSpinback = isSpinback
+                        state.spinbackDuration = CalculateSpinbackDuration(angleDiff)
 
-                        if not isSpinback then
-                            LevelVars.Engine.InterpolateProgress[spinKey] = nil
-                        end
+                        LevelVars.Engine.InterpolateProgress[spinKey] = nil
+
                     end
 
                     if state.isSpinback then
-                        -- Rotation speed based spinback - degrees per frame toward target
-                        local angleDiff = CalcAngleDiff(currentRotation.y, targetAngle)
+                        local result = Interpolate.Calculate(spinKey, 0, 1, state.spinbackDuration, Interpolate.Easing.Smoothstep)
+                        local newAngle = state.startAngle + state.angleDiff * result.output
+                        displayItem:SetRotation(Rotation(currentRotation.x, newAngle, currentRotation.z))
 
-                        if math.abs(angleDiff) > ItemSpin.SPINBACK_SPEED then
-                            local newAngle = currentRotation.y + (angleDiff > 0 and ItemSpin.SPINBACK_SPEED or -ItemSpin.SPINBACK_SPEED)
-                            displayItem:SetRotation(Rotation(currentRotation.x, newAngle, currentRotation.z))
-                        else
-                            -- Reached target, switch to alignment mode
+                        if result.progress >= 1 then
                             state.isSpinback = false
                             state.startAngle = targetAngle
                             state.angleDiff = 0
@@ -163,7 +166,6 @@ function ItemSpin.UpdateRing(ringState)
                             displayItem:SetRotation(Rotation(currentRotation.x, targetAngle, currentRotation.z))
                         end
                     else
-                        -- Time based alignment via Interpolate
                         local result = Interpolate.Calculate(spinKey, 0, 1, ItemSpin.ALIGNMENT_SPEED, Interpolate.Easing.Smoothstep)
                         local newAngle = state.startAngle + state.angleDiff * result.output
                         displayItem:SetRotation(Rotation(currentRotation.x, newAngle, currentRotation.z))

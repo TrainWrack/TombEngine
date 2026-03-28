@@ -26,8 +26,11 @@ TextChannels.TRANSITION = {
 
 -- Configuration
 local TEXT_CONFIG = {
-    FADE_SPEED = Settings.Animation.textAlphaSpeed,  -- Global fade speed
+    FADE_SPEED = Settings.Animation.textAlphaSpeed,
     SWIPE_DISTANCE = 2,
+    CROSSFADE_DURATION_MULTIPLIER = 2,
+    CROSSFADE_BLEND_START = 0.45,
+    CROSSFADE_BLEND_END = 0.65,
     MIN_ALPHA = Constants.ALPHA_MIN,
     MAX_ALPHA = Constants.ALPHA_MAX
 }
@@ -61,6 +64,27 @@ local function GetTransitionPosition(position, transitionType, progress, isNext)
     end
 
     return TEN.Vec2(position.x + offsetX, position.y)
+end
+
+local function GetCrossfadeAlpha(progress, isNext)
+    local blendStart = TEXT_CONFIG.CROSSFADE_BLEND_START
+    local blendEnd = TEXT_CONFIG.CROSSFADE_BLEND_END
+
+    if isNext then
+        if progress <= blendStart then
+            return TEXT_CONFIG.MIN_ALPHA
+        end
+
+        local fadeInProgress = math.min((progress - blendStart) / (1 - blendStart), 1)
+        return TEXT_CONFIG.MAX_ALPHA * fadeInProgress
+    end
+
+    if progress >= blendEnd then
+        return TEXT_CONFIG.MIN_ALPHA
+    end
+
+    local fadeOutProgress = math.min(progress / blendEnd, 1)
+    return TEXT_CONFIG.MAX_ALPHA * (1 - fadeOutProgress)
 end
 
 -- ============================================================================
@@ -237,11 +261,22 @@ end
 function TextChannels.Update()
     for channelName, state in pairs(TextChannelStates) do
         if state.isTransitioning then
-            state.currentAlpha = math.max(state.currentAlpha - state.fadeSpeed, TEXT_CONFIG.MIN_ALPHA)
+            local progressStep = state.fadeSpeed / TEXT_CONFIG.MAX_ALPHA
+            if state.activeTransition == TextChannels.TRANSITION.CROSSFADE then
+                progressStep = progressStep / TEXT_CONFIG.CROSSFADE_DURATION_MULTIPLIER
+            end
+            state.transitionProgress = math.min(state.transitionProgress + progressStep, 1)
+
             if state.visible then
-                state.nextAlpha = math.min(state.nextAlpha + state.fadeSpeed, TEXT_CONFIG.MAX_ALPHA)
-                state.transitionProgress = state.nextAlpha / TEXT_CONFIG.MAX_ALPHA
+                if state.activeTransition == TextChannels.TRANSITION.CROSSFADE then
+                    state.currentAlpha = GetCrossfadeAlpha(state.transitionProgress, false)
+                    state.nextAlpha = GetCrossfadeAlpha(state.transitionProgress, true)
+                else
+                    state.currentAlpha = math.max(TEXT_CONFIG.MAX_ALPHA * (1 - state.transitionProgress), TEXT_CONFIG.MIN_ALPHA)
+                    state.nextAlpha = math.min(TEXT_CONFIG.MAX_ALPHA * state.transitionProgress, TEXT_CONFIG.MAX_ALPHA)
+                end
             else
+                state.currentAlpha = math.max(state.currentAlpha - state.fadeSpeed, TEXT_CONFIG.MIN_ALPHA)
                 state.nextAlpha = TEXT_CONFIG.MIN_ALPHA
                 state.transitionProgress = 0
             end
@@ -293,7 +328,7 @@ function TextChannels.Draw(channelName)
     local nextPosition = TEN.Util.PercentToScreen(GetTransitionPosition(state.position, state.activeTransition, state.transitionProgress, true))
     
     -- Draw current text (fading out)
-    if state.currentAlpha > 0 and state.currentText ~= "" then  -- ADD CHECK
+    if state.currentAlpha > 0 and state.currentText ~= "" then
         local textObj = TEN.Strings.DisplayString(
             state.currentText,
             currentPosition,
@@ -306,7 +341,7 @@ function TextChannels.Draw(channelName)
     end
     
     -- Draw next text (fading in) - only during transition
-    if state.isTransitioning and state.nextAlpha > 0 and state.nextText ~= "" then  -- ADD CHECK
+    if state.isTransitioning and state.nextAlpha > 0 and state.nextText ~= "" then
         local textObj = TEN.Strings.DisplayString(
             state.nextText,
             nextPosition,

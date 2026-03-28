@@ -122,7 +122,7 @@ function InventoryStates.IsMode(mode)
     
 end
 
-local function UpdateActionLabel(itemSelected, override)
+local function UpdateActionLabel(itemSelected, override, transitionType)
 
     local string = nil
 
@@ -142,8 +142,16 @@ local function UpdateActionLabel(itemSelected, override)
 
     local actionString = Input.GetActionBinding(ActionID.SELECT)..": "..string
 
-    Text.SetText("CONTROLS_SELECT", actionString, true)
+    Text.SetText("CONTROLS_SELECT", actionString, true, transitionType)
 
+end
+
+local ShowSelectedAmmoName
+
+local function UpdateInventoryTextsForSelectedItem(selectedItem, itemTransitionType, controlsTransitionType)
+    Text.SetItemLabel(selectedItem, itemTransitionType)
+    UpdateActionLabel(selectedItem, nil, controlsTransitionType or itemTransitionType)
+    ShowSelectedAmmoName(selectedItem, itemTransitionType)
 end
 
 local function UpdateBackLabel(label)
@@ -160,7 +168,7 @@ local function UpdateBackLabel(label)
     Text.SetText("CONTROLS_BACK", string, true)
 end
 
-local function ShowSelectedAmmoName(weaponItem, transitionType)
+ShowSelectedAmmoName = function(weaponItem, transitionType)
 
     if not weaponItem or weaponItem:GetType() ~= PickupData.TYPE.WEAPON then
         Text.Hide("ITEM_LABEL_SECONDARY")
@@ -243,13 +251,26 @@ function InventoryStates.StartRingNavigation(ring, direction)
     local transitionType = direction < 0 and Text.TRANSITION.SWIPE_RIGHT or Text.TRANSITION.SWIPE_LEFT
     local selectedItem = ring:GetSelectedItem()
 
-    Text.SetItemLabel(selectedItem, transitionType)
-    UpdateActionLabel(selectedItem, nil, Text.TRANSITION.CROSSFADE)
-    ShowSelectedAmmoName(selectedItem, transitionType)
+    UpdateInventoryTextsForSelectedItem(selectedItem, transitionType, Text.TRANSITION.CROSSFADE)
 
     if inventoryMode ~= InventoryStates.MODE.RING_ROTATE then
         InventoryStates.SetMode(InventoryStates.MODE.RING_ROTATE)
     end
+end
+
+function InventoryStates.StartRingChange(targetRingType, offsetDirection)
+    if not targetRingType then
+        return
+    end
+
+    InventoryData.SwitchToRingType(targetRingType)
+    InventoryData.OffsetAll(offsetDirection)
+
+    local selectedRing = InventoryData.GetSelectedRing()
+    local selectedItem = selectedRing:GetSelectedItem()
+    UpdateInventoryTextsForSelectedItem(selectedItem, Text.TRANSITION.CROSSFADE)
+
+    InventoryStates.SetMode(InventoryStates.MODE.RING_CHANGE)
 end
 
 function InventoryStates.Update()
@@ -279,6 +300,12 @@ function InventoryStates.Update()
             TEN.Sound.PlaySound(SOUND_MAP.inventoryOpen)
             InventoryData.Construct()
             InventoryData.OpenAtItem(InventoryData.GetOpenAtItem(), true)
+
+            selectedRing = InventoryData.GetSelectedRing()
+            selectedItem = selectedRing:GetSelectedItem()
+            UpdateInventoryTextsForSelectedItem(selectedItem)
+            UpdateBackLabel()
+
             inventoryMode = InventoryStates.MODE.RING_OPENING
         end
     elseif inventoryMode == InventoryStates.MODE.INVENTORY_EXIT then
@@ -347,9 +374,6 @@ function InventoryStates.Update()
     elseif inventoryMode == InventoryStates.MODE.RING_CHANGE then
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             ItemSpin.StartSpin(selectedRing)
-            Text.SetItemLabel(selectedItem)
-            UpdateActionLabel(selectedItem)
-            ShowSelectedAmmoName(selectedItem)
             InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
         end
     elseif inventoryMode == InventoryStates.MODE.EXAMINE_OPEN then
@@ -484,7 +508,7 @@ function InventoryStates.Update()
     elseif inventoryMode == InventoryStates.MODE.STATISTICS then
         
         if InventoryStates.GetActionCheck() then
-            Statistics.ToggleType()
+            Statistics.ToggleType(Text.TRANSITION.SWIPE_RIGHT)
             if Statistics.GetType() then
                 UpdateActionLabel(nil, "level_statistics")
             else
