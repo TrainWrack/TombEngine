@@ -6,6 +6,7 @@
 -- Examine - Handles examine functions and data for ring inventory
 -- ============================================================================
 --External Modules
+local Constants = require("Engine.RingInventory.Constants")
 local Interpolate = require("Engine.RingInventory.Interpolate")
 local Settings = require("Engine.RingInventory.Settings")
 local Text = require("Engine.RingInventory.Text")
@@ -26,6 +27,7 @@ local ROTATION_MULTIPLIER = 2
 local ZOOM_MULTIPLIER = 0.15
 local ROTATION_SMOOTHING = 0.35
 local ROTATION_SNAP_THRESHOLD = 0.05
+local SCALE_SNAP_THRESHOLD = 0.01
 
 local function StepRotationAxis(current, target)
     local normalizedCurrent = Utilities.NormalizeAngle(current)
@@ -75,9 +77,20 @@ local EXAMINE_CONTROLS =
 local examineRotation = Rotation(0, 0, 0)
 local examineTargetRotation = Rotation(0, 0, 0)
 local examineScaler = EXAMINE_DEFAULT_SCALE
+local examineTargetScale = EXAMINE_DEFAULT_SCALE
 local examineShowString = false
 local alpha  = 0
 local targetAlpha = 0
+
+local function StepScale(current, target)
+    local delta = target - current
+
+    if math.abs(delta) <= SCALE_SNAP_THRESHOLD then
+        return target
+    end
+
+    return current + delta * Interpolate.Easing.Softstep(ROTATION_SMOOTHING)
+end
 
 Examine.item = nil
 
@@ -155,7 +168,7 @@ end
 
 function Examine.ModifyScale(dir)
 
-    examineScaler = examineScaler + dir * ZOOM_MULTIPLIER
+    examineTargetScale = examineTargetScale + dir * ZOOM_MULTIPLIER
 
 end
 
@@ -174,14 +187,16 @@ end
 
 function Examine.GetScale()
 
-    return examineScaler
+    return Utilities.Clamp(examineTargetScale, EXAMINE_MIN_SCALE, EXAMINE_MAX_SCALE)
 
 end
 
 
 function Examine.SetScale(scaleValue)
 
-    examineScaler = scaleValue
+    local clampedScale = Utilities.Clamp(scaleValue, EXAMINE_MIN_SCALE, EXAMINE_MAX_SCALE)
+    examineScaler = clampedScale
+    examineTargetScale = clampedScale
     
 end
 
@@ -234,6 +249,8 @@ function Examine.Update()
         StepRotationAxis(examineRotation.y, examineTargetRotation.y),
         StepRotationAxis(examineRotation.z, examineTargetRotation.z)
     )
+    examineTargetScale = Utilities.Clamp(examineTargetScale, EXAMINE_MIN_SCALE, EXAMINE_MAX_SCALE)
+    examineScaler = StepScale(examineScaler, examineTargetScale)
 
     local color = Examine.item :GetColor()
     alpha = Interpolate.StepAlpha(alpha, targetAlpha, Settings.Animation.textAlphaSpeed)

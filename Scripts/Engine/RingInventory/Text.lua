@@ -43,16 +43,6 @@ local function ClampTransitionType(transitionType)
     return TextChannels.TRANSITION.CROSSFADE
 end
 
-local function GetSubLabelTransition(transitionType)
-    transitionType = ClampTransitionType(transitionType)
-
-    if transitionType == TextChannels.TRANSITION.SWIPE_RIGHT then
-        return TextChannels.TRANSITION.SWIPE_RIGHT
-    end
-
-    return TextChannels.TRANSITION.SWIPE_LEFT
-end
-
 local function GetTransitionPosition(position, transitionType, progress, isNext)
     local direction = 0
 
@@ -636,12 +626,12 @@ end
 function TextChannels.SetItemSubLabel(item, transitionType)
 
     local text = TextChannels.CreateItemLabel(item)
-    TextChannels.SetText("ITEM_LABEL_SECONDARY", text, true, GetSubLabelTransition(transitionType))
+    TextChannels.SetText("ITEM_LABEL_SECONDARY", text, true, TextChannels.TRANSITION.CROSSFADE)
 
 end
 
 function TextChannels.HideItemSubLabel(transitionType)
-    TextChannels.SetText("ITEM_LABEL_SECONDARY", "", false, GetSubLabelTransition(transitionType))
+    TextChannels.SetText("ITEM_LABEL_SECONDARY", "", false, TextChannels.TRANSITION.CROSSFADE)
 end
 
 return TextChannels
