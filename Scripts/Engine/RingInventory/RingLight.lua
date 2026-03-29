@@ -11,7 +11,7 @@ local RingLighting = {}
 
 -- Constants
 local FADE_SPEED = 0.1
-local UI_FADE_SPEED = Utilities.GetAlphaLerpFactor(Settings.Animation.textAlphaSpeed)
+local UI_FADE_SPEED = Utilities.GetAlphaLerpFactor(Settings.Animation.transitionSpeed)
 
 -- State tracking per ring: { ringType = { ring, color, selectedItemColor, previousSelectedItem } }
 RingLighting.rings = {}

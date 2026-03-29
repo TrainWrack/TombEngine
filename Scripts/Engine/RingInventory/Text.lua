@@ -29,7 +29,7 @@ TextChannels.TRANSITION =
 -- Configuration
 local TEXT_CONFIG =
 {
-    FADE_SPEED = Settings.Animation.textAlphaSpeed,
+    FADE_SPEED = Settings.Animation.transitionSpeed,
     SWIPE_DISTANCE = 2,
     CROSSFADE_DURATION_MULTIPLIER = 2,
     CROSSFADE_BLEND_START = 0.45,

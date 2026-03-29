@@ -240,7 +240,7 @@ function Examine.Update()
     examineScaler = StepScale(examineScaler, examineTargetScale)
 
     local color = Examine.item :GetColor()
-    alpha = Interpolate.StepAlpha(alpha, targetAlpha, Settings.Animation.textAlphaSpeed)
+    alpha = Interpolate.StepAlpha(alpha, targetAlpha, Settings.Animation.transitionSpeed)
     local targetColor = Utilities.ColorCombine(color, alpha)
     Examine.item :SetColor(targetColor)
 

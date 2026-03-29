@@ -45,10 +45,10 @@ Settings.Background =
 
 Settings.Animation = 
 {
-    inventoryAnimTime = .5,
-    itemAnimTime = .2,
+    inventoryAnimTime = 0.5,
+    itemAnimTime = 0.2,
     skipRingClose = false,
-    textAlphaSpeed = 255 / 5
+    transitionSpeed = 50
 }
 
 Settings.Statistics = 

@@ -93,7 +93,7 @@ local ITEM_USE_TEXT_CHANNELS =
 local ANIM_SETTINGS = Settings.Animation
 local COLOR_MAP = Settings.ColorMap
 local SOUND_MAP = Settings.SoundMap
-local UI_RING_FADE_SPEED = Utilities.GetAlphaLerpFactor(ANIM_SETTINGS.textAlphaSpeed)
+local UI_RING_FADE_SPEED = Utilities.GetAlphaLerpFactor(ANIM_SETTINGS.transitionSpeed) * 1.5
 
 -- Variables
 local inventoryClosed = false

@@ -14,7 +14,7 @@ local COLOR_MAP = Settings.ColorMap
 
 --CONSTANTS
 local BG_LAYER = 0
-local ALPHA_SPEED = Settings.Animation.textAlphaSpeed
+local ALPHA_SPEED = Settings.Animation.transitionSpeed
 
 -- Background state
 local bgAlpha  = 0
@@ -56,8 +56,8 @@ local function DrawArrows()
 
     local arrowsDown =
     {
-        {180, Vec2(5, 95)},
-        {180, Vec2(95, 95)},
+        {180, Vec2(5, 88)},
+        {180, Vec2(95, 88)},
     }
 
     if arrowUpAlpha > 0 then

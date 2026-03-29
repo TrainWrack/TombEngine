@@ -112,9 +112,13 @@ LevelFuncs.Engine.RingInventory.RunInventory = function()
         end
 
         inventoryDelay = inventoryDelay + 1
-        TEN.View.SetPostProcessMode(View.PostProcessMode.MONOCHROME)
-        TEN.View.SetPostProcessStrength(COLOR_MAP.background.a / Constants.ALPHA_MAX)
-        TEN.View.SetPostProcessTint(COLOR_MAP.background)
+        
+        if Settings.Background.enable ~= true then
+            TEN.View.SetPostProcessMode(View.PostProcessMode.MONOCHROME)
+            TEN.View.SetPostProcessStrength(COLOR_MAP.background.a / Constants.ALPHA_MAX)
+            TEN.View.SetPostProcessTint(COLOR_MAP.background)
+        end
+        
         if inventoryDelay >= requiredDelay then
             TEN.View.DisplayItem.SetCameraPosition(Constants.CAMERA_START)
             TEN.View.DisplayItem.SetTargetPosition(Constants.TARGET_START)
@@ -127,9 +131,11 @@ LevelFuncs.Engine.RingInventory.RunInventory = function()
     end
     
     if InventoryStates.GetInventoryClosed() then
-        TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
-        TEN.View.SetPostProcessStrength(1)
-        TEN.View.SetPostProcessTint(COLOR_MAP.itemSelected)
+        if Settings.Background.enable ~= true then
+            TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
+            TEN.View.SetPostProcessStrength(1)
+            TEN.View.SetPostProcessTint(COLOR_MAP.itemSelected)
+        end
         InventoryStates.SetInventoryClosed(false)
         inventoryRunning = false
     end
@@ -290,7 +296,7 @@ end
 -- @tfield[opt=false] bool skipRingClose If true, the inventory closes instantly without playing the ring-retract animation.
 
 --- Speed at which inventory text fades in and out.
--- @tfield[opt=25.5] float textAlphaSpeed Alpha change applied per frame (255 / 10 ≈ 25.5). Higher values cause faster fades.
+-- @tfield[opt=50] float transitionSpeed Alpha change applied per frame. Higher values cause faster fades.
 
 --- Statistics
 -- @section Statistics
