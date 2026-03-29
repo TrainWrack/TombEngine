@@ -24,6 +24,45 @@ local EXAMINE_MAX_SCALE = 1.6
 local EXAMINE_TEXT_POS = Vec2(50, 80)
 local ROTATION_MULTIPLIER = 2
 local ZOOM_MULTIPLIER = 0.3
+local ROTATION_SMOOTHING = 0.35
+local ROTATION_SNAP_THRESHOLD = 0.05
+
+local function NormalizeAngle(angle)
+    angle = angle % 360
+    if angle < 0 then
+        angle = angle + 360
+    end
+    return angle
+end
+
+local function GetShortestAngleDelta(current, target)
+    local delta = (target - current + 180) % 360 - 180
+    if delta < -180 then
+        delta = delta + 360
+    end
+    return delta
+end
+
+local function NormalizeRotation(rotation)
+    return Rotation(
+        NormalizeAngle(rotation.x),
+        NormalizeAngle(rotation.y),
+        NormalizeAngle(rotation.z)
+    )
+end
+
+local function StepRotationAxis(current, target)
+    local normalizedCurrent = NormalizeAngle(current)
+    local normalizedTarget = NormalizeAngle(target)
+    local delta = GetShortestAngleDelta(normalizedCurrent, normalizedTarget)
+
+    if math.abs(delta) <= ROTATION_SNAP_THRESHOLD then
+        return normalizedTarget
+    end
+
+    local step = delta * Interpolate.Easing.Softstep(ROTATION_SMOOTHING)
+    return NormalizeAngle(normalizedCurrent + step)
+end
 
 local EXAMINE_TEXT = 
     {
@@ -58,6 +97,7 @@ local EXAMINE_CONTROLS =
     }
 
 local examineRotation = Rotation(0, 0, 0)
+local examineTargetRotation = Rotation(0, 0, 0)
 local examineScaler = EXAMINE_DEFAULT_SCALE
 local examineShowString = false
 local alpha  = 0
@@ -131,9 +171,9 @@ end
 
 function Examine.ModifyRotation(dirX, dirY, dirZ)
 
-    examineRotation.x = examineRotation.x + dirX * ROTATION_MULTIPLIER
-    examineRotation.y = examineRotation.y + dirY * ROTATION_MULTIPLIER
-    examineRotation.z = examineRotation.z + dirZ * ROTATION_MULTIPLIER
+    examineTargetRotation.x = NormalizeAngle(examineTargetRotation.x + dirX * ROTATION_MULTIPLIER)
+    examineTargetRotation.y = NormalizeAngle(examineTargetRotation.y + dirY * ROTATION_MULTIPLIER)
+    examineTargetRotation.z = NormalizeAngle(examineTargetRotation.z + dirZ * ROTATION_MULTIPLIER)
 
 end
 
@@ -145,13 +185,14 @@ end
 
 function Examine.GetRotation()
 
-    return examineRotation
+    return NormalizeRotation(examineTargetRotation)
     
 end
 
 function Examine.SetRotation(rotation)
 
-    examineRotation = Utilities.CopyRotation(rotation)
+    examineRotation = NormalizeRotation(rotation)
+    examineTargetRotation = NormalizeRotation(rotation)
     
 end
 
@@ -212,6 +253,12 @@ function Examine.Update()
 
     if not Examine.item  then return end
 
+    examineRotation = Rotation(
+        StepRotationAxis(examineRotation.x, examineTargetRotation.x),
+        StepRotationAxis(examineRotation.y, examineTargetRotation.y),
+        StepRotationAxis(examineRotation.z, examineTargetRotation.z)
+    )
+
     local color = Examine.item :GetColor()
     alpha = Interpolate.StepAlpha(alpha, targetAlpha, Settings.Animation.textAlphaSpeed)
     local targetColor = Utilities.ColorCombine(color, alpha)
@@ -220,6 +267,7 @@ function Examine.Update()
     if alpha == 0 then
         Examine.item  = nil
         Text.Destroy("EXAMINE_TEXT")
+        Text.Destroy("EXAMINE_CONTROLS")
     end
 
 end

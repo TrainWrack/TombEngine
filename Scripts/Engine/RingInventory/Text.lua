@@ -43,6 +43,16 @@ local function ClampTransitionType(transitionType)
     return TextChannels.TRANSITION.CROSSFADE
 end
 
+local function GetSubLabelTransition(transitionType)
+    transitionType = ClampTransitionType(transitionType)
+
+    if transitionType == TextChannels.TRANSITION.SWIPE_RIGHT then
+        return TextChannels.TRANSITION.SWIPE_RIGHT
+    end
+
+    return TextChannels.TRANSITION.SWIPE_LEFT
+end
+
 local function GetTransitionPosition(position, transitionType, progress, isNext)
     local direction = 0
 
@@ -189,6 +199,14 @@ function TextChannels.SetText(channelName, newText, shouldShow, transitionType)
         elseif not shouldShow and state.onHide then
             state.onHide()
         end
+
+        if not shouldShow and state.currentText ~= "" then
+            state.nextText = newText
+            state.isTransitioning = true
+            state.activeTransition = transitionType
+            state.transitionProgress = 0
+            state.nextAlpha = TEXT_CONFIG.MIN_ALPHA
+        end
     end
     
     -- Handle text change
@@ -276,9 +294,8 @@ function TextChannels.Update()
                     state.nextAlpha = math.min(TEXT_CONFIG.MAX_ALPHA * state.transitionProgress, TEXT_CONFIG.MAX_ALPHA)
                 end
             else
-                state.currentAlpha = math.max(state.currentAlpha - state.fadeSpeed, TEXT_CONFIG.MIN_ALPHA)
+                state.currentAlpha = math.max(TEXT_CONFIG.MAX_ALPHA * (1 - state.transitionProgress), TEXT_CONFIG.MIN_ALPHA)
                 state.nextAlpha = TEXT_CONFIG.MIN_ALPHA
-                state.transitionProgress = 0
             end
 
             if state.currentAlpha <= TEXT_CONFIG.MIN_ALPHA and state.nextAlpha >= TEXT_CONFIG.MAX_ALPHA then
@@ -619,8 +636,12 @@ end
 function TextChannels.SetItemSubLabel(item, transitionType)
 
     local text = TextChannels.CreateItemLabel(item)
-    TextChannels.SetText("ITEM_LABEL_SECONDARY", text, true, transitionType)
+    TextChannels.SetText("ITEM_LABEL_SECONDARY", text, true, GetSubLabelTransition(transitionType))
 
+end
+
+function TextChannels.HideItemSubLabel(transitionType)
+    TextChannels.SetText("ITEM_LABEL_SECONDARY", "", false, GetSubLabelTransition(transitionType))
 end
 
 return TextChannels

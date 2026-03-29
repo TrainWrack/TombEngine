@@ -211,9 +211,9 @@ function Ring:Translate(center, radius, rotationOffset, alpha)
 end
 
 -- Color items in the ring
-function Ring:Color(color, selectedItemColor)
+function Ring:Color(color, selectedItemColor, fadeSpeed)
     
-    RingLight.SetRingColors(self, color, selectedItemColor)
+    RingLight.SetRingColors(self, color, selectedItemColor, fadeSpeed)
 
 end
 

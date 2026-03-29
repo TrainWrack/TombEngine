@@ -26,6 +26,7 @@ local WeaponMode =  require("Engine.RingInventory.WeaponMode")
 local ANIM_SETTINGS = Settings.Animation
 local COLOR_MAP = Settings.ColorMap
 local SOUND_MAP = Settings.SoundMap
+local UI_RING_FADE_SPEED = math.min(ANIM_SETTINGS.textAlphaSpeed / 255, 1)
 
 --Variables
 local inventoryClosed = false
@@ -169,16 +170,20 @@ local function UpdateBackLabel(label)
 end
 
 ShowSelectedAmmoName = function(weaponItem, transitionType)
+    local subLabelTransition = transitionType
+    if subLabelTransition ~= Text.TRANSITION.SWIPE_LEFT and subLabelTransition ~= Text.TRANSITION.SWIPE_RIGHT then
+        subLabelTransition = Text.TRANSITION.SWIPE_LEFT
+    end
 
     if not weaponItem or weaponItem:GetType() ~= PickupData.TYPE.WEAPON then
-        Text.Hide("ITEM_LABEL_SECONDARY")
+        Text.HideItemSubLabel(subLabelTransition)
         return
     end
 
     local itemObjectID = weaponItem:GetObjectID()
 
     if not itemObjectID then
-        Text.Hide("ITEM_LABEL_SECONDARY")
+        Text.HideItemSubLabel(subLabelTransition)
         return
     end
 
@@ -187,7 +192,7 @@ ShowSelectedAmmoName = function(weaponItem, transitionType)
     local ammoType = Lara:GetAmmoType(weaponSlot)
     
     if not ammoType then
-        Text.Hide("ITEM_LABEL_SECONDARY")
+        Text.HideItemSubLabel(subLabelTransition)
         return
     end
     
@@ -198,7 +203,7 @@ ShowSelectedAmmoName = function(weaponItem, transitionType)
     local base  = PickupData.GetProperties(objectID)
     local data = InventoryData.BuildItem(base)
  
-    Text.SetItemSubLabel(data, transitionType)
+    Text.SetItemSubLabel(data, subLabelTransition)
 
 end
 
@@ -365,7 +370,11 @@ function InventoryStates.Update()
     elseif inventoryMode == InventoryStates.MODE.RING_ROTATE then
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             selectedRing:SetCurrentAngle(selectedRing:GetTargetAngle())
-            if previousMode then
+            local queuedDirection = Inputs.ConsumeContinuousSpinDirection()
+            if queuedDirection ~= 0 then
+                TEN.Sound.PlaySound(SOUND_MAP.menuRotate)
+                InventoryStates.StartRingNavigation(selectedRing, queuedDirection)
+            elseif previousMode then
                 inventoryMode = previousMode
             else
                 InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
@@ -383,7 +392,7 @@ function InventoryStates.Update()
             Text.SetText("HEADER", "examine", true)
             Text.Hide("ITEM_LABEL_SECONDARY")
             Text.Hide("ITEM_LABEL_PRIMARY")
-            selectedRing:Color(COLOR_MAP.itemHidden, COLOR_MAP.itemHidden)
+            selectedRing:Color(COLOR_MAP.itemHidden, COLOR_MAP.itemHidden, UI_RING_FADE_SPEED)
             Examine.Show(selectedItem)
             Text.Hide("CONTROLS_SELECT")
             UpdateBackLabel("back")
@@ -412,8 +421,7 @@ function InventoryStates.Update()
             InventoryStates.SetMode(InventoryStates.MODE.ITEM_SELECTED)
         else
             Text.SetText("HEADER", "actions_inventory", true)
-            Text.SetItemLabel(selectedItem)
-            UpdateActionLabel(selectedItem)
+            UpdateInventoryTextsForSelectedItem(selectedItem)
             UpdateBackLabel()
             Sprites.ShowArrows()
             selectedRing:Color(COLOR_MAP.itemDeselected, COLOR_MAP.itemSelected)
@@ -526,8 +534,8 @@ function InventoryStates.Update()
             if not isItemChosen then
                 selectedRing:Color(COLOR_MAP.itemDeselected, COLOR_MAP.itemSelected)
                 Text.SetText("HEADER", "actions_inventory", true)
+                UpdateInventoryTextsForSelectedItem(selectedItem)
                 Sprites.ShowArrows()
-                UpdateActionLabel(selectedItem)
                 UpdateBackLabel()
                 ItemSpin.StartSelectedItemSpin(selectedRing)
             end
@@ -560,7 +568,7 @@ function InventoryStates.Update()
             Text.Hide("ITEM_LABEL_SECONDARY")
             Text.Hide("CONTROLS_SELECT")
             Text.Hide("CONTROLS_BACK")
-            Animation.SaveItemData(selectedItem)
+            selectedRing:Color(COLOR_MAP.itemHidden, COLOR_MAP.itemHidden, UI_RING_FADE_SPEED)
             ItemSpin.StopSelectedItemSpin(selectedRing)
             Sprites.HideArrows()
             if InventoryData.IsItemChosen() then
@@ -571,10 +579,6 @@ function InventoryStates.Update()
             Save.CreateSaveMenu()
             Save.Show()
 
-            onEnter = false
-        end
-
-        if Save.IsQuickSaveEnabled() or InventoryData.IsItemChosen() or Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             onEnter = true
             inventoryMode = InventoryStates.MODE.SAVE_MENU
         end
@@ -585,10 +589,12 @@ function InventoryStates.Update()
             Save.Hide()
 
             if not InventoryData.IsItemChosen() then
-                UpdateActionLabel()
+                selectedRing:Color(COLOR_MAP.itemDeselected, COLOR_MAP.itemSelected)
+                UpdateInventoryTextsForSelectedItem(selectedItem)
                 UpdateBackLabel()
                 Text.SetText("HEADER", "actions_inventory", true)
                 Sprites.ShowArrows()
+                ItemSpin.StartSelectedItemSpin(selectedRing)
             end
 
             onEnter = false
@@ -600,20 +606,17 @@ function InventoryStates.Update()
             Text.SetText("HEADER", selectedItem:GetName(), true)
             UpdateActionLabel()
             UpdateBackLabel()
+            selectedRing:Color(COLOR_MAP.itemHidden, COLOR_MAP.itemSelected)
             onEnter = true
             inventoryMode = InventoryStates.MODE.ITEM_SELECTED
-        elseif Save.IsQuickSaveEnabled() or Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
-            if Save.IsSaveSelected() or Save.IsQuickSaveEnabled() then
-                Save.ClearSaveSelected()
-                Save.SetQuickSaveStatus(false)
-                onEnter = true
-                inventoryMode = InventoryStates.MODE.INVENTORY_EXIT
-            else
-                
-                ItemSpin.StartSelectedItemSpin(selectedRing)
-                onEnter = true
-                inventoryMode = InventoryStates.MODE.INVENTORY
-            end
+        elseif Save.IsSaveSelected() or Save.IsQuickSaveEnabled() then
+            Save.ClearSaveSelected()
+            Save.SetQuickSaveStatus(false)
+            onEnter = true
+            inventoryMode = InventoryStates.MODE.INVENTORY_EXIT
+        else
+            onEnter = true
+            inventoryMode = InventoryStates.MODE.INVENTORY
         end
     elseif inventoryMode == InventoryStates.MODE.COMBINE_SETUP then
         if onEnter then

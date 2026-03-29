@@ -22,6 +22,8 @@ local SOUND_MAP = Settings.SoundMap
 
 local timer = 0
 local continuousSpinQueued = false
+local continuousSpinDirection = 0
+local suppressRotationInput = false
 
 local Inputs = {}
 
@@ -92,30 +94,38 @@ function Inputs.Update(mode, timeInMenu)
     local selectedItem  = selectedRing:GetSelectedItem()
 
     if mode == INVENTORY_MODE.RING_ROTATE then
+        if suppressRotationInput then
+            suppressRotationInput = false
+            return
+        end
+
         local heldDirection = GetHeldHorizontalDirection()
         local rotationProgress = Interpolate.GetProgress("RingRotateAngle")
 
         if heldDirection ~= 0 and rotationProgress >= 0.75 and not continuousSpinQueued then
-            if heldDirection < 0 then
-                DoLeftKey(selectedRing)
-            else
-                DoRightKey(selectedRing)
-            end
             continuousSpinQueued = true
+            continuousSpinDirection = heldDirection
         elseif GuiIsPulsed(TEN.Input.ActionID.LEFT) then
             DoLeftKey(selectedRing)
         elseif GuiIsPulsed(TEN.Input.ActionID.RIGHT) then
             DoRightKey(selectedRing)
+        elseif heldDirection == 0 then
+            continuousSpinQueued = false
+            continuousSpinDirection = 0
         end
 
         if Interpolate.GetProgress("RingRotateAngle") < 0.75 or heldDirection == 0 then
             continuousSpinQueued = false
+            if heldDirection == 0 then
+                continuousSpinDirection = 0
+            end
         end
 
         return
     end
 
     continuousSpinQueued = false
+    continuousSpinDirection = 0
 
     if mode == INVENTORY_MODE.INVENTORY then
         if GuiIsPulsed(TEN.Input.ActionID.LEFT) then
@@ -218,6 +228,14 @@ function Inputs.Update(mode, timeInMenu)
             InventoryStates.SetMode(INVENTORY_MODE.EXAMINE_CLOSE)
         end
     end
+end
+
+function Inputs.ConsumeContinuousSpinDirection()
+    local direction = continuousSpinDirection
+    continuousSpinQueued = false
+    continuousSpinDirection = 0
+    suppressRotationInput = direction ~= 0
+    return direction
 end
 
 return Inputs
