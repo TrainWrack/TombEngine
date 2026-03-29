@@ -370,10 +370,10 @@ function InventoryStates.Update()
     elseif inventoryMode == InventoryStates.MODE.RING_ROTATE then
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             selectedRing:SetCurrentAngle(selectedRing:GetTargetAngle())
-            local queuedDirection = Inputs.ConsumeContinuousSpinDirection()
-            if queuedDirection ~= 0 then
+            local heldDirection = Inputs.GetHeldRingDirection()
+            if heldDirection ~= 0 then
                 TEN.Sound.PlaySound(SOUND_MAP.menuRotate)
-                InventoryStates.StartRingNavigation(selectedRing, queuedDirection)
+                InventoryStates.StartRingNavigation(selectedRing, heldDirection)
             elseif previousMode then
                 inventoryMode = previousMode
             else
