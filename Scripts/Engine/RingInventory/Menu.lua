@@ -531,7 +531,7 @@ local PlaySoundEffect = function(menuName, soundIndex)
     end
 end
 
-local HandleInput  = function(menuName)
+local HandleInput = function(menuName)
     local menu = Menus[menuName]
     local itemCount = #menu.items
     local previousItem = menu.currentItem

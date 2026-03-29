@@ -648,12 +648,12 @@ function TextChannels.SetItemLabel(item, transitionType)
     TextChannels.SetText("ITEM_LABEL_PRIMARY", text, true, transitionType)
 end
 
-function TextChannels.SetItemSubLabel(item, transitionType)
+function TextChannels.SetItemSubLabel(item)
     local text = TextChannels.CreateItemLabel(item)
     TextChannels.SetText("ITEM_LABEL_SECONDARY", text, true, TextChannels.TRANSITION.CROSSFADE)
 end
 
-function TextChannels.HideItemSubLabel(transitionType)
+function TextChannels.HideItemSubLabel()
     TextChannels.SetText("ITEM_LABEL_SECONDARY", "", false, TextChannels.TRANSITION.CROSSFADE)
 end
 

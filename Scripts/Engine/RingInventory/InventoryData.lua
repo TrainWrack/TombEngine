@@ -51,18 +51,6 @@ function InventoryData.GetRing(ringType)
     return rings[ringType]
 end
 
--- Add an existing Ring instance to the inventory
-function InventoryData.AddRing(ring)
-    if not ring then
-        return false
-    end
-    
-    -- Store the ring
-    rings[ring.type] = ring
-    
-    return true
-end
-
 -- Check if a ring exists
 function InventoryData.HasRing(ringType)
     return rings[ringType] ~= nil
@@ -109,16 +97,6 @@ function InventoryData.SwitchToRingType(ringType)
 
     local ring = InventoryData.GetRing(ringType)
 
-    ItemSpin.StartSpin(ring)
-    return true
-end
-
--- Switch to a different ring
-function InventoryData.SwitchToRing(ring)
-    local ItemSpin = require("Engine.RingInventory.ItemSpin")
-    
-    previousRingType = selectedRingType
-    selectedRingType = ring:GetType()
     ItemSpin.StartSpin(ring)
     return true
 end
@@ -200,7 +178,7 @@ function InventoryData.ColorAll(color, selectedItemColor, omitSelectedRing)
     end
 end
 
--- OFfset all rings
+-- Offset all rings
 function InventoryData.OffsetAll(direction)
     for ringType, ring in pairs(rings) do
         ring:OffsetPosition(direction)
@@ -456,11 +434,6 @@ end
 function InventoryData.SetChosenItem(item)
     chosenItem = item
     return true
-end
-
---Check item selected objectID
-function InventoryData.IsChosenItem(item)
-    return chosenItem == item
 end
 
 --Check if an item is chosen

@@ -34,7 +34,7 @@ local examineTargetRotation = Rotation(0, 0, 0)
 local examineScaler = EXAMINE_DEFAULT_SCALE
 local examineTargetScale = EXAMINE_DEFAULT_SCALE
 local examineShowString = false
-local alpha  = 0
+local alpha = 0
 local targetAlpha = 0
 
 Examine.item = nil
@@ -112,15 +112,6 @@ local function ExamineLabel(showText)
     return string
 end
 
-function Examine.Item(itemData)
-
-    examineScaler = Utilities.Clamp(examineScaler, EXAMINE_MIN_SCALE, EXAMINE_MAX_SCALE)
-    local displayItem = itemData:GetDisplayItem()
-    displayItem:SetRotation(examineRotation)
-    displayItem:SetScale(Vec3(examineScaler))
-    displayItem:Draw()
-end
-
 function Examine.SetupText(itemData)
 
     local item = itemData:GetObjectID()
@@ -150,10 +141,6 @@ function Examine.ToggleText()
     end
 end
 
-function Examine.TextStatus()
-    return examineShowString
-end
-
 function Examine.ModifyRotation(dirX, dirY, dirZ)
 
     examineTargetRotation.x = Utilities.NormalizeAngle(examineTargetRotation.x + dirX * ROTATION_MULTIPLIER)
@@ -167,22 +154,11 @@ function Examine.ModifyScale(dir)
     examineTargetScale = examineTargetScale + dir * ZOOM_MULTIPLIER
 end
 
-function Examine.GetRotation()
-
-    return Utilities.NormalizeRotation(examineTargetRotation)
-end
-
 function Examine.SetRotation(rotation)
 
     examineRotation = Utilities.NormalizeRotation(rotation)
     examineTargetRotation = Utilities.NormalizeRotation(rotation)
 end
-
-function Examine.GetScale()
-
-    return Utilities.Clamp(examineTargetScale, EXAMINE_MIN_SCALE, EXAMINE_MAX_SCALE)
-end
-
 
 function Examine.SetScale(scaleValue)
 
@@ -204,19 +180,19 @@ function Examine.Show(item)
     Examine.ResetExamine(item)
     Examine.SetupText(item)
     targetAlpha = 255
-    Examine.item  = TEN.View.DisplayItem(item:GetObjectID(), EXAMINE_POSITION, examineRotation, Vec3(examineScaler), item:GetMeshBits())
+    Examine.item = TEN.View.DisplayItem(item:GetObjectID(), EXAMINE_POSITION, examineRotation, Vec3(examineScaler), item:GetMeshBits())
 end
 
 function Examine.Draw()
 
-    if not Examine.item  then return end
+    if not Examine.item then return end
 
     examineScaler = Utilities.Clamp(examineScaler, EXAMINE_MIN_SCALE, EXAMINE_MAX_SCALE)
-    local color = Examine.item :GetColor()
-    Examine.item :SetRotation(examineRotation)
-    Examine.item :SetScale(Vec3(examineScaler))
-    Examine.item :SetColor(Utilities.ColorCombine(color, alpha))
-    Examine.item :Draw()
+    local color = Examine.item:GetColor()
+    Examine.item:SetRotation(examineRotation)
+    Examine.item:SetScale(Vec3(examineScaler))
+    Examine.item:SetColor(Utilities.ColorCombine(color, alpha))
+    Examine.item:Draw()
 end
 
 function Examine.Hide()
@@ -229,7 +205,7 @@ end
 
 function Examine.Update()
 
-    if not Examine.item  then return end
+    if not Examine.item then return end
 
     examineRotation = Rotation(
         StepRotationAxis(examineRotation.x, examineTargetRotation.x),
@@ -239,13 +215,13 @@ function Examine.Update()
     examineTargetScale = Utilities.Clamp(examineTargetScale, EXAMINE_MIN_SCALE, EXAMINE_MAX_SCALE)
     examineScaler = StepScale(examineScaler, examineTargetScale)
 
-    local color = Examine.item :GetColor()
+    local color = Examine.item:GetColor()
     alpha = Interpolate.StepAlpha(alpha, targetAlpha, Settings.Animation.transitionSpeed)
     local targetColor = Utilities.ColorCombine(color, alpha)
-    Examine.item :SetColor(targetColor)
+    Examine.item:SetColor(targetColor)
 
     if alpha == 0 then
-        Examine.item  = nil
+        Examine.item = nil
         Text.Destroy("EXAMINE_TEXT")
         Text.Destroy("EXAMINE_CONTROLS")
     end

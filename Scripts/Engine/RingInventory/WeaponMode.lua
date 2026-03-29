@@ -29,7 +29,7 @@ function WeaponMode.CreateWeaponModeMenu(itemData)
         if entry.weapon == itemData:GetObjectID() then
             table.insert(weaponModes, {
                 itemName = entry.string,
-                actionBit = entry.bit,
+                actionBit = nil,
                 options = nil,
                 currentOption = 1
             })

@@ -7,10 +7,10 @@
 -- ============================================================================
 
 --External Modules
-local Examine =  require("Engine.RingInventory.Examine")
+local Examine = require("Engine.RingInventory.Examine")
 local InputHelpers = require("Engine.RingInventory.InputHelpers")
 local ItemMenu = require("Engine.RingInventory.ItemMenu")
-local InventoryData= require("Engine.RingInventory.InventoryData")
+local InventoryData = require("Engine.RingInventory.InventoryData")
 local InventoryStates = require("Engine.RingInventory.InventoryStates")
 local Ring = require("Engine.RingInventory.Ring")
 local Settings = require("Engine.RingInventory.Settings")
@@ -58,7 +58,7 @@ function Inputs.Update(mode, timeInMenu)
 
     local selectedRing = InventoryData.GetSelectedRing()
     local selectedRingType = InventoryData.GetSelectedRingType()
-    local selectedItem  = selectedRing:GetSelectedItem()
+    local selectedItem = selectedRing:GetSelectedItem()
 
     if mode == INVENTORY_MODE.RING_ROTATE then
         if InputHelpers.GuiIsPulsed(TEN.Input.ActionID.LEFT, timer) then

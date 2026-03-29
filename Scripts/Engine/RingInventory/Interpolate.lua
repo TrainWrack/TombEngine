@@ -5,7 +5,7 @@
 local Interpolate = {}
 
 -- Internal motion progress tracker
-LevelVars.Engine.InterpolateProgress = {}
+LevelVars.Engine.InterpolateProgress = LevelVars.Engine.InterpolateProgress or {}
 
 -- Easing functions
 Interpolate.Easing = 

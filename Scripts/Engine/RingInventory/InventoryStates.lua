@@ -6,9 +6,9 @@
 local Animation = require("Engine.RingInventory.Animation")
 local Combine = require("Engine.RingInventory.Combine")
 local Constants = require("Engine.RingInventory.Constants")
-local Examine =  require("Engine.RingInventory.Examine")
+local Examine = require("Engine.RingInventory.Examine")
 local Menu = require("Engine.RingInventory.Menu")
-local InventoryData= require("Engine.RingInventory.InventoryData")
+local InventoryData = require("Engine.RingInventory.InventoryData")
 local Interpolate = require("Engine.RingInventory.Interpolate")
 local ItemSpin = require("Engine.RingInventory.ItemSpin")
 local PickupData = require("Engine.RingInventory.PickupData")
@@ -19,7 +19,7 @@ local Save = require("Engine.RingInventory.Save")
 local Sprites = require("Engine.RingInventory.Sprites")
 local Text = require("Engine.RingInventory.Text")
 local Utilities = require("Engine.RingInventory.Utilities")
-local WeaponMode =  require("Engine.RingInventory.WeaponMode")
+local WeaponMode = require("Engine.RingInventory.WeaponMode")
 
 local ItemMenu
 local Inputs
@@ -38,7 +38,8 @@ InventoryStates.MODE =
 	STATISTICS = 7,
     STATISTICS_CLOSE = 8,
     EXAMINE_OPEN = 9,
-	EXAMINE = 10,
+    EXAMINE = 10,
+    -- 11 unused
     EXAMINE_CLOSE = 12,
     ITEM_USE = 13,
     ITEM_SELECT = 14,
@@ -49,9 +50,10 @@ InventoryStates.MODE =
     COMBINE_CLOSE = 19,
     COMBINE_RING_OPENING = 20,
     COMBINE_SUCCESS = 21,
-	COMBINE_COMPLETE = 22,
+	COMBINE_COMPLETE = 22, -- Reserved (unused)
 	SEPARATE = 23,
-    SEPARATE_COMPLETE = 24,
+    SEPARATE_COMPLETE = 24, -- Reserved (unused)
+    -- 25 unused
     AMMO_SELECT_OPEN = 26,
     AMMO_SELECT = 27,
     AMMO_SELECT_CLOSE = 28,
@@ -163,21 +165,16 @@ local HideAmmoRing = function(item)
     end
 end
 
-local ShowSelectedAmmoName = function(weaponItem, transitionType)
-    local subLabelTransition = transitionType
-    if subLabelTransition ~= Text.TRANSITION.SWIPE_LEFT and subLabelTransition ~= Text.TRANSITION.SWIPE_RIGHT then
-        subLabelTransition = Text.TRANSITION.SWIPE_LEFT
-    end
-
+local ShowSelectedAmmoName = function(weaponItem)
     if not weaponItem or weaponItem:GetType() ~= PickupData.TYPE.WEAPON then
-        Text.HideItemSubLabel(subLabelTransition)
+        Text.HideItemSubLabel()
         return
     end
 
     local itemObjectID = weaponItem:GetObjectID()
 
     if not itemObjectID then
-        Text.HideItemSubLabel(subLabelTransition)
+        Text.HideItemSubLabel()
         return
     end
 
@@ -186,7 +183,7 @@ local ShowSelectedAmmoName = function(weaponItem, transitionType)
     local ammoType = Lara:GetAmmoType(weaponSlot)
     
     if not ammoType then
-        Text.HideItemSubLabel(subLabelTransition)
+        Text.HideItemSubLabel()
         return
     end
     
@@ -194,10 +191,10 @@ local ShowSelectedAmmoName = function(weaponItem, transitionType)
     
     if not objectID then return end
     
-    local base  = PickupData.GetProperties(objectID)
+    local base = PickupData.GetProperties(objectID)
     local data = InventoryData.BuildItem(base)
  
-    Text.SetItemSubLabel(data, subLabelTransition)
+    Text.SetItemSubLabel(data)
 end
 
 local UpdateActionLabel = function(itemSelected, override, transitionType)
@@ -252,7 +249,7 @@ end
 local UpdateInventoryTextsForSelectedItem = function(selectedItem, itemTransitionType, controlsTransitionType)
     Text.SetItemLabel(selectedItem, itemTransitionType)
     UpdateActionLabel(selectedItem, nil, controlsTransitionType or itemTransitionType)
-    ShowSelectedAmmoName(selectedItem, itemTransitionType)
+    ShowSelectedAmmoName(selectedItem)
 end
 
 local UpdateBackLabel = function(label)

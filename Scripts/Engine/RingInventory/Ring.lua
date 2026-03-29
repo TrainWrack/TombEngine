@@ -36,7 +36,7 @@ Ring.CENTERS =
 }
 
 -- Constructor
-function Ring.Create(ringType, centerPosition, inventory)
+function Ring.Create(ringType, centerPosition)
     local self = setmetatable({}, Ring)
     
     -- Instance variables
@@ -47,7 +47,6 @@ function Ring.Create(ringType, centerPosition, inventory)
     self.position = centerPosition or Vec3(0, 0, 0)
     self.previousPosition = centerPosition or Vec3(0, 0, 0)
     self.slice = 0
-    self.inventory = inventory  -- Reference to parent inventory
     self.visible = true
     
     self.currentAngle = 0
@@ -57,14 +56,6 @@ function Ring.Create(ringType, centerPosition, inventory)
     Ring.RING_RADIUS = -512 * Utilities.GetAspectRatioMultiplier()
 
     return self
-end
-
--- Static method: Get ring by type from inventory
-function Ring.GetRingByType(ringType)
-    if Ring.inventory then
-        return Ring.inventory:GetRing(ringType)
-    end
-    return nil
 end
 
 -- Recalculate slice based on item count
@@ -238,14 +229,6 @@ end
 -- Get ring type
 function Ring:GetType()
     return self.type
-end
-
--- Get another ring by type from the same inventory
-function Ring:GetRingByType(ringType)
-    if self.inventory then
-        return self.inventory:GetRing(ringType)
-    end
-    return nil
 end
 
 -- Set slice value

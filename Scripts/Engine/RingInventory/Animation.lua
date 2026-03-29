@@ -147,7 +147,7 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
         local rings = InventoryData.GetAllRings()
         for ringType, ring in pairs(rings) do   
 
-            local targetAngle  = ring:GetCurrentAngle()
+            local targetAngle = ring:GetCurrentAngle()
 
             local ringChange = 
             {

@@ -25,10 +25,10 @@ Settings.ColorMap =
     itemHidden = Color(0, 0, 0, 0),
     itemDeselected = Color(32, 32, 32, 255),
     itemSelected = Color(128, 128, 128, 255),
-    neutral =  Color(255, 255, 255, 255)
+    neutral = Color(255, 255, 255, 255)
 }
 
-Settings.Background = 
+Settings.Background =
 {
     enable = true,
     objectID = TEN.Objects.ObjID.DIARY_ENTRY_SPRITES,
@@ -43,7 +43,7 @@ Settings.Background =
     alpha = 255
 }
 
-Settings.Animation = 
+Settings.Animation =
 {
     inventoryAnimTime = 0.5,
     itemAnimTime = 0.2,
@@ -51,7 +51,7 @@ Settings.Animation =
     transitionSpeed = 50
 }
 
-Settings.Statistics = 
+Settings.Statistics =
 {
     progressTime = true,
     gameStats = true
