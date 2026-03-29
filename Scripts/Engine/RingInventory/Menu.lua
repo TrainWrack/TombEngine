@@ -4,6 +4,7 @@
 
 --External Modules
 local Constants = require("Engine.RingInventory.Constants")
+local InputHelpers = require("Engine.RingInventory.InputHelpers")
 local Settings = require("Engine.RingInventory.Settings")
 local Utilities = require("Engine.RingInventory.Utilities")
 
@@ -93,7 +94,8 @@ Menu.Create = function(menuName, title, items, acceptFunction, exitFunction, men
         targetScrollY = 0,
         currentAlpha = 0,
         targetAlpha = 0,
-        fadeSpeed = FADE_SPEED
+        fadeSpeed = FADE_SPEED,
+        inputTimer = 0
     }
 
     return setmetatable(self, Menu)
@@ -142,6 +144,7 @@ Menu.AddActive = function(menuName, instant)
         menu.visible = true
         menu.currentAlpha = instant and Constants.ALPHA_MAX or Constants.ALPHA_MIN
         menu.targetAlpha = Constants.ALPHA_MAX
+        menu.inputTimer = 0
     end
 
 end
@@ -200,6 +203,7 @@ function Menu:Reset()
 	menu.visibleStartIndex = 1
 	menu.scrollY = 0
 	menu.targetScrollY = 0
+	menu.inputTimer = 0
 
 	for _, item in ipairs(menu.items) do
 		item.currentOption = 1
@@ -214,6 +218,7 @@ function Menu:SetVisibility(visible)
 		if visible then
 			menu.visible = true  -- Set visible immediately for fade in
 			menu.targetAlpha = Constants.ALPHA_MAX
+			menu.inputTimer = 0
 		else
 			menu.targetAlpha = Constants.ALPHA_MIN  -- Trigger fade out
 			-- visible will be set to false when fade completes in UpdateMenu
@@ -550,17 +555,14 @@ local PlaySoundEffect = function(menuName, soundIndex)
     end
 end
 
-local Input = function(menuName)
-    local DELAY = 0.25
-    local INITIAL_DELAY = 0.5
-
+local HandleInput  = function(menuName)
     local menu = Menus[menuName]
     local itemCount = #menu.items
     local previousItem = menu.currentItem
 
     if itemCount == 0 then return end
 
-    if TEN.Input.IsKeyPulsed(ActionID.FORWARD, DELAY, INITIAL_DELAY) then
+    if InputHelpers.GuiIsPulsed(ActionID.FORWARD, menu.inputTimer) then
         if menu.sounds then PlaySoundEffect(menu.name, menu.sounds.menuSelect) end
         if menu.wrapAroundItems then
             menu.currentItem = (menu.currentItem - 2) % itemCount + 1
@@ -574,7 +576,7 @@ local Input = function(menuName)
             PerformFunction(menu.itemChangeFunction)
         end
         
-    elseif TEN.Input.IsKeyPulsed(ActionID.BACK, DELAY, INITIAL_DELAY) then
+    elseif InputHelpers.GuiIsPulsed(ActionID.BACK, menu.inputTimer) then
         PlaySoundEffect(menu.name, menu.sounds.menuSelect)
         if menu.wrapAroundItems then
             menu.currentItem = menu.currentItem % itemCount + 1
@@ -587,7 +589,7 @@ local Input = function(menuName)
         if previousItem ~= menu.currentItem and menu.itemChangeFunction then
             PerformFunction(menu.itemChangeFunction)
         end
-    elseif TEN.Input.IsKeyPulsed(ActionID.LEFT, DELAY, INITIAL_DELAY) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
+    elseif InputHelpers.GuiIsPulsed(ActionID.LEFT, menu.inputTimer) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
         PlaySoundEffect(menu.name, menu.sounds.menuSelect)
         local currentItem = menu.items[menu.currentItem]
         if currentItem.options and #currentItem.options > 1 then
@@ -601,7 +603,7 @@ local Input = function(menuName)
                 PerformFunction(currentItem.onOptionChange)
 		    end
         end
-    elseif TEN.Input.IsKeyPulsed(ActionID.RIGHT, DELAY, INITIAL_DELAY) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
+    elseif InputHelpers.GuiIsPulsed(ActionID.RIGHT, menu.inputTimer) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
         PlaySoundEffect(menu.name, menu.sounds.menuSelect)
         local currentItem = menu.items[menu.currentItem]
         if currentItem.options and #currentItem.options > 1 then
@@ -615,12 +617,12 @@ local Input = function(menuName)
                 PerformFunction(currentItem.onOptionChange)
 		    end
         end
-    elseif Input.IsKeyHit(ActionID.ACTION) or Input.IsKeyHit(ActionID.SELECT) then
+    elseif TEN.Input.IsKeyHit(ActionID.ACTION) or TEN.Input.IsKeyHit(ActionID.SELECT) then
         if menu.acceptFunction then 
             PlaySoundEffect(menu.name, menu.sounds.menuChoose)
             PerformFunction(menu.acceptFunction)
         end
-    elseif Input.IsKeyHit(ActionID.INVENTORY) or Input.IsKeyHit(ActionID.DESELECT) then
+    elseif TEN.Input.IsKeyHit(ActionID.INVENTORY) or TEN.Input.IsKeyHit(ActionID.DESELECT) then
         if menu.exitFunction then 
             PlaySoundEffect(menu.name, menu.sounds.menuSelect)
             PerformFunction(menu.exitFunction) end
@@ -637,6 +639,8 @@ function Menu.UpdateMenu(menuName)
     if not menu.visible then
         return
     end
+
+    menu.inputTimer = (menu.inputTimer or 0) + 1
     
     -- Update fade animation
     if menu.currentAlpha ~= menu.targetAlpha then
@@ -658,7 +662,7 @@ function Menu.UpdateMenu(menuName)
     
     -- Handle input only when fully faded in
     if menu.inputs and menu.currentAlpha >= Constants.ALPHA_MAX then
-        Input(menuName)
+        HandleInput(menuName)
     end
     
     -- Store previous visibleStartIndex to detect change

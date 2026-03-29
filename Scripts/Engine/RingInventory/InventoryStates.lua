@@ -673,15 +673,25 @@ function InventoryStates.Update()
             inventoryMode = InventoryStates.MODE.COMBINE_CLOSE
         end
     elseif inventoryMode == InventoryStates.MODE.COMBINE_CLOSE then
+        local targetObjectID = Combine.GetResults() or InventoryData.GetChosenItem():GetObjectID()
+
         Text.Hide("SUB_HEADER")
         Text.SetText("HEADER", "actions_inventory", true)
         ItemMenu.Hide()
-        InventoryData.SetOpenAtItem(Combine.GetResults() and Combine.GetResults() or InventoryData.GetChosenItem():GetObjectID())
-        InventoryData.SetChosenItem()
+        InventoryData.SetChosenItem(nil)
         Combine.ClearResults()
         InventoryStates.SetActionCheck(false)
-        InventoryData.ColorAll(COLOR_MAP.itemHidden, COLOR_MAP.itemHidden)
-        inventoryMode = InventoryStates.MODE.INVENTORY_OPENING
+        InventoryData.RemoveRing(Ring.TYPE.COMBINE)
+        InventoryData.OpenAtItem(targetObjectID, true)
+
+        selectedRing = InventoryData.GetSelectedRing()
+        selectedItem = selectedRing:GetSelectedItem()
+
+        selectedRing:Color(COLOR_MAP.itemDeselected, COLOR_MAP.itemSelected, UI_RING_FADE_SPEED)
+        UpdateInventoryTextsForSelectedItem(selectedItem)
+        UpdateBackLabel()
+        Sprites.ShowArrows()
+        inventoryMode = InventoryStates.MODE.INVENTORY
     elseif inventoryMode == InventoryStates.MODE.SEPARATE then
             Combine.SeparateItems(selectedItem)
             ItemMenu.Hide()

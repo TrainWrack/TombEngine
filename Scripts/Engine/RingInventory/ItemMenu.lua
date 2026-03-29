@@ -131,6 +131,7 @@ end
 -- ============================================================================
 -- PUBLIC API (LevelFuncs.Engine.RingInventory)
 -- ============================================================================
+LevelFuncs.Engine.RingInventory = LevelFuncs.Engine.RingInventory or {}
 LevelFuncs.Engine.RingInventory.DoItemAction = ItemMenu.DoItemAction
 
 return ItemMenu
