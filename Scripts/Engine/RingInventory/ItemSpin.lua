@@ -4,6 +4,7 @@
 
 local Settings = require("Engine.RingInventory.Settings")
 local Interpolate = require("Engine.RingInventory.Interpolate")
+local Utilities = require("Engine.RingInventory.Utilities")
 
 local ItemSpin = {}
 
@@ -73,12 +74,6 @@ function ItemSpin.Update()
     end
 end
 
-local function CalcAngleDiff(from, to)
-    local diff = (to - from) % 360
-    if diff > 180 then diff = diff - 360 end
-    return diff
-end
-
 local function CalculateSpinbackDuration(angleDiff)
     local duration = math.abs(angleDiff) / (ItemSpin.SPINBACK_SPEED * 30)
     return math.max(duration, 1 / 30)
@@ -122,7 +117,7 @@ function ItemSpin.UpdateRing(ringState)
 
                     -- Initialize state on first frame
                     if not ItemSpin.itemStates[id] then
-                        local angleDiff = CalcAngleDiff(currentRotation.y, targetAngle)
+                        local angleDiff = Utilities.GetShortestAngleDelta(currentRotation.y, targetAngle)
                         ItemSpin.itemStates[id] = {
                             startAngle = currentRotation.y,
                             angleDiff = angleDiff,
@@ -137,12 +132,12 @@ function ItemSpin.UpdateRing(ringState)
                     -- If target changed (ring rotated), restart animation from current position
                     if math.abs(targetAngle - state.lastTarget) > 0.1 then
                         local spinbackFinished = state.isSpinback and 
-                            math.abs(CalcAngleDiff(currentRotation.y, targetAngle)) <= ItemSpin.SPINBACK_SPEED
+                            math.abs(Utilities.GetShortestAngleDelta(currentRotation.y, targetAngle)) <= ItemSpin.SPINBACK_SPEED
 
                         -- Keep spinback if still in progress, otherwise re-evaluate
                         local isSpinback = (state.isSpinback and not spinbackFinished) or isJustDeselected
 
-                        local angleDiff = CalcAngleDiff(currentRotation.y, targetAngle)
+                        local angleDiff = Utilities.GetShortestAngleDelta(currentRotation.y, targetAngle)
                         state.startAngle = currentRotation.y
                         state.angleDiff = angleDiff
                         state.lastTarget = targetAngle

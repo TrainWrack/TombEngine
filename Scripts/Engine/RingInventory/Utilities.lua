@@ -4,6 +4,34 @@
 
 local Utilities = {}
 
+Utilities.Clamp = function(value, minValue, maxValue)
+
+    return math.max(minValue, math.min(value, maxValue))
+
+end
+
+Utilities.NormalizeAngle = function(angle)
+
+    angle = angle % 360
+    if angle < 0 then
+        angle = angle + 360
+    end
+
+    return angle
+
+end
+
+Utilities.GetShortestAngleDelta = function(current, target)
+
+    local delta = (target - current + 180) % 360 - 180
+    if delta < -180 then
+        delta = delta + 360
+    end
+
+    return delta
+
+end
+
 Utilities.ColorCombine = function(color, transparency)
 
     return TEN.Color(color.r, color.g, color.b, transparency)
@@ -20,6 +48,16 @@ end
 Utilities.CopyRotation = function(r)
 
     return TEN.Rotation(r.x, r.y, r.z)
+
+end
+
+Utilities.NormalizeRotation = function(rotation)
+
+    return TEN.Rotation(
+        Utilities.NormalizeAngle(rotation.x),
+        Utilities.NormalizeAngle(rotation.y),
+        Utilities.NormalizeAngle(rotation.z)
+    )
 
 end
 
@@ -44,6 +82,13 @@ Utilities.GetAspectRatioMultiplier = function()
     else
         return current / BASELINE
     end
+end
+
+Utilities.GetAlphaLerpFactor = function(alphaSpeed, maxAlpha)
+
+    maxAlpha = maxAlpha or 255
+    return Utilities.Clamp(alphaSpeed / maxAlpha, 0, 1)
+
 end
 
 Utilities.CopyTable = function(original)

@@ -20,13 +20,14 @@ local Statistics = require("Engine.RingInventory.Statistics")
 local Save = require("Engine.RingInventory.Save")
 local Sprites = require("Engine.RingInventory.Sprites")
 local Text = require("Engine.RingInventory.Text")
+local Utilities = require("Engine.RingInventory.Utilities")
 local WeaponMode =  require("Engine.RingInventory.WeaponMode")
 
 --Pointers to tables
 local ANIM_SETTINGS = Settings.Animation
 local COLOR_MAP = Settings.ColorMap
 local SOUND_MAP = Settings.SoundMap
-local UI_RING_FADE_SPEED = math.min(ANIM_SETTINGS.textAlphaSpeed / 255, 1)
+local UI_RING_FADE_SPEED = Utilities.GetAlphaLerpFactor(ANIM_SETTINGS.textAlphaSpeed)
 
 --Variables
 local inventoryClosed = false

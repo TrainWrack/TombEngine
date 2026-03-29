@@ -5,12 +5,13 @@
 --External Modules
 local Interpolate = require("Engine.RingInventory.Interpolate")
 local Settings = require("Engine.RingInventory.Settings")
+local Utilities = require("Engine.RingInventory.Utilities")
 
 local RingLighting = {}
 
 -- Constants
 local FADE_SPEED = 0.1
-local UI_FADE_SPEED = math.min(Settings.Animation.textAlphaSpeed / 255, 1)
+local UI_FADE_SPEED = Utilities.GetAlphaLerpFactor(Settings.Animation.textAlphaSpeed)
 
 -- State tracking per ring: { ringType = { ring, color, selectedItemColor, previousSelectedItem } }
 RingLighting.rings = {}

@@ -223,17 +223,14 @@ end
 
 function Menu:SetTransparency(transparency)
 	if Menus[self.name] then
-
-        transparency = math.max(0, math.min(1, transparency))
-
+		transparency = Utilities.Clamp(transparency, 0, 1)
 		Menus[self.name].menuTransparency = transparency
-
     end
 end
 
 function Menu:SetFadeSpeed(speed)
     if Menus[self.name] then
-        Menus[self.name].fadeSpeed = math.max(Constants.ALPHA_MIN, math.min(Constants.ALPHA_MAX, speed))
+        Menus[self.name].fadeSpeed = Utilities.Clamp(speed, Constants.ALPHA_MIN, Constants.ALPHA_MAX)
     end
 end
 
@@ -505,7 +502,7 @@ function Menu:SetOptionIndexForItem(itemIndex, optionIndex)
         error("Item at index " .. tostring(itemIndex) .. " has no options.")
     end
 
-    optionIndex = math.max(1, math.min(optionIndex, maxOptions))
+    optionIndex = Utilities.Clamp(optionIndex, 1, maxOptions)
     item.currentOption = optionIndex
 
 end
@@ -523,7 +520,7 @@ function Menu:SetCurrentItem(itemIndex)
     end
 
     -- Clamp to valid range
-    itemIndex = math.max(1, math.min(itemIndex, itemCount))
+    itemIndex = Utilities.Clamp(itemIndex, 1, itemCount)
 
     -- Set
     menu.currentItem = itemIndex

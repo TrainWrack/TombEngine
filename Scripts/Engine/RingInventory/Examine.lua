@@ -27,41 +27,17 @@ local ZOOM_MULTIPLIER = 0.15
 local ROTATION_SMOOTHING = 0.35
 local ROTATION_SNAP_THRESHOLD = 0.05
 
-local function NormalizeAngle(angle)
-    angle = angle % 360
-    if angle < 0 then
-        angle = angle + 360
-    end
-    return angle
-end
-
-local function GetShortestAngleDelta(current, target)
-    local delta = (target - current + 180) % 360 - 180
-    if delta < -180 then
-        delta = delta + 360
-    end
-    return delta
-end
-
-local function NormalizeRotation(rotation)
-    return Rotation(
-        NormalizeAngle(rotation.x),
-        NormalizeAngle(rotation.y),
-        NormalizeAngle(rotation.z)
-    )
-end
-
 local function StepRotationAxis(current, target)
-    local normalizedCurrent = NormalizeAngle(current)
-    local normalizedTarget = NormalizeAngle(target)
-    local delta = GetShortestAngleDelta(normalizedCurrent, normalizedTarget)
+    local normalizedCurrent = Utilities.NormalizeAngle(current)
+    local normalizedTarget = Utilities.NormalizeAngle(target)
+    local delta = Utilities.GetShortestAngleDelta(normalizedCurrent, normalizedTarget)
 
     if math.abs(delta) <= ROTATION_SNAP_THRESHOLD then
         return normalizedTarget
     end
 
     local step = delta * Interpolate.Easing.Softstep(ROTATION_SMOOTHING)
-    return NormalizeAngle(normalizedCurrent + step)
+    return Utilities.NormalizeAngle(normalizedCurrent + step)
 end
 
 local EXAMINE_TEXT = 
@@ -125,7 +101,7 @@ end
 
 function Examine.Item(itemData)
 
-    examineScaler = math.max(EXAMINE_MIN_SCALE, math.min(EXAMINE_MAX_SCALE, examineScaler))
+    examineScaler = Utilities.Clamp(examineScaler, EXAMINE_MIN_SCALE, EXAMINE_MAX_SCALE)
     local displayItem = itemData:GetDisplayItem()
     displayItem:SetRotation(examineRotation)
     displayItem:SetScale(Vec3(examineScaler))
@@ -171,9 +147,9 @@ end
 
 function Examine.ModifyRotation(dirX, dirY, dirZ)
 
-    examineTargetRotation.x = NormalizeAngle(examineTargetRotation.x + dirX * ROTATION_MULTIPLIER)
-    examineTargetRotation.y = NormalizeAngle(examineTargetRotation.y + dirY * ROTATION_MULTIPLIER)
-    examineTargetRotation.z = NormalizeAngle(examineTargetRotation.z + dirZ * ROTATION_MULTIPLIER)
+    examineTargetRotation.x = Utilities.NormalizeAngle(examineTargetRotation.x + dirX * ROTATION_MULTIPLIER)
+    examineTargetRotation.y = Utilities.NormalizeAngle(examineTargetRotation.y + dirY * ROTATION_MULTIPLIER)
+    examineTargetRotation.z = Utilities.NormalizeAngle(examineTargetRotation.z + dirZ * ROTATION_MULTIPLIER)
 
 end
 
@@ -185,14 +161,14 @@ end
 
 function Examine.GetRotation()
 
-    return NormalizeRotation(examineTargetRotation)
+    return Utilities.NormalizeRotation(examineTargetRotation)
     
 end
 
 function Examine.SetRotation(rotation)
 
-    examineRotation = NormalizeRotation(rotation)
-    examineTargetRotation = NormalizeRotation(rotation)
+    examineRotation = Utilities.NormalizeRotation(rotation)
+    examineTargetRotation = Utilities.NormalizeRotation(rotation)
     
 end
 
@@ -231,7 +207,7 @@ function Examine.Draw()
 
     if not Examine.item  then return end
 
-    examineScaler = math.max(EXAMINE_MIN_SCALE, math.min(EXAMINE_MAX_SCALE, examineScaler))
+    examineScaler = Utilities.Clamp(examineScaler, EXAMINE_MIN_SCALE, EXAMINE_MAX_SCALE)
     local color = Examine.item :GetColor()
     Examine.item :SetRotation(examineRotation)
     Examine.item :SetScale(Vec3(examineScaler))
