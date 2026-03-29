@@ -28,7 +28,7 @@ local SOUND_MAP =
 
 Menu.Active = {} --table to store active menus
 local Menus = {} --table to store all menus
-LevelFuncs.Engine.Menu = {}
+LevelFuncs.Engine.Menu = LevelFuncs.Engine.Menu or {}
 
 
 local NORMAL_FONT_COLOR = COLOR_MAP.plainText
@@ -787,8 +787,4 @@ function Menu.DrawActiveMenus()
     end
 end
 
--- ============================================================================
--- PUBLIC API (LevelFuncs.Engine.Menu)
--- ============================================================================
-LevelFuncs.Engine.Menu = LevelFuncs.Engine.Menu or {}
 return Menu

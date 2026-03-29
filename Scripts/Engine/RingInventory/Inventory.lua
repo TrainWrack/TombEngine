@@ -33,12 +33,12 @@ local inventorySetup = true
 local inventoryOpen = false
 local inventoryRunning = false
 
-LevelFuncs.Engine.RingInventory = {}
+LevelFuncs.Engine.RingInventory = LevelFuncs.Engine.RingInventory or {}
 
 -- ============================================================================
 -- MAIN FUNCTIONS
 -- ============================================================================
-local function UpdateInventory()
+LevelFuncs.Engine.RingInventory.UpdateInventory = function()
     if not inventoryRunning then
         return
     end
@@ -53,7 +53,7 @@ local function UpdateInventory()
 
 end
 
-local function RunInventory()
+LevelFuncs.Engine.RingInventory.RunInventory = function()
 
     if not InventoryStates then
         InventoryStates = require("Engine.RingInventory.InventoryStates")
@@ -308,10 +308,6 @@ end
 --- Display the full game statistics in Statistics mode.
 -- @tfield[opt=true] bool gameStats If true, full game statistics are show in Statistics mode in Inventory.
 
-
--- ============================================================================
--- PUBLIC API (LevelFuncs.Engine.RingInventory)
--- ============================================================================
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_FREEZE, LevelFuncs.Engine.RingInventory.UpdateInventory)
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.Engine.RingInventory.RunInventory)
 
