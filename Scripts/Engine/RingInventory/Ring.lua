@@ -26,7 +26,8 @@ Ring.TYPE =
 }
 
 -- Default center positions for different ring types
-Ring.CENTERS = {
+Ring.CENTERS =
+{
     [Ring.TYPE.PUZZLE] = Vec3(0, -800, 1024),
     [Ring.TYPE.MAIN] = Vec3(0, 200, 1024),
     [Ring.TYPE.OPTIONS] = Vec3(0, 1200, 1024),
@@ -77,7 +78,6 @@ end
 
 -- Add item to this ring
 function Ring:AddItem(item)
-
     table.insert(self.items, item)
     self:RecalculateSlice()
 end
@@ -207,14 +207,11 @@ function Ring:Translate(center, radius, rotationOffset, alpha)
             currentDisplayItem:SetPosition(Utilities.OffsetY(position, self.items[i].yOffset))
         end
     end
-    
 end
 
 -- Color items in the ring
 function Ring:Color(color, selectedItemColor, fadeSpeed)
-    
     RingLight.SetRingColors(self, color, selectedItemColor, fadeSpeed)
-
 end
 
 -- Set ring position
@@ -224,10 +221,8 @@ function Ring:SetPosition(position)
 end
 
 function Ring:OffsetPosition(direction)
-
     self.previousPosition = self.position 
     self.position = Vec3(self.previousPosition.x, self.previousPosition.y - direction * RING_POSITION_OFFSET, self.previousPosition.z)
-
 end
 
 -- Get ring position
@@ -291,7 +286,6 @@ end
 
 -- Calculate rotation angle
 function Ring:CalculateRotation(direction)
-    
     self.previousAngle = self.currentAngle
 
     local baseAngle = self.targetAngle
@@ -300,7 +294,6 @@ function Ring:CalculateRotation(direction)
     end
 
     self.targetAngle = baseAngle + direction * self.slice
-
 end
 
 -- Set all angles at once

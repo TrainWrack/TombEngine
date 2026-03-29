@@ -8,7 +8,8 @@ local Interpolate = {}
 LevelVars.Engine.InterpolateProgress = {}
 
 -- Easing functions
-Interpolate.Easing = {
+Interpolate.Easing = 
+{
     Linear = function(t) return t end,
     
     EaseInQuad = function(t) return t * t end,
@@ -64,8 +65,7 @@ function Interpolate.Lerp(start, finish, t, easing)
     if start.x and start.y and not start.z then
         return Vec2(
             start.x + (finish.x - start.x) * factor,
-            start.y + (finish.y - start.y) * factor
-        )
+            start.y + (finish.y - start.y) * factor)
     end
     
     -- Vec3 or Rotation
@@ -78,15 +78,13 @@ function Interpolate.Lerp(start, finish, t, easing)
             return Rotation(
                 start.x + (finish.x - start.x) * factor,
                 start.y + (finish.y - start.y) * factor,
-                start.z + (finish.z - start.z) * factor
-            )
+                start.z + (finish.z - start.z) * factor)
         else
             -- It's a Vec3
             return Vec3(
                 start.x + (finish.x - start.x) * factor,
                 start.y + (finish.y - start.y) * factor,
-                start.z + (finish.z - start.z) * factor
-            )
+                start.z + (finish.z - start.z) * factor)
         end
     end
     
@@ -96,8 +94,7 @@ function Interpolate.Lerp(start, finish, t, easing)
             math.floor(start.r + (finish.r - start.r) * factor),
             math.floor(start.g + (finish.g - start.g) * factor),
             math.floor(start.b + (finish.b - start.b) * factor),
-            math.floor(start.a + (finish.a - start.a) * factor)
-        )
+            math.floor(start.a + (finish.a - start.a) * factor))
     end
     
     return finish  -- Fallback
@@ -105,7 +102,6 @@ end
 
 -- Perform single interpolation
 function Interpolate.Calculate(name, oldValue, newValue, time, easing)
-    
     if LevelVars.Engine.InterpolateProgress[name] == nil then
         LevelVars.Engine.InterpolateProgress[name] = 0
     end
@@ -118,11 +114,11 @@ function Interpolate.Calculate(name, oldValue, newValue, time, easing)
 
     local outputValue = Interpolate.Lerp(oldValue, newValue, factor, easing)
 
-    return {
+    return
+    {
         output = outputValue,
         progress = LevelVars.Engine.InterpolateProgress[name]
     }
-
 end
 
 -- Clear motion progress by name
@@ -138,9 +134,7 @@ function Interpolate.ClearAll()
 end
 
 function Interpolate.GetProgress(motionName)
-
     return LevelVars.Engine.InterpolateProgress[motionName] or 0
-    
 end
 
 function Interpolate.StepAlpha(current, target, alphaSpeed)

@@ -27,13 +27,11 @@ local PROGRESS_COMPLETE = 1
 local Animation = {}
 
 function Animation.SaveItemData(selectedItem)
-
     if not selectedItem then return end
 
     local displayItem = selectedItem:GetDisplayItem()
     itemRotationOld = Utilities.CopyRotation(displayItem:GetRotation())
     itemRotation = Utilities.CopyRotation(selectedItem:GetRotation())
-
 end
 
 function Animation.Clear(prefix, motionTable)
@@ -112,7 +110,8 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
     local InventoryStates = require("Engine.RingInventory.InventoryStates")
     local INVENTORY_MODE = InventoryStates.MODE
     
-    local ringAnimation = {
+    local ringAnimation =
+    {
         {key = "ringRadius", start = 0, finish = Ring.RING_RADIUS},
         {key = "ringAngle", start = -360, finish = selectedRing:GetCurrentAngle()},
         {key = "ringCenter", start = selectedRing:GetPosition(), finish = selectedRing:GetPosition()},
@@ -120,13 +119,15 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
         {key = "target", start = Constants.TARGET_START, finish = Constants.TARGET_END},
     }
     
-    local examineAnimation = {
+    local examineAnimation =
+    {
         {key = "itemPosition", start = ITEM_START, finish = ITEM_END},
         {key = "itemRotation", start = itemRotationOld, finish = itemRotation},
         {key = "ringFade", start = Constants.ALPHA_MAX, finish = Constants.ALPHA_MIN},
     }
     
-    local combineRingAnimation = {
+    local combineRingAnimation =
+    {
         ringAnimation[1],
         ringAnimation[2]
     }
@@ -189,10 +190,11 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
         end
 
         local ammoRing = InventoryData.GetRing(Ring.TYPE.AMMO)
-        local ringAnimation = {
-        {key = "ringRadius", start = 0, finish = Ring.RING_RADIUS},
-        {key = "ringAngle", start = ammoRing:GetCurrentAngle(), finish = ammoRing:GetCurrentAngle()},
-        {key = "ringCenter", start = ammoRing:GetPosition(), finish = ammoRing:GetPosition()},
+        local ringAnimation =
+        {
+            {key = "ringRadius", start = 0, finish = Ring.RING_RADIUS},
+            {key = "ringAngle", start = ammoRing:GetCurrentAngle(), finish = ammoRing:GetCurrentAngle()},
+            {key = "ringCenter", start = ammoRing:GetPosition(), finish = ammoRing:GetPosition()},
         }
 
         if not Animation.PerformBatchMotion("CombineRingOpening", ringAnimation, Settings.Animation.inventoryAnimTime, true, ammoRing) then

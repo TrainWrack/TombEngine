@@ -25,7 +25,8 @@ function RingLighting.InitializeRing(ring, color, selectedItemColor)
     
     local ringType = ring:GetType()
     
-    RingLighting.rings[ringType] = {
+    RingLighting.rings[ringType] =
+    {
         ring = ring,
         color = color,
         selectedItemColor = selectedItemColor,
@@ -91,7 +92,8 @@ function RingLighting.FadeItem(item, targetColor, fadeSpeed)
     
     local itemID = item:GetObjectID()
     
-    RingLighting.itemStates[itemID] = {
+    RingLighting.itemStates[itemID] =
+    {
         item = item,
         targetColor = targetColor,
         isFading = true,
@@ -130,7 +132,6 @@ end
 
 -- Set colors for a ring (call once when ring colors change)
 function RingLighting.SetRingColors(ring, color, selectedItemColor, fadeSpeed)
-    
     if not ring then return end
     
     local ringType = ring:GetType()
@@ -140,7 +141,6 @@ function RingLighting.SetRingColors(ring, color, selectedItemColor, fadeSpeed)
     
     -- Update all items with new colors
     RingLighting.UpdateRingSelection(RingLighting.rings[ringType])
-    
 end
 
 -- Reset all lighting

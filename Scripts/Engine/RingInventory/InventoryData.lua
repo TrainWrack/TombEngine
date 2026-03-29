@@ -115,7 +115,6 @@ end
 
 -- Switch to a different ring
 function InventoryData.SwitchToRing(ring)
-
     local ItemSpin = require("Engine.RingInventory.ItemSpin")
     
     previousRingType = selectedRingType
@@ -137,7 +136,6 @@ end
 
 -- Setup secondary ring (combine, ammo, etc.)
 function InventoryData.SetupSecondaryRing(ringType, item, keepCurrentRing)
-    
     local currentRing = InventoryData.GetSelectedRing()
     item = item or (currentRing and currentRing:GetSelectedItem())
     
@@ -230,7 +228,8 @@ local ReadGameflow = function()
     for _, itemID in ipairs(TEN.Flow.GetCurrentLevel().objects) do
         if itemID.objectID then
             local id = TEN.Inventory.ConvertInventoryItemToObject(itemID.objectID)
-            overrides[id] = { 
+            overrides[id] = 
+            { 
                 item = id,
                 yOffset = itemID.yOffset,
                 scale = itemID.scale,
@@ -270,7 +269,6 @@ end
 
 -- Construct rings with items from game data
 function InventoryData.Construct(ringType, selectedWeapon)
-    
     local selectedWeaponID = selectedWeapon and selectedWeapon:GetObjectID()
     local items = PickupData.CONSTANTS
     
@@ -373,7 +371,6 @@ end
 
 -- Open inventory at specific item
 function InventoryData.OpenAtItem(itemID, repositionRings)
-    
     if itemID == Constants.NO_VALUE then
         return
     end
@@ -417,7 +414,6 @@ end
 
 -- Clear a specific ring or all rings
 function InventoryData.Clear(ringType)
-        
     local ring = InventoryData.GetRing(ringType)
     
     if ring then
@@ -427,27 +423,21 @@ function InventoryData.Clear(ringType)
         if selectedRingType == ringType then
             selectedRingType = RING.MAIN
         end
-
     end
-
 end
 
 function InventoryData.ClearAll()
-
     for ringType, ring in pairs(rings) do
         ring:Clear()
     end
 
     combineCount = 0
-
 end
 
 function InventoryData.DrawAllRings()
-
     for ringType, ring in pairs(rings) do
         ring:Draw()
     end
-
 end
 
 -- Get count of rings
@@ -461,56 +451,44 @@ end
 
 --Get item selected objectID
 function InventoryData.GetChosenItem()
-
     return chosenItem 
-
 end
 
 --Set item selected objectID
 function InventoryData.SetChosenItem(item)
-
     chosenItem = item
     return true
-
 end
 
 --Check item selected objectID
 function InventoryData.IsChosenItem(item)
-
     return chosenItem == item
-
 end
 
 --Check if an item is chosen
 function InventoryData.IsItemChosen()
-
     return chosenItem ~= nil
-
 end
 
 --Get open at item objectID
 function InventoryData.GetOpenAtItem()
-
     return openAtItem
-
 end
 
 --Set open at item objectID
 function InventoryData.SetOpenAtItem(objectID)
-
     openAtItem = objectID
     return true
-
 end
 
-local function CalculateCompassAngle(timeCount)
+local function CalculateCompassNeedle(timeCount)
     local needleOrient = Rotation(0, -Lara:GetRotation().y, 0)
     local wibble = math.sin((timeCount % 0x40) / 0x3F * (2 * math.pi)) * 3
     needleOrient.y = needleOrient.y + wibble
     return needleOrient
 end
 
-local function CalculateStopWatchRotation()
+local function CalculateStopWatchHands()
     local angles = {}
     local Stats = require("Engine.RingInventory.Statistics")
     local levelTime = Flow.GetStatistics(Stats.GetType()).timeTaken
@@ -521,8 +499,7 @@ local function CalculateStopWatchRotation()
 end
 
 function InventoryData.SetItemRotations(timeCount)
-
-    local angles = CalculateStopWatchRotation()
+    local angles = CalculateStopWatchHands()
     local stopwatch = InventoryData.FindItem(TEN.Objects.ObjID.STOPWATCH_ITEM)
     if stopwatch then
         local displayItem = stopwatch:GetDisplayItem()
@@ -534,7 +511,7 @@ function InventoryData.SetItemRotations(timeCount)
     local compass = InventoryData.FindItem(TEN.Objects.ObjID.COMPASS_ITEM)
     if compass then
         local displayItem = compass:GetDisplayItem()
-        displayItem:SetJointRotation(1, CalculateCompassAngle(timeCount))
+        displayItem:SetJointRotation(1, CalculateCompassNeedle(timeCount))
     end
 
     local Examine = require("Engine.RingInventory.Examine")
@@ -545,7 +522,7 @@ function InventoryData.SetItemRotations(timeCount)
             displayItem:SetJointRotation(5, angles.minute_hand_angle)
             displayItem:SetJointRotation(6, angles.second_hand_angle)
         else
-            displayItem:SetJointRotation(1, CalculateCompassAngle(timeCount))
+            displayItem:SetJointRotation(1, CalculateCompassNeedle(timeCount))
         end
     end
 

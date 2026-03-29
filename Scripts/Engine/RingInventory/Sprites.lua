@@ -48,13 +48,14 @@ local function DrawArrow(list, alpha)
 end
 
 local function DrawArrows()
-    
-    local arrowsUp = {
+    local arrowsUp =
+    {
         {0, Vec2(5, 5)},
         {0, Vec2(95, 5)},
     }
 
-    local arrowsDown = {
+    local arrowsDown =
+    {
         {180, Vec2(5, 95)},
         {180, Vec2(95, 95)},
     }
@@ -70,7 +71,6 @@ local function DrawArrows()
 end
 
 local function DrawBackground(alpha)
-
     if Settings.Background.enable then
         local capped    = math.min(alpha, Settings.Background.alpha)
         local bgColor   = Utilities.ColorCombine(Settings.Background.color, capped)
@@ -84,7 +84,6 @@ local function DrawBackground(alpha)
         )
         bgSprite:Draw(BG_LAYER, Settings.Background.alignMode, Settings.Background.scaleMode, Settings.Background.blendMode)
     end
-
 end
 
 -- ============================================================
@@ -136,7 +135,6 @@ end
 -- ============================================================
 
 function Sprites.Update(selectedRing)
-
     if not Ring then
         Ring = require("Engine.RingInventory.Ring")
     end
@@ -183,7 +181,6 @@ end
 -- ============================================================
 
 function Sprites.Draw()
-    
     if bgAlpha > 0 then
         DrawBackground(bgAlpha)
     end

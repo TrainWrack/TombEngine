@@ -29,7 +29,6 @@ local function DoSave()
 end
 
 local function DoLoad()
-
     local slot = Menu.Get("SaveMenu2"):GetCurrentItemIndex()
 
     if Flow.DoesSaveGameExist(slot - 1) then
@@ -47,7 +46,8 @@ local function DoLoad()
 end
 
 function Save.CreateSaveMenu()
-    local textPosition = {
+    local textPosition =
+    {
         Vec2(10, 12),
         Vec2(20, 12),
         Vec2(75, 12),
@@ -57,7 +57,8 @@ function Save.CreateSaveMenu()
     local saveFunctions = {nil, "Engine.RingInventory.DoSave", nil, nil}
     local loadFunctions = {nil, "Engine.RingInventory.DoLoad", nil, nil}
     
-    local soundMap = {
+    local soundMap =
+    {
         [1] = {select = nil, choose = nil},
         [2] = {select = SOUND_MAP.menuSelect, choose = SOUND_MAP.menuChoose},
         [3] = {select = nil, choose = nil},
@@ -67,14 +68,16 @@ function Save.CreateSaveMenu()
     local itemFlag = {Strings.DisplayStringOption.SHADOW}
     local selectedFlag = {Strings.DisplayStringOption.BLINK, Strings.DisplayStringOption.SHADOW}
     
-    local itemFlags = {
+    local itemFlags =
+    {
         itemFlag,
         itemFlag,
         itemFlag,
         {Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
     }
     
-    local selectedFlags = {
+    local selectedFlags =
+    {
         selectedFlag,
         selectedFlag,
         selectedFlag,
@@ -179,7 +182,6 @@ end
 function Save.IsQuickSaveEnabled()
     return quickSave == true
 end
-
 
 -- ============================================================================
 -- PUBLIC API (LevelFuncs.Engine.RingInventory)

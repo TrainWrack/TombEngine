@@ -29,7 +29,6 @@ local function HasChooseAmmo(menuActions)
 end
 
 function ItemMenu.IsSingleItemAction(item)
-    
     local flags = item:GetMenuActions()
 
     if flags == 0 then return false end
@@ -38,11 +37,9 @@ function ItemMenu.IsSingleItemAction(item)
     if (flags & (flags - 1)) == 0 then return true end
 
     return false
-
 end
 
 function ItemMenu.ParseAction(menuActions)
-
     if ItemMenu.HasItemAction(menuActions, ItemAction.USE) or ItemMenu.HasItemAction(menuActions, ItemAction.EQUIP) then
         ItemMenu.Hide()
         InventoryStates.SetMode(INVENTORY_MODE.ITEM_USE)
@@ -74,7 +71,6 @@ function ItemMenu.ParseAction(menuActions)
 end
 
 function ItemMenu.DoItemAction()
-
     local menu = Menu.Get("menuActions")
     if not menu then return end
 

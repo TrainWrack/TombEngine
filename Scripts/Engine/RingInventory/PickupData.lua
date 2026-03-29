@@ -15,7 +15,8 @@ local INV_ROT_Y = 1
 
 local PICKUP_DATA = {}
 
-local COL = {
+local COL =
+{
     OBJECT_ID = 1,
     YOFFSET = 2,
     SCALE = 3,
@@ -29,7 +30,8 @@ local COL = {
 	RING = 11,
 }
 
-PICKUP_DATA.TYPE = {
+PICKUP_DATA.TYPE =
+{
     WEAPON = 1,
     AMMO = 2,
     MEDIPACK = 3,
@@ -39,7 +41,8 @@ PICKUP_DATA.TYPE = {
     SAVE = 7
 }
 
-PICKUP_DATA.CONSTANTS = {
+PICKUP_DATA.CONSTANTS =
+{
 	{ TEN.Objects.ObjID.STOPWATCH_ITEM, 2, 0.8, Rotation(0, 180, 0), ItemAction.STATISTICS, "statistics", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.TOOL, false, RING_TYPE.MAIN},
 	-- Weapons
 	{ TEN.Objects.ObjID.PISTOLS_ITEM, 6, 0.5, Rotation(244.0, 90.0, 276.0), ItemAction.EQUIP | ItemAction.CHOOSE_AMMO_PISTOLS |ItemAction.EXAMINE | ItemAction.STATISTICS | ItemAction.SAVE | ItemAction.LOAD, "pistols", NO_JOINT_BITS, INV_ROT_Y, PICKUP_DATA.TYPE.WEAPON, false, RING_TYPE.MAIN},
@@ -351,7 +354,8 @@ PICKUP_DATA.combineTable =
 }
 
 --Structure for weapon data. TEN Weapon type constant, underwater equip allowed, equip while crawling allowed
-PICKUP_DATA.WEAPON_SET = {
+PICKUP_DATA.WEAPON_SET =
+{
     [TEN.Objects.ObjID.PISTOLS_ITEM] = {slot = TEN.Objects.WeaponType.PISTOLS, underwater = false, crawl = true}, 
     [TEN.Objects.ObjID.UZI_ITEM] = {slot = TEN.Objects.WeaponType.UZIS, underwater = false, crawl = true}, 
     [TEN.Objects.ObjID.SHOTGUN_ITEM] = {slot = TEN.Objects.WeaponType.SHOTGUN, underwater = false, crawl = false},
@@ -364,13 +368,15 @@ PICKUP_DATA.WEAPON_SET = {
     [TEN.Objects.ObjID.FLARE_INV_ITEM] = {slot = TEN.Objects.WeaponType.FLARE, underwater = true, crawl = true}
 }
 
-PICKUP_DATA.WEAPON_LASERSIGHT_DATA = {
+PICKUP_DATA.WEAPON_LASERSIGHT_DATA =
+{
     [TEN.Objects.ObjID.REVOLVER_ITEM] = {MESHBITS = 0x0B, NAME = "revolver_lasersight", FLAGS = ItemAction.EQUIP | ItemAction.SEPARATE},                            
     [TEN.Objects.ObjID.CROSSBOW_ITEM] = {MESHBITS = 0x03, NAME = "crossbow_lasersight", FLAGS = ItemAction.EQUIP | ItemAction.SEPARATE | ItemAction.CHOOSE_AMMO_CROSSBOW},                          
     [TEN.Objects.ObjID.HK_ITEM]       = {MESHBITS = 0, NAME = "hk_lasersight", FLAGS = ItemAction.EQUIP | ItemAction.SEPARATE | ItemAction.CHOOSE_AMMO_HK},
 }
 
-PICKUP_DATA.WEAPON_AMMO_LOOKUP = {
+PICKUP_DATA.WEAPON_AMMO_LOOKUP =
+{
     [TEN.Objects.ObjID.PISTOLS_ITEM] = {TEN.Objects.ObjID.PISTOLS_AMMO_ITEM},
     [TEN.Objects.ObjID.UZI_ITEM] = {TEN.Objects.ObjID.UZI_AMMO_ITEM},
     [TEN.Objects.ObjID.SHOTGUN_ITEM] = {TEN.Objects.ObjID.SHOTGUN_AMMO1_ITEM, TEN.Objects.ObjID.SHOTGUN_AMMO2_ITEM},
@@ -382,13 +388,15 @@ PICKUP_DATA.WEAPON_AMMO_LOOKUP = {
     [TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM] = {TEN.Objects.ObjID.ROCKET_LAUNCHER_AMMO_ITEM}
 }
 
-PICKUP_DATA.WEAPON_MODE_LOOKUP = {
+PICKUP_DATA.WEAPON_MODE_LOOKUP =
+{
     {weapon = TEN.Objects.ObjID.HK_ITEM, string = "hk_rapid_mode"},
     {weapon = TEN.Objects.ObjID.HK_ITEM, string = "hk_burst_mode"},
     {weapon = TEN.Objects.ObjID.HK_ITEM, string = "hk_sniper_mode"},
 }
 
-PICKUP_DATA.AMMO_SET = {
+PICKUP_DATA.AMMO_SET =
+{
     [TEN.Objects.ObjID.PISTOLS_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.PISTOLS, weapon = TEN.Objects.ObjID.PISTOLS_ITEM}, 
     [TEN.Objects.ObjID.UZI_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.UZI, weapon = TEN.Objects.ObjID.UZI_ITEM}, 
     [TEN.Objects.ObjID.SHOTGUN_AMMO1_ITEM] = {slot = TEN.Objects.AmmoType.SHOTGUN_NORMAL, weapon = TEN.Objects.ObjID.SHOTGUN_ITEM},
@@ -405,7 +413,14 @@ PICKUP_DATA.AMMO_SET = {
     [TEN.Objects.ObjID.ROCKET_LAUNCHER_AMMO_ITEM] = {slot = TEN.Objects.AmmoType.ROCKET, weapon = TEN.Objects.ObjID.ROCKET_LAUNCHER_ITEM}
 }
 
-PICKUP_DATA.ItemActionFlags = {
+PICKUP_DATA.AMMO_TYPE_TO_OBJECT = {}
+
+for objID, data in pairs(PICKUP_DATA.AMMO_SET) do
+    PICKUP_DATA.AMMO_TYPE_TO_OBJECT[data.slot] = objID
+end
+
+PICKUP_DATA.ItemActionFlags =
+{
     {bit = ItemAction.EQUIP, string = "equip"},
     {bit = ItemAction.USE, string = "use"},
     {bit = ItemAction.EXAMINE, string = "examine"},
@@ -425,7 +440,8 @@ PICKUP_DATA.ItemActionFlags = {
     {bit = ItemAction.SEPARATE, string = "separate"},
 }
 
-PICKUP_DATA.CHOOSE_AMMO_FLAGS = {
+PICKUP_DATA.CHOOSE_AMMO_FLAGS =
+{
     ItemAction.CHOOSE_AMMO_SHOTGUN,
     ItemAction.CHOOSE_AMMO_CROSSBOW,
     ItemAction.CHOOSE_AMMO_GRENADEGUN,
@@ -437,7 +453,6 @@ PICKUP_DATA.CHOOSE_AMMO_FLAGS = {
 }
 
 PICKUP_DATA.GetRow = function(lookupValue)
-    
 	local lookupCol = COL.OBJECT_ID
 
     for _, row in ipairs(PICKUP_DATA.CONSTANTS) do
@@ -450,7 +465,8 @@ PICKUP_DATA.GetRow = function(lookupValue)
 end
 
 PICKUP_DATA.ConvertRowData = function(row)
-    return {
+    return
+    {
         objectID = row[COL.OBJECT_ID],
         yOffset = row[COL.YOFFSET],
         scale = row[COL.SCALE],
@@ -466,16 +482,9 @@ PICKUP_DATA.ConvertRowData = function(row)
 end
 
 PICKUP_DATA.GetProperties = function(objectID)
-
 	local row  = PICKUP_DATA.GetRow(objectID)
     return PICKUP_DATA.ConvertRowData(row)
 
-end
-
-PICKUP_DATA.AMMO_TYPE_TO_OBJECT = {}
-
-for objID, data in pairs(PICKUP_DATA.AMMO_SET) do
-    PICKUP_DATA.AMMO_TYPE_TO_OBJECT[data.slot] = objID
 end
 
 return PICKUP_DATA

@@ -15,7 +15,8 @@ local Menu = {}
 local debug = false
 Menu.__index = Menu
 
-Menu.Type = {
+Menu.Type =
+{
     ITEMS_ONLY = 1,
     ITEMS_AND_OPTIONS = 2,
     OPTIONS_ONLY = 3,
@@ -31,7 +32,6 @@ Menu.Active = {} --table to store active menus
 local Menus = {} --table to store all menus
 LevelFuncs.Engine.Menu = LevelFuncs.Engine.Menu or {}
 
-
 local NORMAL_FONT_COLOR = COLOR_MAP.plainText
 local HEADER_FONT_COLOR = COLOR_MAP.headerText
 local HEADER_FONT_SCALE = 1.6
@@ -40,7 +40,7 @@ local LINE_SPACING = 6
 local TEXT_FLAGS_SELECT = {Strings.DisplayStringOption.BLINK, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
 local TEXT_FLAGS_NORMAL = {Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER}
 local SCROLL_SPEED = 0.2
-local FADE_SPEED = Settings.Animation.textAlphaSpeed  -- Speed of fade animation (higher = faster)
+local FADE_SPEED = Settings.Animation.textAlphaSpeed -- Speed of fade animation (higher = faster)
 
 Menu.Create = function(menuName, title, items, acceptFunction, exitFunction, menuType)
     local self = { name = menuName }
@@ -102,24 +102,19 @@ Menu.Create = function(menuName, title, items, acceptFunction, exitFunction, men
 end
 
 Menu.Get = function(menuName)
-    
     if Menus[menuName] then
         local self = {name = menuName}
         return setmetatable(self, Menu)
     end
-
 end
 
 Menu.Delete = function (menuName)
-   
 	if Menus[menuName] then
 		Menus[menuName] = nil
 	end
-
 end
 
 Menu.DeleteAll = function()
-
     Menu.Active = {}
 
     if Menus then
@@ -127,11 +122,9 @@ Menu.DeleteAll = function()
             Menus[name] = nil
         end
     end
-    
 end
 
 Menu.AddActive = function(menuName, instant)
-    
     if not menuName then
         return
     end
@@ -146,11 +139,9 @@ Menu.AddActive = function(menuName, instant)
         menu.targetAlpha = Constants.ALPHA_MAX
         menu.inputTimer = 0
     end
-
 end
 
 Menu.RemoveActive = function(menuName)
-
     if not menuName then
         return
     end
@@ -161,11 +152,9 @@ Menu.RemoveActive = function(menuName)
         menu.currentAlpha = Constants.ALPHA_MAX
         menu.targetAlpha = Constants.ALPHA_MIN
     end
-
 end
 
 Menu.Status = function(value)
-
     if Menus then
         if value == true then
             TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_FREEZE, LevelFuncs.Engine.Menu.DrawAllMenus)
@@ -175,7 +164,6 @@ Menu.Status = function(value)
             TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PRE_FREEZE, LevelFuncs.Engine.Menu.UpdateAllMenus)
         end
     end
-
 end
 
 Menu.IfExists = function (menuName)
@@ -211,7 +199,7 @@ function Menu:Reset()
 end
 
 function Menu:SetVisibility(visible)
-    --the visible variable is a boolean
+    -- The visible variable is a boolean
 	if Menus[self.name] then
 		local menu = Menus[self.name]
 		
@@ -221,7 +209,7 @@ function Menu:SetVisibility(visible)
 			menu.inputTimer = 0
 		else
 			menu.targetAlpha = Constants.ALPHA_MIN  -- Trigger fade out
-			-- visible will be set to false when fade completes in UpdateMenu
+			-- Visible will be set to false when fade completes in UpdateMenu
 		end
 	end
 end
@@ -338,15 +326,12 @@ function Menu:SetItemsFont(fontColor, fontScale, flags)
 end
 
 function Menu:SetItemsTranslate(translate)
-
     if Menus[self.name] then
 		Menus[self.name].itemsTranslate = translate
 	end
-
 end
 
 function Menu:SetOptionsFont(fontColor, fontScale, flags)
-
     local menu = Menus[self.name]
     if not menu then return end
 
@@ -359,15 +344,12 @@ function Menu:SetOptionsFont(fontColor, fontScale, flags)
     if flags ~= nil then
         menu.optionsTextFlags = flags
     end
-
 end
 
 function Menu:SetOptionsTranslate(translate)
-
     if Menus[self.name] then
 		Menus[self.name].optionsTranslate = translate
 	end
-
 end
 
 function Menu:SetItemsPosition(position)
@@ -411,24 +393,19 @@ function Menu:SetSoundEffects(select, choose)
     if type(choose) == "number" then
         menu.sounds.menuChoose = choose
     end
-
 end
 
 function Menu:ClearSoundEffects()
-
     if not Menus[self.name] then return end
 
     local menu = Menus[self.name]
     menu.sounds = {}
-
 end
 
 function Menu:EnableInputs(inputs)
-
     if Menus[self.name] then
 		Menus[self.name].inputs = inputs
 	end
-
 end
 
 -- Getter Methods
@@ -439,22 +416,23 @@ function Menu:GetCurrentItem()
     return item and item or nil
 end
 
+-- Returns the currently selected item
 function Menu:GetCurrentItemName()
-    -- Returns the currently selected item
     local menu = Menus[self.name]
     local item = menu.items[menu.currentItem]
     return item and item.itemName or nil
 end
 
+-- Returns the currently selected option for the current item
 function Menu:GetCurrentOption()
-    -- Returns the currently selected option for the current item
+    
     local menu = Menus[self.name]
     local item = menu.items[menu.currentItem]
     return (item and item.options and item.options[item.currentOption]) or nil
 end
 
+-- Returns the currently selected option for a specific item by index
 function Menu:GetOptionForItem(itemIndex)
-    -- Returns the currently selected option for a specific item by index
     local menu = Menus[self.name]
    if debug and (not menu.items or not menu.items[itemIndex]) then
         error("Invalid item index: " .. tostring(itemIndex))
@@ -489,7 +467,6 @@ function Menu:GetOptionIndexForItem(itemIndex)
         error("currentOption is not defined for item index: " .. tostring(itemIndex))
     end
     return item.currentOption
-
 end
 
 function Menu:SetOptionIndexForItem(itemIndex, optionIndex)
@@ -509,7 +486,6 @@ function Menu:SetOptionIndexForItem(itemIndex, optionIndex)
 
     optionIndex = Utilities.Clamp(optionIndex, 1, maxOptions)
     item.currentOption = optionIndex
-
 end
 
 function Menu:SetCurrentItem(itemIndex)
@@ -633,7 +609,6 @@ end
 
 -- Update function - handles logic, input, and animations
 function Menu.UpdateMenu(menuName)
-
     local menu = Menus[menuName]
 
     if not menu.visible then
@@ -687,7 +662,6 @@ end
 
 -- Draw function - handles rendering only
 function Menu.DrawMenu(menuName)
-
     local menu = Menus[menuName]
 
     if not menu.visible then

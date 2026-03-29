@@ -18,7 +18,8 @@ local PICKUP_DATA = require("Engine.RingInventory.PickupData")
 local TextChannels = {}
 local TextChannelStates = {}
 
-TextChannels.TRANSITION = {
+TextChannels.TRANSITION =
+{
     NONE = "none",
     CROSSFADE = "crossfade",
     SWIPE_LEFT = "swipe_left",
@@ -26,7 +27,8 @@ TextChannels.TRANSITION = {
 }
 
 -- Configuration
-local TEXT_CONFIG = {
+local TEXT_CONFIG =
+{
     FADE_SPEED = Settings.Animation.textAlphaSpeed,
     SWIPE_DISTANCE = 2,
     CROSSFADE_DURATION_MULTIPLIER = 2,
@@ -380,8 +382,7 @@ function TextChannels.Draw(channelName)
             state.scale,
             Utilities.ColorCombine(state.color, state.nextAlpha),
             state.translate,
-            state.flags
-        )
+            state.flags)
         TEN.Strings.ShowString(textObj, 1 / 30)
     end
 end
@@ -511,7 +512,8 @@ end
 -- ============================================================================
 -- TEXT SETUP
 -- ============================================================================
-TextChannels.CONFIGS = {
+TextChannels.CONFIGS =
+{
     HEADER = 
     {
         name = "HEADER",                 -- Unique identifier
@@ -572,7 +574,7 @@ TextChannels.CONFIGS = {
         },
         translate = false,
     },
-        CONTROLS_SELECT = 
+    CONTROLS_SELECT = 
     {
         name = "CONTROLS_SELECT",                 
         text = "",               
@@ -587,7 +589,7 @@ TextChannels.CONFIGS = {
         },
         translate = false,
     },
-        CONTROLS_BACK = 
+    CONTROLS_BACK = 
     {
         name = "CONTROLS_BACK",                 
         text =  "",               
@@ -622,7 +624,6 @@ end
 
 
 function TextChannels.CreateItemLabel(item)
-    
     if item then
         local label = TEN.Flow.GetString(item.name)
         local count = item.count
@@ -640,21 +641,16 @@ function TextChannels.CreateItemLabel(item)
     end
 
     return ""
-
 end
 
 function TextChannels.SetItemLabel(item, transitionType)
-
     local text = TextChannels.CreateItemLabel(item)
     TextChannels.SetText("ITEM_LABEL_PRIMARY", text, true, transitionType)
-
 end
 
 function TextChannels.SetItemSubLabel(item, transitionType)
-
     local text = TextChannels.CreateItemLabel(item)
     TextChannels.SetText("ITEM_LABEL_SECONDARY", text, true, TextChannels.TRANSITION.CROSSFADE)
-
 end
 
 function TextChannels.HideItemSubLabel(transitionType)

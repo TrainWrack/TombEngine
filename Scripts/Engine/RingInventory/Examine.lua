@@ -29,6 +29,48 @@ local ROTATION_SMOOTHING = 0.35
 local ROTATION_SNAP_THRESHOLD = 0.05
 local SCALE_SNAP_THRESHOLD = 0.01
 
+local examineRotation = Rotation(0, 0, 0)
+local examineTargetRotation = Rotation(0, 0, 0)
+local examineScaler = EXAMINE_DEFAULT_SCALE
+local examineTargetScale = EXAMINE_DEFAULT_SCALE
+local examineShowString = false
+local alpha  = 0
+local targetAlpha = 0
+
+Examine.item = nil
+
+local EXAMINE_TEXT = 
+{
+    name = "EXAMINE_TEXT",                 
+    text = "",               
+    position = EXAMINE_TEXT_POS,                   
+    scale = 1,                             
+    color = COLOR_MAP.plainText,        
+    visible = false,                           
+    flags = 
+    {
+        Strings.DisplayStringOption.VERTICAL_CENTER,
+        Strings.DisplayStringOption.CENTER,
+        Strings.DisplayStringOption.SHADOW
+    },
+    translate = false,
+}
+
+local EXAMINE_CONTROLS = 
+{
+    name = "EXAMINE_CONTROLS",                 
+    text = "",               
+    position = Vec2(3, 80),              
+    scale = 0.7,                          
+    color = COLOR_MAP.plainText,    
+    visible = false,                     
+    flags = 
+    {
+        Strings.DisplayStringOption.SHADOW
+    },
+    translate = false,
+}
+
 local function StepRotationAxis(current, target)
     local normalizedCurrent = Utilities.NormalizeAngle(current)
     local normalizedTarget = Utilities.NormalizeAngle(target)
@@ -42,47 +84,8 @@ local function StepRotationAxis(current, target)
     return Utilities.NormalizeAngle(normalizedCurrent + step)
 end
 
-local EXAMINE_TEXT = 
-    {
-        name = "EXAMINE_TEXT",                 
-        text = "",               
-        position = EXAMINE_TEXT_POS,                   
-        scale = 1,                             
-        color = COLOR_MAP.plainText,        
-        visible = false,                           
-        flags = 
-        {
-            Strings.DisplayStringOption.VERTICAL_CENTER,
-            Strings.DisplayStringOption.CENTER,
-            Strings.DisplayStringOption.SHADOW
-        },
-        translate = false,
-    }
-
-local EXAMINE_CONTROLS = 
-    {
-        name = "EXAMINE_CONTROLS",                 
-        text = "",               
-        position = Vec2(3, 80),              
-        scale = 0.7,                          
-        color = COLOR_MAP.plainText,    
-        visible = false,                     
-        flags = 
-        {
-            Strings.DisplayStringOption.SHADOW
-        },
-        translate = false,
-    }
-
-local examineRotation = Rotation(0, 0, 0)
-local examineTargetRotation = Rotation(0, 0, 0)
-local examineScaler = EXAMINE_DEFAULT_SCALE
-local examineTargetScale = EXAMINE_DEFAULT_SCALE
-local examineShowString = false
-local alpha  = 0
-local targetAlpha = 0
-
 local function StepScale(current, target)
+
     local delta = target - current
 
     if math.abs(delta) <= SCALE_SNAP_THRESHOLD then
@@ -91,8 +94,6 @@ local function StepScale(current, target)
 
     return current + delta * Interpolate.Easing.Softstep(ROTATION_SMOOTHING)
 end
-
-Examine.item = nil
 
 local function ExamineLabel(showText)
 
@@ -103,13 +104,12 @@ local function ExamineLabel(showText)
     end
 
     string = string.."\n"..
-            
-            Input.GetActionBinding(ActionID.JUMP)..": "..Flow.GetString("reset").."\n"..
-            Input.GetActionBinding(ActionID.SPRINT)..": "..Flow.GetString("zoom_in").."\n"..
-            Input.GetActionBinding(ActionID.CROUCH)..": "..Flow.GetString("zoom_out")
-            
-    return string
 
+    Input.GetActionBinding(ActionID.JUMP)..": "..Flow.GetString("reset").."\n"..
+    Input.GetActionBinding(ActionID.SPRINT)..": "..Flow.GetString("zoom_in").."\n"..
+    Input.GetActionBinding(ActionID.CROUCH)..": "..Flow.GetString("zoom_out")
+
+    return string
 end
 
 function Examine.Item(itemData)
@@ -119,7 +119,6 @@ function Examine.Item(itemData)
     displayItem:SetRotation(examineRotation)
     displayItem:SetScale(Vec3(examineScaler))
     displayItem:Draw()
-    
 end
 
 function Examine.SetupText(itemData)
@@ -130,7 +129,6 @@ function Examine.SetupText(itemData)
     local stringKey = objectName:lower().."_text"
     local localizedString = Flow.IsStringPresent(stringKey) and Flow.GetString(stringKey) or nil
 
-    
     if localizedString then
         examineShowString = true
         Text.Create(EXAMINE_TEXT)
@@ -139,19 +137,17 @@ function Examine.SetupText(itemData)
 
     Text.Create(EXAMINE_CONTROLS)
     Text.SetText("EXAMINE_CONTROLS", ExamineLabel(examineShowString), true)
-
 end
 
 function Examine.ToggleText()
 
     examineShowString = not examineShowString
-    
+
     if examineShowString then
         Text.Show("EXAMINE_TEXT")
     else
         Text.Hide("EXAMINE_TEXT")
     end
-
 end
 
 function Examine.TextStatus()
@@ -169,26 +165,22 @@ end
 function Examine.ModifyScale(dir)
 
     examineTargetScale = examineTargetScale + dir * ZOOM_MULTIPLIER
-
 end
 
 function Examine.GetRotation()
 
     return Utilities.NormalizeRotation(examineTargetRotation)
-    
 end
 
 function Examine.SetRotation(rotation)
 
     examineRotation = Utilities.NormalizeRotation(rotation)
     examineTargetRotation = Utilities.NormalizeRotation(rotation)
-    
 end
 
 function Examine.GetScale()
 
     return Utilities.Clamp(examineTargetScale, EXAMINE_MIN_SCALE, EXAMINE_MAX_SCALE)
-
 end
 
 
@@ -197,25 +189,22 @@ function Examine.SetScale(scaleValue)
     local clampedScale = Utilities.Clamp(scaleValue, EXAMINE_MIN_SCALE, EXAMINE_MAX_SCALE)
     examineScaler = clampedScale
     examineTargetScale = clampedScale
-    
 end
 
 function Examine.ResetExamine(item)
 
     Examine.SetRotation(item:GetRotation())
     Examine.SetScale(item:GetScale())
-
 end
 
 function Examine.Show(item)
 
-    if not item then return end 
+    if not item then return end
 
     Examine.ResetExamine(item)
     Examine.SetupText(item)
     targetAlpha = 255
     Examine.item  = TEN.View.DisplayItem(item:GetObjectID(), EXAMINE_POSITION, examineRotation, Vec3(examineScaler), item:GetMeshBits())
-
 end
 
 function Examine.Draw()
@@ -228,7 +217,6 @@ function Examine.Draw()
     Examine.item :SetScale(Vec3(examineScaler))
     Examine.item :SetColor(Utilities.ColorCombine(color, alpha))
     Examine.item :Draw()
-
 end
 
 function Examine.Hide()
@@ -237,7 +225,6 @@ function Examine.Hide()
     Text.Hide("EXAMINE_TEXT")
     examineShowString = false
     targetAlpha = 0
-
 end
 
 function Examine.Update()
@@ -247,8 +234,8 @@ function Examine.Update()
     examineRotation = Rotation(
         StepRotationAxis(examineRotation.x, examineTargetRotation.x),
         StepRotationAxis(examineRotation.y, examineTargetRotation.y),
-        StepRotationAxis(examineRotation.z, examineTargetRotation.z)
-    )
+        StepRotationAxis(examineRotation.z, examineTargetRotation.z))
+
     examineTargetScale = Utilities.Clamp(examineTargetScale, EXAMINE_MIN_SCALE, EXAMINE_MAX_SCALE)
     examineScaler = StepScale(examineScaler, examineTargetScale)
 
@@ -262,7 +249,6 @@ function Examine.Update()
         Text.Destroy("EXAMINE_TEXT")
         Text.Destroy("EXAMINE_CONTROLS")
     end
-
 end
 
 return Examine

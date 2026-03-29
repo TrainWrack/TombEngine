@@ -56,7 +56,6 @@ function Combine.PerformWaterskinCombine(flag)
 end
 
 function Combine.CombineItems(data1, data2)
-    
     local item1 = data1:GetObjectID()
     local item2 = data2:GetObjectID()
     
@@ -108,7 +107,6 @@ function Combine.CombineItems(data1, data2)
 end
 
 function Combine.SeparateItems(item)
-
     local itemObjectID = item:GetObjectID()
     
     for _, combo in ipairs(PickupData.combineTable) do
@@ -140,16 +138,11 @@ function Combine.SeparateItems(item)
 end
 
 function Combine.GetResults()
-
     return combineResult
-
 end
 
 function Combine.ClearResults()
-
     combineResult = nil
-
 end
-
 
 return Combine

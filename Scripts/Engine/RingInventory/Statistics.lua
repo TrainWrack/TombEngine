@@ -25,52 +25,51 @@ local STATS_TEXT_SCALE = 1
 
 local LEVEL_HEADER_TEXT = 
 {
-name = "LEVEL_HEADER_TEXT",                 
-text = "",               
-position = LEVEL_HEADER_POS,                   
-scale = STATS_TEXT_SCALE,                             
-color = COLOR_MAP.headerText,        
-visible = false,                           
-flags = 
-{
-    TEN.Strings.DisplayStringOption.CENTER,
-    TEN.Strings.DisplayStringOption.SHADOW
-},
-translate = false,
+	name = "LEVEL_HEADER_TEXT",                 
+	text = "",               
+	position = LEVEL_HEADER_POS,                   
+	scale = STATS_TEXT_SCALE,                             
+	color = COLOR_MAP.headerText,        
+	visible = false,                           
+	flags = 
+	{
+		TEN.Strings.DisplayStringOption.CENTER,
+		TEN.Strings.DisplayStringOption.SHADOW
+	},
+	translate = false,
 }
 
 local HEADER_TEXT = 
 {
-name = "HEADER_TEXT",                 
-text = "",               
-position = HEADER_TEXT_POS,                   
-scale = STATS_TEXT_SCALE,                             
-color = COLOR_MAP.plainText,        
-visible = false,                           
-flags = 
-{
-    TEN.Strings.DisplayStringOption.SHADOW
-},
-translate = false,
+	name = "HEADER_TEXT",                 
+	text = "",               
+	position = HEADER_TEXT_POS,                   
+	scale = STATS_TEXT_SCALE,                             
+	color = COLOR_MAP.plainText,        
+	visible = false,                           
+	flags = 
+	{
+		TEN.Strings.DisplayStringOption.SHADOW
+	},
+	translate = false,
 }
 
 local STATS_TEXT = 
 {
-name = "STATS_TEXT",                 
-text = "",               
-position = STATS_TEXT_POS,                   
-scale = STATS_TEXT_SCALE,                             
-color = COLOR_MAP.plainText,        
-visible = false,                           
-flags = 
-{
-    TEN.Strings.DisplayStringOption.SHADOW
-},
-translate = false,
+	name = "STATS_TEXT",                 
+	text = "",               
+	position = STATS_TEXT_POS,                   
+	scale = STATS_TEXT_SCALE,                             
+	color = COLOR_MAP.plainText,        
+	visible = false,                           
+	flags = 
+	{
+		TEN.Strings.DisplayStringOption.SHADOW
+	},
+	translate = false,
 }
 
 local GetStatistics = function(type)
-
     local secretCount = type and TEN.Flow.GetTotalSecretCount() or TEN.Flow.GetCurrentLevel().secrets
     local levelStats = TEN.Flow.GetStatistics(type)
     local statistics = tostring(levelStats.timeTaken):sub(1, -4) .. "\n" ..
@@ -82,11 +81,9 @@ local GetStatistics = function(type)
         string.format("%.1f", levelStats.distanceTraveled / 420) .. " m"
 
     return statistics
-
 end
 
 local GetLabels = function(type)
-
     local secretsText = type and TEN.Flow.GetString("total_secrets_found") or TEN.Flow.GetString("level_secrets_found")
 
     local headings = 
@@ -99,11 +96,9 @@ local GetLabels = function(type)
         TEN.Flow.GetString("distance_travelled")
 
     return headings
-
 end
 
 function Stats.SetupStats()
-
     Text.Create(LEVEL_HEADER_TEXT)
     Text.Create(HEADER_TEXT) 
     Text.Create(STATS_TEXT)
@@ -120,7 +115,6 @@ function Stats.SetupStats()
     Text.SetText("LEVEL_HEADER_TEXT", levelHeader, false)
     Text.SetText("HEADER_TEXT", headings, false)
     Text.SetText("STATS_TEXT", statistics, false)
-
 end
 
 function Stats.Show()
@@ -132,7 +126,6 @@ function Stats.Hide()
 end
 
 function Stats.UpdateStatistics(type, transitionType)
-
     if type then
         Text.SetText("LEVEL_HEADER_TEXT", TEN.Flow.GetString("game_title"), true, transitionType)
     else
@@ -156,12 +149,10 @@ function Stats.GetType()
 end
 
 function Stats.UpdateIngameTime()
-    
     if Settings.Statistics.progressTime then
         TEN.Flow.GetStatistics(true).timeTaken = TEN.Flow.GetStatistics(true).timeTaken + 1
         TEN.Flow.GetStatistics(false).timeTaken = TEN.Flow.GetStatistics(false).timeTaken + 1
     end
-
 end
 
 return Stats

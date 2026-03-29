@@ -106,35 +106,25 @@ local function BeginSaveSetup(selectedRing, selectedItem, instantOpen)
 end
 
 function InventoryStates.GetActionCheck()
-
     return performAction
-
 end
 
 function InventoryStates.SetActionCheck(check)
-
     performAction = check
-
 end
 
 function InventoryStates.SetInventoryClosed(status)
-
     inventoryClosed = status
-
 end
 
 function InventoryStates.GetInventoryClosed()
-
     return inventoryClosed
-
 end
 
 function InventoryStates.SetMode(mode)
-
     previousMode = inventoryMode
     inventoryMode = mode
     return true
-
 end
 
 function InventoryStates.GetMode()
@@ -146,13 +136,10 @@ function InventoryStates.GetPreviousMode()
 end
 
 function InventoryStates.IsMode(mode)
-
     return inventoryMode == mode
-    
 end
 
 local function UpdateActionLabel(itemSelected, override, transitionType)
-
     local string = nil
 
     if  itemSelected and ItemMenu.IsSingleItemAction(itemSelected) then
@@ -172,7 +159,6 @@ local function UpdateActionLabel(itemSelected, override, transitionType)
     local actionString = Input.GetActionBinding(ActionID.SELECT)..": "..string
 
     Text.SetText("CONTROLS_SELECT", actionString, true, transitionType)
-
 end
 
 local ShowSelectedAmmoName
@@ -184,7 +170,6 @@ local function UpdateInventoryTextsForSelectedItem(selectedItem, itemTransitionT
 end
 
 local function UpdateBackLabel(label)
-    
     local backstring
 
     if label then
@@ -232,39 +217,32 @@ ShowSelectedAmmoName = function(weaponItem, transitionType)
     local data = InventoryData.BuildItem(base)
  
     Text.SetItemSubLabel(data, subLabelTransition)
-
 end
 
 local function CreateAmmoRing(item)
-
     if PickupData.WEAPON_SET[item:GetObjectID()] then
         local ammoRing = InventoryData.SetupSecondaryRing(Ring.TYPE.AMMO, InventoryData.GetChosenItem(), true)
         ammoRing:Color(COLOR_MAP.itemHidden, COLOR_MAP.itemSelected)
         ItemSpin.StartSpin(ammoRing)
         Text.SetItemLabel(ammoRing:GetSelectedItem())
     end
-
 end
 
 local function ShowAmmoRing(item)
-
     if PickupData.WEAPON_SET[item:GetObjectID()] then
         local ammoRing = InventoryData.GetRing(Ring.TYPE.AMMO)
         ammoRing:Color(COLOR_MAP.itemHidden, COLOR_MAP.itemSelected)
         ItemSpin.StartSpin(ammoRing)
         Text.SetItemLabel(ammoRing:GetSelectedItem())
     end
-
 end
 
 local function HideAmmoRing(item)
-
     if PickupData.WEAPON_SET[item:GetObjectID()] then
         local ammoRing = InventoryData.GetRing(Ring.TYPE.AMMO)
         ammoRing:Color(COLOR_MAP.itemHidden, COLOR_MAP.itemHidden)
         ItemSpin.StopSelectedItemSpin(ammoRing)
     end
-
 end
 
 function InventoryStates.StartRingNavigation(ring, direction)
@@ -309,7 +287,6 @@ function InventoryStates.StartRingChange(targetRingType, offsetDirection)
 end
 
 function InventoryStates.Update()
-
     timeInMenu = timeInMenu + 1
 
     if not Inputs then
@@ -324,8 +301,9 @@ function InventoryStates.Update()
     local selectedItem = selectedRing:GetSelectedItem()
     
     if inventoryMode == InventoryStates.MODE.INVENTORY then
-
+		-- Absorb case.
     elseif inventoryMode == InventoryStates.MODE.INVENTORY_OPENING then
+	
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         Text.Setup()
         if Save.IsQuickSaveEnabled() then
@@ -343,7 +321,9 @@ function InventoryStates.Update()
 
             inventoryMode = InventoryStates.MODE.RING_OPENING
         end
+		
     elseif inventoryMode == InventoryStates.MODE.INVENTORY_EXIT then
+	
         InventoryData.Reset()
         Sprites.Clear()
         TEN.Inventory.SetFocusedItem(Constants.NO_VALUE)
@@ -359,7 +339,9 @@ function InventoryStates.Update()
         InventoryStates.SetInventoryClosed(true)
         InventoryData.ClearAll()
         Flow.SetFreezeMode(Flow.FreezeMode.NONE)       
+		
     elseif inventoryMode == InventoryStates.MODE.RING_OPENING then
+	
         if onEnter then
             Sprites.ShowBackground()
             Sprites.ShowArrows()
@@ -379,7 +361,9 @@ function InventoryStates.Update()
             InventoryData.ColorAll(COLOR_MAP.itemDeselected, COLOR_MAP.itemSelected, true)
             InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
         end
+		
     elseif inventoryMode == InventoryStates.MODE.RING_CLOSING then
+	
         if onEnter then
             Text.Hide("ITEM_LABEL_PRIMARY")
             Text.Hide("ITEM_LABEL_SECONDARY")
@@ -397,7 +381,9 @@ function InventoryStates.Update()
             onEnter = true
             InventoryStates.SetMode(InventoryStates.MODE.INVENTORY_EXIT)
         end
+		
     elseif inventoryMode == InventoryStates.MODE.RING_ROTATE then
+	
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             selectedRing:SetCurrentAngle(selectedRing:GetTargetAngle())
             local heldDirection = Inputs.GetHeldRingDirection()
@@ -415,13 +401,16 @@ function InventoryStates.Update()
                 InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
             end
         end
+		
     elseif inventoryMode == InventoryStates.MODE.RING_CHANGE then
+	
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             ItemSpin.StartSpin(selectedRing)
             InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
         end
+		
     elseif inventoryMode == InventoryStates.MODE.EXAMINE_OPEN then
-
+	
             Animation.SaveItemData(selectedItem)
             ItemMenu.Hide()
             Text.SetText("HEADER", "examine", true)
@@ -434,16 +423,16 @@ function InventoryStates.Update()
             Sprites.HideArrows()
             HideAmmoRing(selectedItem)
             InventoryStates.SetMode(InventoryStates.MODE.EXAMINE)
-
+			
     elseif inventoryMode == InventoryStates.MODE.EXAMINE then
-
+	
         if InventoryStates.GetActionCheck() then
             Examine.ResetExamine(selectedItem)
             InventoryStates.SetActionCheck(false)
         end
-
+		
     elseif inventoryMode == InventoryStates.MODE.EXAMINE_CLOSE then
-        
+	
         local isItemChosen = InventoryData.IsItemChosen()
         Examine.Hide()
         if isItemChosen then
@@ -462,8 +451,9 @@ function InventoryStates.Update()
             selectedRing:Color(COLOR_MAP.itemDeselected, COLOR_MAP.itemSelected)
             InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
         end
-
+		
     elseif inventoryMode == InventoryStates.MODE.ITEM_SELECT then
+	
         if onEnter then
             ItemSpin.StopSelectedItemSpin(selectedRing)
             Animation.SaveItemData(selectedItem)
@@ -484,9 +474,12 @@ function InventoryStates.Update()
             onEnter = true
             InventoryStates.SetMode(InventoryStates.MODE.ITEM_SELECTED)
         end
+		
     elseif inventoryMode == InventoryStates.MODE.ITEM_SELECTED then
-        
+        -- Absorb case.
+		
     elseif inventoryMode == InventoryStates.MODE.ITEM_DESELECT then
+	
         if onEnter then
             Text.SetText("HEADER", "actions_inventory", true)
             ItemMenu.Hide()
@@ -507,7 +500,9 @@ function InventoryStates.Update()
             onEnter = true
             InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
         end
+		
     elseif inventoryMode == InventoryStates.MODE.ITEM_USE then
+	
         if onEnter then
             Text.Hide("ITEM_LABEL_PRIMARY")
             Text.Hide("ITEM_LABEL_SECONDARY")
@@ -521,7 +516,9 @@ function InventoryStates.Update()
             TEN.Inventory.UseItem(selectedItem.objectID)
             InventoryStates.SetMode(InventoryStates.MODE.RING_CLOSING)
         end
+		
     elseif inventoryMode == InventoryStates.MODE.STATISTICS_OPEN then
+	
         if onEnter then
             Text.Hide("ITEM_LABEL_PRIMARY")
             Animation.SaveItemData(selectedItem)
@@ -548,8 +545,9 @@ function InventoryStates.Update()
             onEnter = true
             inventoryMode = InventoryStates.MODE.STATISTICS
         end
+		
     elseif inventoryMode == InventoryStates.MODE.STATISTICS then
-        
+	
         if InventoryStates.GetActionCheck() then
             Statistics.ToggleType(Text.TRANSITION.SWIPE_RIGHT)
             if Statistics.GetType() then
@@ -559,8 +557,9 @@ function InventoryStates.Update()
             end
             InventoryStates.SetActionCheck(false)
         end
+		
     elseif inventoryMode == InventoryStates.MODE.STATISTICS_CLOSE then
-        
+	
         local isItemChosen = InventoryData.IsItemChosen()
         
         if onEnter then
@@ -589,14 +588,19 @@ function InventoryStates.Update()
             else
                 InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
             end
-        end 
+        end
+		
     elseif inventoryMode == InventoryStates.MODE.SAVE_SETUP then
+	
         if onEnter then
             BeginSaveSetup(selectedRing, selectedItem, false)
         end
+		
     elseif inventoryMode == InventoryStates.MODE.SAVE_MENU then
-        
+        -- Absorb case.
+		
     elseif inventoryMode == InventoryStates.MODE.SAVE_CLOSE then
+	
         if onEnter then
             Save.Hide()
 
@@ -630,7 +634,9 @@ function InventoryStates.Update()
             onEnter = true
             inventoryMode = InventoryStates.MODE.INVENTORY
         end
+		
     elseif inventoryMode == InventoryStates.MODE.COMBINE_SETUP then
+	
         if onEnter then
             ItemMenu.Hide()
             Animation.SaveItemData(selectedItem)
@@ -649,12 +655,15 @@ function InventoryStates.Update()
             Text.SetText("SUB_HEADER", "combine_with", true)
             inventoryMode = InventoryStates.MODE.COMBINE_RING_OPENING
         end
+		
     elseif inventoryMode == InventoryStates.MODE.COMBINE_RING_OPENING then
+	
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             Text.SetItemLabel(selectedItem)
             UpdateActionLabel(selectedItem)
             inventoryMode = InventoryStates.MODE.COMBINE
         end
+		
     elseif inventoryMode == InventoryStates.MODE.COMBINE then
 
         if InventoryStates.GetActionCheck() then
@@ -668,11 +677,15 @@ function InventoryStates.Update()
                 InventoryStates.SetActionCheck(false)
             end
         end
+		
     elseif inventoryMode == InventoryStates.MODE.COMBINE_SUCCESS then
+	
         if Animation.Inventory(inventoryMode, selectedRing, selectedItem) then
             inventoryMode = InventoryStates.MODE.COMBINE_CLOSE
         end
+		
     elseif inventoryMode == InventoryStates.MODE.COMBINE_CLOSE then
+	
         local targetObjectID = Combine.GetResults() or InventoryData.GetChosenItem():GetObjectID()
 
         Text.Hide("SUB_HEADER")
@@ -692,14 +705,18 @@ function InventoryStates.Update()
         UpdateBackLabel()
         Sprites.ShowArrows()
         inventoryMode = InventoryStates.MODE.INVENTORY
+		
     elseif inventoryMode == InventoryStates.MODE.SEPARATE then
+	
             Combine.SeparateItems(selectedItem)
             ItemMenu.Hide()
             Text.SetText("HEADER", "actions_inventory", true)
             InventoryData.SetOpenAtItem(Combine.GetResults())
             InventoryData.SetChosenItem(nil)
             inventoryMode = InventoryStates.MODE.INVENTORY_OPENING
+			
     elseif inventoryMode == InventoryStates.MODE.AMMO_SELECT_OPEN then
+	
             Animation.SaveItemData(selectedItem)
             local ammoRing = InventoryData.GetRing(Ring.TYPE.AMMO)
             ammoRing:Color(COLOR_MAP.itemDeselected, COLOR_MAP.itemSelected)
@@ -709,13 +726,17 @@ function InventoryStates.Update()
             UpdateBackLabel("back")
             Text.SetText("SUB_HEADER", "choose_ammo", true)
             inventoryMode = InventoryStates.MODE.AMMO_SELECT
+			
     elseif inventoryMode == InventoryStates.MODE.AMMO_SELECT then
+	
         if InventoryStates.GetActionCheck() then
             local ammo = PickupData.AMMO_SET[selectedItem.objectID]
             Lara:SetAmmoType(ammo.slot)
             inventoryMode = InventoryStates.MODE.AMMO_SELECT_CLOSE
         end
+		
     elseif inventoryMode == InventoryStates.MODE.AMMO_SELECT_CLOSE then
+	
             InventoryStates.SetActionCheck(false)
             InventoryData.ReturnToPreviousRing()
             InventoryData.GetRing(Ring.TYPE.AMMO):Color(COLOR_MAP.itemHidden, COLOR_MAP.itemSelected)
@@ -725,19 +746,25 @@ function InventoryStates.Update()
             ItemMenu.Show()
             Text.SetItemLabel(selectedItem)
             inventoryMode = InventoryStates.MODE.ITEM_SELECTED
+			
     elseif inventoryMode == InventoryStates.MODE.WEAPON_MODE_SETUP then
+	
         WeaponMode.CreateWeaponModeMenu(selectedItem)
         WeaponMode.Show()
         ItemMenu.Hide()
         UpdateBackLabel("back")
         inventoryMode = InventoryStates.MODE.WEAPON_MODE
+		
     elseif inventoryMode == InventoryStates.MODE.WEAPON_MODE then
-        
+        -- Absorb case.
+		
     elseif inventoryMode == InventoryStates.MODE.WEAPON_MODE_CLOSE then
+	
         WeaponMode.Hide()
         UpdateBackLabel("actions_deselect")
         ItemMenu.Show()
         inventoryMode = InventoryStates.MODE.ITEM_SELECTED
+		
     end
 
     Statistics.UpdateIngameTime()
@@ -753,7 +780,6 @@ function InventoryStates.Update()
     Text.DrawAll()
     Sprites.Update(selectedRing)
     Sprites.Draw()
-    
 end
 
 return InventoryStates

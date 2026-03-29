@@ -21,7 +21,6 @@ function WeaponMode.ChangeWeaponMode()
 end
 
 function WeaponMode.CreateWeaponModeMenu(itemData)
-    
     local PickupData = require("Engine.RingInventory.PickupData")
 
     local weaponModes = {}

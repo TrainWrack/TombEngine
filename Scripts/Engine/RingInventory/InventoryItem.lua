@@ -64,7 +64,6 @@ end
 
 -- Create and store DisplayItem for this item
 function InventoryItem:CreateDisplayItem(defaultPosition)
-
     local scaleFactor = Utilities.GetAspectRatioMultiplier()
     local finalScale = scaleFactor * self.scale
     self.displayItem = TEN.View.DisplayItem(
