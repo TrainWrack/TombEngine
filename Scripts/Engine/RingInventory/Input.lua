@@ -70,14 +70,16 @@ local function GuiIsPulsed(actionID)
 end
 
 local function DoLeftKey(ring)
-    InventoryStates.StartRingNavigation(ring, -1)
-    TEN.Sound.PlaySound(SOUND_MAP.menuRotate)
+    if InventoryStates.StartRingNavigation(ring, -1) then
+        TEN.Sound.PlaySound(SOUND_MAP.menuRotate)
+    end
 
 end
 
 local function DoRightKey(ring)
-    InventoryStates.StartRingNavigation(ring, 1)
-    TEN.Sound.PlaySound(SOUND_MAP.menuRotate)
+    if InventoryStates.StartRingNavigation(ring, 1) then
+        TEN.Sound.PlaySound(SOUND_MAP.menuRotate)
+    end
 
 end
 

@@ -241,8 +241,8 @@ local function HideAmmoRing(item)
 end
 
 function InventoryStates.StartRingNavigation(ring, direction)
-    if not ring then
-        return
+    if not ring or ring:GetItemCount() <= 1 then
+        return false
     end
 
     if direction < 0 then
@@ -262,6 +262,8 @@ function InventoryStates.StartRingNavigation(ring, direction)
     if inventoryMode ~= InventoryStates.MODE.RING_ROTATE then
         InventoryStates.SetMode(InventoryStates.MODE.RING_ROTATE)
     end
+
+    return true
 end
 
 function InventoryStates.StartRingChange(targetRingType, offsetDirection)
@@ -373,8 +375,13 @@ function InventoryStates.Update()
             selectedRing:SetCurrentAngle(selectedRing:GetTargetAngle())
             local heldDirection = Inputs.GetHeldRingDirection()
             if heldDirection ~= 0 then
-                TEN.Sound.PlaySound(SOUND_MAP.menuRotate)
-                InventoryStates.StartRingNavigation(selectedRing, heldDirection)
+                if InventoryStates.StartRingNavigation(selectedRing, heldDirection) then
+                    TEN.Sound.PlaySound(SOUND_MAP.menuRotate)
+                elseif previousMode then
+                    inventoryMode = previousMode
+                else
+                    InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
+                end
             elseif previousMode then
                 inventoryMode = previousMode
             else
