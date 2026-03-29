@@ -61,6 +61,12 @@ function Inputs.Update(mode, timeInMenu)
     local selectedItem  = selectedRing:GetSelectedItem()
 
     if mode == INVENTORY_MODE.RING_ROTATE then
+        if InputHelpers.GuiIsPulsed(TEN.Input.ActionID.LEFT, timer) then
+            DoLeftKey(selectedRing)
+        elseif InputHelpers.GuiIsPulsed(TEN.Input.ActionID.RIGHT, timer) then
+            DoRightKey(selectedRing)
+        end
+
         return
     end
 
