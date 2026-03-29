@@ -128,7 +128,7 @@ Menu.DeleteAll = function()
     
 end
 
-Menu.AddActive = function(menuName)
+Menu.AddActive = function(menuName, instant)
     
     if not menuName then
         return
@@ -140,7 +140,7 @@ Menu.AddActive = function(menuName)
     local menu = Menus[menuName]
     if menu then
         menu.visible = true
-        menu.currentAlpha = Constants.ALPHA_MIN
+        menu.currentAlpha = instant and Constants.ALPHA_MAX or Constants.ALPHA_MIN
         menu.targetAlpha = Constants.ALPHA_MAX
     end
 
@@ -551,16 +551,16 @@ local PlaySoundEffect = function(menuName, soundIndex)
 end
 
 local Input = function(menuName)
+    local DELAY = 0.25
+    local INITIAL_DELAY = 0.5
 
     local menu = Menus[menuName]
-
     local itemCount = #menu.items
-
     local previousItem = menu.currentItem
 
     if itemCount == 0 then return end
 
-    if Input.IsKeyHit(ActionID.FORWARD) then
+    if TEN.Input.IsKeyPulsed(ActionID.FORWARD, DELAY, INITIAL_DELAY) then
         if menu.sounds then PlaySoundEffect(menu.name, menu.sounds.menuSelect) end
         if menu.wrapAroundItems then
             menu.currentItem = (menu.currentItem - 2) % itemCount + 1
@@ -574,7 +574,7 @@ local Input = function(menuName)
             PerformFunction(menu.itemChangeFunction)
         end
         
-    elseif Input.IsKeyHit(ActionID.BACK) then
+    elseif TEN.Input.IsKeyPulsed(ActionID.BACK, DELAY, INITIAL_DELAY) then
         PlaySoundEffect(menu.name, menu.sounds.menuSelect)
         if menu.wrapAroundItems then
             menu.currentItem = menu.currentItem % itemCount + 1
@@ -587,7 +587,7 @@ local Input = function(menuName)
         if previousItem ~= menu.currentItem and menu.itemChangeFunction then
             PerformFunction(menu.itemChangeFunction)
         end
-    elseif Input.IsKeyHit(ActionID.LEFT) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
+    elseif TEN.Input.IsKeyPulsed(ActionID.LEFT, DELAY, INITIAL_DELAY) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
         PlaySoundEffect(menu.name, menu.sounds.menuSelect)
         local currentItem = menu.items[menu.currentItem]
         if currentItem.options and #currentItem.options > 1 then
@@ -601,7 +601,7 @@ local Input = function(menuName)
                 PerformFunction(currentItem.onOptionChange)
 		    end
         end
-    elseif Input.IsKeyHit(ActionID.RIGHT) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
+    elseif TEN.Input.IsKeyPulsed(ActionID.RIGHT, DELAY, INITIAL_DELAY) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
         PlaySoundEffect(menu.name, menu.sounds.menuSelect)
         local currentItem = menu.items[menu.currentItem]
         if currentItem.options and #currentItem.options > 1 then
@@ -760,17 +760,20 @@ function Menu.DrawMenu(menuName)
 end
 
 
-function Menu.UpdateAllMenus()
+LevelFuncs.Engine.Menu.UpdateAllMenus = function()
     for menuName in pairs(Menus) do
         Menu.UpdateMenu(menuName)
     end
 end
 
-function Menu.DrawAllMenus()
+LevelFuncs.Engine.Menu.DrawAllMenus = function()
     for menuName in pairs(Menus) do
         Menu.DrawMenu(menuName)
     end
 end
+
+Menu.UpdateAllMenus = LevelFuncs.Engine.Menu.UpdateAllMenus
+Menu.DrawAllMenus = LevelFuncs.Engine.Menu.DrawAllMenus
 
 function Menu.UpdateActiveMenus()
     for menuName in pairs(Menu.Active) do
@@ -788,7 +791,4 @@ end
 -- PUBLIC API (LevelFuncs.Engine.Menu)
 -- ============================================================================
 LevelFuncs.Engine.Menu = LevelFuncs.Engine.Menu or {}
-LevelFuncs.Engine.Menu.UpdateAllMenus = Menu.UpdateAllMenus
-LevelFuncs.Engine.Menu.DrawAllMenus = Menu.DrawAllMenus
-
 return Menu

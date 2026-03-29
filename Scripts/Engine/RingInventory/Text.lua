@@ -19,6 +19,7 @@ local TextChannels = {}
 local TextChannelStates = {}
 
 TextChannels.TRANSITION = {
+    NONE = "none",
     CROSSFADE = "crossfade",
     SWIPE_LEFT = "swipe_left",
     SWIPE_RIGHT = "swipe_right"
@@ -31,12 +32,15 @@ local TEXT_CONFIG = {
     CROSSFADE_DURATION_MULTIPLIER = 2,
     CROSSFADE_BLEND_START = 0.45,
     CROSSFADE_BLEND_END = 0.65,
+    CONTROL_HINT_PADDING = 3,
     MIN_ALPHA = Constants.ALPHA_MIN,
     MAX_ALPHA = Constants.ALPHA_MAX
 }
 
-local function ClampTransitionType(transitionType)
-    if transitionType == TextChannels.TRANSITION.SWIPE_LEFT or transitionType == TextChannels.TRANSITION.SWIPE_RIGHT then
+local function SetTransitionType(transitionType)
+    if transitionType == TextChannels.TRANSITION.NONE or 
+       transitionType == TextChannels.TRANSITION.SWIPE_LEFT or 
+       transitionType == TextChannels.TRANSITION.SWIPE_RIGHT then
         return transitionType
     end
 
@@ -131,7 +135,7 @@ function TextChannels.Create(config)
         flags = config.flags or {TEN.Strings.DisplayStringOption.CENTER, TEN.Strings.DisplayStringOption.SHADOW},
         translate = config.translate ~= false,  -- Default true
         fadeSpeed = config.fadeSpeed or TEXT_CONFIG.FADE_SPEED,
-        transitionType = ClampTransitionType(config.transitionType),
+        transitionType = SetTransitionType(config.transitionType),
         
         -- Current state (mutable)
         currentText = config.text or "",
@@ -140,7 +144,7 @@ function TextChannels.Create(config)
         nextAlpha = TEXT_CONFIG.MIN_ALPHA,
         visible = config.visible or false,
         isTransitioning = false,
-        activeTransition = ClampTransitionType(config.transitionType),
+        activeTransition = SetTransitionType(config.transitionType),
         transitionProgress = 0,
     }
     
@@ -158,7 +162,7 @@ function TextChannels.SetText(channelName, newText, shouldShow, transitionType)
         return
     end
 
-    transitionType = ClampTransitionType(transitionType or state.transitionType)
+    transitionType = SetTransitionType(transitionType or state.transitionType)
     
      -- Normalize text (treat nil as empty string)
     newText = newText or ""
@@ -168,6 +172,28 @@ function TextChannels.SetText(channelName, newText, shouldShow, transitionType)
     
     -- Check if text is actually changing (compare against BOTH current AND next)
     local textChanged = (newText ~= "" and newText ~= state.currentText and newText ~= state.nextText)
+
+    if transitionType == TextChannels.TRANSITION.NONE then
+        local resolvedVisible = (shouldShow ~= nil) and shouldShow or state.visible
+
+        if resolvedVisible ~= state.visible then
+            if resolvedVisible and state.onShow then
+                state.onShow()
+            elseif not resolvedVisible and state.onHide then
+                state.onHide()
+            end
+        end
+
+        state.visible = resolvedVisible
+        state.currentText = newText
+        state.nextText = newText
+        state.isTransitioning = false
+        state.activeTransition = transitionType
+        state.transitionProgress = 0
+        state.currentAlpha = state.visible and TEXT_CONFIG.MAX_ALPHA or TEXT_CONFIG.MIN_ALPHA
+        state.nextAlpha = TEXT_CONFIG.MIN_ALPHA
+        return
+    end
 
     --check to prevent restarting mid-transition
     if state.isTransitioning and newText == state.nextText and not visibilityChanged and transitionType == state.activeTransition then
@@ -208,7 +234,6 @@ function TextChannels.SetText(channelName, newText, shouldShow, transitionType)
         state.transitionProgress = 0
         state.nextAlpha = TEXT_CONFIG.MIN_ALPHA
     end
-
 end
 
 function TextChannels.Show(channelName)
@@ -551,13 +576,14 @@ TextChannels.CONFIGS = {
     {
         name = "CONTROLS_SELECT",                 
         text = "",               
-        position = TEN.Vec2(3, 87),              
+        position = TEN.Vec2(TEXT_CONFIG.CONTROL_HINT_PADDING, 100 - TEXT_CONFIG.CONTROL_HINT_PADDING),              
         scale = 0.7,                          
         color = COLOR_MAP.plainText,    
         visible = false,                     
         flags = 
         {
-            TEN.Strings.DisplayStringOption.SHADOW
+            TEN.Strings.DisplayStringOption.SHADOW,
+            TEN.Strings.DisplayStringOption.VERTICAL_BOTTOM
         },
         translate = false,
     },
@@ -565,14 +591,15 @@ TextChannels.CONFIGS = {
     {
         name = "CONTROLS_BACK",                 
         text =  "",               
-        position = TEN.Vec2(97, 87),              
+        position = TEN.Vec2(100 - TEXT_CONFIG.CONTROL_HINT_PADDING, 100 - TEXT_CONFIG.CONTROL_HINT_PADDING),              
         scale = 0.7,                          
         color = COLOR_MAP.plainText,    
         visible = false,                  
         flags = 
         {
             TEN.Strings.DisplayStringOption.RIGHT,
-            TEN.Strings.DisplayStringOption.SHADOW
+            TEN.Strings.DisplayStringOption.SHADOW,
+            TEN.Strings.DisplayStringOption.VERTICAL_BOTTOM
         },
         translate = false,
     }

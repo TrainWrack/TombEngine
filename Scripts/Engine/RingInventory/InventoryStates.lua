@@ -78,6 +78,33 @@ local performAction = false
 local onEnter = true
 local timeInMenu = 0
 
+local function BeginSaveSetup(selectedRing, selectedItem, instantOpen)
+    Sprites.ShowBackground()
+    if Save.IsLoadMenu() then
+        Text.SetText("HEADER", "load_game", true, instantOpen and Text.TRANSITION.NONE or nil)
+    else
+        Text.SetText("HEADER", "save_game", true, instantOpen and Text.TRANSITION.NONE or nil)
+    end
+    ItemMenu.Hide()
+    Text.Hide("ITEM_LABEL_PRIMARY")
+    Text.Hide("ITEM_LABEL_SECONDARY")
+    Text.Hide("CONTROLS_SELECT")
+    Text.Hide("CONTROLS_BACK")
+    selectedRing:Color(COLOR_MAP.itemHidden, COLOR_MAP.itemHidden, UI_RING_FADE_SPEED)
+    ItemSpin.StopSelectedItemSpin(selectedRing)
+    Sprites.HideArrows()
+    if InventoryData.IsItemChosen() then
+        ItemMenu.Hide()
+        HideAmmoRing(selectedItem)
+    end
+
+    Save.CreateSaveMenu()
+    Save.Show(instantOpen)
+
+    onEnter = true
+    inventoryMode = InventoryStates.MODE.SAVE_MENU
+end
+
 function InventoryStates.GetActionCheck()
 
     return performAction
@@ -302,7 +329,7 @@ function InventoryStates.Update()
         TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
         Text.Setup()
         if Save.IsQuickSaveEnabled() then
-            InventoryStates.SetMode(InventoryStates.MODE.SAVE_SETUP)
+            BeginSaveSetup(selectedRing, selectedItem, true)
         else
             Text.SetText("HEADER", "actions_inventory", true)
             TEN.Sound.PlaySound(SOUND_MAP.inventoryOpen)
@@ -565,30 +592,7 @@ function InventoryStates.Update()
         end 
     elseif inventoryMode == InventoryStates.MODE.SAVE_SETUP then
         if onEnter then
-            Sprites.ShowBackground()
-            if Save.IsLoadMenu() then
-                Text.SetText("HEADER", "load_game", true)
-            else
-                Text.SetText("HEADER", "save_game", true)
-            end
-            ItemMenu.Hide()
-            Text.Hide("ITEM_LABEL_PRIMARY")
-            Text.Hide("ITEM_LABEL_SECONDARY")
-            Text.Hide("CONTROLS_SELECT")
-            Text.Hide("CONTROLS_BACK")
-            selectedRing:Color(COLOR_MAP.itemHidden, COLOR_MAP.itemHidden, UI_RING_FADE_SPEED)
-            ItemSpin.StopSelectedItemSpin(selectedRing)
-            Sprites.HideArrows()
-            if InventoryData.IsItemChosen() then
-                ItemMenu.Hide()
-                HideAmmoRing(selectedItem)
-            end
-
-            Save.CreateSaveMenu()
-            Save.Show()
-
-            onEnter = true
-            inventoryMode = InventoryStates.MODE.SAVE_MENU
+            BeginSaveSetup(selectedRing, selectedItem, false)
         end
     elseif inventoryMode == InventoryStates.MODE.SAVE_MENU then
         

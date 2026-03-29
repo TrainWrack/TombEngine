@@ -6,6 +6,7 @@
 local Menu = require("Engine.RingInventory.Menu")
 local PickupData = require("Engine.RingInventory.PickupData")
 local InventoryStates= require("Engine.RingInventory.InventoryStates")
+local Save = require("Engine.RingInventory.Save")
 local Settings = require("Engine.RingInventory.Settings")
 
 --Pointers to tables
@@ -58,11 +59,9 @@ function ItemMenu.ParseAction(menuActions)
     elseif ItemMenu.HasItemAction(menuActions, ItemAction.STATISTICS) then
         InventoryStates.SetMode(INVENTORY_MODE.STATISTICS_OPEN)
     elseif ItemMenu.HasItemAction(menuActions, ItemAction.SAVE) then
-        local Save = require("Engine.RingInventory.Save")
         Save.SetSaveMenu()
         InventoryStates.SetMode(INVENTORY_MODE.SAVE_SETUP)
     elseif ItemMenu.HasItemAction(menuActions, ItemAction.LOAD) then
-        local Save = require("Engine.RingInventory.Save")
         Save.SetLoadMenu()
         InventoryStates.SetMode(INVENTORY_MODE.SAVE_SETUP)
     elseif ItemMenu.HasItemAction(menuActions, ItemAction.SEPARATE) then

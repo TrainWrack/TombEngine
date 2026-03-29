@@ -19,8 +19,8 @@ local InventoryData = require("Engine.RingInventory.InventoryData")
 local InventoryStates
 local ItemSpin = require("Engine.RingInventory.ItemSpin")
 local RingLight = require("Engine.RingInventory.RingLight")
+local Save = require("Engine.RingInventory.Save")
 local Settings = require("Engine.RingInventory.Settings")
-local Strings = require("Engine.RingInventory.Strings")
 local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointers to tables
@@ -91,7 +91,6 @@ local function RunInventory()
        playerHp and 
        isNotUsingBinoculars then
         inventoryOpen = true
-        local Save = require("Engine.RingInventory.Save")
         Save.SetQuickSaveStatus(true)
         Save.SetSaveMenu()
         inventoryDelay = 0
@@ -101,18 +100,22 @@ local function RunInventory()
        not inventoryOpen and 
        isNotUsingBinoculars then
         inventoryOpen = true
-        local Save = require("Engine.RingInventory.Save")
         Save.SetQuickSaveStatus(true)
         Save.SetLoadMenu()
         inventoryDelay = 0
     end
     
     if inventoryOpen == true then
+        local requiredDelay = 2
+        if Save.IsQuickSaveEnabled() then
+            requiredDelay = 1
+        end
+
         inventoryDelay = inventoryDelay + 1
         TEN.View.SetPostProcessMode(View.PostProcessMode.MONOCHROME)
         TEN.View.SetPostProcessStrength(COLOR_MAP.background.a / Constants.ALPHA_MAX)
         TEN.View.SetPostProcessTint(COLOR_MAP.background)
-        if inventoryDelay >= 2 then
+        if inventoryDelay >= requiredDelay then
             TEN.View.DisplayItem.SetCameraPosition(Constants.CAMERA_START)
             TEN.View.DisplayItem.SetTargetPosition(Constants.TARGET_START)
             TEN.View.DisplayItem.SetFOV(80)
@@ -131,7 +134,6 @@ local function RunInventory()
         inventoryRunning = false
     end
 end
-
 
 local InventoryModule = {}
 
@@ -309,13 +311,6 @@ end
 
 -- ============================================================================
 -- PUBLIC API (LevelFuncs.Engine.RingInventory)
--- ============================================================================
-LevelFuncs.Engine.RingInventory = LevelFuncs.Engine.RingInventory or {}
-LevelFuncs.Engine.RingInventory.UpdateInventory = UpdateInventory
-LevelFuncs.Engine.RingInventory.RunInventory = RunInventory
-
--- ============================================================================
--- CALLBACKS
 -- ============================================================================
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_FREEZE, LevelFuncs.Engine.RingInventory.UpdateInventory)
 TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.Engine.RingInventory.RunInventory)

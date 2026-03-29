@@ -89,7 +89,7 @@ function Save.CreateSaveMenu()
         local itemText1, itemText2, itemText3, itemText4
         
         if h and h.Present then
-            itemText1 = string.format("%02d", h.Count)
+            itemText1 = string.format("%03d", h.Count)
             itemText2 = string.format("%s", h.LevelName)
             itemText3 = string.format("%02d:%02d:%02d", h.Hours, h.Minutes, h.Seconds)
             itemText4 = ""
@@ -131,9 +131,9 @@ function Save.CreateSaveMenu()
     end
 end
 
-function Save.Show()
+function Save.Show(instant)
     for index = 1, 4 do
-        Menu.AddActive("SaveMenu"..index)
+        Menu.AddActive("SaveMenu"..index, instant)
     end
 end
 
