@@ -21,6 +21,7 @@ local ItemSpin = require("Engine.RingInventory.ItemSpin")
 local RingLight = require("Engine.RingInventory.RingLight")
 local Save = require("Engine.RingInventory.Save")
 local Settings = require("Engine.RingInventory.Settings")
+local Strings = require("Engine.RingInventory.Strings")
 local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointers to tables
