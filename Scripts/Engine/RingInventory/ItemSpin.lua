@@ -15,10 +15,6 @@ ItemSpin.ALIGNMENT_SPEED = Settings.Animation.itemAnimTime -- Seconds, for ring 
 ItemSpin.rings = {}
 ItemSpin.itemStates = {} -- { [objectID] = { startAngle, angleDiff, lastTarget, isSpinback } }
 
-local function CalculateRingAngle(itemIndex, itemCount, ringAngle)
-    return (360 / itemCount) * (itemIndex - 1) + ringAngle
-end
-
 -- Start spinning for a ring
 function ItemSpin.StartSpin(ring)
     if not ring then return end
@@ -111,7 +107,7 @@ function ItemSpin.UpdateRing(ringState)
                         displayItem:SetRotation(Rotation(currentRotation.x, newY, currentRotation.z))
                     end
                 else
-                    local targetAngle = CalculateRingAngle(i, itemCount, ringAngle)
+                    local targetAngle = Utilities.GetRingItemAngle(i, itemCount, ringAngle)
                     local isJustDeselected = previousItem and item == previousItem
 
                     -- Initialize state on first frame

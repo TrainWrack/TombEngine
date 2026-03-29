@@ -26,6 +26,23 @@ Utilities.GetShortestAngleDelta = function(current, target)
     return delta
 end
 
+Utilities.GetRingSliceAngle = function(itemCount)
+    if not itemCount or itemCount <= 0 then
+        return 0
+    end
+
+    return 360 / itemCount
+end
+
+Utilities.GetRingItemAngle = function(itemIndex, itemCount, ringAngle)
+    ringAngle = ringAngle or 0
+    return Utilities.GetRingSliceAngle(itemCount) * (itemIndex - 1) + ringAngle
+end
+
+Utilities.GetSelectedRingAngle = function(itemIndex, itemCount)
+    return -Utilities.GetRingItemAngle(itemIndex, itemCount)
+end
+
 Utilities.ColorCombine = function(color, transparency)
     return TEN.Color(color.r, color.g, color.b, transparency)
 end
@@ -33,7 +50,6 @@ end
 Utilities.OffsetY = function(position, offsetY)
     return TEN.Vec3(position.x, position.y + offsetY, position.z)
 end
-
 
 Utilities.CopyRotation = function(r)
     return TEN.Rotation(r.x, r.y, r.z)

@@ -156,9 +156,8 @@ function InventoryData.SetupSecondaryRing(ringType, item, keepCurrentRing)
 
         newRing:SetSelectedItemByID(objectID)
 
-        local slice = newRing:GetSlice()
         local itemIndex = newRing:GetSelectedItemIndex()
-        local angle = -slice * (itemIndex - 1)
+        local angle = Utilities.GetSelectedRingAngle(itemIndex, newRing:GetItemCount())
     
         newRing:SetCurrentAngle(angle)
         newRing:SetTargetAngle(angle)
@@ -386,9 +385,8 @@ function InventoryData.OpenAtItem(itemID, repositionRings)
     -- Set selected item
     ring:SetSelectedItemByID(itemID)
     
-    local slice = ring:GetSlice()
     local itemIndex = ring:GetSelectedItemIndex()
-    local angle = -slice * (itemIndex - 1)
+    local angle = Utilities.GetSelectedRingAngle(itemIndex, ring:GetItemCount())
     
     -- Store angle (you may want to make these instance variables)
     ring:SetCurrentAngle(angle)
