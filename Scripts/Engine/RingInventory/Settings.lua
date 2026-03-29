@@ -57,7 +57,4 @@ Settings.Statistics =
     gameStats = true
 }
 
-
-
-
 return Settings

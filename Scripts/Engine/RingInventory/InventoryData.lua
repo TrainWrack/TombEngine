@@ -505,7 +505,7 @@ end
 
 local function CalculateCompassAngle(timeCount)
     local needleOrient = Rotation(0, -Lara:GetRotation().y, 0)
-    local wibble = math.sin((timeCount % 0x40) / 0x3F * (2 * math.pi))
+    local wibble = math.sin((timeCount % 0x40) / 0x3F * (2 * math.pi)) * 3
     needleOrient.y = needleOrient.y + wibble
     return needleOrient
 end
