@@ -436,17 +436,6 @@ local HandleRingRotate = function(state)
     end
 
     state.selectedRing:SetCurrentAngle(state.selectedRing:GetTargetAngle())
-
-    local heldDirection = Inputs.GetHeldRingDirection()
-    if heldDirection ~= 0 then
-        if InventoryStates.StartRingNavigation(state.selectedRing, heldDirection) then
-            TEN.Sound.PlaySound(SOUND_MAP.menuRotate)
-        else
-            ReturnToPreviousModeOrInventory()
-        end
-        return
-    end
-
     ReturnToPreviousModeOrInventory()
 end
 
@@ -713,9 +702,22 @@ local HandleCombine = function(state)
 end
 
 local HandleCombineSuccess = function(state)
-    if Animation.Inventory(inventoryMode, state.selectedRing, state.selectedItem) then
-        inventoryMode = InventoryStates.MODE.COMBINE_CLOSE
+    if not Animation.Inventory(inventoryMode, state.selectedRing, state.selectedItem) then
+        return
     end
+
+    -- Raise complete; trigger fades on both combine pieces and immediately
+    -- proceed to COMBINE_CLOSE so the ring restore happens concurrently.
+    state.selectedRing:Color(COLOR_MAP.itemHidden, COLOR_MAP.itemHidden, UI_RING_FADE_SPEED)
+    local chosenItem = InventoryData.GetChosenItem()
+    if chosenItem then
+        local _, ringType = InventoryData.FindItem(chosenItem:GetObjectID())
+        if ringType then
+            InventoryData.GetRing(ringType):Color(COLOR_MAP.itemHidden, COLOR_MAP.itemHidden, UI_RING_FADE_SPEED)
+        end
+    end
+
+    inventoryMode = InventoryStates.MODE.COMBINE_CLOSE
 end
 
 local HandleCombineClose = function(state)
