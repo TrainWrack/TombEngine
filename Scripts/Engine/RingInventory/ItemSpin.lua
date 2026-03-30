@@ -60,6 +60,23 @@ function ItemSpin.StopSelectedItemSpin(ring)
     end
 end
 
+function ItemSpin.ClearRingState(ring)
+    if not ring then return end
+
+    local ringName = ring:GetType()
+    local items = ring:GetItems() or {}
+
+    for _, item in ipairs(items) do
+        if item and item.objectID then
+            local spinKey = "Spin" .. item:GetObjectID()
+            ItemSpin.itemStates[item:GetObjectID()] = nil
+            LevelVars.Engine.InterpolateProgress[spinKey] = nil
+        end
+    end
+
+    ItemSpin.rings[ringName] = nil
+end
+
 -- Update all spinning items - call once per frame
 function ItemSpin.Update()
     for _, ringState in pairs(ItemSpin.rings) do

@@ -104,6 +104,7 @@ local previousMode = nil
 local performAction = false
 local onEnter = true
 local timeInMenu = 0
+local combineCloseTargetObjectID = nil
 
 InventoryStates.GetActionCheck = function()
     return performAction
@@ -718,23 +719,40 @@ local HandleCombineSuccess = function(state)
 end
 
 local HandleCombineClose = function(state)
-    local targetObjectID = Combine.GetResults() or InventoryData.GetChosenItem():GetObjectID()
+    local chosenItem = InventoryData.GetChosenItem()
+    local transitionItem = Combine.GetResults() and state.selectedItem or chosenItem or state.selectedItem
 
-    Text.Hide("SUB_HEADER")
-    Text.SetText("HEADER", "actions_inventory", true)
-    ItemMenu.Hide()
-    InventoryData.SetChosenItem(nil)
-    Combine.ClearResults()
-    InventoryStates.SetActionCheck(false)
-    InventoryData.RemoveRing(Ring.TYPE.COMBINE)
-    InventoryData.OpenAtItem(targetObjectID, true)
+    if onEnter then
+        combineCloseTargetObjectID = Combine.GetResults() or (chosenItem and chosenItem:GetObjectID())
 
-    state:RefreshSelection()
-    state.selectedRing:Color(COLOR_MAP.itemDeselected, COLOR_MAP.itemSelected, UI_RING_FADE_SPEED)
-    UpdateInventoryTextsForSelectedItem(state.selectedItem)
-    UpdateBackLabel()
-    Sprites.ShowArrows()
-    inventoryMode = InventoryStates.MODE.INVENTORY
+        Animation.SaveItemData(transitionItem)
+        Text.Hide("SUB_HEADER")
+        Text.SetText("HEADER", "actions_inventory", true)
+        ItemMenu.Hide()
+        InventoryStates.SetActionCheck(false)
+        state.selectedRing:Color(COLOR_MAP.itemHidden, COLOR_MAP.itemHidden, UI_RING_FADE_SPEED)
+        Sprites.HideArrows()
+        onEnter = false
+    end
+
+    if Animation.Inventory(inventoryMode, state.selectedRing, transitionItem) then
+        InventoryData.SetOpenAtItem(combineCloseTargetObjectID)
+        InventoryData.SetChosenItem(nil)
+        Combine.ClearResults()
+        InventoryData.RemoveRing(Ring.TYPE.COMBINE)
+        InventoryData.Construct()
+        InventoryData.OpenAtItem(InventoryData.GetOpenAtItem(), true)
+
+        state:RefreshSelection()
+        InventoryData.ColorAll(COLOR_MAP.itemDeselected, COLOR_MAP.itemSelected)
+        ItemSpin.StartSelectedItemSpin(state.selectedRing)
+        SetInventoryOverviewText(state.selectedItem)
+        Sprites.ShowArrows()
+
+        combineCloseTargetObjectID = nil
+        onEnter = true
+        inventoryMode = InventoryStates.MODE.INVENTORY
+    end
 end
 
 local HandleSeparate = function(state)

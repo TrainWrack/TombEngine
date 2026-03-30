@@ -209,7 +209,8 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
 
     elseif mode == INVENTORY_MODE.STATISTICS_CLOSE or 
            mode == INVENTORY_MODE.SAVE_CLOSE or 
-           mode == INVENTORY_MODE.ITEM_DESELECT then
+           mode == INVENTORY_MODE.ITEM_DESELECT or
+           mode == INVENTORY_MODE.COMBINE_CLOSE then
         if Animation.PerformBatchMotion("ExamineClose", examineAnimation, Settings.Animation.inventoryAnimTime, true, selectedRing, selectedItem, true) then
             return true
         end

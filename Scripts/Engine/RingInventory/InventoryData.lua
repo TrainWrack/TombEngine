@@ -6,6 +6,7 @@
 local Constants = require("Engine.RingInventory.Constants")
 local Ring = require("Engine.RingInventory.Ring")
 local InventoryItem = require("Engine.RingInventory.InventoryItem")
+local ItemSpin = require("Engine.RingInventory.ItemSpin")
 local Settings = require("Engine.RingInventory.Settings")
 local PickupData = require("Engine.RingInventory.PickupData")
 local Utilities = require("Engine.RingInventory.Utilities")
@@ -89,8 +90,6 @@ function InventoryData.SwitchToRingType(ringType)
     if not isValid then
         return false
     end
-
-    local ItemSpin = require("Engine.RingInventory.ItemSpin")
     
     previousRingType = selectedRingType
     selectedRingType = ringType
@@ -158,6 +157,7 @@ end
 -- Remove a ring
 function InventoryData.RemoveRing(ringType)
     if rings[ringType] then
+        ItemSpin.ClearRingState(rings[ringType])
         rings[ringType] = nil
         
         -- If we removed the selected ring, switch to main
