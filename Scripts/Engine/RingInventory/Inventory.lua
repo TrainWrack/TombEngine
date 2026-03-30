@@ -41,7 +41,6 @@ LevelFuncs.Engine.RingInventory = LevelFuncs.Engine.RingInventory or {}
 -- ============================================================================
 LevelFuncs.Engine.RingInventory.UpdateInventory = function()
     if not inventoryRunning then
-        Flow.SetFreezeMode(Flow.FreezeMode.NONE)
         return
     end
 
@@ -108,9 +107,6 @@ LevelFuncs.Engine.RingInventory.RunInventory = function()
     
     if inventoryOpen == true then
         local requiredDelay = 2
-        if Save.IsQuickSaveEnabled() then
-            requiredDelay = 1
-        end
 
         inventoryDelay = inventoryDelay + 1
         
