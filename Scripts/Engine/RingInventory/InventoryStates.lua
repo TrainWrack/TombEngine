@@ -757,11 +757,11 @@ end
 
 local HandleSeparate = function(state)
     Combine.SeparateItems(state.selectedItem)
+    InventoryData.SetOpenAtItem(Combine.GetResults())
     ItemMenu.Hide()
     Text.SetText("HEADER", "actions_inventory", true)
-    InventoryData.SetOpenAtItem(Combine.GetResults())
-    InventoryData.SetChosenItem(nil)
-    inventoryMode = InventoryStates.MODE.INVENTORY_OPENING
+    state.selectedRing:Color(COLOR_MAP.itemHidden, COLOR_MAP.itemHidden, UI_RING_FADE_SPEED)
+    inventoryMode = InventoryStates.MODE.COMBINE_CLOSE
 end
 
 local HandleAmmoSelectOpen = function(state)
