@@ -706,8 +706,6 @@ local HandleCombineSuccess = function(state)
         return
     end
 
-    -- Raise complete; trigger fades on both combine pieces and immediately
-    -- proceed to COMBINE_CLOSE so the ring restore happens concurrently.
     state.selectedRing:Color(COLOR_MAP.itemHidden, COLOR_MAP.itemHidden, UI_RING_FADE_SPEED)
     local chosenItem = InventoryData.GetChosenItem()
     if chosenItem then
