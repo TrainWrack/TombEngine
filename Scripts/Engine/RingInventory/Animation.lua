@@ -113,15 +113,16 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
     local ringAnimation =
     {
         {key = "ringRadius", start = 0, finish = Ring.RING_RADIUS},
-        {key = "ringAngle", start = -360, finish = selectedRing:GetCurrentAngle()},
+        {key = "ringAngle", start = selectedRing:GetCurrentAngle() - 360, finish = selectedRing:GetCurrentAngle()},
         {key = "ringCenter", start = selectedRing:GetPosition(), finish = selectedRing:GetPosition()},
         {key = "camera", start = Constants.CAMERA_START, finish = Constants.CAMERA_END},
         {key = "target", start = Constants.TARGET_START, finish = Constants.TARGET_END},
     }
     
+    local itemRingPos = selectedRing:GetPosition():Translate(Rotation(0, 0, 0), Ring.RING_RADIUS)
     local examineAnimation =
     {
-        {key = "itemPosition", start = ITEM_START, finish = ITEM_END},
+        {key = "itemPosition", start = itemRingPos, finish = ITEM_END},
         {key = "itemRotation", start = itemRotationOld, finish = itemRotation},
         {key = "ringFade", start = Constants.ALPHA_MAX, finish = Constants.ALPHA_MIN},
     }
