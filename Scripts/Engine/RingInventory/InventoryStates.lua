@@ -342,6 +342,14 @@ local RestoreInventoryView = function(selectedRing, selectedItem, startSelectedI
 end
 
 local ResetInventorySession = function()
+    local selectedRing = InventoryData.GetSelectedRing()
+    if selectedRing then
+        local selectedItem = selectedRing:GetSelectedItem()
+        if selectedItem then
+            LevelVars.Engine.RingInventory.lastFocusedItem = selectedItem:GetObjectID()
+        end
+    end
+
     InventoryData.Reset()
     Sprites.Clear()
     TEN.Inventory.SetFocusedItem(Constants.NO_VALUE)

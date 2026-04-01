@@ -82,7 +82,11 @@ LevelFuncs.Engine.RingInventory.RunInventory = function()
        playerHp and 
        isNotUsingBinoculars then
         inventoryOpen = true
-        InventoryData.SetOpenAtItem(TEN.Inventory.GetFocusedItem())
+        local focusedItem = TEN.Inventory.GetFocusedItem()
+        if focusedItem == Constants.NO_VALUE then
+            focusedItem = LevelVars.Engine.RingInventory.lastFocusedItem or Constants.NO_VALUE
+        end
+        InventoryData.SetOpenAtItem(focusedItem)
         inventoryDelay = 0
     end
     
