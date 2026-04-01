@@ -14,15 +14,15 @@ local Ring = require("Engine.RingInventory.Ring")
 local Settings = require("Engine.RingInventory.Settings")
 local Utilities = require("Engine.RingInventory.Utilities")
 
---Variables to be cleaned up
-local itemRotation = TEN.Rotation(0, 0, 0)
-local itemRotationOld = TEN.Rotation(0, 0, 0)
-local itemStartPos = TEN.Vec3(0, 200, 512)
-
 --Constants
 local ITEM_START = TEN.Vec3(0, 200, 512)
 local ITEM_END = TEN.Vec3(0, -25, 400)
 local PROGRESS_COMPLETE = 1
+
+--Variables to be cleaned up
+local itemRotation = TEN.Rotation(0, 0, 0)
+local itemRotationOld = TEN.Rotation(0, 0, 0)
+local itemStartPos = ITEM_START
 
 --Animation functions
 local Animation = {}
