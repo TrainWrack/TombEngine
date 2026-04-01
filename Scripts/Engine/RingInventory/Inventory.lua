@@ -33,7 +33,6 @@ local inventoryDelay = 0
 local inventorySetup = true
 local inventoryOpen = false
 local inventoryRunning = false
-local lastSelectedObjectID = Constants.NO_VALUE
 
 LevelFuncs.Engine.RingInventory = LevelFuncs.Engine.RingInventory or {}
 
@@ -75,17 +74,6 @@ LevelFuncs.Engine.RingInventory.RunInventory = function()
         inventorySetup = false
     end
     
-    if InventoryStates.GetInventoryClosed() then
-        lastSelectedObjectID = TEN.Inventory.GetFocusedItem()
-        if Settings.Background.enable ~= true then
-            TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
-            TEN.View.SetPostProcessStrength(1)
-            TEN.View.SetPostProcessTint(COLOR_MAP.itemSelected)
-        end
-        InventoryStates.SetInventoryClosed(false)
-        inventoryRunning = false
-    end
-
     local playerHp = Lara:GetHP() > 0
     local isNotUsingBinoculars = TEN.View.GetCameraType() ~= CameraType.BINOCULARS
     
@@ -94,8 +82,7 @@ LevelFuncs.Engine.RingInventory.RunInventory = function()
        playerHp and 
        isNotUsingBinoculars then
         inventoryOpen = true
-        local focusedItem = TEN.Inventory.GetFocusedItem()
-        InventoryData.SetOpenAtItem(focusedItem ~= Constants.NO_VALUE and focusedItem or lastSelectedObjectID)
+        InventoryData.SetOpenAtItem(TEN.Inventory.GetFocusedItem())
         inventoryDelay = 0
     end
     
@@ -138,6 +125,16 @@ LevelFuncs.Engine.RingInventory.RunInventory = function()
             inventoryOpen = false
             Flow.SetFreezeMode(Flow.FreezeMode.FULL)
         end
+    end
+    
+    if InventoryStates.GetInventoryClosed() then
+        if Settings.Background.enable ~= true then
+            TEN.View.SetPostProcessMode(View.PostProcessMode.NONE)
+            TEN.View.SetPostProcessStrength(1)
+            TEN.View.SetPostProcessTint(COLOR_MAP.itemSelected)
+        end
+        InventoryStates.SetInventoryClosed(false)
+        inventoryRunning = false
     end
 end
 
