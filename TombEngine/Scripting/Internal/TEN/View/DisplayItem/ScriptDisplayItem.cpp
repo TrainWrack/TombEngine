@@ -138,7 +138,7 @@ namespace TEN::Scripting::DisplayItem
 	{
 		auto convertedFOV = ValueOr<float>(fov, 80.0f);
 		auto convertedBool = ValueOr<bool>(disableInterpolation, false);
-		auto clampedFov = ANGLE(std::clamp(abs(convertedFOV), 10.0f, 170.0f));
+		auto clampedFov = DEG_TO_RAD(std::clamp(abs(convertedFOV), 10.0f, 170.0f));
 		g_DrawItems.SetFOV(clampedFov, convertedBool);
 	}
 
@@ -179,7 +179,7 @@ namespace TEN::Scripting::DisplayItem
 	// local fieldOfView = TEN.View.DisplayItem.GetFOV()
 	float ScriptDisplayItem::GetFOV()
 	{
-		return TO_DEGREES(g_DrawItems.GetFov());
+		return RAD_TO_DEG(g_DrawItems.GetFov());
 	}
 
 	/// Reset the camera position, camera target position, and field of view.

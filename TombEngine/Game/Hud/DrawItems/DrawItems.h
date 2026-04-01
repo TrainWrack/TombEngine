@@ -20,8 +20,8 @@ namespace TEN::Hud
 		std::vector<DisplayItem> _displayItems = {};
 		Vector4                  _ambientLight = Vector4(1.0f, 1.0f, 0.5f, 1.0f);
 		
-		float _fov = ANGLE(80.0f);
-		float _prevFov = ANGLE(80.0f);
+		float _fov = DEG_TO_RAD(80.0f);
+		float _prevFov = DEG_TO_RAD(80.0f);
 
 		Vector3 _cameraPosition     = Vector3(0.0f, 0.0f, -BLOCK(1));
 		Vector3 _targetPosition     = Vector3::Zero;
