@@ -197,4 +197,26 @@ function ItemSpin.Reset()
     ItemSpin.itemStates = {}
 end
 
+function ItemSpin.SnapToTargetAngles(ring)
+    if not ring then return end
+
+    local items = ring:GetItems()
+    if not items then return end
+
+    local selectedItem = ring:GetSelectedItem()
+    local ringAngle = ring:GetTargetAngle()
+    local itemCount = #items
+    
+    for i = 1, itemCount do
+        local item = items[i]
+        if item and item.objectID and not (selectedItem and item == selectedItem) then
+            local displayItem = item:GetDisplayItem()
+            if displayItem then
+                local rot = displayItem:GetRotation()
+                displayItem:SetRotation(Rotation(rot.x, Utilities.GetRingItemAngle(i, itemCount, ringAngle), rot.z))
+            end
+        end
+    end
+end
+
 return ItemSpin
