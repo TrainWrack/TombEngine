@@ -744,6 +744,7 @@ local HandleCombineClose = function(state)
         InventoryData.OpenAtItem(InventoryData.GetOpenAtItem(), true)
 
         state:RefreshSelection()
+        ItemSpin.ClearRingState(state.selectedRing)
         InventoryData.ColorAll(COLOR_MAP.itemDeselected, COLOR_MAP.itemSelected)
         ItemSpin.StartSelectedItemSpin(state.selectedRing)
         SetInventoryOverviewText(state.selectedItem)

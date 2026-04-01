@@ -533,7 +533,7 @@ TextChannels.CONFIGS =
     {
         name = "SUB_HEADER",                 
         text = "",               
-        position = TEN.Vec2(50, 40.3),                   
+        position = TEN.Vec2(50, 45),                   
         scale = 0.9,                             
         color = COLOR_MAP.headerText,        
         visible = false,                           
@@ -548,8 +548,8 @@ TextChannels.CONFIGS =
     {
         name = "ITEM_LABEL_PRIMARY",                 
         text = "",               
-        position = TEN.Vec2(50, 80),                   
-        scale = 1.5,                             
+        position = TEN.Vec2(50, 76),                   
+        scale = 1.4,                             
         color = COLOR_MAP.plainText,        
         visible = false,                           
         flags = 
@@ -563,7 +563,7 @@ TextChannels.CONFIGS =
     {
         name = "ITEM_LABEL_SECONDARY",                 
         text = "",               
-        position = TEN.Vec2(50, 90),              
+        position = TEN.Vec2(50, 85),              
         scale = 1,                          
         color = COLOR_MAP.plainText,    
         visible = false,                     

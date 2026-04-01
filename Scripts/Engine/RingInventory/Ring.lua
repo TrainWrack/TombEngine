@@ -4,6 +4,7 @@
 
 --External Modules
 local RingLight = require("Engine.RingInventory.RingLight")
+local Settings = require("Engine.RingInventory.Settings")
 local Utilities = require("Engine.RingInventory.Utilities")
 
 --Pointer to tables
@@ -14,7 +15,7 @@ Ring.__index = Ring
 
 -- Class Constants
 local RING_POSITION_OFFSET = 1000
-Ring.RING_RADIUS = -512
+Ring.RING_RADIUS = -Settings.Animation.ringRadius
 
 Ring.TYPE =
 {
@@ -31,8 +32,8 @@ Ring.CENTERS =
     [Ring.TYPE.PUZZLE] = Vec3(0, -800, 1024),
     [Ring.TYPE.MAIN] = Vec3(0, 200, 1024),
     [Ring.TYPE.OPTIONS] = Vec3(0, 1200, 1024),
-    [Ring.TYPE.COMBINE] = Vec3(0, 300, 1024),
-    [Ring.TYPE.AMMO] = Vec3(0, 300, 1024)
+    [Ring.TYPE.COMBINE] = Vec3(0, 250, 1024),
+    [Ring.TYPE.AMMO] = Vec3(0, 250, 1024)
 }
 
 -- Constructor
@@ -53,7 +54,7 @@ function Ring.Create(ringType, centerPosition)
     self.previousAngle = 0
     self.targetAngle = 0
     
-    Ring.RING_RADIUS = -512 * Utilities.GetAspectRatioMultiplier()
+    Ring.RING_RADIUS = -Settings.Animation.ringRadius * Utilities.GetAspectRatioMultiplier()
 
     return self
 end

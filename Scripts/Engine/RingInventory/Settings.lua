@@ -47,6 +47,7 @@ Settings.Animation =
 {
     inventoryAnimTime = 0.5,
     itemAnimTime = 0.2,
+    ringRadius = 570,
     skipRingClose = false,
     transitionSpeed = 50
 }
