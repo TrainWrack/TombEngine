@@ -112,7 +112,7 @@ function RingLighting.ProcessItemFades()
         if state.isFading then
             local displayItem = state.item:GetDisplayItem()
             local currentColor = displayItem:GetColor()
-            local interpolatedColor = Interpolate.Lerp(currentColor, state.targetColor, state.fadeSpeed or FADE_SPEED, Interpolate.Easing.Linear)
+            local interpolatedColor = Interpolate.Lerp(currentColor, state.targetColor, 1 - (1 - (state.fadeSpeed or FADE_SPEED)) ^ 2, Interpolate.Easing.Linear)
             displayItem:SetColor(interpolatedColor)
             
             -- Check if fade is complete
