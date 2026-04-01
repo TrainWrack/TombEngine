@@ -119,7 +119,7 @@ function ItemSpin.UpdateRing(ringState)
                     LevelVars.Engine.InterpolateProgress[spinKey] = nil
 
                     -- Selected item spins continuously
-                    if ringState.selectedItemEnabled then
+                    if ring:IsAtTargetAngle() and ringState.selectedItemEnabled then
                         local newY = (currentRotation.y + ItemSpin.ROTATION_SPEED) % 360
                         displayItem:SetRotation(Rotation(currentRotation.x, newY, currentRotation.z))
                     end
