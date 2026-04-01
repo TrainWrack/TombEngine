@@ -108,7 +108,7 @@ function ItemMenu.Create(item)
     
     local itemMenu = Menu.Create("menuActions", nil, menuActions, "Engine.RingInventory.DoItemAction", nil, Menu.Type.ITEMS_ONLY)
     
-    itemMenu:SetItemsPosition(Vec2(50, 35))
+    itemMenu:SetItemsPosition(Vec2(50, 38))
     itemMenu:SetVisibility(true)
     itemMenu:SetLineSpacing(5.3)
     itemMenu:SetItemsFont(COLOR_MAP.plainText, 0.9)
