@@ -20,7 +20,7 @@ local itemRotationOld = TEN.Rotation(0, 0, 0)
 
 --Constants
 local ITEM_START = TEN.Vec3(0, 200, 512)
-local ITEM_END = TEN.Vec3(0, 0, 400)
+local ITEM_END = TEN.Vec3(0, -25, 400)
 local PROGRESS_COMPLETE = 1
 
 --Animation functions

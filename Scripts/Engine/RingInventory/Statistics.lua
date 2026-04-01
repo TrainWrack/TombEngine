@@ -18,9 +18,9 @@ local Stats = {}
 
 local statisticsType = false
 
-local LEVEL_HEADER_POS = TEN.Vec2(50, 33.3)
-local HEADER_TEXT_POS = TEN.Vec2(22.4, 41.7)
-local STATS_TEXT_POS = TEN.Vec2(65, 41.7)
+local LEVEL_HEADER_POS = TEN.Vec2(50, 36)
+local HEADER_TEXT_POS = TEN.Vec2(22.4, 43)
+local STATS_TEXT_POS = TEN.Vec2(65, 43)
 local STATS_TEXT_SCALE = 1
 
 local LEVEL_HEADER_TEXT = 
