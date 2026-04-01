@@ -25,10 +25,12 @@
 #include "Objects/TR3/Vehicles/kayak.h"
 #include "Sound/sound.h"
 #include "Specific/clock.h"
+#include "Specific/trutils.h"
 
 using namespace TEN::Collision::Point;
 using namespace TEN::Effects::Items;
 using namespace TEN::Entities::Switches;
+using namespace TEN::Utils;
 
 int TriggerTimer;
 int KeyTriggerActive;
@@ -215,8 +217,8 @@ bool SwitchTrigger(short itemNumber, short timer)
 	else if (item.Status != ITEM_NOT_ACTIVE)
 	{
 		if (item.ObjectNumber == ID_AIRLOCK_SWITCH &&
-			item.Animation.AnimNumber == GetAnimIndex(item, 2) &&
-			item.Animation.FrameNumber == GetFrameIndex(&item, 0))
+			item.Animation.AnimNumber == 2 &&
+			item.Animation.FrameNumber == 0)
 		{
 			return true;
 		}
@@ -442,7 +444,7 @@ void TestTriggers(int x, int y, int z, FloorInfo* floor, Activator activator, bo
 
 	short triggerType = (*(data++) >> 8) & TRIGGER_BITS;
 	short flags = *(data++);
-	short timer = flags & TIMER_BITS;
+	short timer = (char)(flags & TIMER_BITS);
 
 	if (Camera.type != CameraType::Heavy)
 		RefreshCamera(triggerType, data);
@@ -669,11 +671,13 @@ void TestTriggers(int x, int y, int z, FloorInfo* floor, Activator activator, bo
 
 			if (Camera.number != Camera.last || triggerType == TRIGGER_TYPES::SWITCH)
 			{
-				Camera.speed = 1; // Was unused upper floordata entry bit in original codebase.
+				// Borrow camera speed from the static camera to keep momentum between gliding fixed cameras.
+				Camera.speed = g_Level.Cameras[Camera.number].Speed + 1;
 				Camera.timer = (trigger & TIMER_BITS) * FPS;
 				Camera.type = heavy ? CameraType::Heavy : CameraType::Fixed;
 
-				Camera.DisableInterpolation = true;
+				// If camera is not gliding, disable interpolation.
+				Camera.DisableInterpolation = (Camera.speed == 1);
 
 				if (trigger & ONESHOT)
 					g_Level.Cameras[Camera.number].Flags |= ONESHOT;
@@ -828,7 +832,7 @@ void TestTriggers(int x, int y, int z, FloorInfo* floor, Activator activator, bo
 				int eventType = trigger & TIMER_BITS;
 				if (eventType >= (int)EventType::Count)
 				{
-					TENLog("Unknown volume event type encountered for legacy trigger " + std::to_string(eventType), LogLevel::Warning);
+					TENLog(fmt::format("Unknown volume event type encountered for legacy trigger {}.", eventType), LogLevel::Warning);
 					continue;
 				}
 
@@ -913,8 +917,7 @@ void ProcessSectorFlags(ItemInfo* item)
 		{
 			const auto& player = GetLaraInfo(*item);
 
-			if (!IsJumpState((LaraState)item->Animation.ActiveState) || 
-				player.Control.WaterStatus != WaterStatus::Dry)
+			if (!IsJumpState((LaraState)item->Animation.ActiveState) || player.Control.WaterStatus != WaterStatus::Dry || item->HitPoints <= 0)
 			{
 				// Check floor material.
 				auto material = sector.GetSurfaceMaterial(pointColl.GetPosition().x, pointColl.GetPosition().z, true);

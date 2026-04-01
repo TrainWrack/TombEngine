@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Game/control/los.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/collision/collide_room.h"
 #include "Game/collision/Los.h"
 #include "Game/collision/Point.h"
@@ -23,6 +23,7 @@
 #include "Specific/Input/Input.h"
 #include "Specific/trutils.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Collision::Los;
 using namespace TEN::Collision::Point;
 using namespace TEN::Collision::Sphere;
@@ -168,7 +169,7 @@ bool GetTargetOnLOS(GameVector* origin, GameVector* target)
 		}
 	}
 
-	MESH_INFO* mesh = nullptr;
+	StaticMesh* mesh = nullptr;
 	auto vector = Vector3i::Zero;
 	int itemNumber = ObjectOnLOS2(origin, target, &vector, &mesh);
 	bool hasHit = (itemNumber != NO_LOS_ITEM);
@@ -177,10 +178,11 @@ bool GetTargetOnLOS(GameVector* origin, GameVector* target)
 	{
 		if (!result)
 		{
+			SpawnDecal(target2.ToVector3(), target2.RoomNumber, DecalType::BulletHole);
+
 			target2.x -= (target2.x - origin->x) >> 5;
 			target2.y -= (target2.y - origin->y) >> 5;
 			target2.z -= (target2.z - origin->z) >> 5;
-
 			TriggerRicochetSpark(target2, LaraItem->Pose.Orientation.y);
 		}
 
@@ -194,16 +196,20 @@ bool GetTargetOnLOS(GameVector* origin, GameVector* target)
 	target2.z = vector.z - ((vector.z - origin->z) >> 5);
 	GetFloor(target2.x, target2.y, target2.z, &target2.RoomNumber);
 
+	// TODO: This is a shatter bug workaround, should be removed after proper conversion to newer LOS tests
+	// such as GetRoomLosCollision et al -- Lwmte, 15.10.25
+	int shatterRoomNumber = FindRoomNumber(target2.ToVector3i(), target2.RoomNumber, true);
+
 	if (itemNumber < 0)
 	{
-		if (Statics[mesh->staticNumber].shatterType != ShatterType::None)
+		if (Statics[mesh->Slot].shatterType != ShatterType::None)
 		{
 			const auto& weapon = Weapons[(int)Lara.Control.Weapon.GunType];
 			mesh->HitPoints -= weapon.Damage;
 			ShatterImpactData.impactDirection = dir;
-			ShatterImpactData.impactLocation = Vector3(mesh->pos.Position.x, mesh->pos.Position.y, mesh->pos.Position.z);
-			ShatterObject(nullptr, mesh, 128, target2.RoomNumber, 0);
-			SoundEffect(GetShatterSound(mesh->staticNumber), &mesh->pos);
+			ShatterImpactData.impactLocation = mesh->Pose.Position.ToVector3();
+			ShatterObject(nullptr, mesh, 128, shatterRoomNumber, 0);
+			SoundEffect(GetShatterSound(mesh->Slot), &mesh->Pose);
 			hitProcessed = true;
 		}
 
@@ -221,7 +227,7 @@ bool GetTargetOnLOS(GameVector* origin, GameVector* target)
 					item->MeshBits &= ~ShatterItem.bit;
 					ShatterImpactData.impactDirection = dir;
 					ShatterImpactData.impactLocation = ShatterItem.sphere.Center;
-					ShatterObject(&ShatterItem, 0, 128, target2.RoomNumber, 0);
+					ShatterObject(&ShatterItem, 0, 128, shatterRoomNumber, 0);
 					TriggerRicochetSpark(target2, LaraItem->Pose.Orientation.y, false);
 					hitProcessed = true;
 			}
@@ -229,7 +235,7 @@ bool GetTargetOnLOS(GameVector* origin, GameVector* target)
 			{
 				auto* object = &Objects[item->ObjectNumber];
 
-				if ((object->intelligent || object->HitRoutine) && object->drawRoutine)
+				if ((object->intelligent || object->HitRoutine) && !object->Hidden)
 				{
 					const auto& weapon = Weapons[(int)Lara.Control.Weapon.GunType];
 
@@ -269,49 +275,7 @@ bool GetTargetOnLOS(GameVector* origin, GameVector* target)
 		{
 			if (ShatterItem.bit == 1 << (Objects[item->ObjectNumber].nmeshes - 1))
 			{
-				if (!(item->Flags & 0x40))
-				{
-					if (item->ObjectNumber == ID_SHOOT_SWITCH1)
-						ExplodeItemNode(item, Objects[item->ObjectNumber].nmeshes - 1, 0, 64);
-
-					if (item->TriggerFlags == 444 && item->ObjectNumber == ID_SHOOT_SWITCH2)
-					{
-						// TR5 ID_SWITCH_TYPE_8/ID_SHOOT_SWITCH2
-						ProcessExplodingSwitchType8(item);
-					}
-					else
-					{
-						/*if (item->objectNumber == ID_SHOOT_SWITCH3)
-						{
-						// TR4 ID_SWITCH_TYPE7
-						ExplodeItemNode(item, Objects[item->objectNumber].nmeshes - 1, 0, 64);
-						}*/
-
-						if (item->Flags & IFLAG_ACTIVATION_MASK &&
-							(item->Flags & IFLAG_ACTIVATION_MASK) != IFLAG_ACTIVATION_MASK)
-						{
-							TestTriggers(item->Pose.Position.x, item->Pose.Position.y - 256, item->Pose.Position.z, item->RoomNumber, true, item->Flags & IFLAG_ACTIVATION_MASK);
-						}
-						else
-						{
-							short triggerItems[8];
-							for (int count = GetSwitchTrigger(item, triggerItems, 1); count > 0; --count)
-							{
-								AddActiveItem(triggerItems[count - 1]);
-								g_Level.Items[triggerItems[count - 1]].Status = ITEM_ACTIVE;
-								g_Level.Items[triggerItems[count - 1]].Flags |= IFLAG_ACTIVATION_MASK;
-							}
-						}
-					}
-				}
-
-				if (item->Status != ITEM_DEACTIVATED)
-				{
-					AddActiveItem(itemNumber);
-					item->Status = ITEM_ACTIVE;
-					item->Flags |= IFLAG_ACTIVATION_MASK | 0x40;
-				}
-
+				ProcessShootSwitch(item);
 				hitProcessed = true;
 			}
 
@@ -420,10 +384,10 @@ static bool DoRayBox(const GameVector& origin, const GameVector& target, const G
 	return true;
 }
 
-int ObjectOnLOS2(GameVector* origin, GameVector* target, Vector3i* vec, MESH_INFO** staticObj, GAME_OBJECT_ID priorityObjectID)
+int ObjectOnLOS2(GameVector* origin, GameVector* target, Vector3i* vec, StaticMesh** staticObj, GAME_OBJECT_ID priorityObjectID)
 {
 	ClosestItem = NO_LOS_ITEM;
-	ClosestDist = SQUARE(target->x - origin->x) + SQUARE(target->y - origin->y) + SQUARE(target->z - origin->z);
+	ClosestDist = (int)Vector3i::Distance(origin->ToVector3i(), target->ToVector3i());
 
 	for (int roomNumber : LosRoomNumbers)
 	{
@@ -437,12 +401,12 @@ int ObjectOnLOS2(GameVector* origin, GameVector* target, Vector3i* vec, MESH_INF
 			{
 				auto& meshp = room.mesh[m];
 
-				if (meshp.flags & StaticMeshFlags::SM_VISIBLE)
+				if (meshp.Flags & StaticMeshFlags::SM_VISIBLE)
 				{
 					auto bounds = GetBoundsAccurate(meshp, false);
-					pose = Pose(meshp.pos.Position, EulerAngles(0, meshp.pos.Orientation.y, 0));
+					pose = Pose(meshp.Pose.Position, EulerAngles(0, meshp.Pose.Orientation.y, 0));
 
-					if (DoRayBox(*origin, *target, bounds, pose, *vec, -1 - meshp.staticNumber))
+					if (DoRayBox(*origin, *target, bounds, pose, *vec, -1 - meshp.Slot))
 					{
 						*staticObj = &meshp;
 						target->RoomNumber = roomNumber;
@@ -461,7 +425,7 @@ int ObjectOnLOS2(GameVector* origin, GameVector* target, Vector3i* vec, MESH_INF
 			if (priorityObjectID != GAME_OBJECT_ID::ID_NO_OBJECT && item.ObjectNumber != priorityObjectID)
 				continue;
 
-			if (item.ObjectNumber != ID_LARA && (Objects[item.ObjectNumber].collision == nullptr || Objects[item.ObjectNumber].drawRoutine == nullptr || !item.Collidable))
+			if (item.ObjectNumber != ID_LARA && (Objects[item.ObjectNumber].collision == nullptr || Objects[item.ObjectNumber].Hidden || !item.Collidable))
 				continue;
 
 			if (item.ObjectNumber == ID_LARA && priorityObjectID != ID_LARA)

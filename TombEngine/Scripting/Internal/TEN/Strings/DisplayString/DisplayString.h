@@ -10,18 +10,11 @@ using namespace TEN::Scripting::Types;
 
 /***
 Constants for Display String Options.
+
+To be used with @{Strings.DisplayString} class.
+
 @enum Strings.DisplayStringOption
 @pragma nostrip
-*/
-
-/*** Strings.DisplayStringOption constants. To be used with @{Strings.DisplayString} class.
-@table Strings.DisplayStringOption
-
- - `CENTER` - Sets the horizontal origin point to the center of the string.
- - `RIGHT` - Sets the horizontal origin point to the right side of the string.
- - `VERTICAL_CENTER` - Sets the vertical origin point of the multiline string to the center.
- - `SHADOW` - Gives the string a drop shadow effect.
- - `BLINK` - Blinks the string.
 */
 
 enum class DisplayStringOptions
@@ -31,6 +24,7 @@ enum class DisplayStringOptions
 	Right,
 	Blink,
 	VerticalCenter,
+	VerticalBottom,
 
 	Count
 };
@@ -40,11 +34,29 @@ using FlagArray = std::array<bool, (int)DisplayStringOptions::Count>;
 
 static const std::unordered_map<std::string, DisplayStringOptions> DISPLAY_STRING_OPTION_NAMES
 {
+	/// Sets the horizontal origin point to the center of the string.
+	// @mem CENTER
 	{ "CENTER", DisplayStringOptions::Center },
+
+	/// Gives the string a drop shadow effect.
+	// @mem SHADOW
 	{ "SHADOW", DisplayStringOptions::Outline },
+
+	/// Sets the horizontal origin point to the right side of the string.
+	// @mem RIGHT
 	{ "RIGHT", DisplayStringOptions::Right },
+
+	/// Blinks the string.
+	// @mem BLINK
 	{ "BLINK", DisplayStringOptions::Blink },
+
+	/// Sets the vertical origin point of the multiline string to the center.
+	// @mem VERTICAL_CENTER
 	{ "VERTICAL_CENTER", DisplayStringOptions::VerticalCenter }
+
+	/// Sets the vertical origin point of the multiline string to the bottom.
+	// @mem VERTICAL_BOTTOM
+	,{ "VERTICAL_BOTTOM", DisplayStringOptions::VerticalBottom }
 };
 
 class UserDisplayString
@@ -103,6 +115,7 @@ public:
 	Vec2			GetArea() const;
 	float			GetScale() const;
 	ScriptColor		GetColor() const;
+	sol::table		GetFlags(sol::this_state state) const;
 
 	// Setters
 	void SetKey(const std::string& key);

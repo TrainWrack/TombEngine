@@ -3,27 +3,15 @@
 The dates are in European standard format where date is presented as **YYYY-MM-DD**.
 TombEngine releases are located in this repository (alongside with Tomb Editor): https://github.com/TombEngine/TombEditorReleases
 
-## [Version 1.9.2]
-
-### Bug fixes
-* Fixed ROLLINGBALL not stopped by full walls.
-* Fixed several JEEP and MOTORBIKE vehicle collision bugs.
-* Fixed puzzle holes losing collision after inserting puzzle items.
-* Fixed projectile weapon hits not registering in statistics and collision callbacks.
-* Fixed incorrect distance checks on a very large room coordinates which could have caused random Lara teleportations.
-* Fixed firearms bullet range limited to targeting range.
-* Fixed pistols not allowing to spam fire in untargeted mode.
-* Fixed crashes and visual issues with exploding body part effects.
-* Fixed shatterable static meshes not producing shatter sound when hit by projectile weapons.
-* Fixed Doppler effect not applied to sounds.
-* Fixed HUD bars displaying incorrect update animation after loading savegame.
+## [Version 1.11.1]
 
 ### Lua API changes
 * Added `SetObjectCameraRoll` and `GetObjectCameraRoll` functions to `View`.
 * Fixed `Moveable:SetOnCollidedWithObject` not working for Lara and invisible or inactive objects.
 * Fixed `Input.ActionID.MOUSE_SCROLL_UP` and `Input.ActionID.MOUSE_SCROLL_DOWN` polling mouse movement instead of scrolling.
+* Fixed `Strings.ShowString` called without last two arguments not showing strings indefinitely.
 
-## [Version 1.9.1]
+## [Version 1.9.1](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9.1) - 2025-06-25
 
 ### New features
 * Added ability to open doors with draw weapon key in dozy mode.
@@ -51,7 +39,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed `Camera:SetPosition` interfering with non-fixed camera position.
 * Renamed `Camera:PlayCamera` to `Camera:Play`.
 
-## [Version 1.9]
+## [Version 1.9](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.9) - 2025-05-19
 
 ## New features
 * Added skinned meshes support for any object.
@@ -64,7 +52,6 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added land mode for underwater switches. Asset change required for both types of underwater switches.
   [Use this asset version](https://github.com/TombEngine/Resources/raw/refs/heads/main/Wad2%20Objects/Puzzles_Switches/TEN_WallSwitch.wad2).
 * Added ability to use big push switch (OCB 3) underwater.
-* Added extra behaviour for PIERRE and LARSON objects with non-zero OCBs to escape to either AI_AMBUSH with the same OCB, if it exists, or to any other point.
 
 ### Bug fixes
 * Fixed LASER_BEAM object going through walls.

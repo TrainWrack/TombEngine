@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Game/Lara/lara.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/camera.h"
 #include "Game/collision/collide_item.h"
 #include "Game/collision/floordata.h"
@@ -41,8 +41,8 @@
 #include "Scripting/Include/ScriptInterfaceLevel.h"
 #include "Sound/sound.h"
 #include "Specific/Input/Input.h"
-#include "Specific/winmain.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Collision::Floordata;
 using namespace TEN::Collision::Point;
 using namespace TEN::Control::Volumes;
@@ -53,11 +53,10 @@ using namespace TEN::Entities::Player;
 using namespace TEN::Input;
 using namespace TEN::Math;
 using namespace TEN::Gui;
-
 using TEN::Renderer::g_Renderer;
 
 LaraInfo	  Lara			= {};
-ItemInfo*	  LaraItem		= nullptr;
+ItemHandler	  LaraItem		= {};
 CollisionInfo LaraCollision = {};
 
 static void HandlePlayerDebug(const ItemInfo& item)
@@ -70,7 +69,7 @@ static void HandlePlayerDebug(const ItemInfo& item)
 	// Pathfinding stats.
 	else if (g_Renderer.GetDebugPage() == RendererDebugPage::PathfindingStats)
 	{
-		DrawNearbyPathfinding(GetPointCollision(item).GetBottomSector().PathfindingBoxID);
+		DrawPathfindingDebug(GetPointCollision(item).GetBottomSector().PathfindingBoxID);
 	}
 	// Collision mesh stats.
 	else if (g_Renderer.GetDebugPage() == RendererDebugPage::CollisionMeshStats)
@@ -78,7 +77,7 @@ static void HandlePlayerDebug(const ItemInfo& item)
 		auto bridgeItemNumbers = std::set<int>{};
 		const auto& room = g_Level.Rooms[Camera.pos.RoomNumber];
 
-		PrintDebugMessage("Room number: %d", room.RoomNumber);
+		PrintDebugMessage("Room number: %d", Camera.pos.RoomNumber);
 		PrintDebugMessage("Sectors: %d", room.Sectors.size());
 		PrintDebugMessage("Bridges: %d", room.Bridges.GetIds().size());
 		PrintDebugMessage("Trigger volumes: %d", room.TriggerVolumes.size());
@@ -128,7 +127,7 @@ static void HandlePlayerDebug(const ItemInfo& item)
 	else if (g_Renderer.GetDebugPage() == RendererDebugPage::PortalStats)
 	{
 		const auto& room = g_Level.Rooms[Camera.pos.RoomNumber];
-		PrintDebugMessage("Portals in room %d: %d", room.RoomNumber, room.Portals.size());
+		PrintDebugMessage("Portals in room %d: %d", Camera.pos.RoomNumber, room.Portals.size());
 
 		for (int neighborRoomNumber : room.NeighborRoomNumbers)
 		{
@@ -188,6 +187,7 @@ void LaraControl(ItemInfo* item, CollisionInfo* coll)
 	if (player.Context.Vehicle == NO_VALUE)
 		SpawnPlayerWaterSurfaceEffects(*item, water.WaterHeight, water.WaterDepth);
 
+	int headOffset = 0;
 	bool isWaterOnHeadspace = false;
 
 	// TODO: Move unrelated handling elsewhere.
@@ -283,9 +283,12 @@ void LaraControl(ItemInfo* item, CollisionInfo* coll)
 
 			// Determine if player's head is above water surface. Needed to prevent
 			// pre-TR5 bug where player would keep submerged until root mesh was above water level.
+			// Account for pitch: when angled upward, head position is higher than root position.
+			// LARA_HEADROOM / 2 - Allow half of the head to be above water before resurfacing.
+			headOffset = (LARA_HEADROOM / 2) + (int)(CLICK(1) * phd_sin(item->Pose.Orientation.x));
 			isWaterOnHeadspace = TestEnvironment(
-				ENV_FLAG_WATER, item->Pose.Position.x, item->Pose.Position.y - CLICK(1), item->Pose.Position.z,
-				GetPointCollision(*item, 0, 0, -CLICK(1)).GetRoomNumber());
+				ENV_FLAG_WATER, item->Pose.Position.x, item->Pose.Position.y - headOffset, item->Pose.Position.z,
+				GetPointCollision(*item, 0, 0, -headOffset).GetRoomNumber());
 
 			if (water.WaterDepth == NO_HEIGHT || abs(water.HeightFromWater) >= CLICK(1) || isWaterOnHeadspace ||
 				item->Animation.AnimNumber == LA_UNDERWATER_RESURFACE || item->Animation.AnimNumber == LA_ONWATER_DIVE)
@@ -455,8 +458,12 @@ void LaraAboveWater(ItemInfo* item, CollisionInfo* coll)
 
 	// Process vehicles.
 	if (HandleLaraVehicle(item, coll))
+	{
+		DoObjectCollision(item, coll);
 		return;
+	}
 
+	HandlePlayerExtraAnim(*item);
 	HandlePlayerBehaviorState(*item, *coll, PlayerBehaviorStateRoutineType::Control);
 	HandleLaraMovementParameters(item, coll);
 	AnimateItem(item);
@@ -538,7 +545,7 @@ void LaraWaterSurface(ItemInfo* item, CollisionInfo* coll)
 		LaraWaterCurrent(item, coll);
 
 	AnimateItem(item);
-	TranslateItem(item, player.Control.MoveAngle, item->Animation.Velocity.y);
+	item->Pose.Translate(player.Control.MoveAngle, item->Animation.Velocity.y);
 
 	DoObjectCollision(item, coll);
 
@@ -642,7 +649,7 @@ void LaraUnderwater(ItemInfo* item, CollisionInfo* coll)
 		LaraWaterCurrent(item, coll);
 
 	AnimateItem(item);
-	TranslateItem(item, item->Pose.Orientation, item->Animation.Velocity.y);
+	item->Pose.Translate(item->Pose.Orientation, item->Animation.Velocity.y);
 
 	DoObjectCollision(item, coll);
 

@@ -8,7 +8,6 @@ class Vector3i;
 
 extern int NumRPickups;
 extern short RPickups[16];
-extern Vector3i OldPickupPos;
 
 void InitializePickup(short itemNumber);
 bool SetInventoryCount(GAME_OBJECT_ID objectID, int count);
@@ -19,7 +18,7 @@ int GetInventoryCount(GAME_OBJECT_ID objectID);
 void CollectCarriedItems(ItemInfo* item);
 void PickupCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo* coll);
 void RegeneratePickups();
-void DropPickups(ItemInfo* item);
+void DropPickups(ItemInfo* item, bool disableAlignment = false);
 void CollectMultiplePickups(int itemNumber);
 const GameBoundingBox* FindPlinth(ItemInfo* item);
 

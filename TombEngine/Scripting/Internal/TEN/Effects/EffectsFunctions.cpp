@@ -100,13 +100,13 @@ namespace TEN::Scripting::Effects
 		bool isDrift = ValueOr<bool>(endDrift, false);
 
 		char flags = 0;
-		if(isSmooth)
+		if (isSmooth)
 			flags |= 1;
 
-		if(isDrift)
+		if (isDrift)
 			flags |= 2;
 
-		auto convertedColor = ValueOr<ScriptColor>(color, ScriptColor( 255, 255, 255 ));
+		auto convertedColor = ValueOr<ScriptColor>(color, ScriptColor(255, 255, 255)).PremultiplyAlpha();
 
 		SpawnElectricity(convertedOrigin, convertedTarget, byteAmp, convertedColor.GetR(), convertedColor.GetG(), convertedColor.GetB(), byteLife, flags, width, segs);
 	}
@@ -126,7 +126,7 @@ namespace TEN::Scripting::Effects
 	// @tparam[opt=2] float life Lifespan in seconds.
 	// @tparam[opt=false] bool damage Harm the player on collision.
 	// @tparam[opt=false] bool poison Poison the player on collision.
-	// @tparam[opt=Objects.ObjID.DEFAULT_SPRITES] Objects.ObjID.SpriteConstants spriteSeqID Sprite sequence slot ID.
+	// @tparam[opt=Objects.ObjID.DEFAULT_SPRITES] Objects.ObjID spriteSeqID Sprite sequence slot ID.
 	// @tparam[opt=random] float startRot Rotation at start of life.
 	// @usage
 	// EmitParticle(
@@ -264,7 +264,7 @@ namespace TEN::Scripting::Effects
 	// @table ParticleData
 	// @tfield Vec3 pos World position.
 	// @tfield Vec3 vel Directional velocity in world units per second.
-	// @tfield[opt=Objects.ObjID.DEFAULT_SPRITES] Objects.ObjID.SpriteConstants spriteSeqID Sprite sequence slot ID.
+	// @tfield[opt=Objects.ObjID.DEFAULT_SPRITES] Objects.ObjID spriteSeqID Sprite sequence slot ID.
 	// @tfield[opt=0] int spriteID Sprite ID in the sprite sequence slot.
 	// @tfield[opt=2] float life Lifespan in seconds.
 	// @tfield[opt=0] float maxYVel Maximum vertical velocity in world units per second.
@@ -424,7 +424,7 @@ namespace TEN::Scripting::Effects
 		int innerRad = ValueOr<int>(innerRadius, 0);
 		int outerRad = ValueOr<int>(outerRadius, 128);
 
-		auto color = ValueOr<ScriptColor>(col, ScriptColor(255, 255, 255));
+		auto color = ValueOr<ScriptColor>(col, ScriptColor(255, 255, 255)).PremultiplyAlpha();
 		int spd = ValueOr<int>(speed, 50);
 		int ang = ValueOr<int>(angle, 0);
  
@@ -447,13 +447,13 @@ namespace TEN::Scripting::Effects
 	// If you want a light that sticks around, you must call this each frame.
 	// @function EmitLight
 	// @tparam Vec3 pos World position of the light.
-	// @tparam[opt=Color(255&#44; 255&#44; 255)] Color color light color.
+	// @tparam[opt=Color(255&#44; 255&#44; 255)] Color color Light color.
 	// @tparam[opt=20] int radius Measured in "clicks" or 256 world units.
 	// @tparam[opt=false] bool shadows Determines whether light should generate dynamic shadows for applicable moveables.
 	// @tparam[opt] string name If provided, engine will interpolate this light for high framerate mode (be careful not to use same name for different lights).
 	static void EmitLight(Vec3 pos, TypeOrNil<ScriptColor> col, TypeOrNil<int> radius, TypeOrNil<bool> castShadows, TypeOrNil<std::string> name)
 	{
-		auto color = ValueOr<ScriptColor>(col, ScriptColor(255, 255, 255));
+		auto color = ValueOr<ScriptColor>(col, ScriptColor(255, 255, 255)).PremultiplyAlpha();
 		int rad = (float)(ValueOr<int>(radius, 20) * BLOCK(0.25f));
 		SpawnDynamicPointLight(pos.ToVector3(), color, rad, ValueOr<bool>(castShadows, false), GetHash(ValueOr<std::string>(name, std::string())));
 	}
@@ -463,7 +463,7 @@ namespace TEN::Scripting::Effects
 	// @function EmitSpotLight
 	// @tparam Vec3 pos World position of the light.
 	// @tparam Vec3 dir Normal which indicates light direction.
-	// @tparam[opt=Color(255&#44; 255&#44; 255)] Color color Color.
+	// @tparam[opt=Color(255&#44; 255&#44; 255)] Color color Light color.
 	// @tparam[opt=10] int radius Overall radius at the endpoint of a light cone, measured in "clicks" or 256 world units.
 	// @tparam[opt=5] int falloff Radius, at which light starts to fade out, measured in "clicks".
 	// @tparam[opt=20] int distance Distance, at which light cone fades out, measured in "clicks".
@@ -471,11 +471,29 @@ namespace TEN::Scripting::Effects
 	// @tparam[opt] string name If provided, engine will interpolate this light for high framerate mode (be careful not to use same name for different lights).
 	static void EmitSpotLight(Vec3 pos, Vec3 dir, TypeOrNil<ScriptColor> col, TypeOrNil<int> radius, TypeOrNil<int> falloff, TypeOrNil<int> distance, TypeOrNil<bool> castShadows, TypeOrNil<std::string> name)
 	{
-		auto color = ValueOr<ScriptColor>(col, ScriptColor(255, 255, 255));
+		auto color = ValueOr<ScriptColor>(col, ScriptColor(255, 255, 255)).PremultiplyAlpha();
 		int rad =	  (float)(ValueOr<int>(radius,   10) * BLOCK(0.25f));
 		int fallOff = (float)(ValueOr<int>(falloff,   5) * BLOCK(0.25f));
 		int dist =	  (float)(ValueOr<int>(distance, 20) * BLOCK(0.25f));
 		SpawnDynamicSpotLight(pos.ToVector3(), dir.ToVector3(), color, rad, fallOff, dist, ValueOr<bool>(castShadows, false), GetHash(ValueOr<std::string>(name, std::string())));
+	}
+
+	/// Emit dynamic fog bulb that lasts for a single frame.
+	// If you want a fog bulb that sticks around, you must call this each frame.
+	// @function EmitFogBulb
+	// @tparam Vec3 pos Position of the fog bulb.
+	// @tparam[opt=20] int radius Radius measured in "clicks" or 256 world units.
+	// @tparam[opt=255] int density Density, ranging from 0 to 255.
+	// @tparam[opt=Color(255&#44; 255&#44; 255)] Color color Color.
+	// @tparam[opt] string name If provided, engine will interpolate this fog bulb for high framerate mode (be careful not to use same name for different fogbulbs)
+	static void EmitFogBulb(Vec3 pos, TypeOrNil<int> radius, TypeOrNil<int> density, TypeOrNil<ScriptColor> col, TypeOrNil<std::string> name)
+	{
+		constexpr auto DEFAULT_DENSITY = 255;
+
+		auto color = ValueOr<ScriptColor>(col, ScriptColor(255, 255, 255)).PremultiplyAlpha();
+		int rad = (float)(ValueOr<int>(radius, 20));
+		int dens = (float)(ValueOr<int>(density, DEFAULT_DENSITY));
+		SpawnDynamicFogBulb(pos.ToVector3(), rad, dens, color, GetHash(ValueOr<std::string>(name, std::string())));
 	}
 
 	/// Emit blood.
@@ -523,7 +541,7 @@ namespace TEN::Scripting::Effects
 		auto convertedAngle = ANGLE(ValueOr<float>(angle, 0.0f));
 		auto convertedSize = ValueOr<int>(size, DEFAULT_SIZE);
 		auto convertedWidth = ValueOr<int>(width, DEFAULT_WIDTH);
-		auto _color = ValueOr<ScriptColor>(color, ScriptColor(255, 255, 255));
+		auto _color = ValueOr<ScriptColor>(color, ScriptColor(255, 255, 255)).PremultiplyAlpha();
 		auto convertedColor = Vector4(_color.GetR(), _color.GetG(), _color.GetB(), _color.GetA()) / UCHAR_MAX;
 
 		TriggerWaterfallMist(pos, convertedSize, convertedWidth, convertedAngle, convertedColor);
@@ -593,7 +611,7 @@ namespace TEN::Scripting::Effects
 	// @tparam[opt=25] float maxSize Max size of the particle.
 	// @tparam[opt=Color(128&#44; 128&#44; 128)] Color startColor Color at start of life.
 	// @tparam[opt=Color(0&#44; 0&#44; 0)] Color endColor Color at end of life.
-	// @tparam[opt=Objects.ObjID.DEFAULT_SPRITES] Objects.ObjID.SpriteConstants spriteSeqID Sprite sequence slot ID.
+	// @tparam[opt=Objects.ObjID.DEFAULT_SPRITES] Objects.ObjID spriteSeqID Sprite sequence slot ID.
 	// @tparam[opt=14 (UNDERWATER_DUST)] int spriteID Sprite ID in the sprite sequence slot.
 	static void EmitFlow(const Vec3& pos, const Vec3& dir, TypeOrNil<float> radius, TypeOrNil<float> life, TypeOrNil<float> friction, TypeOrNil<float> maxSize, TypeOrNil<ScriptColor> startColor, TypeOrNil<ScriptColor> endColor, TypeOrNil<GAME_OBJECT_ID> spriteSeqID, TypeOrNil<int> spriteID)
 	{
@@ -729,6 +747,7 @@ namespace TEN::Scripting::Effects
 		tableEffects.set_function(ScriptReserved_EmitShockwave, &EmitShockwave);
 		tableEffects.set_function(ScriptReserved_EmitLight, &EmitLight);
 		tableEffects.set_function(ScriptReserved_EmitSpotLight, &EmitSpotLight);
+		tableEffects.set_function(ScriptReserved_EmitFogBulb, &EmitFogBulb);
 		tableEffects.set_function(ScriptReserved_EmitBlood, &EmitBlood);
 		tableEffects.set_function(ScriptReserved_EmitAirBubble, &EmitAirBubble);
 		tableEffects.set_function(ScriptReserved_EmitStreamer, &EmitStreamer);

@@ -2,7 +2,7 @@
 #include "Game/effects/effects.h"
 
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/control/box.h"
 #include "Game/control/los.h"
 #include "Game/collision/collide_room.h"
@@ -21,6 +21,7 @@
 #include "Game/effects/weather.h"
 #include "Game/items.h"
 #include "Game/Lara/lara.h"
+#include "Game/Lara/lara_collide.h"
 #include "Game/Lara/lara_helpers.h"
 #include "Game/Setup.h"
 #include "Math/Math.h"
@@ -32,6 +33,7 @@
 #include "Specific/level.h"
 #include "Specific/trutils.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Collision::Point;
 using namespace TEN::Effects::Blood;
 using namespace TEN::Effects::Bubble;
@@ -41,6 +43,7 @@ using namespace TEN::Effects::Explosion;
 using namespace TEN::Effects::Items;
 using namespace TEN::Effects::Light;
 using namespace TEN::Effects::Ripple;
+using namespace TEN::Effects::Smoke;
 using namespace TEN::Effects::Spark;
 using namespace TEN::Effects::Splash;
 using namespace TEN::Effects::WaterfallEmitter;
@@ -65,25 +68,25 @@ int Wibble = 0;
 Vector3i NodeVectors[ParticleNodeOffsetIDs::NodeMax];
 NODEOFFSET_INFO NodeOffsets[ParticleNodeOffsetIDs::NodeMax] =
 {
-	{ -16, 40, 160, 13, false },		// TR5 offset 0
-	{ -16, -8, 160, 0, false },			// TR5 offset 1
-	{ 0, 0, 256, 8, false },			// TR5 offset 2
-	{ 0, 0, 256, 17, false },			// TR5 offset 3
-	{ 0, 0, 256, 26, false },			// TR5 offset 4
-	{ 0, 144, 40, 10, false },			// TR5 offset 5
-	{ -40, 64, 360, 14, false },		// TR5 offset 6
-	{ 0, -600, -40, 0, false },			// TR5 offset 7
-	{ 0, 32, 16, 9, false },			// TR5 offset 8
-	{ 0, 340, 64, 7, false },			// TR3 offset 9
-	{ 0, 0, -96, 10, false },			// TR3 offset 10
-	{ 16, 48, 320, 13, false },			// TR3 offset 11
-	{ 0, -256, 0, 5, false },			// TR3 offset 12
-	{ 0, 64, 0, 10, false },			// TR3 offset 13
-	{ 0, 64, 0, 13, false },			// TR3 offset 14
-	{ -32, -16, -192, 13, false },		// TR3 offset 15
-	{ -64, 410, 0, 20, false },			// TR3 offset 16
-	{ 64, 410, 0, 23, false },			// TR3 offset 17
-	{ 0, 0, 0, 0, false }				// Empty offset 18
+	{ -16, 40, 160, 13, NO_VALUE },		// TR5 offset 0
+	{ -16, -8, 160, 0, NO_VALUE },		// TR5 offset 1
+	{ 0, 0, 256, 8, NO_VALUE },			// TR5 offset 2
+	{ 0, 0, 256, 17, NO_VALUE },		// TR5 offset 3
+	{ 0, 0, 256, 26, NO_VALUE },		// TR5 offset 4
+	{ 0, 144, 40, 10, NO_VALUE },		// TR5 offset 5
+	{ -40, 64, 360, 14, NO_VALUE },		// TR5 offset 6
+	{ 0, -600, -40, 0, NO_VALUE },		// TR5 offset 7
+	{ 0, 32, 16, 9, NO_VALUE },			// TR5 offset 8
+	{ 0, 340, 64, 7, NO_VALUE },		// TR3 offset 9
+	{ 0, 0, -96, 10, NO_VALUE },		// TR3 offset 10
+	{ 16, 48, 320, 13, NO_VALUE },		// TR3 offset 11
+	{ 0, -256, 0, 5, NO_VALUE },		// TR3 offset 12
+	{ 0, 64, 0, 10, NO_VALUE },			// TR3 offset 13
+	{ 0, 64, 0, 13, NO_VALUE },			// TR3 offset 14
+	{ -32, -16, -192, 13, NO_VALUE },	// TR3 offset 15
+	{ -64, 410, 0, 20, NO_VALUE },		// TR3 offset 16
+	{ 64, 410, 0, 23, NO_VALUE },		// TR3 offset 17
+	{ 0, 0, 0, 0, NO_VALUE }			// Empty offset 18
 };
 
 void DetatchSpark(int number, SpriteEnumFlag type)
@@ -164,6 +167,7 @@ Particle* GetFreeParticle()
 	auto& part = Particles[partID];
 	part.SpriteSeqID = ID_DEFAULT_SPRITES;
 	part.SpriteID = 0;
+	part.fxObj = NO_VALUE;
 	part.blendMode = BlendMode::Additive;
 	part.extras = 0;
 	part.dynamic = NO_VALUE;
@@ -278,14 +282,7 @@ void UpdateWibble()
 
 void UpdateSparks()
 {
-	auto bounds = GameBoundingBox(LaraItem);
-	DeadlyBounds = GameBoundingBox(
-		LaraItem->Pose.Position.x + bounds.X1,
-		LaraItem->Pose.Position.x + bounds.X2,
-		LaraItem->Pose.Position.y + bounds.Y1,
-		LaraItem->Pose.Position.y + bounds.Y2,
-		LaraItem->Pose.Position.z + bounds.Z1,
-		LaraItem->Pose.Position.z + bounds.Z2);
+	GetLaraDeadlyBounds();
 
 	for (int i = 0; i < MAX_PARTICLES; i++)
 	{
@@ -494,7 +491,12 @@ void UpdateSparks()
 						if (spark.z + ds > DeadlyBounds.Z1 && spark.z - ds < DeadlyBounds.Z2)
 						{
 							if (spark.flags & SP_FIRE)
-								ItemBurn(LaraItem);
+							{
+								if (spark.fxObj != NO_VALUE && g_Level.Items.size() > spark.fxObj && g_Level.Items[spark.fxObj].ObjectNumber == ID_FLAME_EMITTER)
+									ItemCustomBurn(LaraItem, (Vector3)g_Level.Items[spark.fxObj].Model.Color, (Vector3)g_Level.Items[spark.fxObj].Model.Color);
+								else
+									ItemBurn(LaraItem);
+							}
 
 							if (spark.flags & SP_DAMAGE)
 								DoDamage(LaraItem, spark.damage);
@@ -594,7 +596,9 @@ void TriggerRicochetSpark(const GameVector& pos, short angle, bool sound)
 {
 	int count = Random::GenerateInt(3, 8);
 	TriggerRicochetSpark(pos, angle, count);
-	SoundEffect(SFX_TR4_WEAPON_RICOCHET, &Pose(pos.ToVector3i()));
+
+	if (sound)
+		SoundEffect(SFX_TR4_WEAPON_RICOCHET, &Pose(pos.ToVector3i()));
 }
 
 void TriggerGlow(const GameVector& pos, const Vector3& color, int scale)
@@ -1093,12 +1097,33 @@ void TriggerSuperJetFlame(ItemInfo* item, int yvel, int deadly)
 		if (size < 512)
 			size = 512;
 
+		if (item->Model.Color == Vector4::One)
+		{
+			sptr->sR = sptr->sG = (GetRandomControl() & 0x1F) + 48;
+			sptr->sB = (GetRandomControl() & 0x3F) - 64;
+			sptr->dR = (GetRandomControl() & 0x3F) - 64;
+			sptr->dG = (GetRandomControl() & 0x3F) - 128;
+			sptr->dB = 32;
+		}
+		else
+		{
+			auto colorD = item->Model.Color / 2.0f * UCHAR_MAX;
+			auto luma = Luma((Vector3)item->Model.Color / 2.0f) * 0.85f * UCHAR_MAX;
+			auto colorS = Vector3(0.15f * colorD.x + luma,
+								  0.15f * colorD.y + luma,
+								  0.15f * colorD.z + luma);
+
+			sptr->sR = colorS.x;
+			sptr->sG = colorS.y;
+			sptr->sB = colorS.z;
+			sptr->dR = colorD.x;
+			sptr->dG = colorD.y;
+			sptr->dB = colorD.z;
+
+			sptr->fxObj = item->Index;
+		}
+
 		sptr->on = 1;
-		sptr->sR = sptr->sG = (GetRandomControl() & 0x1F) + 48;
-		sptr->sB = (GetRandomControl() & 0x3F) - 64;
-		sptr->dR = (GetRandomControl() & 0x3F) - 64;
-		sptr->dG = (GetRandomControl() & 0x3F) - 128;
-		sptr->dB = 32;
 		sptr->colFadeSpeed = 8;
 		sptr->fadeToBlack = 8;
 		sptr->blendMode = BlendMode::Additive;
@@ -1151,14 +1176,16 @@ void TriggerSuperJetFlame(ItemInfo* item, int yvel, int deadly)
 
 short DoBloodSplat(int x, int y, int z, short speed, short direction, short roomNumber)
 {
-	short probedRoomNumber = GetPointCollision(Vector3i(x, y, z), roomNumber).GetRoomNumber();
+	int intensity = Random::GenerateInt(10, 20);
+	int probedRoomNumber = GetPointCollision(Vector3i(x, y, z), roomNumber).GetRoomNumber();
+
 	if (TestEnvironment(ENV_FLAG_WATER, probedRoomNumber))
 	{
-		SpawnUnderwaterBlood(Vector3(x, y, z), probedRoomNumber, speed);
+		SpawnUnderwaterBlood(Vector3(x, y, z), probedRoomNumber, intensity);
 	}
 	else
 	{
-		TriggerBlood(x, y, z, direction >> 4, speed);
+		TriggerBlood(x, y, z, direction >> 4, intensity);
 	}
 
 	return 0;
@@ -1430,17 +1457,6 @@ void TriggerRocketFire(int x, int y, int z)
 	int size = (GetRandomControl() & 7) + 128;
 	sptr->size = sptr->sSize = size >> 2;
 	sptr->dSize = size;
-}
-
-
-void TriggerRocketSmoke(int x, int y, int z)
-{
-	TEN::Effects::Smoke::TriggerRocketSmoke(x, y, z);
-}
-
-void SpawnCorpseEffect(const Vector3& pos)
-{
-	TEN::Effects::Smoke::SpawnCorpseEffect(pos);
 }
 
 void TriggerFlashSmoke(int x, int y, int z, short roomNumber)
@@ -1829,7 +1845,7 @@ void ProcessEffects(ItemInfo* item)
 			{
 				TriggerElectricSpark(
 					GameVector(pos, item->RoomNumber),
-					EulerAngles(0, Random::GenerateAngle(0, ANGLE(359.0f)), 0), 2);
+					EulerAngles(0, Random::GenerateAngle(), 0), 2);
 			}
 
 			if (TestProbability(1 / 64.0f))
@@ -1842,7 +1858,7 @@ void ProcessEffects(ItemInfo* item)
 			{
 				TriggerElectricSpark(
 					GameVector(pos, item->RoomNumber),
-					EulerAngles(0, Random::GenerateAngle(0, ANGLE(359.0f)), 0), 2);
+					EulerAngles(0, Random::GenerateAngle(), 0), 2);
 			}
 
 			if (TestProbability(1 / 1.0f))
@@ -1964,12 +1980,34 @@ void TriggerAttackFlame(const Vector3i& pos, const Vector3& color, int scale)
 	spark.dSize = spark.size / 4;
 }
 
+void SpawnCreatureGunEffect(const ItemInfo& item, const CreatureMuzzleFlashInfo& muzzleFlash)
+{
+	constexpr auto CREATURE_GUN_EFFECT_VERTICAL_OFFSET = 75;
+	constexpr auto CREATURE_GUN_EFFECT_LIGHT_FALLOFF = 15.0f * (float)UCHAR_MAX;
+
+	if (muzzleFlash.Delay == 0)
+		return;
+
+	auto intensity = Random::GenerateFloat(0.75f, 1.0f);
+	auto muzzlePos = muzzleFlash.Bite;
+	auto pos = GetJointPosition(item, muzzlePos);
+	SpawnDynamicPointLight(pos.ToVector3(), CREATURE_GUNFLASH_COLOR * intensity, CREATURE_GUN_EFFECT_LIGHT_FALLOFF * intensity);
+
+	if (muzzleFlash.UseSmoke)
+	{
+		muzzlePos.Position.y -= CREATURE_GUN_EFFECT_VERTICAL_OFFSET;
+		auto smokePos = GetJointPosition(item, muzzlePos);
+		SpawnGunSmokeParticles(smokePos.ToVector3(), Vector3::Zero, item.RoomNumber, 1, LaraWeaponType::Pistol, 12);
+	}
+}
+
 void SpawnPlayerWaterSurfaceEffects(const ItemInfo& item, int waterHeight, int waterDepth)
 {
 	const auto& player = GetLaraInfo(item);
 
-	// Player underwater; return early.
-	if (player.Control.WaterStatus == WaterStatus::Underwater)
+	// Player underwater or in fly mode; return early.
+	if (player.Control.WaterStatus == WaterStatus::Underwater ||
+		player.Control.WaterStatus == WaterStatus::FlyCheat)
 		return;
 
 	// Get point collision.
@@ -2013,43 +2051,4 @@ void SpawnPlayerWaterSurfaceEffects(const ItemInfo& item, int waterHeight, int w
 			item.RoomNumber, Random::GenerateFloat(112.0f, 128.0f),
 			flags);
 	}
-}
-
-std::pair<std::array<int, 3>, std::array<int, 3>> GenerateColorShift(Vector3 mainColor, Vector3 additionalColor)
-{
-	std::array<int, 3> colorS = {
-		int(mainColor.x * UCHAR_MAX),
-		int(mainColor.y * UCHAR_MAX),
-		int(mainColor.z * UCHAR_MAX)
-	};
-
-	std::array<int, 3> colorD = {
-		int(additionalColor.x * UCHAR_MAX),
-		int(additionalColor.y * UCHAR_MAX),
-		int(additionalColor.z * UCHAR_MAX)
-	};
-
-	// Determine weakest RGB component
-	int lowestS = *std::min_element(colorS.begin(), colorS.end());
-	int lowestD = *std::min_element(colorD.begin(), colorD.end());
-
-	constexpr auto CHROMA_SHIFT = 32;
-	constexpr auto LUMA_SHIFT = 0.5f;
-
-	for (int i = 0; i < 3; i++)
-	{
-		if (colorS[i] != lowestS)
-			colorS[i] += GenerateInt(-CHROMA_SHIFT, CHROMA_SHIFT);
-
-		if (colorD[i] != lowestD)
-			colorD[i] += GenerateInt(-CHROMA_SHIFT, CHROMA_SHIFT);
-
-		colorS[i] = int(colorS[i] * (1.0f + GenerateFloat(-LUMA_SHIFT, 0)));
-		colorD[i] = int(colorD[i] * (1.0f + GenerateFloat(-LUMA_SHIFT, 0)));
-
-		colorS[i] = std::clamp(colorS[i], 0, UCHAR_MAX);
-		colorD[i] = std::clamp(colorD[i], 0, UCHAR_MAX);
-	}
-
-	return { colorS, colorD };
 }
