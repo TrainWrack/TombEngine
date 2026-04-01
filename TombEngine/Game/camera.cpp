@@ -210,7 +210,7 @@ void LookCamera(ItemInfo& item, const CollisionInfo& coll)
 	MoveCamera(&target, Camera.speed);
 	Camera.target = GameVector(Camera.target.ToVector3i() + (lookAtPos - Camera.target.ToVector3i()) * POS_LERP_ALPHA, item.RoomNumber);
 
-	LookAt(&Camera, 0);
+	LookAt(&Camera, GetCurrentRoll());
 	UpdateMikePos(item);
 	Camera.oldType = Camera.type;
 }
@@ -241,7 +241,7 @@ void AlterRoll(short value)
 
 float GetCurrentRoll()
 {
-	return Camera.Roll;
+	return FROM_RAD(Camera.Roll);
 }
 
 inline void RumbleFromBounce()
@@ -442,7 +442,7 @@ void MoveCamera(GameVector* ideal, int speed, bool force)
 	ItemsCollideCamera();
 
 	Camera.pos.RoomNumber = GetPointCollision(Camera.pos.ToVector3i(), Camera.pos.RoomNumber).GetRoomNumber();
-	LookAt(&Camera, 0);
+	LookAt(&Camera, GetCurrentRoll());
 	UpdateMikePos(*LaraItem);
 	Camera.oldType = Camera.type;
 }
@@ -1027,7 +1027,7 @@ void BinocularCamera(ItemInfo* item)
 		CalculateBounce(true);
 
 	Camera.target.RoomNumber = GetPointCollision(Camera.pos.ToVector3i(), Camera.target.RoomNumber).GetRoomNumber();
-	LookAt(&Camera, 0);
+	LookAt(&Camera, GetCurrentRoll());
 	UpdateMikePos(*item);
 	Camera.oldType = Camera.type;
 }
