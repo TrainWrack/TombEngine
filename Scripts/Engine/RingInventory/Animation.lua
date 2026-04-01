@@ -17,6 +17,7 @@ local Utilities = require("Engine.RingInventory.Utilities")
 --Variables to be cleaned up
 local itemRotation = TEN.Rotation(0, 0, 0)
 local itemRotationOld = TEN.Rotation(0, 0, 0)
+local itemStartPos = TEN.Vec3(0, 200, 512)
 
 --Constants
 local ITEM_START = TEN.Vec3(0, 200, 512)
@@ -32,6 +33,14 @@ function Animation.SaveItemData(selectedItem)
     local displayItem = selectedItem:GetDisplayItem()
     itemRotationOld = Utilities.CopyRotation(displayItem:GetRotation())
     itemRotation = Utilities.CopyRotation(selectedItem:GetRotation())
+end
+
+function Animation.SetItemStartPos(selectedItem)
+    if not selectedItem then return end
+    local displayItem = selectedItem:GetDisplayItem()
+    if displayItem then
+        itemStartPos = displayItem:GetPosition()
+    end
 end
 
 function Animation.Clear(prefix, motionTable)
@@ -119,10 +128,9 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
         {key = "target", start = Constants.TARGET_START, finish = Constants.TARGET_END},
     }
     
-    local itemRingPos = selectedRing:GetPosition():Translate(Rotation(0, 0, 0), Ring.RING_RADIUS)
     local examineAnimation =
     {
-        {key = "itemPosition", start = itemRingPos, finish = ITEM_END},
+        {key = "itemPosition", start = itemStartPos, finish = ITEM_END},
         {key = "itemRotation", start = itemRotationOld, finish = itemRotation},
         {key = "ringFade", start = Constants.ALPHA_MAX, finish = Constants.ALPHA_MIN},
     }
