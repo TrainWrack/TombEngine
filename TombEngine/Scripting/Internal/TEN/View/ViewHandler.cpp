@@ -264,13 +264,13 @@ namespace TEN::Scripting::View
 		//@treturn float Current FOV angle in degrees.
 		tableView.set_function(ScriptReserved_GetFOV, &GetFOV);
 
-		///Set the camera roll for object camera.
-		//@function SetObjectCameraRoll
+		///Set the camera roll.
+		//@function SetRoll
 		//@tparam float angle Angle in degrees.
 		tableView.set_function(ScriptReserved_SetCameraRoll, &SetRoll);
 
 		///Get the current roll of camera.
-		//@function GetObjectCameraRoll
+		//@function GetRoll
 		//@treturn float Current roll angle in degrees.
 		tableView.set_function(ScriptReserved_GetCameraRoll, &GetRoll);
 
