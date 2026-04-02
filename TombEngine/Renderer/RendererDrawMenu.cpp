@@ -999,7 +999,7 @@ namespace TEN::Renderer
 
 		float aspectRatio = (float)(_screenWidth) / _screenHeight;
 
-		auto viewMatrix = Matrix::CreateLookAt(g_DrawItems.GetInterpolatedCameraPosition(alpha), g_DrawItems.GetInterpolatedCameraTargetPosition(alpha), Vector3::Up);
+		auto viewMatrix = Matrix::CreateLookAt(g_DrawItems.GetInterpolatedCameraPosition(alpha), g_DrawItems.GetInterpolatedCameraTargetPosition(alpha), Vector3::Down);
 		auto projMatrix = Matrix::CreatePerspectiveFieldOfView(g_DrawItems.GetInterpolatedFov(alpha), aspectRatio, DISPLAY_ITEM_NEAR_PLANE, DISPLAY_ITEM_FAR_PLANE);
 
 		auto& moveableObject = _moveableObjects[objectNumber];
