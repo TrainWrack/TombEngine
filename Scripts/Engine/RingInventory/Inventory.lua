@@ -293,9 +293,6 @@ end
 --- Duration of the per-item spin or presentation animation.
 -- @tfield[opt=0.2] float itemAnimTime Time in seconds for an individual item to animate into its focused pose.
 
---- Radius of the inventory ring.
--- @tfield[opt=570] float ringRadius Ring radius.
-
 --- Skip the ring collapse animation when closing the inventory.
 -- @tfield[opt=false] bool skipRingClose If true, the inventory closes instantly without playing the ring-retract animation.
 
