@@ -555,15 +555,17 @@ end
 
 local HandleStatisticsOpen = function(state)
     if onEnter then
+        if not InventoryData.IsItemChosen() then
+            Animation.SaveItemData(state.selectedItem)
+            Animation.SetItemStartPos(state.selectedItem)
+        end
         Text.Hide("ITEM_LABEL_PRIMARY")
-        Animation.SaveItemData(state.selectedItem)
-        Animation.SetItemStartPos(state.selectedItem)
-        Statistics.SetupStats()
         Text.SetText("HEADER", "statistics", true)
+        Sprites.HideArrows()
         UpdateBackLabel("back")
         ItemSpin.StopSelectedItemSpin(state.selectedRing)
+        Statistics.SetupStats()
         Statistics.Show()
-        Sprites.HideArrows()
         state.selectedRing:Color(COLOR_MAP.itemHidden, COLOR_MAP.itemSelected)
 
         if InventoryData.IsItemChosen() then
