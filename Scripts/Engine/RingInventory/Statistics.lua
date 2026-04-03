@@ -36,7 +36,7 @@ local LEVEL_HEADER_TEXT =
 		TEN.Strings.DisplayStringOption.CENTER,
 		TEN.Strings.DisplayStringOption.SHADOW
 	},
-	translate = false,
+	translate = false
 }
 
 local HEADER_TEXT = 
@@ -51,7 +51,7 @@ local HEADER_TEXT =
 	{
 		TEN.Strings.DisplayStringOption.SHADOW
 	},
-	translate = false,
+	translate = false
 }
 
 local STATS_TEXT = 
@@ -66,7 +66,7 @@ local STATS_TEXT =
 	{
 		TEN.Strings.DisplayStringOption.SHADOW
 	},
-	translate = false,
+	translate = false
 }
 
 local GetStatistics = function(type)

@@ -290,7 +290,8 @@ end
 
 -- Get all angles at once
 function Ring:GetAngles()
-    return {
+    return
+	{
         current = self.currentAngle,
         previous = self.previousAngle,
         target = self.targetAngle
@@ -339,7 +340,6 @@ end
 
 --Draw items in the ring
 function Ring:Draw()
-
     if not self.visible then return end
 
     for i = 1, #self.items do

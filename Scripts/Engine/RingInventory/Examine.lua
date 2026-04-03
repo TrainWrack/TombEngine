@@ -53,7 +53,7 @@ local EXAMINE_TEXT =
         Strings.DisplayStringOption.CENTER,
         Strings.DisplayStringOption.SHADOW
     },
-    translate = false,
+    translate = false
 }
 
 local EXAMINE_CONTROLS = 
@@ -68,7 +68,7 @@ local EXAMINE_CONTROLS =
     {
         Strings.DisplayStringOption.SHADOW
     },
-    translate = false,
+    translate = false
 }
 
 local function StepRotationAxis(current, target)
@@ -85,7 +85,6 @@ local function StepRotationAxis(current, target)
 end
 
 local function StepScale(current, target)
-
     local delta = target - current
 
     if math.abs(delta) <= SCALE_SNAP_THRESHOLD then
@@ -96,7 +95,6 @@ local function StepScale(current, target)
 end
 
 local function ExamineLabel(showText)
-
     local string = ""
 
     if showText then
@@ -113,7 +111,6 @@ local function ExamineLabel(showText)
 end
 
 function Examine.SetupText(itemData)
-
     local item = itemData:GetObjectID()
 
     local objectName = Objects.GetSlotName(item)
@@ -131,7 +128,6 @@ function Examine.SetupText(itemData)
 end
 
 function Examine.ToggleText()
-
     examineShowString = not examineShowString
 
     if examineShowString then
@@ -142,7 +138,6 @@ function Examine.ToggleText()
 end
 
 function Examine.ModifyRotation(dirX, dirY, dirZ)
-
     examineTargetRotation.x = Utilities.NormalizeAngle(examineTargetRotation.x + dirX * ROTATION_MULTIPLIER)
     examineTargetRotation.y = Utilities.NormalizeAngle(examineTargetRotation.y + dirY * ROTATION_MULTIPLIER)
     examineTargetRotation.z = Utilities.NormalizeAngle(examineTargetRotation.z + dirZ * ROTATION_MULTIPLIER)
@@ -150,31 +145,26 @@ function Examine.ModifyRotation(dirX, dirY, dirZ)
 end
 
 function Examine.ModifyScale(dir)
-
     examineTargetScale = examineTargetScale + dir * ZOOM_MULTIPLIER
 end
 
 function Examine.SetRotation(rotation)
-
     examineRotation = Utilities.NormalizeRotation(rotation)
     examineTargetRotation = Utilities.NormalizeRotation(rotation)
 end
 
 function Examine.SetScale(scaleValue)
-
     local clampedScale = Utilities.Clamp(scaleValue, EXAMINE_MIN_SCALE, EXAMINE_MAX_SCALE)
     examineScaler = clampedScale
     examineTargetScale = clampedScale
 end
 
 function Examine.ResetExamine(item)
-
     Examine.SetRotation(item:GetRotation())
     Examine.SetScale(item:GetScale())
 end
 
 function Examine.Show(item)
-
     if not item then return end
 
     Examine.ResetExamine(item)
@@ -184,7 +174,6 @@ function Examine.Show(item)
 end
 
 function Examine.Draw()
-
     if not Examine.item then return end
 
     examineScaler = Utilities.Clamp(examineScaler, EXAMINE_MIN_SCALE, EXAMINE_MAX_SCALE)
@@ -196,7 +185,6 @@ function Examine.Draw()
 end
 
 function Examine.Hide()
-
     Text.Hide("EXAMINE_CONTROLS")
     Text.Hide("EXAMINE_TEXT")
     examineShowString = false
@@ -204,7 +192,6 @@ function Examine.Hide()
 end
 
 function Examine.Update()
-
     if not Examine.item then return end
 
     examineRotation = Rotation(

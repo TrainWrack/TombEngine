@@ -55,7 +55,8 @@ Menu.Create = function(menuName, title, items, acceptFunction, exitFunction, men
         end
     end
 
-    Menus[menuName] = {
+    Menus[menuName] =
+    {
         name = menuName,
         titleString = title,
         items = items or {},

@@ -3,10 +3,9 @@
 -- @local
 
 local InputHelpers = {}
+local PULSE_DELAY = 0.25
 
 function InputHelpers.GuiIsPulsed(actionID, timer)
-    local DELAY = 0.25
-
     if TEN.Input.GetActionTimeActive(actionID) >= timer then
         return false
     end
@@ -26,7 +25,7 @@ function InputHelpers.GuiIsPulsed(actionID, timer)
         return false
     end
 
-    return TEN.Input.IsKeyPulsed(actionID, DELAY, DELAY)
+    return TEN.Input.IsKeyPulsed(actionID, PULSE_DELAY, PULSE_DELAY)
 end
 
 return InputHelpers

@@ -172,7 +172,6 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
             return true
         end
     elseif mode == INVENTORY_MODE.RING_ROTATE then
-        
         local ringRotate = Interpolate.Calculate("RingRotateAngle",
             selectedRing:GetPreviousAngle(), selectedRing:GetTargetAngle(),
             Settings.Animation.inventoryAnimTime / 1.5, Interpolate.Easing.Smoothstep)
@@ -215,7 +214,6 @@ function Animation.Inventory(mode, selectedRing, selectedItem)
             Animation.Clear("CombineRingOpening", combineRingAnimation)
             return true
         end
-
     elseif mode == INVENTORY_MODE.STATISTICS_CLOSE or 
            mode == INVENTORY_MODE.SAVE_CLOSE or 
            mode == INVENTORY_MODE.ITEM_DESELECT or

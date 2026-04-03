@@ -27,7 +27,8 @@ function WeaponMode.CreateWeaponModeMenu(itemData)
     
     for _, entry in ipairs(PickupData.WEAPON_MODE_LOOKUP) do
         if entry.weapon == itemData:GetObjectID() then
-            table.insert(weaponModes, {
+            table.insert(weaponModes, 
+			{
                 itemName = entry.string,
                 actionBit = nil,
                 options = nil,
