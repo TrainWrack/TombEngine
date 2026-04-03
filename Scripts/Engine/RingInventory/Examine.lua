@@ -18,7 +18,7 @@ local COLOR_MAP = Settings.ColorMap
 --Examine functions
 local Examine = {}
 
-local EXAMINE_POSITION = Vec3(0, 100, 0)
+local EXAMINE_POSITION = Vec3(0, 50, 0)
 local EXAMINE_DEFAULT_SCALE = 1
 local EXAMINE_MIN_SCALE = 0.3
 local EXAMINE_MAX_SCALE = 1.6
@@ -180,7 +180,7 @@ function Examine.Show(item)
     Examine.ResetExamine(item)
     Examine.SetupText(item)
     targetAlpha = 255
-    Examine.item = TEN.View.DisplayItem(item:GetObjectID(), EXAMINE_POSITION, examineRotation, Vec3(examineScaler), item:GetMeshBits())
+    Examine.item = TEN.View.DisplayItem(item:GetObjectID(), Utilities.OffsetY(EXAMINE_POSITION, item:GetYOffset()), examineRotation, Vec3(examineScaler), item:GetMeshBits())
 end
 
 function Examine.Draw()
