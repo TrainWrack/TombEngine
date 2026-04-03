@@ -516,94 +516,94 @@ TextChannels.CONFIGS =
 {
     HEADER = 
     {
-        name = "HEADER",                 -- Unique identifier
-        text = "",               -- Current display text
-        position = TEN.Vec2(50, 4),                   -- Screen position (percentage)
-        scale = 1.5,                              -- Text scale
-        color = COLOR_MAP.headerText,        -- Base color
-        visible = false,                           -- Visibility flag
-        flags = 
-        {                                 -- Display flags
+        name = "HEADER",              -- Unique identifier
+        text = "",                    -- Current display text
+        position = TEN.Vec2(50, 4),   -- Screen position (percentage)
+        scale = 1.5,                  -- Text scale
+        color = COLOR_MAP.headerText, -- Base color
+        visible = false,              -- Visibility flag
+        translate = true,             -- Use GetString() for localization
+        flags =                       -- Display flags
+        {
             TEN.Strings.DisplayStringOption.CENTER,
             TEN.Strings.DisplayStringOption.SHADOW
-        },
-        translate = true,                         -- Use GetString() for localization
+        }
     },
     SUB_HEADER = 
     {
-        name = "SUB_HEADER",                 
-        text = "",               
-        position = TEN.Vec2(50, 45),                   
-        scale = 0.9,                             
-        color = COLOR_MAP.headerText,        
-        visible = false,                           
+        name = "SUB_HEADER",
+        text = "",
+        position = TEN.Vec2(50, 45),
+        scale = 0.9,
+        color = COLOR_MAP.headerText,
+        visible = false,
+        translate = true,
         flags = 
         {                                
             TEN.Strings.DisplayStringOption.CENTER,
             TEN.Strings.DisplayStringOption.SHADOW
-        },
-        translate = true,
+        }
     },
     ITEM_LABEL_PRIMARY = 
     {
-        name = "ITEM_LABEL_PRIMARY",                 
-        text = "",               
-        position = TEN.Vec2(50, 76),                   
-        scale = 1.4,                             
-        color = COLOR_MAP.plainText,        
-        visible = false,                           
+        name = "ITEM_LABEL_PRIMARY",
+        text = "",
+        position = TEN.Vec2(50, 77),
+        scale = 1.4,
+        color = COLOR_MAP.plainText,
+        visible = false,
+        translate = false,
         flags = 
         {                                
             TEN.Strings.DisplayStringOption.CENTER,
             TEN.Strings.DisplayStringOption.SHADOW
-        },
-        translate = false,
+        }
     },
     ITEM_LABEL_SECONDARY = 
     {
-        name = "ITEM_LABEL_SECONDARY",                 
-        text = "",               
-        position = TEN.Vec2(50, 85),              
-        scale = 1,                          
-        color = COLOR_MAP.plainText,    
-        visible = false,                     
+        name = "ITEM_LABEL_SECONDARY",
+        text = "",
+        position = TEN.Vec2(50, 85),
+        scale = 1,
+        color = COLOR_MAP.plainText,
+        visible = false,
+        translate = false,
         flags = 
         {
             TEN.Strings.DisplayStringOption.CENTER,
             TEN.Strings.DisplayStringOption.SHADOW
-        },
-        translate = false,
+        }
     },
     CONTROLS_SELECT = 
     {
-        name = "CONTROLS_SELECT",                 
-        text = "",               
-        position = TEN.Vec2(TEXT_CONFIG.CONTROL_HINT_PADDING, 100 - TEXT_CONFIG.CONTROL_HINT_PADDING),              
-        scale = 0.7,                          
-        color = COLOR_MAP.plainText,    
-        visible = false,                     
+        name = "CONTROLS_SELECT",
+        text = "",
+        position = TEN.Vec2(TEXT_CONFIG.CONTROL_HINT_PADDING, 100 - TEXT_CONFIG.CONTROL_HINT_PADDING),
+        scale = 0.7,
+        color = COLOR_MAP.plainText,
+        visible = false,
+        translate = false,
         flags = 
         {
             TEN.Strings.DisplayStringOption.SHADOW,
             TEN.Strings.DisplayStringOption.VERTICAL_BOTTOM
-        },
-        translate = false,
+        }
     },
     CONTROLS_BACK = 
     {
-        name = "CONTROLS_BACK",                 
-        text =  "",               
-        position = TEN.Vec2(100 - TEXT_CONFIG.CONTROL_HINT_PADDING, 100 - TEXT_CONFIG.CONTROL_HINT_PADDING),              
-        scale = 0.7,                          
-        color = COLOR_MAP.plainText,    
-        visible = false,                  
+        name = "CONTROLS_BACK",
+        text =  "",
+        position = TEN.Vec2(100 - TEXT_CONFIG.CONTROL_HINT_PADDING, 100 - TEXT_CONFIG.CONTROL_HINT_PADDING),
+        scale = 0.7,
+        color = COLOR_MAP.plainText,
+        visible = false,
+        translate = false,
         flags = 
         {
             TEN.Strings.DisplayStringOption.RIGHT,
             TEN.Strings.DisplayStringOption.SHADOW,
             TEN.Strings.DisplayStringOption.VERTICAL_BOTTOM
-        },
-        translate = false,
+        }
     }
 }
 
