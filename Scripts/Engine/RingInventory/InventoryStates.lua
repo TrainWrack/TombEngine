@@ -707,6 +707,7 @@ local HandleCombine = function(state)
     if Combine.CombineItems(InventoryData.GetChosenItem(), state.selectedItem) then
         TEN.Sound.PlaySound(SOUND_MAP.menuCombine)
         Animation.SaveItemData(state.selectedItem)
+        Animation.SetItemStartPos(state.selectedItem)
         inventoryMode = InventoryStates.MODE.COMBINE_SUCCESS
     else
         TEN.Sound.PlaySound(SOUND_MAP.playerNo)
