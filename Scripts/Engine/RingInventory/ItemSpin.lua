@@ -25,11 +25,13 @@ function ItemSpin.StartSpin(ring)
         ItemSpin.rings[ringName] = {
             enabled = true,
             selectedItemEnabled = true,
-            ring = ring
+            ring = ring,
+            firstFrame = true
         }
     else
         ItemSpin.rings[ringName].enabled = true
         ItemSpin.rings[ringName].selectedItemEnabled = true
+        ItemSpin.rings[ringName].firstFrame = true
     end
 end
 
@@ -104,6 +106,11 @@ function ItemSpin.UpdateRing(ringState)
     local ringAngle = ring:GetTargetAngle()
     local itemCount = #items
 
+    local isFirstFrame = ringState.firstFrame
+    if isFirstFrame then
+        ringState.firstFrame = false
+    end
+
     for i = 1, itemCount do
         local item = items[i]
         if item and item.objectID then
@@ -125,7 +132,7 @@ function ItemSpin.UpdateRing(ringState)
                     end
                 else
                     local targetAngle = Utilities.GetRingItemAngle(i, itemCount, ringAngle)
-                    local isJustDeselected = previousItem and item == previousItem
+                    local isJustDeselected = (not isFirstFrame) and previousItem and item == previousItem
 
                     -- Initialize state on first frame
                     if not ItemSpin.itemStates[id] then
