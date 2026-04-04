@@ -36,6 +36,37 @@ local inventoryRunning = false
 
 LevelFuncs.Engine.RingInventory = LevelFuncs.Engine.RingInventory or {}
 
+local function LoadWaterskin(savedID)
+    local waterskinFamilies = {
+        [TEN.Objects.ObjID.WATERSKIN1_EMPTY] = {
+            TEN.Objects.ObjID.WATERSKIN1_EMPTY,
+            TEN.Objects.ObjID.WATERSKIN1_1,
+            TEN.Objects.ObjID.WATERSKIN1_2,
+            TEN.Objects.ObjID.WATERSKIN1_3,
+        },
+        [TEN.Objects.ObjID.WATERSKIN2_EMPTY] = {
+            TEN.Objects.ObjID.WATERSKIN2_EMPTY,
+            TEN.Objects.ObjID.WATERSKIN2_1,
+            TEN.Objects.ObjID.WATERSKIN2_2,
+            TEN.Objects.ObjID.WATERSKIN2_3,
+            TEN.Objects.ObjID.WATERSKIN2_4,
+            TEN.Objects.ObjID.WATERSKIN2_5,
+        },
+    }
+
+    local family = waterskinFamilies[savedID]
+    if family then
+        for _, variantID in ipairs(family) do
+            if TEN.Inventory.GetItemCount(variantID) > 0 then
+                return variantID
+            end
+        end
+        return Constants.NO_VALUE
+    end
+
+    return savedID
+end
+
 -- ============================================================================
 -- MAIN FUNCTIONS
 -- ============================================================================
@@ -84,7 +115,8 @@ LevelFuncs.Engine.RingInventory.RunInventory = function()
         inventoryOpen = true
         local focusedItem = TEN.Inventory.GetFocusedItem()
         if focusedItem == Constants.NO_VALUE then
-            focusedItem = LevelVars.Engine.RingInventory.lastFocusedItem or Constants.NO_VALUE
+            local savedItem = LevelVars.Engine.RingInventory.lastFocusedItem or Constants.NO_VALUE
+            focusedItem = LoadWaterskin(savedItem)
         end
         InventoryData.SetOpenAtItem(focusedItem)
         inventoryDelay = 0
