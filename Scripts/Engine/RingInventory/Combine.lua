@@ -83,21 +83,28 @@ function Combine.CombineItems(data1, data2)
         if (item1 == a and item2 == b) or (item1 == b and item2 == a) then
             local count1 = TEN.Inventory.GetItemCount(item1)
             local count2 = TEN.Inventory.GetItemCount(item2)
-            
+            local selectedAmmo = nil
+
             if count1 == 0 or count2 == 0 then
                 return false
             end
-            
+
             if PickupData.WEAPON_LASERSIGHT_DATA[result] and
                PickupData.WEAPON_SET[result] and
                PickupData.WEAPON_SET[result].slot then
                 Lara:SetLaserSight(PickupData.WEAPON_SET[result].slot, true)
+                selectedAmmo = Lara:GetAmmoType(PickupData.WEAPON_SET[result].slot)
             end
             
             TEN.Inventory.TakeItem(item1, 1)
             TEN.Inventory.TakeItem(item2, 1)
             TEN.Inventory.GiveItem(result, 1)
             
+            if PickupData.WEAPON_LASERSIGHT_DATA[result] and
+               PickupData.WEAPON_SET[result] then
+                Lara:SetAmmoType(selectedAmmo)
+            end
+
             combineResult = result
             return true
         end
