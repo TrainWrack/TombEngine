@@ -453,14 +453,17 @@ function InventoryData.SetOpenAtItem(objectID)
 end
 
 function InventoryData.LoadFocusedItem(savedID)
-    local waterskinFamilies = {
-        [TEN.Objects.ObjID.WATERSKIN1_EMPTY] = {
+    local waterskinFamilies =
+    {
+        [TEN.Objects.ObjID.WATERSKIN1_EMPTY] = 
+        {
             TEN.Objects.ObjID.WATERSKIN1_EMPTY,
             TEN.Objects.ObjID.WATERSKIN1_1,
             TEN.Objects.ObjID.WATERSKIN1_2,
             TEN.Objects.ObjID.WATERSKIN1_3,
         },
-        [TEN.Objects.ObjID.WATERSKIN2_EMPTY] = {
+        [TEN.Objects.ObjID.WATERSKIN2_EMPTY] = 
+        {
             TEN.Objects.ObjID.WATERSKIN2_EMPTY,
             TEN.Objects.ObjID.WATERSKIN2_1,
             TEN.Objects.ObjID.WATERSKIN2_2,
