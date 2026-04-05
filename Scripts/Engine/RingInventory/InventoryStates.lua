@@ -337,29 +337,12 @@ local RestoreInventoryView = function(selectedRing, selectedItem, startSelectedI
     end
 end
 
-local SaveWaterSkin = function(item)
-    
-    if item:IsType(PickupData.TYPE.WATERSKIN) then
-        local id = item:GetObjectID()
-        local isSmall = (id >= TEN.Objects.ObjID.WATERSKIN1_EMPTY and id <= TEN.Objects.ObjID.WATERSKIN1_3)
-        local isLarge = (id >= TEN.Objects.ObjID.WATERSKIN2_EMPTY and id <= TEN.Objects.ObjID.WATERSKIN2_5)
-
-        if isSmall then
-            LevelVars.Engine.RingInventory.lastFocusedItem = TEN.Objects.ObjID.WATERSKIN1_EMPTY
-        elseif isLarge then
-            LevelVars.Engine.RingInventory.lastFocusedItem = TEN.Objects.ObjID.WATERSKIN2_EMPTY
-        end
-    end
-
-end
-
 local ResetInventorySession = function()
     local selectedRing = InventoryData.GetSelectedRing()
     if selectedRing then
         local selectedItem = selectedRing:GetSelectedItem()
         if selectedItem then
-            LevelVars.Engine.RingInventory.lastFocusedItem = selectedItem:GetObjectID()
-            SaveWaterSkin(selectedItem)
+            InventoryData.SaveFocusedItem(selectedItem)
         end
     end
 

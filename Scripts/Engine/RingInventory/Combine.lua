@@ -121,7 +121,8 @@ function Combine.SeparateItems(item)
         
         if itemObjectID == result then
             local count = TEN.Inventory.GetItemCount(itemObjectID)
-            
+            local selectedAmmo = nil
+
             if count == 0 then
                 return false
             end
@@ -130,12 +131,18 @@ function Combine.SeparateItems(item)
                PickupData.WEAPON_SET[result] and
                PickupData.WEAPON_SET[result].slot then
                 Lara:SetLaserSight(PickupData.WEAPON_SET[result].slot, false)
+                selectedAmmo = Lara:GetAmmoType(PickupData.WEAPON_SET[result].slot)
             end
             
             TEN.Inventory.TakeItem(itemObjectID, 1)
             TEN.Inventory.GiveItem(a, 1)
             TEN.Inventory.GiveItem(b, 1)
             
+            if PickupData.WEAPON_LASERSIGHT_DATA[result] and
+               PickupData.WEAPON_SET[result] then
+                Lara:SetAmmoType(selectedAmmo)
+            end
+
             combineResult = a
             return true
         end

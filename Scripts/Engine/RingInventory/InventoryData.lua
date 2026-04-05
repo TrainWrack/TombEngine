@@ -452,6 +452,56 @@ function InventoryData.SetOpenAtItem(objectID)
     return true
 end
 
+function InventoryData.LoadFocusedItem(savedID)
+    local waterskinFamilies = {
+        [TEN.Objects.ObjID.WATERSKIN1_EMPTY] = {
+            TEN.Objects.ObjID.WATERSKIN1_EMPTY,
+            TEN.Objects.ObjID.WATERSKIN1_1,
+            TEN.Objects.ObjID.WATERSKIN1_2,
+            TEN.Objects.ObjID.WATERSKIN1_3,
+        },
+        [TEN.Objects.ObjID.WATERSKIN2_EMPTY] = {
+            TEN.Objects.ObjID.WATERSKIN2_EMPTY,
+            TEN.Objects.ObjID.WATERSKIN2_1,
+            TEN.Objects.ObjID.WATERSKIN2_2,
+            TEN.Objects.ObjID.WATERSKIN2_3,
+            TEN.Objects.ObjID.WATERSKIN2_4,
+            TEN.Objects.ObjID.WATERSKIN2_5,
+        },
+    }
+
+    local family = waterskinFamilies[savedID]
+    if family then
+        for _, variantID in ipairs(family) do
+            if TEN.Inventory.GetItemCount(variantID) > 0 then
+                return variantID
+            end
+        end
+        return Constants.NO_VALUE
+    end
+
+    return savedID
+end
+
+function InventoryData.SaveFocusedItem(item)
+    local id = item:GetObjectID()
+
+    if item:IsType(PickupData.TYPE.WATERSKIN) then
+        
+        local isSmall = (id >= TEN.Objects.ObjID.WATERSKIN1_EMPTY and id <= TEN.Objects.ObjID.WATERSKIN1_3)
+        local isLarge = (id >= TEN.Objects.ObjID.WATERSKIN2_EMPTY and id <= TEN.Objects.ObjID.WATERSKIN2_5)
+
+        if isSmall then
+            LevelVars.Engine.RingInventory.lastFocusedItem = TEN.Objects.ObjID.WATERSKIN1_EMPTY
+        elseif isLarge then
+            LevelVars.Engine.RingInventory.lastFocusedItem = TEN.Objects.ObjID.WATERSKIN2_EMPTY
+
+        end
+    else
+        LevelVars.Engine.RingInventory.lastFocusedItem = id
+    end
+end
+
 local function CalculateCompassNeedle(timeCount)
     local needleOrient = Rotation(0, -Lara:GetRotation().y, 0)
     local wibble = math.sin((timeCount % 0x40) / 0x3F * (2 * math.pi)) * 3
