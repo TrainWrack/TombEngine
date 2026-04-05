@@ -10,7 +10,7 @@ class Vec3;
 
 namespace TEN::Scripting::Objects
 {
-    class LuaCreatureInfo
+    class ScriptCreatureInfo
     {
     public:
         static void Register(sol::table& parent);
@@ -22,8 +22,8 @@ namespace TEN::Scripting::Objects
 
     public:
         // Constructors
-		LuaCreatureInfo() = default;
-		LuaCreatureInfo(const Moveable& mov);
+		ScriptCreatureInfo() = default;
+		ScriptCreatureInfo(const Moveable& mov);
 				
         // Getters
 		MoodType					GetMood();
