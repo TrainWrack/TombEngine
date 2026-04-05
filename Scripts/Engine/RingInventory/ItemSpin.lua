@@ -13,7 +13,6 @@ ItemSpin.SPINBACK_SPEED = 5 -- Degrees per frame, spinback for just-deselected i
 ItemSpin.ALIGNMENT_SPEED = Settings.Animation.itemAnimTime -- Seconds, for ring rotation alignment
 
 ItemSpin.rings = {}
-ItemSpin.itemStates = {} -- { [objectID] = { startAngle, angleDiff, lastTarget, isSpinback } }
 
 -- Start spinning for a ring
 function ItemSpin.StartSpin(ring)
@@ -26,12 +25,14 @@ function ItemSpin.StartSpin(ring)
             enabled = true,
             selectedItemEnabled = true,
             ring = ring,
-            firstFrame = true
+            firstFrame = true,
+            itemStates = {}
         }
     else
         ItemSpin.rings[ringName].enabled = true
         ItemSpin.rings[ringName].selectedItemEnabled = true
         ItemSpin.rings[ringName].firstFrame = true
+        ItemSpin.rings[ringName].itemStates = {}
     end
 end
 
@@ -70,8 +71,7 @@ function ItemSpin.ClearRingState(ring)
 
     for _, item in ipairs(items) do
         if item and item.objectID then
-            local spinKey = "Spin" .. item:GetObjectID()
-            ItemSpin.itemStates[item:GetObjectID()] = nil
+            local spinKey = ringName .. "Spin" .. item:GetObjectID()
             LevelVars.Engine.InterpolateProgress[spinKey] = nil
         end
     end
@@ -105,6 +105,7 @@ function ItemSpin.UpdateRing(ringState)
     local previousItem = ring:GetPreviousItem()
     local ringAngle = ring:GetTargetAngle()
     local itemCount = #items
+    local itemStates = ringState.itemStates
 
     local isFirstFrame = ringState.firstFrame
     if isFirstFrame then
@@ -118,11 +119,11 @@ function ItemSpin.UpdateRing(ringState)
             if displayItem then
                 local currentRotation = displayItem:GetRotation()
                 local id = item:GetObjectID()
-                local spinKey = "Spin"..id
+                local spinKey = ringState.ring:GetType() .. "Spin" .. id
 
                 if selectedItem and item == selectedItem then
                     -- Clear state and interpolation so next deselection starts fresh
-                    ItemSpin.itemStates[id] = nil
+                    itemStates[id] = nil
                     LevelVars.Engine.InterpolateProgress[spinKey] = nil
 
                     -- Selected item spins continuously
@@ -135,9 +136,10 @@ function ItemSpin.UpdateRing(ringState)
                     local isJustDeselected = (not isFirstFrame) and previousItem and item == previousItem
 
                     -- Initialize state on first frame
-                    if not ItemSpin.itemStates[id] then
+                    if not itemStates[id] then
                         local angleDiff = Utilities.GetShortestAngleDelta(currentRotation.y, targetAngle)
-                        ItemSpin.itemStates[id] = {
+                        itemStates[id] =
+                        {
                             startAngle = currentRotation.y,
                             angleDiff = angleDiff,
                             lastTarget = targetAngle,
@@ -146,7 +148,7 @@ function ItemSpin.UpdateRing(ringState)
                         }
                     end
 
-                    local state = ItemSpin.itemStates[id]
+                    local state = itemStates[id]
 
                     -- If target changed (ring rotated), restart animation from current position
                     if math.abs(targetAngle - state.lastTarget) > 0.1 then
@@ -201,7 +203,6 @@ end
 -- Reset all spinning state
 function ItemSpin.Reset()
     ItemSpin.rings = {}
-    ItemSpin.itemStates = {}
 end
 
 function ItemSpin.SnapToTargetAngles(ring)
