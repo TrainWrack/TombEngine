@@ -293,7 +293,7 @@ namespace TEN::Entities::TR4
 		else
 		{
 			AI_INFO laraAI;
-			if (creature->Enemy->IsLara())
+			if (creature->Enemy.IsLara())
 			{
 				laraAI.distance = AI.distance;
 				laraAI.angle = AI.angle;

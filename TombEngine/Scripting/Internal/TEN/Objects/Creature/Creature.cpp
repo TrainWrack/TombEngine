@@ -57,7 +57,7 @@ namespace TEN::Scripting::Objects
 	// Manages warnings for invalid creature/moveable pointers.
 	bool ScriptCreature::TestCreature(int itemNumber)
 	{
-		if (itemNumber <= NO_VALUE)
+		if (itemNumber <= NO_VALUE || itemNumber >= (int)g_Level.Items.size())
 		{
 			TENLog(fmt::format("Attempt to access creature with invalid item number {}.", itemNumber), LogLevel::Warning);
 			return false;
@@ -128,10 +128,20 @@ namespace TEN::Scripting::Objects
 	std::optional<Moveable> ScriptCreature::GetTarget()
 	{
 		auto* creature = GetCreature();
-		if (creature != nullptr && creature->Enemy != nullptr)
-			return Moveable(creature->Enemy->Index);
-		else 
+		if (creature == nullptr)
 			return std::nullopt;
+
+		auto* enemy = creature->Enemy.Get();
+
+		if (enemy && enemy->Index > NO_VALUE && enemy->Index < (int)g_Level.Items.size())
+		{
+			return Moveable(enemy->Index);
+		}
+		else
+		{
+			TENLog(fmt::format("Creature {} has invalid target pointer.", g_Level.Items[_itemNumber].Name), LogLevel::Warning);
+			return std::nullopt;
+		}
 	}
 
 	/// Sets a new target for the creature.
@@ -152,8 +162,23 @@ namespace TEN::Scripting::Objects
 		if (std::holds_alternative<Moveable*>(moveable))
 		{
 			auto* targetMov = std::get<Moveable*>(moveable);
-			if (targetMov != nullptr)
-				creature->Enemy = &g_Level.Items[targetMov->GetIndex()];
+
+			if (targetMov == nullptr || !targetMov->GetValid())
+			{
+				TENLog(fmt::format("Attempt to set target for {} to an invalid moveable.", g_Level.Items[_itemNumber].Name), LogLevel::Warning);
+				creature->Enemy = nullptr;
+				return;
+			}
+
+			auto targetIndex = targetMov->GetIndex();
+			if (targetIndex <= NO_VALUE || targetIndex >= (int)g_Level.Items.size())
+			{
+				TENLog(fmt::format("Attempt to set creature target for {} with invalid moveable index {}.", g_Level.Items[_itemNumber].Name, targetIndex), LogLevel::Warning);
+				creature->Enemy = nullptr;
+				return;
+			}
+
+			creature->Enemy = &g_Level.Items[targetIndex];
 		}
 		else
 		{
@@ -219,6 +244,7 @@ namespace TEN::Scripting::Objects
 
 	/// Sets the creature's friendly state.
 	// Friendly creatures will not attack the player unless player attacks them, except special cases when behaviour is hardcoded.
+	// If a creature was attacked by player, @{Objects.Creature.SetHurtByPlayer} must be set to `false` as well to make a creature friendly.
 	// @function SetFriendly
 	// @tparam bool enabled `true` sets creature as friendly, `false` sets it as hostile.
 	void ScriptCreature::SetFriendly(bool enabled)

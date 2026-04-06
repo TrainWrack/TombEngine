@@ -239,7 +239,7 @@ void PerformFinalAttack(ItemInfo& item, const CreatureBiteInfo& bite, int headBo
 
 	auto* creature = GetCreatureInfo(&item);
 
-	if (creature->Enemy == nullptr || (!creature->Enemy->IsLara() && !creature->Enemy->IsCreature()))
+	if (creature->Enemy == nullptr || (!creature->Enemy.IsLara() && !creature->Enemy->IsCreature()))
 		return;
 
 	AI_INFO AI;

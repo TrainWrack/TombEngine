@@ -171,7 +171,7 @@ namespace TEN::Entities::Creatures::TR5
 		auto target2 = GameVector(target);
 		auto hitPos = Vector3i::Zero;
 
-		if (ObjectOnLOS2(&origin2, &target2, &hitPos, nullptr, ID_LARA) == creature.Enemy->Index)
+		if (creature.Enemy && ObjectOnLOS2(&origin2, &target2, &hitPos, nullptr, ID_LARA) == creature.Enemy->Index)
 		{
 			if (LaraItem->HitPoints <= HEAVY_GUARD_RAYGUN_PLAYER_BURN_HEALTH)
 			{
