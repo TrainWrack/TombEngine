@@ -67,7 +67,7 @@ namespace TEN::Scripting::Objects
 
 		if (!item->IsCreature())
 		{
-			TENLog(fmt::format("Item {} does not correspond to an active creature.", item->Name), LogLevel::Warning);
+			TENLog(fmt::format("Item {} does not correspond to an active creature. Make sure the item is a creature and it was activated.", item->Name), LogLevel::Warning);
 			return false;
 		}
 
