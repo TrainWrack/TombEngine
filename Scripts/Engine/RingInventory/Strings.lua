@@ -4,6 +4,7 @@
 
 local strings =
 {
+    choose_mode = {"Choose Mode"},
     compass = {"Compass"},
     compass_item_text = {"Item Compass"},
     game_statistics = {"Game Statistics"},

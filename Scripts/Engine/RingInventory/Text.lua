@@ -628,14 +628,21 @@ function TextChannels.CreateItemLabel(item)
         local label = TEN.Flow.GetString(item.name)
         local count = item.count
         local result = ""
+        local type = ""
     
         if count == -1 then
             result = TEN.Flow.GetString("unlimited"):gsub(" ", ""):gsub("%%s", "").." "
         elseif count > 1 or item.type == PICKUP_DATA.TYPE.AMMO or item.type == PICKUP_DATA.TYPE.MEDIPACK then
             result = tostring(count).." x "
         end
-    
-        local string = result..label
+        
+        if item:GetObjectID() == TEN.Objects.ObjID.HK_ITEM then
+            local modeIndex = Lara:GetWeaponMode(TEN.Objects.WeaponType.HK)
+            local modeString = PICKUP_DATA.HK_MODES[modeIndex]
+            type = " ("..TEN.Flow.GetString(modeString)..")"
+        end
+
+        local string = result..label..type
 
         return string
     end

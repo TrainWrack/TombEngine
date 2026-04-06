@@ -432,7 +432,7 @@ PICKUP_DATA.ItemActionFlags =
     {bit = ItemAction.CHOOSE_AMMO_REVOLVER, string = "choose_ammo"},
     {bit = ItemAction.LOAD, string = "load_game"},
     {bit = ItemAction.SAVE, string = "save_game"},
-    {bit = ItemAction.CHOOSE_AMMO_HK, string = "choose_ammo"},
+    {bit = ItemAction.CHOOSE_AMMO_HK, string = "choose_mode"},
     {bit = ItemAction.STATISTICS , string = "statistics"},
     {bit = ItemAction.CHOOSE_AMMO_HARPOON, string = "choose_ammo"},
     {bit = ItemAction.CHOOSE_AMMO_ROCKET, string = "choose_ammo"},
@@ -450,6 +450,13 @@ PICKUP_DATA.CHOOSE_AMMO_FLAGS =
     ItemAction.CHOOSE_AMMO_REVOLVER,
     ItemAction.CHOOSE_AMMO_HARPOON,
     ItemAction.CHOOSE_AMMO_ROCKET
+}
+
+PICKUP_DATA.HK_MODES = 
+{
+	[TEN.Objects.WeaponMode.RAPID] = "hk_rapid_mode",
+	[TEN.Objects.WeaponMode.BURST] = "hk_burst_mode",
+	[TEN.Objects.WeaponMode.SNIPER] = "hk_sniper_mode",
 }
 
 PICKUP_DATA.GetRow = function(lookupValue)
