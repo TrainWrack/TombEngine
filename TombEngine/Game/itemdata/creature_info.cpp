@@ -3,7 +3,7 @@
 
 #include "Game/items.h"
 #include "Game/Lara/lara.h"
-#include <Game/misc.h>
+#include "Game/misc.h"
 
 void CreatureInfo::EnemyHandler::Initialize(const CreatureInfo* creature)
 {

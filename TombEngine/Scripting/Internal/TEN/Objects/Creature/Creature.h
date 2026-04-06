@@ -1,12 +1,10 @@
 #pragma once
 
 #include "Game/itemdata/creature_info.h"
-#include "Scripting/Internal/ScriptUtil.h"
 
-namespace sol { class state; };
-namespace TEN::Scripting { class Rotation; }
-class Moveable;
-class Vec3;
+#include "Scripting/Internal/TEN/Objects/Moveable/MoveableObject.h"
+#include "Scripting/Internal/TEN\Types/Vec3/Vec3.h"
+#include "Scripting/Internal/ScriptUtil.h"
 
 namespace TEN::Scripting::Objects
 {
@@ -38,7 +36,7 @@ namespace TEN::Scripting::Objects
 		// Setters
 		void SetMood(MoodType mood);
 		void SetTarget(const TypeOrNil<Moveable*> moveable);
-		void SetTargetPosition(Vec3& position);
+		void SetTargetPosition(const Vec3& position);
 		void SetAlerted(bool enabled);
 		void SetFriendly(bool enabled);
 		void SetHurtByPlayer(bool enabled);

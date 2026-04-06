@@ -133,15 +133,19 @@ namespace TEN::Scripting::Objects
 
 		auto* enemy = creature->Enemy.Get();
 
-		if (enemy && enemy->Index > NO_VALUE && enemy->Index < (int)g_Level.Items.size())
+		if (enemy)
 		{
-			return Moveable(enemy->Index);
+			if (enemy->Index > NO_VALUE && enemy->Index < (int)g_Level.Items.size())
+			{
+				return Moveable(enemy->Index);
+			}
+			else
+			{
+				TENLog(fmt::format("Creature {} has invalid target pointer.", g_Level.Items[_itemNumber].Name), LogLevel::Warning);
+			}
 		}
-		else
-		{
-			TENLog(fmt::format("Creature {} has invalid target pointer.", g_Level.Items[_itemNumber].Name), LogLevel::Warning);
-			return std::nullopt;
-		}
+
+		return std::nullopt;
 	}
 
 	/// Sets a new target for the creature.
@@ -201,7 +205,7 @@ namespace TEN::Scripting::Objects
 	/// Sets the position of the creature's target.
 	// @function SetTargetPosition
 	// @tparam Vec3 position The target position to set.
-	void ScriptCreature::SetTargetPosition(Vec3& position)
+	void ScriptCreature::SetTargetPosition(const Vec3& position)
 	{
 		auto* creature = GetCreature();
 		if (creature != nullptr)
