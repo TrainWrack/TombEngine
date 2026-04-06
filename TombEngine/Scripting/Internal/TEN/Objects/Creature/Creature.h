@@ -6,6 +6,8 @@
 #include "Scripting/Internal/TEN\Types/Vec3/Vec3.h"
 #include "Scripting/Internal/ScriptUtil.h"
 
+namespace sol { class state; };
+
 namespace TEN::Scripting::Objects
 {
     class ScriptCreature

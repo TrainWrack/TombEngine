@@ -2509,8 +2509,10 @@ void CreatureAIInfo(ItemInfo* item, AI_INFO* AI)
 	// Friendly creature with no valid target: skip AI computation.
 	if (enemy == nullptr)
 	{
-		AI->distance = INT_MAX;
-		AI->verticalDistance = INT_MAX;
+		AI->distance = AI->verticalDistance = INT_MAX;
+		AI->enemyZone = NO_VALUE;
+		AI->ahead = AI->bite = false;
+		AI->angle = AI->xAngle = AI->enemyFacing = 0;
 		return;
 	}
 
