@@ -288,12 +288,8 @@ static constexpr char ScriptReserved_GetPoisoned[]			= "GetPoisoned";
 static constexpr char ScriptReserved_SetPoisoned[]			= "SetPoisoned";
 static constexpr char ScriptReserved_GetAtGoal[]			= "GetAtGoal";
 static constexpr char ScriptReserved_SetAtGoal[]			= "SetAtGoal";
-
-static constexpr char ScriptReserved_ClearTarget[]			= "ClearTarget";
 static constexpr char ScriptReserved_GetJumping[]			= "GetJumping";
 static constexpr char ScriptReserved_GetMonkeying[]			= "GetMonkeying";
-static constexpr char ScriptReserved_GetCanJump[]			= "GetCanJump";
-static constexpr char ScriptReserved_GetCanMonkey[]			= "GetCanMonkey";
 static constexpr char ScriptReserved_CreatureMood[]			= "CreatureMood";
 
 // Flow Functions

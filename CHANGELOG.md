@@ -3,6 +3,11 @@
 The dates are in European standard format where date is presented as **YYYY-MM-DD**.
 TombEngine releases are located in this repository (alongside with Tomb Editor): https://github.com/TombEngine/TombEditorReleases
 
+## [Version 2.0]
+
+### Lua API changes
+* Added `Objects.Creature` class to fetch and set various enemy AI state parameters.
+
 ## [Version 1.11.1]
 
 ### Bug fixes
@@ -358,7 +363,6 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 ### Lua API changes
 * Added missing constructor for `Collision.Probe` without room number.
 * Added optional looping argument for `View.GetFlybyPosition` and `View.GetFlybyRotation` functions.
-* Added `Objects.CreatureInfo` class to probe creature mood and other AI status.
 
 ## [Version 1.8](https://github.com/TombEngine/TombEditorReleases/releases/tag/v1.8) - 2025-03-16
 
