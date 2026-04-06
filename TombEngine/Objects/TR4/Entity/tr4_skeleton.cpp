@@ -203,7 +203,7 @@ namespace TEN::Entities::TR4
 
 		auto* item = &g_Level.Items[itemNumber];
 		auto* creature = GetCreatureInfo(item);
-		auto* enemyItem = creature->Enemy;
+		auto* enemyItem = creature->Enemy.Get();
 
 		bool jumpLeft = false;
 		bool jumpRight = false;
@@ -315,7 +315,7 @@ namespace TEN::Entities::TR4
 
 			angle = CreatureTurn(item, creature->MaxTurn);
 
-			auto* tempEnemy = creature->Enemy;
+			auto* tempEnemy = creature->Enemy.Get();
 
 			creature->Enemy = LaraItem;
 

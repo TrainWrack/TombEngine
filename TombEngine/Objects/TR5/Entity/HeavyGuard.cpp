@@ -293,7 +293,7 @@ namespace TEN::Entities::Creatures::TR5
 			CreatureAIInfo(&item, &ai);
 
 			AI_INFO laraAI;
-			if (creature.Enemy->IsLara())
+			if (creature.Enemy.IsLara())
 			{
 				laraAI.angle = ai.angle;
 				laraAI.distance = ai.distance;

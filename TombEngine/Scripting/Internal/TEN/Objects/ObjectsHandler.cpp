@@ -194,7 +194,7 @@ ObjectsHandler::ObjectsHandler(sol::state* lua, sol::table& parent) :
 		[this](auto && ... param) { return AddName(std::forward<decltype(param)>(param)...); },
 		[this](auto && ... param) { return RemoveName(std::forward<decltype(param)>(param)...); });
 
-	ScriptCreatureInfo::Register(_table_objects);
+	ScriptCreature::Register(_table_objects);
 
 	_handler.MakeReadOnlyTable(_table_objects, ScriptReserved_ObjID, GAME_OBJECT_IDS);
 	_handler.MakeReadOnlyTable(_table_objects, ScriptReserved_RoomFlagID, ROOM_FLAG_IDS);

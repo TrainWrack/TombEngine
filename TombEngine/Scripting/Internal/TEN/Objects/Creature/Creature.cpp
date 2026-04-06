@@ -2,181 +2,354 @@
 #include "Scripting/Internal/TEN/Objects/Creature/Creature.h"
 #include "Scripting/Internal/TEN/Objects/Creature/CreatureStates.h"
 
+#include "Game/misc.h"
 #include "Scripting/Internal/LuaHandler.h"
 #include "Scripting/Internal/ReservedScriptNames.h"
 #include "Scripting/Internal/ScriptUtil.h"
 #include "Scripting/Internal/TEN/Objects/Moveable/MoveableObject.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
 #include "Specific/level.h"
-#include <Game/misc.h>
 
 namespace TEN::Scripting::Objects
 {
-	/// Represents the AI and behavior state of a creature in the game.
+	/// A derivative of the @{Objects.Moveable} class that represents the AI and behavior state of an enemy creature in the game.
 	//
-	// @tenclass Objects.CreatureInfo
+	// @tenclass Objects.Creature
 	// @pragma nostrip
 
-	void ScriptCreatureInfo::Register(sol::table& parent)
+	void ScriptCreature::Register(sol::table& parent)
 	{
 		using ctors = sol::constructors<
-			ScriptCreatureInfo(const Moveable& mov)>;
+			ScriptCreature(const Moveable& mov)>;
 
 		// Register type.
-		parent.new_usertype<ScriptCreatureInfo>(ScriptReserved_CreatureInfo,
+		parent.new_usertype<ScriptCreature>(ScriptReserved_Creature,
 			ctors(), sol::call_constructor, ctors(),
 
 			// Getters
-			ScriptReserved_GetMood, &ScriptCreatureInfo::GetMood,
-			ScriptReserved_GetCreatureTarget, &ScriptCreatureInfo::GetTarget,
-			ScriptReserved_GetTargetPosition, &ScriptCreatureInfo::GetTargetPosition,
-			ScriptReserved_SetCreatureTarget, &ScriptCreatureInfo::SetTarget,
-			ScriptReserved_SetTargetPosition, &ScriptCreatureInfo::SetTargetPosition,
-			ScriptReserved_ClearTarget, &ScriptCreatureInfo::ClearTarget,
-			ScriptReserved_IsAlerted, &ScriptCreatureInfo::IsAlerted,
-			ScriptReserved_IsFriendly, &ScriptCreatureInfo::IsFriendly,
-			ScriptReserved_IsHurtByPlayer, &ScriptCreatureInfo::IsHurtByPlayer,
-			ScriptReserved_IsPoisoned, &ScriptCreatureInfo::IsPoisoned,
-			ScriptReserved_IsAtGoal, &ScriptCreatureInfo::IsAtGoal);
-			
+			ScriptReserved_GetMood, &ScriptCreature::GetMood,
+			ScriptReserved_GetCreatureTarget, &ScriptCreature::GetTarget,
+			ScriptReserved_GetTargetPosition, &ScriptCreature::GetTargetPosition,
+			ScriptReserved_GetAlerted, &ScriptCreature::GetAlerted,
+			ScriptReserved_GetFriendly, &ScriptCreature::GetFriendly,
+			ScriptReserved_GetHurtByPlayer, &ScriptCreature::GetHurtByPlayer,
+			ScriptReserved_GetPoisoned, &ScriptCreature::GetPoisoned,
+			ScriptReserved_GetLocationAI, &ScriptCreature::GetLocationAI,
+			ScriptReserved_GetAtGoal, &ScriptCreature::GetAtGoal,
+
+			// Setters
+			ScriptReserved_SetMood, &ScriptCreature::SetMood,
+			ScriptReserved_SetCreatureTarget, &ScriptCreature::SetTarget,
+			ScriptReserved_SetTargetPosition, &ScriptCreature::SetTargetPosition,
+			ScriptReserved_SetAlerted, &ScriptCreature::SetAlerted,
+			ScriptReserved_SetFriendly, &ScriptCreature::SetFriendly,
+			ScriptReserved_SetHurtByPlayer, &ScriptCreature::SetHurtByPlayer,
+			ScriptReserved_SetPoisoned, &ScriptCreature::SetPoisoned,
+			ScriptReserved_SetAtGoal, &ScriptCreature::SetAtGoal,
+			ScriptReserved_SetLocationAI, &ScriptCreature::SetLocationAI,
+
+			// Inquirers
+			ScriptReserved_GetValid, &ScriptCreature::GetValid,
+			ScriptReserved_GetJumping, &ScriptCreature::GetJumping,
+			ScriptReserved_GetMonkeying, &ScriptCreature::GetMonkeying);
+	}
+
+	// Manages warnings for invalid creature/moveable pointers.
+	bool ScriptCreature::TestCreature(int itemNumber)
+	{
+		if (itemNumber <= NO_VALUE)
+		{
+			TENLog(fmt::format("Attempt to access creature with invalid item number {}.", itemNumber), LogLevel::Warning);
+			return false;
+		}
+
+		auto* item = &g_Level.Items[itemNumber];
+
+		if (!item->IsCreature())
+		{
+			TENLog(fmt::format("Item {} does not correspond to an active creature.", item->Name), LogLevel::Warning);
+			return false;
+		}
+
+		return true;
+	}
+
+	// Resolves the Creature pointer from the stored item number.
+	// Returns nullptr if the item is invalid, inactive, or not a creature.
+	CreatureInfo* ScriptCreature::GetCreature() const
+	{
+		if (!TestCreature(_itemNumber))
+			return nullptr;
+
+		auto* item = &g_Level.Items[_itemNumber];
+		return GetCreatureInfo(item);
 	}
 
 	/// Create creature info for the provided moveable.
-	// @function CreatureInfo
-	// @tparam Objects.Moveable mov Moveable object to probe creature info. Must be an active enemy.
-	// @treturn CreatureInfo Creature info for the moveable.
-	ScriptCreatureInfo::ScriptCreatureInfo(const Moveable& mov)
+	// @function Creature
+	// @tparam Objects.Moveable moveable Moveable object to fetch creature from. Must be an active enemy.
+	// @treturn Creature Creature info for the moveable.
+	ScriptCreature::ScriptCreature(const Moveable& mov)
 	{
-			auto* item = &g_Level.Items[mov.GetIndex()];
+		auto index = mov.GetIndex();
+		if (!TestCreature(index))
+			return;
 
-			if (!item->Active)
-			{
-				TENLog("Specified creature is not active in function TEN.Objects.CreatureInfo", LogLevel::Warning);
-				m_Creature = nullptr;
-				return;
-			}
-
-			if (item->IsCreature())
-			m_Creature = GetCreatureInfo(item);
+		_itemNumber = mov.GetIndex();
 	}
 
 	/// Gets the current mood of the creature.
 	// @function GetMood
-	// @treturn Objects.CreatureMood The current mood of the creature. If creature is not active, it returns Bored status.
-	MoodType ScriptCreatureInfo::GetMood()
+	// @treturn Objects.CreatureMood The current mood of the creature. If creature is invalid, returns `nil`.
+	std::optional<MoodType> ScriptCreature::GetMood()
 	{
-		if (m_Creature != nullptr)
-			return m_Creature->Mood;
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			return creature->Mood;
 		else
-			return MoodType::Bored;
+			return std::nullopt;
+	}
+
+	/// Sets the mood of the creature.
+	// Note that the creature's built-in AI may recalculate mood each frame, so this value may be overridden
+	// immediately. This may be primarily useful for custom enemies controlled via Lua callbacks.
+	// @function SetMood
+	// @tparam Objects.CreatureMood mood The mood to set.
+	void ScriptCreature::SetMood(MoodType mood)
+	{
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			creature->Mood = mood;
 	}
 
 	/// Gets the current target of the creature.
 	// @function GetTarget
-	// @treturn Objects.Moveable The moveable object representing the target, or null if no target is set.
-	std::optional<Moveable> ScriptCreatureInfo::GetTarget()
+	// @treturn Objects.Moveable The moveable object representing the target. If creature is invalid or target is not set, returns `nil`.
+	std::optional<Moveable> ScriptCreature::GetTarget()
 	{
-		if (m_Creature != nullptr)
-		{
-			auto enemy = m_Creature->Enemy;
-			return Moveable(enemy->Index);
-		}
+		auto* creature = GetCreature();
+		if (creature != nullptr && creature->Enemy != nullptr)
+			return Moveable(creature->Enemy->Index);
 		else 
 			return std::nullopt;
 	}
 
-	/// Gets the current target position of the creature.
-	// @function GetTargetPosition
-	// @treturn Vec3 The position of the creature's target.
-	Vec3 ScriptCreatureInfo::GetTargetPosition()
-	{
-		if (m_Creature != nullptr)
-			return m_Creature->Target;
-		else
-			return Vec3(0, 0, 0);
-	}
-
 	/// Sets a new target for the creature.
 	// @function SetTarget
-	// @tparam Objects.Moveable mov The moveable object to set as the target.
-	void ScriptCreatureInfo::SetTarget(Moveable& mov)
-	{	
-		if (m_Creature != nullptr)
+	// @tparam Objects.Moveable mov The moveable object to set as the target. Set to `nil` to clear the target.
+	void ScriptCreature::SetTarget(const TypeOrNil<Moveable*> moveable)
+	{
+		if (!IsValidOptional(moveable))
 		{
-			auto* item = &g_Level.Items[mov.GetIndex()];
-			m_Creature->Enemy = item;
+			TENLog("Attempt to set creature target with invalid argument.", LogLevel::Warning);
+			return;
 		}
+
+		auto* creature = GetCreature();
+		if (creature == nullptr)
+			return;
+
+		if (std::holds_alternative<Moveable*>(moveable))
+		{
+			auto* targetMov = std::get<Moveable*>(moveable);
+			if (targetMov != nullptr)
+				creature->Enemy = &g_Level.Items[targetMov->GetIndex()];
+		}
+		else
+		{
+			creature->Enemy = nullptr;
+		}
+	}
+
+	/// Gets the current target position of the creature.
+	// @function GetTargetPosition
+	// @treturn Vec3 The position of the creature's target. If creature is invalid, returns `nil`.
+	std::optional<Vec3> ScriptCreature::GetTargetPosition()
+	{
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			return creature->Target;
+		else
+			return std::nullopt;
 	}
 
 	/// Sets the position of the creature's target.
 	// @function SetTargetPosition
 	// @tparam Vec3 position The target position to set.
-	void ScriptCreatureInfo::SetTargetPosition(Vec3& position)
+	void ScriptCreature::SetTargetPosition(Vec3& position)
 	{
-		if (m_Creature != nullptr)
-			m_Creature->Target = position.ToVector3i();
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			creature->Target = position.ToVector3i();
 	}
 
-	/// Clears the current target of the creature.
-	// @function ClearTarget
-	void ScriptCreatureInfo::ClearTarget()
+	/// Gets the creature's alerted state.
+	// @function GetAlerted
+	// @treturn bool `true` if creature is alerted, `false` if not alerted. If creature is invalid, returns `nil`.
+	std::optional<bool> ScriptCreature::GetAlerted()
 	{
-		if (m_Creature != nullptr)
-			m_Creature->Enemy = nullptr;
-	}
-
-	/// Checks if the creature is in an alerted state.
-	// @function IsAlerted
-	// @treturn bool Creature alert state. __true: if the creature is alerted, false: not alerted__
-	bool ScriptCreatureInfo::IsAlerted()
-	{
-		if (m_Creature != nullptr)
-			return m_Creature->Alerted;
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			return creature->Alerted;
 		else
-			return false;
+			return std::nullopt;
 	}
 
-	/// Checks if the creature is friendly. Only returns true for friendly creatures like monks (TR2) or troops (TR4).
-	// @function IsFriendly
-	// @treturn Creature friendly status. bool __true: if the creature is friendly, false: not friendly__
-	bool ScriptCreatureInfo::IsFriendly()
+	/// Sets the creature's alerted state.
+	// @function SetAlerted
+	// @tparam bool enabled `true` sets creature as alerted, `false` clears the alert state.
+	void ScriptCreature::SetAlerted(bool enabled)
 	{
-		if (m_Creature != nullptr)
-			return m_Creature->Friendly;
-		else
-			return false;
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			creature->Alerted = enabled;
 	}
 
-	/// Checks if the creature has been hurt by player.
-	// @function IsHurtByPlayer
-	// @treturn bool Creature hit status. __true: is hit, false: isn't hit__
-	bool ScriptCreatureInfo::IsHurtByPlayer()
+	/// Gets the creature's friendly state.
+	// @function GetFriendly
+	// @treturn bool `true` if the creature is friendly, `false` if not friendly. If creature is invalid, returns `nil`.
+	std::optional<bool> ScriptCreature::GetFriendly()
 	{
-		if (m_Creature != nullptr)
-			return m_Creature->HurtByLara;
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			return creature->Friendly;
 		else
-			return false;
+			return std::nullopt;
 	}
 
-	/// Checks if the creature is poisoned.
-	// @function IsPoisoned
-	// @treturn bool Creature poison status. __true: is poisoned, false: isn't poisoned__
-	bool ScriptCreatureInfo::IsPoisoned()
+	/// Sets the creature's friendly state.
+	// Friendly creatures will not attack the player unless player attacks them, except special cases when behaviour is hardcoded.
+	// @function SetFriendly
+	// @tparam bool enabled `true` sets creature as friendly, `false` sets it as hostile.
+	void ScriptCreature::SetFriendly(bool enabled)
 	{
-		if (m_Creature != nullptr)
-			return m_Creature->Poisoned;
-		else
-			return false;
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			creature->Friendly = enabled;
 	}
 
-	/// Checks if the creature has reached its goal.
-	// @function IsAtGoal
-	// @treturn bool Creature position status. __true: is at its goal, false: isn't at its goal__.
-	bool ScriptCreatureInfo::IsAtGoal()
+	/// Gets whether the creature has been hurt by the player.
+	// @function GetHurtByPlayer
+	// @treturn bool `true` means that creature was hurt by player, `false` means it was not hurt by player. If creature is invalid, returns `nil`.
+	std::optional<bool> ScriptCreature::GetHurtByPlayer()
 	{
-		if (m_Creature != nullptr)
-			return m_Creature->ReachedGoal;
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			return creature->HurtByLara;
 		else
-			return false;
+			return std::nullopt;
+	}
+
+	/// Sets whether the creature has been hurt by the player. This flag influences
+	// creature mood toward escape behavior.
+	// @function SetHurtByPlayer
+	// @tparam bool enabled `true` marks the creature as hurt by player, `false` clears hurt state.
+	void ScriptCreature::SetHurtByPlayer(bool enabled)
+	{
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			creature->HurtByLara = enabled;
+	}
+
+	/// Gets the creature's poisoned state.
+	// @function GetPoisoned
+	// @treturn bool `true` means the creature is poisoned, `false` means it's not poisoned. If creature is invalid, returns `nil`.
+	std::optional<bool> ScriptCreature::GetPoisoned()
+	{
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			return creature->Poisoned;
+		else
+			return std::nullopt;
+	}
+
+	/// Sets the creature's poisoned state.
+	// Poisoned creatures take periodic damage and may be slowly killed, if @{Flow.Settings.Gameplay.killPoisonedEnemies} setting is on.
+	// @function SetPoisoned
+	// @tparam bool enabled `true` sets creature as poisoned, `false` clears poisoned state.
+	void ScriptCreature::SetPoisoned(bool enabled)
+	{
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			creature->Poisoned = enabled;
+	}
+
+	/// Gets whether the creature has reached its goal.
+	// This setting may be used to find out whether a creature that is using AI nullmesh objects has reached its currently specified AI nullmesh.
+	// @function GetAtGoal
+	// @treturn bool `true` means the creature has reached the goal, `false` means it's not at goal. If creature is invalid, returns `nil`.
+	std::optional<bool> ScriptCreature::GetAtGoal()
+	{
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			return creature->ReachedGoal;
+		else
+			return std::nullopt;
+	}
+
+	/// Sets whether the creature has reached its goal.
+	// This setting may be used to break out the creature from reaching the next specified AI object nullmesh.
+	// @function SetAtGoal
+	// @tparam bool enabled `true` marks the creature is at goal, `false` clears goal reached state.
+	void ScriptCreature::SetAtGoal(bool enabled)
+	{
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			creature->ReachedGoal = enabled;
+	}
+
+	/// Gets the creature's AI location index. Used by specific enemies for custom waypoint logic (e.g. Von Croy or Sophia Leigh).
+	// @function GetLocationAI
+	// @treturn int The current AI location index. If creature is invalid, returns `nil`.
+	std::optional<int> ScriptCreature::GetLocationAI()
+	{
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			return (int)creature->LocationAI;
+		else
+			return std::nullopt;
+	}
+
+	/// Sets the creature's AI location index. Used by specific enemies for custom waypoint logic.
+	// @function SetLocationAI
+	// @tparam int value The AI location index to set.
+	void ScriptCreature::SetLocationAI(int value)
+	{
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			creature->LocationAI = (short)value;
+	}
+
+	/// Gets whether the creature's pathfinding currently involves a jump.
+	// Only works for enemies that support jumping.
+	// @function GetJumping
+	// @treturn bool `true` if creature is jumping or about to jump, `false` if not jumping. If creature is invalid, returns `nil`.
+	std::optional<bool> ScriptCreature::GetJumping()
+	{
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			return creature->LOT.IsJumping;
+		else
+			return std::nullopt;
+	}
+
+	/// Gets whether the creature's pathfinding currently involves monkey-swinging.
+	// @function GetMonkeying
+	// @treturn bool `true` if creature is monkey-swinging, `false` if not. If creature is invalid, returns `nil`.
+	std::optional<bool> ScriptCreature::GetMonkeying()
+	{
+		auto* creature = GetCreature();
+		if (creature != nullptr)
+			return creature->LOT.IsMonkeying;
+		else
+			return std::nullopt;
+	}
+
+	/// Checks if the underlying creature data is still valid. Returns `false` if the creature was killed or disabled.
+	// @function GetValid
+	// @treturn bool `true` if creature data is valid, `false` if creature was killed or disabled.
+	bool ScriptCreature::GetValid()
+	{
+		return GetCreature() != nullptr;
 	}
 }

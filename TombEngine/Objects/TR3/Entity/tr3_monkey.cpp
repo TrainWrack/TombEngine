@@ -199,7 +199,7 @@ namespace TEN::Entities::Creatures::TR3
 
 			angle = CreatureTurn(item, creature->MaxTurn);
 
-			auto* enemy = creature->Enemy;
+			auto* enemy = creature->Enemy.Get();
 			creature->Enemy = LaraItem;
 
 			if (item->HitStatus)

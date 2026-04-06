@@ -10,37 +10,45 @@ class Vec3;
 
 namespace TEN::Scripting::Objects
 {
-    class ScriptCreatureInfo
+    class ScriptCreature
     {
-    public:
-        static void Register(sol::table& parent);
-
     private:
-        // Fields
-
-		CreatureInfo* m_Creature = nullptr;
+		int _itemNumber = NO_VALUE;
+		CreatureInfo* GetCreature() const;
 
     public:
+		static void Register(sol::table& parent);
+		static bool TestCreature(int itemNumber);
+
         // Constructors
-		ScriptCreatureInfo() = default;
-		ScriptCreatureInfo(const Moveable& mov);
-				
-        // Getters
-		MoodType					GetMood();
-		std::optional<Moveable>		GetTarget();
-		Vec3						GetTargetPosition();
-		
+		ScriptCreature() = default;
+		ScriptCreature(const Moveable& mov);
+
+		// Getters
+		std::optional<MoodType> GetMood();
+		std::optional<Moveable>	GetTarget();
+		std::optional<Vec3> GetTargetPosition();
+		std::optional<int>	GetLocationAI();
+		std::optional<bool> GetAlerted();
+		std::optional<bool> GetFriendly();
+		std::optional<bool> GetHurtByPlayer();
+		std::optional<bool> GetPoisoned();
+		std::optional<bool> GetAtGoal();
+
 		// Setters
-		void SetTarget(Moveable& moveable);
+		void SetMood(MoodType mood);
+		void SetTarget(const TypeOrNil<Moveable*> moveable);
 		void SetTargetPosition(Vec3& position);
-		void ClearTarget();
+		void SetAlerted(bool enabled);
+		void SetFriendly(bool enabled);
+		void SetHurtByPlayer(bool enabled);
+		void SetPoisoned(bool enabled);
+		void SetAtGoal(bool enabled);
+		void SetLocationAI(int value);
 
 		// Inquirers
-		bool				IsAlerted();
-		bool				IsFriendly();
-		bool				IsHurtByPlayer();
-		bool				IsPoisoned();
-		bool				IsAtGoal();
-
+		bool GetValid();
+		std::optional<bool> GetJumping();
+		std::optional<bool> GetMonkeying();
     };
 }

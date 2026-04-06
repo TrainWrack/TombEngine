@@ -154,7 +154,7 @@ namespace TEN::Entities::TR4
 				creature->Enemy = nullptr;
 
 			int distance = 0;
-			if (creature->Enemy && creature->Enemy->IsLara())
+			if (creature->Enemy.IsLara())
 			{
 				distance = AI.distance;
 				rot = AI.angle;

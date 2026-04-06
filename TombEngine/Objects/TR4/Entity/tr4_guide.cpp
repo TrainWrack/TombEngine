@@ -227,7 +227,7 @@ namespace TEN::Entities::TR4
 			}
 		}
 
-		auto* enemy = creature->Enemy;
+		auto* enemy = creature->Enemy.Get();
 		if (foundEnemy)
 			creature->Enemy = foundEnemy;
 

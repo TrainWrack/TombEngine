@@ -223,7 +223,7 @@ namespace TEN::Entities::Creatures::TR3
 			CreatureMood(&item, &ai, ai.zoneNumber == ai.enemyZone);
 			headingAngle = CreatureTurn(&item, creature.MaxTurn);
 			
-			auto* target = creature.Enemy;
+			auto* target = creature.Enemy.Get();
 			creature.Enemy = LaraItem;
 			if (ai.distance < SEAL_MUTANT_ALERT_RANGE || item.HitStatus || TargetVisible(&item, &ai))
 				AlertAllGuards(itemNumber);

@@ -127,14 +127,31 @@ struct CreatureMuzzleFlashInfo
 
 struct CreatureInfo 
 {
+	struct EnemyHandler
+	{
+	private:
+		ItemInfo* _enemy = nullptr;
+		const CreatureInfo* _creature = nullptr;
+
+	public:
+		void Initialize(const CreatureInfo* creature);
+		ItemInfo* Get() const;
+		bool IsLara() const;
+
+		EnemyHandler& operator=(ItemInfo* item);
+		ItemInfo* operator->() const;
+		operator ItemInfo* () const;
+		explicit operator bool() const;
+	};
+
 	int ItemNumber = NO_VALUE;
 
-	LOTInfo	  LOT			 = {};
-	MoodType  Mood			 = MoodType::Bored;
-	ItemInfo* Enemy			 = nullptr;
-	ItemInfo* AITarget		 = nullptr;
-	int		  AITargetNumber = NO_VALUE;
-	Vector3i  Target		 = Vector3i::Zero;
+	LOTInfo		 LOT			= {};
+	MoodType	 Mood			= MoodType::Bored;
+	EnemyHandler Enemy			= {};
+	ItemInfo*	 AITarget		= nullptr;
+	int			 AITargetNumber	= NO_VALUE;
+	Vector3i	 Target			= Vector3i::Zero;
 
 	int   FlyRate		   = 0;
 	short MaxTurn		   = 0;
@@ -155,6 +172,4 @@ struct CreatureInfo
 	short Tosspad	  = 0;
 	short LocationAI  = 0;
 	short Flags		  = 0;
-
-	bool IsTargetAlive();
 };

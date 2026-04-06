@@ -265,7 +265,7 @@ namespace TEN::Entities::TR4
 		}
 
 		// If a target is found, it becomes the enemy.
-		ItemInfo* enemy = creature->Enemy;
+		auto* enemy = creature->Enemy.Get();
 		if (foundTarget != nullptr)
 			creature->Enemy = foundTarget;
 

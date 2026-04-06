@@ -271,18 +271,29 @@ static constexpr char ScriptReserved_EnableLoadSave[]			= "EnableLoadSave";
 static constexpr char ScriptReserved_EnablePointFilter[]		= "EnablePointFilter";
 
 // Creature Functions
-static constexpr char ScriptReserved_CreatureInfo[]			= "CreatureInfo";
+static constexpr char ScriptReserved_Creature[]				= "Creature";
 static constexpr char ScriptReserved_GetMood[]				= "GetMood";
+static constexpr char ScriptReserved_SetMood[]				= "SetMood";
 static constexpr char ScriptReserved_GetCreatureTarget[]	= "GetTarget";
 static constexpr char ScriptReserved_GetTargetPosition[]	= "GetTargetPosition";
 static constexpr char ScriptReserved_SetCreatureTarget[]	= "SetTarget";
 static constexpr char ScriptReserved_SetTargetPosition[]	= "SetTargetPosition";
+static constexpr char ScriptReserved_GetAlerted[]			= "GetAlerted";
+static constexpr char ScriptReserved_SetAlerted[]			= "SetAlerted";
+static constexpr char ScriptReserved_GetFriendly[]			= "GetFriendly";
+static constexpr char ScriptReserved_SetFriendly[]			= "SetFriendly";
+static constexpr char ScriptReserved_GetHurtByPlayer[]		= "GetHurtByPlayer";
+static constexpr char ScriptReserved_SetHurtByPlayer[]		= "SetHurtByPlayer";
+static constexpr char ScriptReserved_GetPoisoned[]			= "GetPoisoned";
+static constexpr char ScriptReserved_SetPoisoned[]			= "SetPoisoned";
+static constexpr char ScriptReserved_GetAtGoal[]			= "GetAtGoal";
+static constexpr char ScriptReserved_SetAtGoal[]			= "SetAtGoal";
+
 static constexpr char ScriptReserved_ClearTarget[]			= "ClearTarget";
-static constexpr char ScriptReserved_IsAlerted[]			= "IsAlerted";
-static constexpr char ScriptReserved_IsFriendly[]			= "IsFriendly";
-static constexpr char ScriptReserved_IsHurtByPlayer[]		= "IsHurtByPlayer";
-static constexpr char ScriptReserved_IsPoisoned[]			= "IsPoisoned";
-static constexpr char ScriptReserved_IsAtGoal[]				= "IsAtGoal";
+static constexpr char ScriptReserved_GetJumping[]			= "GetJumping";
+static constexpr char ScriptReserved_GetMonkeying[]			= "GetMonkeying";
+static constexpr char ScriptReserved_GetCanJump[]			= "GetCanJump";
+static constexpr char ScriptReserved_GetCanMonkey[]			= "GetCanMonkey";
 static constexpr char ScriptReserved_CreatureMood[]			= "CreatureMood";
 
 // Flow Functions
