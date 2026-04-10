@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Game/spotcam.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/camera.h"
 #include "Game/control/control.h"
 #include "Game/control/volume.h"
@@ -12,6 +12,7 @@
 #include "Game/Lara/lara_helpers.h"
 #include "Specific/Input/Input.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Input;
 using namespace TEN::Renderer;
 using namespace TEN::Control::Volumes;
@@ -49,10 +50,9 @@ int LastSpotCamSequence;
 int LaraHealth;
 int LaraAir;
 int CurrentSpotcamSequence;
-SPOTCAM SpotCam[MAX_SPOTCAMS];
-int SpotCamRemap[MAX_SPOTCAMS];
-int CameraCnt[MAX_SPOTCAMS];
-int NumberSpotcams;
+std::vector<SPOTCAM> SpotCam;
+std::unordered_map<int, int> SpotCamRemap;
+std::vector<int> CameraCnt;
 
 bool CheckTrigger = false;
 bool UseSpotCam = false;
@@ -66,47 +66,41 @@ void ClearSpotCamSequences()
 	SpotcamDontDrawLara = false;
 	SpotcamOverlay = false;
 
-
-	for (int i = 0; i < MAX_SPOTCAMS; i++)
-		SpotCam[i] = {};
+	SpotCam.clear();
+	SpotCamRemap.clear();
+	CameraCnt.clear();
 }
 
 void InitializeSpotCamSequences(bool startFirstSequence)
 {
 	TrackCameraInit = false;
 
-	int n = NumberSpotcams;
-	int cc = 1;
+	CameraCnt.clear();
+	SpotCamRemap.clear();
 
-	if (n != 0)
+	if (SpotCam.empty())
+		return;
+
+	int currentSequence = SpotCam[0].sequence;
+	int count = 0;
+
+	for (const auto& cam : SpotCam)
 	{
-		int ce = 0;
-		int s = SpotCam[0].sequence;
-
-		if (cc < n)
+		if (cam.sequence != currentSequence)
 		{
-			for (n = 1; n < NumberSpotcams; n++)
-			{
-				// Same sequence.
-				if (SpotCam[n].sequence == s)
-					cc++;
-				// New sequence.
-				else
-				{
-					CameraCnt[ce] = cc;
-					cc = 1;
-					SpotCamRemap[s] = ce;
-					ce++;
-					s = SpotCam[n].sequence;
-				}
-			}
+			SpotCamRemap[currentSequence] = (int)CameraCnt.size();
+			CameraCnt.push_back(count);
+			currentSequence = cam.sequence;
+			count = 0;
 		}
 
-		CameraCnt[ce] = cc;
-		SpotCamRemap[s] = ce;
+		count++;
 	}
 
-	if (startFirstSequence)
+	SpotCamRemap[currentSequence] = (int)CameraCnt.size();
+	CameraCnt.push_back(count);
+
+	if (startFirstSequence && SpotCamRemap.count(0))
 	{
 		InitializeSpotCam(0);
 		UseSpotCam = true;
@@ -115,6 +109,12 @@ void InitializeSpotCamSequences(bool startFirstSequence)
 
 void InitializeSpotCam(short Sequence)
 {
+	if (SpotCam.empty() || SpotCamRemap.find(Sequence) == SpotCamRemap.end())
+	{
+		TENLog(fmt::format("Initializing flyby sequence {} failed, sequence not found.", Sequence), LogLevel::Warning);
+		return;
+	}
+
 	if (TrackCameraInit != 0 && LastSpotCamSequence == Sequence)
 	{
 		TrackCameraInit = false;
@@ -134,7 +134,7 @@ void InitializeSpotCam(short Sequence)
 
 	Lara.Inventory.IsBusy = 0;
 
-	CameraFade = -1;
+	CameraFade = NO_VALUE;
 	LastSpotCamSequence = Sequence;
 	TrackCameraInit = false;
 	SpotcamTimer = 0;
@@ -178,7 +178,7 @@ void InitializeSpotCam(short Sequence)
 	if ((spotcam->flags & SCF_DISABLE_LARA_CONTROLS))
 	{
 		Lara.Control.IsLocked = true;
-		SetCinematicBars(1.0f, SPOTCAM_CINEMATIC_BARS_SPEED);
+		SetCinematicBars(SPOTCAM_CINEMATIC_BARS_HEIGHT, SPOTCAM_CINEMATIC_BARS_SPEED);
 	}
 
 	if (spotcam->flags & SCF_TRACKING_CAM)
@@ -361,8 +361,13 @@ void CalculateSpotCameras()
 	int ly; // stack offset -48
 	int cn; // $s0
 
-
 	CAMERA_INFO backup;
+
+	if (SpotCam.empty() || FirstCamera >= (int)SpotCam.size())
+	{
+		UseSpotCam = false;
+		return;
+	}
 
 	if (Lara.Control.IsLocked)
 	{
@@ -464,7 +469,7 @@ void CalculateSpotCameras()
 	else if (!SpotcamTimer)
 		CurrentSplinePosition += cspeed;
 
-	bool lookPressed = (IsHeld(In::Look)) != 0;
+	bool lookPressed = IsHeld(In::Look);
 
 	if (!lookPressed)
 		SpotCamFirstLook = false;
@@ -507,7 +512,7 @@ void CalculateSpotCameras()
 			auto pos = Vector3i(Camera.pos.x, Camera.pos.y, Camera.pos.z);
 			int collRoomNumber = GetPointCollision(pos, SpotCam[CurrentSplineCamera].roomNumber).GetRoomNumber();
 
-			if (collRoomNumber != Camera.pos.RoomNumber)
+			if (collRoomNumber != Camera.pos.RoomNumber && !IsPointInRoom(pos, collRoomNumber))
 				collRoomNumber = FindRoomNumber(pos, SpotCam[CurrentSplineCamera].roomNumber);
 
 			Camera.pos.RoomNumber = collRoomNumber;
@@ -588,7 +593,7 @@ void CalculateSpotCameras()
 					if (SpotCam[CurrentSplineCamera].flags & SCF_DISABLE_LARA_CONTROLS)
 					{						
 						if (CurrentLevel)
-							SetCinematicBars(1.0f, SPOTCAM_CINEMATIC_BARS_SPEED);
+							SetCinematicBars(SPOTCAM_CINEMATIC_BARS_HEIGHT, SPOTCAM_CINEMATIC_BARS_SPEED);
 
 						Lara.Control.IsLocked = true;
 					}
@@ -839,14 +844,27 @@ int Spline(int x, int* knots, int nk)
 	return ((__int64)x * (((__int64)x * (((__int64)x * c1 >> 16) + c2) >> 16) + (k[2] >> 1) + ((-k[0] - 1) >> 1)) >> 16) + k[1];
 }
 
-Pose GetCameraTransform(int sequence, float alpha)
+Pose GetCameraTransform(int sequence, float alpha, bool loop)
 {
+	constexpr auto BLEND_RANGE = 0.1f;
+	constexpr auto BLEND_START = BLEND_RANGE;
+	constexpr auto BLEND_END   = 1.0f - BLEND_RANGE;
+
 	alpha = std::clamp(alpha, 0.0f, 1.0f);
+
+	if (sequence < 0 || SpotCamRemap.find(sequence) == SpotCamRemap.end())
+	{
+		TENLog("Wrong flyby sequence number provided for getting camera coordinates.", LogLevel::Warning);
+		return Pose::Zero;
+	}
 
 	// Retrieve camera count in sequence.
 	int cameraCount = CameraCnt[SpotCamRemap[sequence]];
 	if (cameraCount < 2)
-		return Pose::Zero; // Not enough cameras to interpolate.
+	{
+		TENLog("Not enough cameras in flyby sequence to calculate the coordinates.", LogLevel::Warning);
+		return Pose::Zero;
+	}
 
 	// Find first ID for sequence.
 	int firstSeqID = 0;
@@ -873,15 +891,39 @@ Pose GetCameraTransform(int sequence, float alpha)
 	}
 
 	// Compute spline interpolation of main flyby camera parameters.
-	auto origin = Vector3(Spline(splineAlpha, xOrigins.data(), splinePoints),
-						  Spline(splineAlpha, yOrigins.data(), splinePoints),
-						  Spline(splineAlpha, zOrigins.data(), splinePoints));
+	auto getInterpolatedPoint = [&](float t, std::vector<int>& x, std::vector<int>& y, std::vector<int>& z) 
+	{
+		int tAlpha = int(t * (float)USHRT_MAX);
+		return Vector3(Spline(tAlpha, x.data(), splinePoints),
+					   Spline(tAlpha, y.data(), splinePoints),
+					   Spline(tAlpha, z.data(), splinePoints));
+	};
 
-	auto target = Vector3(Spline(splineAlpha, xTargets.data(), splinePoints),
-						  Spline(splineAlpha, yTargets.data(), splinePoints),
-						  Spline(splineAlpha, zTargets.data(), splinePoints));
+	auto getInterpolatedRoll = [&](float t)
+	{
+		int tAlpha = int(t * (float)USHRT_MAX);
+		return Spline(tAlpha, rolls.data(), splinePoints);
+	};
 
-	short orientZ = Spline(splineAlpha, rolls.data(), splinePoints);
+	auto origin = Vector3::Zero;
+	auto target = Vector3::Zero;
+	short orientZ = 0;
+
+	// If loop is enabled and alpha is at sequence start or end, blend between last and first cameras.
+	if (loop && (alpha < BLEND_START || alpha >= BLEND_END))
+	{
+		float blendFactor = (alpha < BLEND_START) ? (0.5f + ((alpha / BLEND_RANGE) * 0.5f)) : (((alpha - BLEND_END) / BLEND_START) * 0.5f);
+
+		origin = Vector3::Lerp(getInterpolatedPoint(BLEND_END, xOrigins, yOrigins, zOrigins), getInterpolatedPoint(BLEND_START, xOrigins, yOrigins, zOrigins), blendFactor);
+		target = Vector3::Lerp(getInterpolatedPoint(BLEND_END, xTargets, yTargets, zTargets), getInterpolatedPoint(BLEND_START, xTargets, yTargets, zTargets), blendFactor);
+		orientZ = Lerp(getInterpolatedRoll(BLEND_END), getInterpolatedRoll(BLEND_START), blendFactor);
+	}
+	else
+	{
+		origin  = getInterpolatedPoint(alpha, xOrigins, yOrigins, zOrigins);
+		target  = getInterpolatedPoint(alpha, xTargets, yTargets, zTargets);
+		orientZ = getInterpolatedRoll(alpha);
+	}
 
 	auto pose = Pose(origin, EulerAngles(target - origin));
 	pose.Orientation.z = orientZ;

@@ -27,9 +27,6 @@ private:
 	void PrepareInventoryObjects();
 
 public:
-	int FogInDistance  = 0;
-	int FogOutDistance = 0;
-
 	bool LevelSelect = true;
 	bool HomeLevel	 = false;
 	bool LoadSave	 = true;
@@ -48,7 +45,7 @@ public:
 	void		SetGameDir(const std::string& assetDir) override;
 	void		AddLevel(Level const& level);
 	void		LoadFlowScript();
-	char const*	GetString(const char* id) const;
+	const char* GetString(const char* id) const;
 	bool		IsStringPresent(const char* id) const;
 	void		SetStrings(sol::nested<std::unordered_map<std::string, std::vector<std::string>>>&& src);
 	void		SetLanguageNames(sol::as_table_t<std::vector<std::string>>&& src);
@@ -71,9 +68,13 @@ public:
 	int			GetSecretCount() const;
 	void		SetSecretCount(int secretsNum);
 	void		AddSecret(int levelSecretIndex);
+	sol::table	GetSaveHeaders(sol::this_state state);
 	void		SetIntroImagePath(const std::string& path);
+	void		SetIntroVideoPath(const std::string& path);
 	void		SetTitleScreenImagePath(const std::string& path);
+	int			GetTotalSecretCount();
 	void		SetTotalSecretCount(int secretsNumber);
+	Time		GetGlobalGameTime();
 	bool		IsFlyCheatEnabled() const;
 	void		EnableFlyCheat(bool enable);
 	bool		IsPointFilterEnabled() const;

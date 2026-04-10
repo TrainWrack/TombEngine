@@ -1,6 +1,7 @@
 #include "framework.h"
 #include "Objects/TR4/Entity/Wraith.h"
 
+#include "Game/camera.h"
 #include "Game/collision/collide_room.h"
 #include "Game/collision/Point.h"
 #include "Game/control/flipeffect.h"
@@ -84,21 +85,21 @@ namespace TEN::Entities::TR4
 			item.Index, (int)TailTag::First,
 			pos, dir0, orient2D, colorStart, COLOR_END,
 			WIDTH, LIFE_MAX, VEL, EXP_RATE, 0,
-			StreamerFeatherType::Center, BlendMode::Additive);
+			StreamerFeatherMode::Center, BlendMode::Additive);
 
 		// Spawn second tail.
 		StreamerEffect.Spawn(
 			item.Index, (int)TailTag::Second,
 			pos, dir1, orient2D, colorStart, COLOR_END,
 			WIDTH, LIFE_MAX, VEL, EXP_RATE, 0,
-			StreamerFeatherType::Center, BlendMode::Additive);
+			StreamerFeatherMode::Center, BlendMode::Additive);
 
 		// Spawn third tail.
 		StreamerEffect.Spawn(
 			item.Index, (int)TailTag::Third,
 			pos, dir2, orient2D, colorStart, COLOR_END,
 			WIDTH, LIFE_MAX, VEL, EXP_RATE, 0,
-			StreamerFeatherType::Center, BlendMode::Additive);
+			StreamerFeatherMode::Center, BlendMode::Additive);
 	}
 
 	static void WraithWallEffect(Vector3i pos, short yRot, int objectNumber)
@@ -310,6 +311,11 @@ namespace TEN::Entities::TR4
 
 		auto pointColl = GetPointCollision(item);
 
+		// Translate wraith.
+		item.Pose.Position.x += item.Animation.Velocity.z * phd_sin(item.Pose.Orientation.y);
+		item.Pose.Position.y += item.Animation.Velocity.z * phd_sin(item.Pose.Orientation.x);
+		item.Pose.Position.z += item.Animation.Velocity.z * phd_cos(item.Pose.Orientation.y);
+
 		bool hasHitWall = false;
 		if (pointColl.GetFloorHeight() < item.Pose.Position.y ||
 			pointColl.GetCeilingHeight() > item.Pose.Position.y)
@@ -317,13 +323,9 @@ namespace TEN::Entities::TR4
 			hasHitWall = true;
 		}
 
-		// Translate wraith.
-		item.Pose.Position.x += item.Animation.Velocity.z * phd_sin(item.Pose.Orientation.y);
-		item.Pose.Position.y += item.Animation.Velocity.z * phd_sin(item.Pose.Orientation.x);
-		item.Pose.Position.z += item.Animation.Velocity.z * phd_cos(item.Pose.Orientation.y);
-
-		if (pointColl.GetRoomNumber() != item.RoomNumber)
-			ItemNewRoom(itemNumber, pointColl.GetRoomNumber());
+		// Always update room based on camera position. Otherwise object sometimes does not show up in rooms.
+		if (pointColl.GetRoomNumber() != Camera.pos.RoomNumber || item.RoomNumber != Camera.pos.RoomNumber)
+			ItemNewRoom(itemNumber, Camera.pos.RoomNumber);
 
 		for (int linkItemNumber = g_Level.Rooms[item.RoomNumber].itemNumber; linkItemNumber != NO_VALUE; linkItemNumber = g_Level.Items[linkItemNumber].NextItem)
 		{
@@ -508,7 +510,7 @@ namespace TEN::Entities::TR4
 					SpawnWraithExplosion(item, Vector3(48.0f), 48.0f);
 
 					if (target->TriggerFlags > 0)
-						target->Animation.FrameNumber = GetAnimData(target).frameBase;
+						target->Animation.FrameNumber = 0;
 
 					target->ItemFlags[6] = 0;
 					DoDamage(target, INT_MAX);

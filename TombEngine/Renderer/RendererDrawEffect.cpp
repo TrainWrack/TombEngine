@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Renderer/Renderer.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/camera.h"
 #include "Game/collision/collide_room.h"
 #include "Game/control/box.h"
@@ -35,19 +35,24 @@
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
 #include "Specific/level.h"
 #include "Structures/RendererSpriteBucket.h"
+#include "Objects/Effects/Fireflies.h"
 
+using namespace TEN::Animation;
 using namespace TEN::Effects::Blood;
 using namespace TEN::Effects::Bubble;
 using namespace TEN::Effects::Drip;
 using namespace TEN::Effects::Electricity;
 using namespace TEN::Effects::Environment;
+using namespace TEN::Effects::Fireflies;
 using namespace TEN::Effects::Footprint;
 using namespace TEN::Effects::Ripple;
 using namespace TEN::Effects::Splash;
+using namespace TEN::Effects::Spark;
 using namespace TEN::Effects::Streamer;
 using namespace TEN::Entities::Creatures::TR5;
 using namespace TEN::Entities::Traps;
 using namespace TEN::Math;
+using namespace TEN::Renderer::Structures;
 
 extern BLOOD_STRUCT Blood[MAX_SPARKS_BLOOD];
 extern FIRE_SPARKS FireSparks[MAX_SPARKS_FIRE];
@@ -57,7 +62,6 @@ extern std::array<DebrisFragment, MAX_DEBRIS> DebrisFragments;
 
 namespace TEN::Renderer 
 {
-	using namespace TEN::Renderer::Structures;
 
 	constexpr auto ELECTRICITY_RANGE_MAX = BLOCK(24);
 		
@@ -87,25 +91,41 @@ namespace TEN::Renderer
 			for (int i = 0; i < LaserBeamEffect::SUBDIVISION_COUNT; i++)
 			{
 				bool isLastSubdivision = (i == (LaserBeamEffect::SUBDIVISION_COUNT - 1));
+				auto& v1 = beam.Vertices[i];
+				auto& v2 = beam.Vertices[isLastSubdivision ? 0 : (i + 1)];
+				auto& v3 = beam.Vertices[LaserBeamEffect::SUBDIVISION_COUNT + (isLastSubdivision ? 0 : (i + 1))];
+				auto& v4 = beam.Vertices[LaserBeamEffect::SUBDIVISION_COUNT + i];
+				auto& beamColor = beam.Color;
 
-				auto color = Color::Lerp(beam.OldColor, beam.Color, GetInterpolationFactor());
+				// Make lerp only if beam is moving !
+				if (beam.IsDirty)
+				{
+					auto color = Color::Lerp(beam.OldColor, beamColor, GetInterpolationFactor());
 
-				AddColoredQuad(
-					Vector3::Lerp(beam.OldVertices[i], beam.Vertices[i], GetInterpolationFactor()),
-					Vector3::Lerp(
-						beam.OldVertices[isLastSubdivision ? 0 : (i + 1)], 
-						beam.Vertices[isLastSubdivision ? 0 : (i + 1)],
-						GetInterpolationFactor()),
-					Vector3::Lerp(
-						beam.OldVertices[LaserBeamEffect::SUBDIVISION_COUNT + (isLastSubdivision ? 0 : (i + 1))],
-						beam.Vertices[LaserBeamEffect::SUBDIVISION_COUNT + (isLastSubdivision ? 0 : (i + 1))],
-						GetInterpolationFactor()),
-					Vector3::Lerp(
-						beam.OldVertices[LaserBeamEffect::SUBDIVISION_COUNT + i],
-						beam.Vertices[LaserBeamEffect::SUBDIVISION_COUNT + i],
-						GetInterpolationFactor()),
-					color, color, color, color,
-					BlendMode::Additive, view, SpriteRenderType::LaserBeam);
+					AddColoredQuad(
+						Vector3::Lerp(beam.OldVertices[i], v1, GetInterpolationFactor()),
+						Vector3::Lerp(
+							beam.OldVertices[isLastSubdivision ? 0 : (i + 1)],
+							v2,
+							GetInterpolationFactor()),
+						Vector3::Lerp(
+							beam.OldVertices[LaserBeamEffect::SUBDIVISION_COUNT + (isLastSubdivision ? 0 : (i + 1))],
+							v3,
+							GetInterpolationFactor()),
+						Vector3::Lerp(
+							beam.OldVertices[LaserBeamEffect::SUBDIVISION_COUNT + i],
+							v4,
+							GetInterpolationFactor()),
+						color, color, color, color,
+						BlendMode::Additive, view, SpriteRenderType::LaserBeam);
+				}
+				else
+				{
+					AddColoredQuad(
+						v1, v2, v3, v4,
+						beamColor, beamColor, beamColor, beamColor,
+						BlendMode::Additive, view, SpriteRenderType::LaserBeam);
+				}
 			}
 		}
 	}
@@ -134,10 +154,10 @@ namespace TEN::Renderer
 						auto color = Vector4::Lerp(segment.PrevColor, segment.Color, GetInterpolationFactor());
 						auto prevColor = Vector4::Lerp(prevSegment.PrevColor, prevSegment.Color, GetInterpolationFactor());
 
-						switch (streamer.GetFeatherType())
+						switch (streamer.GetFeatherMode())
 						{
 							default:
-							case StreamerFeatherType::None:
+							case StreamerFeatherMode::None:
 								AddColoredQuad(
 									vertex0, vertex1,
 									prevVertex1,
@@ -149,7 +169,7 @@ namespace TEN::Renderer
 									streamer.GetBlendMode(), view);
 								break;
 
-							case StreamerFeatherType::Center:
+							case StreamerFeatherMode::Center:
 							{
 								auto center = (vertex0 + vertex1) / 2;
 								auto prevCenter = (prevVertex0 + prevVertex1) / 2;
@@ -165,14 +185,14 @@ namespace TEN::Renderer
 							}
 								break;
 
-							case StreamerFeatherType::Left:
+							case StreamerFeatherMode::Left:
 								AddColoredQuad(
 									vertex0, vertex1, prevVertex1, prevVertex0,
 									color, Vector4::Zero, Vector4::Zero, prevColor,
 									streamer.GetBlendMode(), view);
 								break;
 
-							case StreamerFeatherType::Right:
+							case StreamerFeatherMode::Right:
 								AddColoredQuad(
 									vertex0, vertex1, prevVertex1, prevVertex0,
 									Vector4::Zero, color, prevColor, Vector4::Zero,
@@ -330,6 +350,42 @@ namespace TEN::Renderer
 		}
 	}
 
+	void Renderer::PrepareFireflies(RenderView& view)
+	{
+		if (!Objects[ID_FIREFLY_EMITTER].loaded)
+			return;
+
+		for (auto& firefly : FireflySwarm)
+		{
+			if (!firefly.on)
+				continue;
+
+			if (!CheckIfSlotExists(ID_FIREFLY_SPRITES, "Firefly rendering"))
+				continue;
+
+			firefly.scalar = 3;
+			firefly.size = 3;
+
+			auto pos = Vector3::Lerp(
+				Vector3(firefly.PrevX, firefly.PrevY, firefly.PrevZ),
+				Vector3(firefly.Position.x, firefly.Position.y, firefly.Position.z),
+				GetInterpolationFactor());
+
+			// Disallow sprites out of bounds.
+			int spriteIndex = Objects[firefly.SpriteSeqID].meshIndex + firefly.SpriteID;
+			spriteIndex = std::clamp(spriteIndex, 0, (int)_sprites.size());
+
+			AddSpriteBillboard(
+				&_sprites[spriteIndex],
+				pos,
+				Color(firefly.r / (float)UCHAR_MAX, firefly.g / (float)UCHAR_MAX, firefly.b / (float)UCHAR_MAX, 1.0f),
+				TO_RAD(firefly.rotAng << 4), firefly.scalar,
+				Vector2(firefly.size, firefly.size),
+				firefly.blendMode, true, view);
+
+		}
+	}
+
 	void Renderer::PrepareSmokes(RenderView& view) 
 	{
 		for (const auto& smoke : SmokeSparks) 
@@ -370,6 +426,27 @@ namespace TEN::Renderer
 				auto* spark = &FireSparks[i];
 				if (spark->on)
 				{
+					// Calculate original flame color.
+					auto color = Vector4::Lerp(
+						Vector4(
+							spark->PrevColor.x / 255.0f * fade,
+							spark->PrevColor.y / 255.0f * fade,
+							spark->PrevColor.z / 255.0f * fade,
+							1.0f),
+						Vector4(
+							spark->color.x / 255.0f * fade,
+							spark->color.y / 255.0f * fade,
+							spark->color.z / 255.0f * fade,
+							1.0f),
+						GetInterpolationFactor());
+
+					// Influence flame color with object color via chroma modulation.
+					if (fire.color != Vector4::One)
+					{
+						auto color3 = Vector3(color.x, color.y, color.z);
+						color = Vector4::Lerp(color, fire.color * Luma(color3), Chroma(color3) * 1.5f);
+					}
+
 					AddSpriteBillboard(
 						&_sprites[spark->def],
 						Vector3::Lerp(
@@ -382,18 +459,7 @@ namespace TEN::Renderer
 								fire.position.y + spark->position.y * fire.size / 2,
 								fire.position.z + spark->position.z * fire.size / 2),
 							GetInterpolationFactor()),
-						Vector4::Lerp(
-							Vector4(
-								spark->PrevColor.x / 255.0f * fade,
-								spark->PrevColor.y / 255.0f * fade,
-								spark->PrevColor.z / 255.0f * fade,
-								1.0f),
-							Vector4(
-								spark->color.x / 255.0f * fade,
-								spark->color.y / 255.0f * fade,
-								spark->color.z / 255.0f * fade,
-								1.0f),
-							GetInterpolationFactor()),
+						color,
 						TO_RAD(Lerp(spark->PrevRotAng << 4, spark->rotAng << 4, GetInterpolationFactor())),
 						Lerp(spark->PrevScalar, spark->scalar, GetInterpolationFactor()),
 						Vector2::Lerp(
@@ -409,12 +475,18 @@ namespace TEN::Renderer
 	void Renderer::PrepareParticles(RenderView& view)
 	{
 		for (int i = 0; i < ParticleNodeOffsetIDs::NodeMax; i++)
-			NodeOffsets[i].gotIt = false;
+			NodeOffsets[i].itemNumber = NO_VALUE;
 
 		for (auto& particle : Particles)
 		{
 			if (!particle.on)
 				continue;
+
+			if (particle.DisableInterpolation)
+			{
+				particle.DisableInterpolation = false;
+				particle.StoreInterpolationData();
+			}
 
 			if (particle.flags & SP_DEF)
 			{
@@ -464,17 +536,23 @@ namespace TEN::Renderer
 				}
 				else
 				{
-					auto* item = &g_Level.Items[particle.fxObj];
+					if (particle.fxObj < 0 || particle.fxObj >= g_Level.Items.size())
+					{
+						TENLog("Particle FX object index is out of bounds.", LogLevel::Warning);
+						continue;
+					}
 
 					auto nodePos = Vector3i::Zero;
 					if (particle.flags & SP_NODEATTACH)
 					{
-						if (NodeOffsets[particle.nodeNumber].gotIt)
+						if (NodeOffsets[particle.nodeNumber].itemNumber == particle.fxObj)
 						{
 							nodePos = NodeVectors[particle.nodeNumber];
 						}
 						else
 						{
+							auto* item = &g_Level.Items[particle.fxObj];
+
 							nodePos.x = NodeOffsets[particle.nodeNumber].x;
 							nodePos.y = NodeOffsets[particle.nodeNumber].y;
 							nodePos.z = NodeOffsets[particle.nodeNumber].z;
@@ -489,7 +567,7 @@ namespace TEN::Renderer
 								nodePos = GetJointPosition(LaraItem, -meshIndex, nodePos);
 							}
 
-							NodeOffsets[particle.nodeNumber].gotIt = true;
+							NodeOffsets[particle.nodeNumber].itemNumber = particle.fxObj;
 							NodeVectors[particle.nodeNumber] = nodePos;
 						}
 
@@ -510,13 +588,19 @@ namespace TEN::Renderer
 						pos += _items[particle.fxObj].InterpolatedPosition; 
 					}
 				}
+				
+				// If sprite is a video texture, bypass it if texture is inactive.
+				if (particle.SpriteID == VIDEO_SPRITE_ID && (_videoSprite.Texture == nullptr || _videoSprite.Texture->Texture == nullptr))
+					continue;
 
 				// Disallow sprites out of bounds.
 				int spriteIndex = Objects[particle.SpriteSeqID].meshIndex + particle.SpriteID;
 				spriteIndex = std::clamp(spriteIndex, 0, (int)_sprites.size());
 
+				auto* sprite = particle.SpriteID == VIDEO_SPRITE_ID ? &_videoSprite : &_sprites[spriteIndex];
+
 				AddSpriteBillboard(
-					&_sprites[spriteIndex],
+					sprite,
 					pos,
 					Color(particle.r / (float)UCHAR_MAX, particle.g / (float)UCHAR_MAX, particle.b / (float)UCHAR_MAX, 1.0f),
 					TO_RAD(particle.rotAng << 4), particle.scalar,
@@ -970,60 +1054,160 @@ namespace TEN::Renderer
 
 	void Renderer::PrepareWeatherParticles(RenderView& view) 
 	{
-		constexpr auto RAIN_WIDTH = 4.0f;
+		constexpr auto SNOW_CLUSTER_SPREAD = BLOCK(1.0f);
+		constexpr auto RAIN_CLUSTER_SPREAD = BLOCK(1.0f);
+
+		constexpr auto RAIN_WIDTH_NEAR = 1.5f;
+		constexpr auto RAIN_WIDTH_FAR = 15.0f;
 
 		for (const auto& part : Weather.GetParticles())
 		{
 			if (!part.Enabled)
 				continue;
 
-			switch (part.Type)
+			auto pos  = Vector3::Lerp(part.PrevPosition, part.Position, GetInterpolationFactor());
+			auto size = Lerp(part.PrevSize, part.Size, GetInterpolationFactor());
+
+			// Underwater dust does not need clustering.
+			if (part.Type == WeatherType::None)
 			{
-			case WeatherType::None:
+				if (!view.Camera.Frustum.SphereInFrustum(pos, size))
+					continue;
 
 				if (!CheckIfSlotExists(ID_DEFAULT_SPRITES, "Underwater dust rendering"))
-					return;
+					continue;
 
 				AddSpriteBillboard(
 					&_sprites[Objects[ID_DEFAULT_SPRITES].meshIndex + SPR_UNDERWATERDUST],
-					Vector3::Lerp(part.PrevPosition, part.Position, GetInterpolationFactor()),
+					pos,
 					Color(1.0f, 1.0f, 1.0f, part.Transparency()),
-					0.0f, 1.0f, Vector2(Lerp(part.PrevSize, part.Size, GetInterpolationFactor())),
+					0.0f, 1.0f, Vector2(size),
 					BlendMode::Additive, true, view);
 
-				break;
+				continue;
+			}
 
-			case WeatherType::Snow:
+			// Clamp cluster size to 1.
+			int clusterSize = std::max(1, part.ClusterSize);
 
-				if (!CheckIfSlotExists(ID_DEFAULT_SPRITES, "Snow rendering"))
-					return;
+			// If particle is dying, immediately cancel the cluster.
+			if (part.Stopped)
+				clusterSize = 1;
 
-				AddSpriteBillboard(
-					&_sprites[Objects[ID_DEFAULT_SPRITES].meshIndex + SPR_UNDERWATERDUST],
-					Vector3::Lerp(part.PrevPosition, part.Position, GetInterpolationFactor()),
-					Color(1.0f, 1.0f, 1.0f, part.Transparency()),
-					0.0f, 1.0f, Vector2(Lerp(part.PrevSize, part.Size, GetInterpolationFactor())),
-					BlendMode::Additive, true, view);
+			auto finalPos = pos;
+			auto finalScale = size;
 
-				break;
+			for (int i = 0; i < clusterSize; i++)
+			{
+				// Combine particle index and cluster index for unique seeding.
+				int uniqueSeed = part.UniqueID + i;
 
-			case WeatherType::Rain:
+				if (i > 0)
+				{
+					// Use bits from uniqueSeed to determine distribution pattern.
+					float spread = part.Type == WeatherType::Snow ? SNOW_CLUSTER_SPREAD : RAIN_CLUSTER_SPREAD;
+					float offsetBase = spread * ((i + 1) / (float)clusterSize);
 
-				if (!CheckIfSlotExists(ID_DRIP_SPRITE, "Rain rendering"))
-					return;
+					// Use bits 0, 1, 2 for axis signs.
+					// Snow Y axis is always negative, so that snowflakes don't sink into room geometry.
+					float xSign = (uniqueSeed & 1) ? 1.0f : -1.0f;
+					float zSign = (uniqueSeed & 4) ? 1.0f : -1.0f;
 
-				Vector3 v;
-				part.Velocity.Normalize(v);
+					// Use bits 3, 4 for axis emphasis.
+					int axisEmphasis = uniqueSeed & 3;
+					float xScale = (axisEmphasis == 0) ? 1.1f : 0.4f;
+					float yScale = (axisEmphasis == 1) ? 1.2f : 0.5f;
+					float zScale = (axisEmphasis == 2) ? 1.0f : 0.6f;
 
-				AddSpriteBillboardConstrained(
-					&_sprites[Objects[ID_DRIP_SPRITE].meshIndex], 
-					Vector3::Lerp(part.PrevPosition, part.Position, GetInterpolationFactor()),
-					Color(0.8f, 1.0f, 1.0f, part.Transparency()),
-					0.0f, 1.0f,
-					Vector2(RAIN_WIDTH, Lerp(part.PrevSize, part.Size, GetInterpolationFactor())),
-					BlendMode::Additive, -v, true, view);
+					Vector3 positionOffset(
+						xSign * offsetBase * xScale,
+						-(offsetBase * yScale),
+						zSign * offsetBase * zScale
+					);
 
-				break;
+					// Apply deterministic offset.
+					finalPos = pos + positionOffset;
+					finalScale = size * (1.0f + abs(phd_sin(part.UniqueID + i)));
+
+					constexpr auto SNOW_SPIN_RATE = 0.05f;
+					constexpr auto SNOW_SPIN_RADIUS = 0.3f;
+
+					if (part.Type == WeatherType::Snow)
+					{
+						// Calculate spin angle based on vertical position.
+						// Wrap the vertical position to 3 blocks and multiply by 21 to get full unsigned short value.
+						unsigned short spinAngle = ((int)abs(finalPos.y) % BLOCK(3)) * 21;
+
+						// Apply circular motion in XZ plane.
+						finalPos.x += positionOffset.x * phd_sin((short)spinAngle);
+						finalPos.z += positionOffset.z * phd_cos((short)spinAngle);
+					}
+				}
+
+				if (!view.Camera.Frustum.SphereInFrustum(finalPos, finalScale))
+					continue;
+
+				switch (part.Type)
+				{
+					case WeatherType::Snow:
+					{
+						if (!CheckIfSlotExists(ID_DEFAULT_SPRITES, "Snow rendering"))
+							continue;
+
+						// Use dedicated snow sprite sequence if available, otherwise fallback to underwater dust sprite.
+						int spriteIndex = Objects[ID_DEFAULT_SPRITES].meshIndex + SPR_UNDERWATERDUST;
+						if (Objects[ID_SNOW_SPRITES].loaded)
+							spriteIndex = Objects[ID_SNOW_SPRITES].meshIndex + (uniqueSeed % Objects[ID_SNOW_SPRITES].nmeshes);
+
+						/// Get a deterministic particle rotation from the cluster index.
+						float rot = ((float)i / (float)clusterSize) * PI_MUL_2;
+
+						AddSpriteBillboard(
+							&_sprites[spriteIndex],
+							finalPos,
+							Color(1.0f, 1.0f, 1.0f, part.Transparency()),
+							rot, 1.0f, Vector2(finalScale),
+							BlendMode::Additive, false, view);
+
+						break;
+					}
+
+					case WeatherType::Rain:
+					{
+						if (!CheckIfSlotExists(ID_DRIP_SPRITE, "Rain rendering"))
+							continue;
+
+						int spriteIndex = Objects[ID_DRIP_SPRITE].meshIndex;
+						if (Objects[ID_RAIN_SPRITES].loaded)
+							spriteIndex = Objects[ID_RAIN_SPRITES].meshIndex + (uniqueSeed % Objects[ID_RAIN_SPRITES].nmeshes);
+
+						Vector3 v;
+						part.Velocity.Normalize(v);
+
+						// Distance to camera
+						const Vector3 camPos = view.Camera.WorldPosition;
+						float dist = (finalPos - camPos).Length();
+
+						// Define interpolation range:
+						// near = ~1 block (no widening), far = expanded rain render range
+						float nearD = BLOCK(0.5f);
+						float farD = COLLISION_CHECK_DISTANCE * RAIN_RENDER_RANGE_MULT;
+						float t = std::clamp((dist - nearD) / std::max(1.0f, (farD - nearD)), 0.0f, 1.0f);
+
+						// Blend rain width based on distance
+						float width = Lerp(RAIN_WIDTH_NEAR, RAIN_WIDTH_FAR, t);
+
+						AddSpriteBillboardConstrained(
+							&_sprites[spriteIndex],
+							finalPos,
+							Color(0.8f, 1.0f, 1.0f, part.Transparency()),
+							0.0f, 1.0f,
+							Vector2(width, finalScale),
+							BlendMode::Additive, -v, false, view);
+
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -1036,11 +1220,25 @@ namespace TEN::Renderer
 		if (Lara.Control.Look.OpticRange > 0 && _currentMirror == nullptr)
 			return false;
 
+		if (Lara.Control.Weapon.GunType == LaraWeaponType::Flare)
+			return false;
+
 		const auto& settings = g_GameFlow->GetSettings()->Weapons[(int)Lara.Control.Weapon.GunType - 1];
 		if (!settings.MuzzleFlash)
 			return false;
 
-		_shaders.Bind(Shader::Statics);
+		// Use MP5 flash if available.
+		auto gunflash = GAME_OBJECT_ID::ID_GUN_FLASH;
+		if (Lara.Control.Weapon.GunType == LaraWeaponType::HK && Objects[GAME_OBJECT_ID::ID_GUN_FLASH2].loaded)
+			gunflash = GAME_OBJECT_ID::ID_GUN_FLASH2;
+
+		if (!_moveableObjects[gunflash].has_value())
+			return false;
+
+		const auto& flashMoveable = *_moveableObjects[gunflash];
+		const auto& flashMesh = *flashMoveable.ObjectMeshes[0];
+
+		_shaders.Bind(Shader::InstancedStatics);
 
 		unsigned int stride = sizeof(Vertex);
 		unsigned int offset = 0;
@@ -1053,105 +1251,65 @@ namespace TEN::Renderer
 		auto* itemPtr = &_items[LaraItem->Index];
 
 		// Divide gunflash tint by 2 because tinting uses multiplication and additive color which doesn't look good with overbright color values.
-		_stStatic.Color = settings.ColorizeMuzzleFlash ? ((Vector4)settings.FlashColor / 2) : Vector4::One;
-		_stStatic.AmbientLight = room.AmbientLight;
-		_stStatic.LightMode = (int)LightMode::Static;
-		BindStaticLights(itemPtr->LightsToDraw);
-
-		short length = 0;
-		short zOffset = 0;
-		short rotationX = 0;
+		_stInstancedStaticMeshBuffer.StaticMeshes[0].Color = settings.ColorizeMuzzleFlash ? ((Vector4)settings.FlashColor / 2) : Vector4::One;
+		_stInstancedStaticMeshBuffer.StaticMeshes[0].Ambient = room.AmbientLight;
+		_stInstancedStaticMeshBuffer.StaticMeshes[0].LightMode = (int)LightMode::Static;
+		BindInstancedStaticLights(itemPtr->LightsToDraw, 0);
 
 		SetAlphaTest(AlphaTestMode::GreatherThan, ALPHA_TEST_THRESHOLD);
 		SetBlendMode(BlendMode::Additive);
 
-		if (Lara.Control.Weapon.GunType != LaraWeaponType::Flare &&
-			Lara.Control.Weapon.GunType != LaraWeaponType::Crossbow)
+		for (const auto& flashBucket : flashMesh.Buckets) 
 		{
-			switch (Lara.Control.Weapon.GunType)
+			if (flashBucket.BlendMode == BlendMode::Opaque)
+				continue;
+
+			if (flashBucket.Polygons.size() == 0)
+				continue;
+
+			BindBucketTextures(flashBucket, TextureSource::Moveables, false);
+			BindMaterial(flashBucket.MaterialIndex, false);
+
+			auto meshOffset = Objects[gunflash].Animations.front().Keyframes.front().RootOffset;
+			auto offset = settings.MuzzleOffset + Vector3(meshOffset.x, meshOffset.z, meshOffset.y); // Offsets are inverted because of bone orientation.
+
+			offset.x = -offset.x;
+			auto tMatrix = Matrix::CreateTranslation(offset);
+
+			auto worldMatrix = Matrix::Identity;
+			auto rotMatrix = Matrix::CreateRotationX(TO_RAD(Lara.Control.Weapon.GunType == LaraWeaponType::Pistol ? -16830 : -14560)); // HACK
+
+			if (Lara.LeftArm.GunFlash)
 			{
-			case LaraWeaponType::Revolver:
-				length = 192;
-				zOffset = 68;
-				rotationX = -14560;
-				break;
+				worldMatrix = itemPtr->InterpolatedAnimTransforms[LM_LHAND] * itemPtr->InterpolatedWorld;
+				worldMatrix = tMatrix * worldMatrix;
+				worldMatrix = rotMatrix * worldMatrix;
+				ReflectMatrixOptionally(worldMatrix);
 
-			case LaraWeaponType::Uzi:
-				length = 190;
-				zOffset = 50;
-				rotationX = -14560;
-				break;
+				_stInstancedStaticMeshBuffer.StaticMeshes[0].World = worldMatrix;
+				UpdateConstantBuffer(_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
 
-			case LaraWeaponType::HK:
-			case LaraWeaponType::Shotgun:
-				length = 300;
-				zOffset = 92;
-				rotationX = -14560;
-				break;
+				DrawIndexedInstancedTriangles(flashBucket.NumIndices, 1, flashBucket.StartIndex, 0);
 
-			default:
-			case LaraWeaponType::Pistol:
-				length = 180;
-				zOffset = 40;
-				rotationX = -16830;
-				break;
+				_numMoveablesDrawCalls++;
 			}
 
-			// Use MP5 flash if available.
-			auto gunflash = GAME_OBJECT_ID::ID_GUN_FLASH;
-			if (Lara.Control.Weapon.GunType == LaraWeaponType::HK && Objects[GAME_OBJECT_ID::ID_GUN_FLASH2].loaded)
+			offset.x = -offset.x;
+			tMatrix = Matrix::CreateTranslation(offset);
+
+			if (Lara.RightArm.GunFlash)
 			{
-				gunflash = GAME_OBJECT_ID::ID_GUN_FLASH2;
-				length += 20;
-				zOffset += 10;
-			}
+				worldMatrix = itemPtr->InterpolatedAnimTransforms[LM_RHAND] * itemPtr->InterpolatedWorld;
+				worldMatrix = tMatrix * worldMatrix;
+				worldMatrix = rotMatrix * worldMatrix;
+				ReflectMatrixOptionally(worldMatrix);
 
-			const auto& flashMoveable = *_moveableObjects[gunflash];
-			const auto& flashMesh = *flashMoveable.ObjectMeshes[0];
+				_stInstancedStaticMeshBuffer.StaticMeshes[0].World = worldMatrix;
+				UpdateConstantBuffer(_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
 
-			for (const auto& flashBucket : flashMesh.Buckets) 
-			{
-				if (flashBucket.BlendMode == BlendMode::Opaque)
-					continue;
+				DrawIndexedInstancedTriangles(flashBucket.NumIndices, 1, flashBucket.StartIndex, 0);
 
-				if (flashBucket.Polygons.size() == 0)
-					continue;
-
-				BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[flashBucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-
-				auto tMatrix = Matrix::CreateTranslation(0, length, zOffset);
-				auto rotMatrix = Matrix::CreateRotationX(TO_RAD(rotationX));
-
-				auto worldMatrix = Matrix::Identity;
-				if (Lara.LeftArm.GunFlash)
-				{
-					worldMatrix = itemPtr->AnimTransforms[LM_LHAND] * itemPtr->World;
-					worldMatrix = tMatrix * worldMatrix;
-					worldMatrix = rotMatrix * worldMatrix;
-					ReflectMatrixOptionally(worldMatrix);
-
-					_stStatic.World = worldMatrix;
-					_cbStatic.UpdateData(_stStatic, _context.Get());
-
-					DrawIndexedTriangles(flashBucket.NumIndices, flashBucket.StartIndex, 0);
-
-					_numMoveablesDrawCalls++;
-				}
-
-				if (Lara.RightArm.GunFlash)
-				{
-					worldMatrix = itemPtr->AnimTransforms[LM_RHAND] * itemPtr->World;
-					worldMatrix = tMatrix * worldMatrix;
-					worldMatrix = rotMatrix * worldMatrix;
-					ReflectMatrixOptionally(worldMatrix);
-
-					_stStatic.World = worldMatrix;
-					_cbStatic.UpdateData(_stStatic, _context.Get());
-
-					DrawIndexedTriangles(flashBucket.NumIndices, flashBucket.StartIndex, 0);
-
-					_numMoveablesDrawCalls++;
-				}
+				_numMoveablesDrawCalls++;
 			}
 		}
 
@@ -1161,7 +1319,7 @@ namespace TEN::Renderer
 
 	void Renderer::DrawBaddyGunflashes(RenderView& view)
 	{
-		_shaders.Bind(Shader::Statics);
+		_shaders.Bind(Shader::InstancedStatics);
 
 		unsigned int stride = sizeof(Vertex);
 		unsigned int offset = 0;
@@ -1184,11 +1342,12 @@ namespace TEN::Renderer
 				auto& creature = *GetCreatureInfo(&nativeItem);
 				const auto& rRoom = _rooms[nativeItem.RoomNumber];
 
-				_stStatic.Color = Vector4::One;
-				_stStatic.AmbientLight = rRoom.AmbientLight;
-				_stStatic.LightMode = (int)LightMode::Static;
+				_stInstancedStaticMeshBuffer.StaticMeshes[0].Color = CREATURE_GUNFLASH_COLOR;
+				_stInstancedStaticMeshBuffer.StaticMeshes[0].Ambient = rRoom.AmbientLight;
+				_stInstancedStaticMeshBuffer.StaticMeshes[0].LightMode = (int)LightMode::Static;
 
-				BindStaticLights(rItemPtr->LightsToDraw); // FIXME: Is it really needed for gunflashes? -- Lwmte, 15.07.22
+				BindInstancedStaticLights(rItemPtr->LightsToDraw, 0); // FIXME: Is it really needed for gunflashes? -- Lwmte, 15.07.22
+
 				SetBlendMode(BlendMode::Additive);
 				SetAlphaTest(AlphaTestMode::GreatherThan, ALPHA_TEST_THRESHOLD);
 
@@ -1208,13 +1367,14 @@ namespace TEN::Renderer
 						if (flashBucket.Polygons.size() == 0)
 							continue;
 
-						BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[flashBucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+						BindBucketTextures(flashBucket, TextureSource::Moveables, false);
+						BindMaterial(flashBucket.MaterialIndex, false);
 
 						auto tMatrix = Matrix::CreateTranslation(creature.MuzzleFlash[0].Bite.Position);
 						auto rotMatrixX = Matrix::CreateRotationX(TO_RAD(ANGLE(270.0f)));
 						auto rotMatrixZ = Matrix::CreateRotationZ(TO_RAD(2 * GetRandomControl()));
 
-						auto worldMatrix = rItemPtr->AnimTransforms[creature.MuzzleFlash[0].Bite.BoneID] * rItemPtr->World;
+						auto worldMatrix = rItemPtr->InterpolatedAnimTransforms[creature.MuzzleFlash[0].Bite.BoneID] * rItemPtr->InterpolatedWorld;
 						worldMatrix = tMatrix * worldMatrix;
 
 						if (creature.MuzzleFlash[0].ApplyXRotation)
@@ -1225,10 +1385,10 @@ namespace TEN::Renderer
 
 						ReflectMatrixOptionally(worldMatrix);
 
-						_stStatic.World = worldMatrix;
-						_cbStatic.UpdateData(_stStatic, _context.Get());
+						_stInstancedStaticMeshBuffer.StaticMeshes[0].World = worldMatrix;
+						UpdateConstantBuffer(_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
 
-						DrawIndexedTriangles(flashBucket.NumIndices, flashBucket.StartIndex, 0);
+						DrawIndexedInstancedTriangles(flashBucket.NumIndices, 1, flashBucket.StartIndex, 0);
 
 						_numMoveablesDrawCalls++;
 					}
@@ -1250,13 +1410,14 @@ namespace TEN::Renderer
 						if (flashBucket.Polygons.size() == 0)
 							continue;
 
-						BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[flashBucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+						BindBucketTextures(flashBucket, TextureSource::Moveables, false);
+						BindMaterial(flashBucket.MaterialIndex, false);
 
 						auto tMatrix = Matrix::CreateTranslation(creature.MuzzleFlash[1].Bite.Position);
 						auto rotMatrixX = Matrix::CreateRotationX(TO_RAD(ANGLE(270.0f)));
 						auto rotMatrixZ = Matrix::CreateRotationZ(TO_RAD(2 * GetRandomControl()));
 
-						auto worldMatrix = rItemPtr->AnimTransforms[creature.MuzzleFlash[1].Bite.BoneID] * rItemPtr->World;
+						auto worldMatrix = rItemPtr->InterpolatedAnimTransforms[creature.MuzzleFlash[1].Bite.BoneID] * rItemPtr->InterpolatedWorld;
 						worldMatrix = tMatrix * worldMatrix;
 
 						if (creature.MuzzleFlash[1].ApplyXRotation)
@@ -1267,10 +1428,10 @@ namespace TEN::Renderer
 
 						ReflectMatrixOptionally(worldMatrix);
 
-						_stStatic.World = worldMatrix;
-						_cbStatic.UpdateData(_stStatic, _context.Get());
+						_stInstancedStaticMeshBuffer.StaticMeshes[0].World = worldMatrix;
+						UpdateConstantBuffer(_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
 
-						DrawIndexedTriangles(flashBucket.NumIndices, flashBucket.StartIndex, 0);
+						DrawIndexedInstancedTriangles(flashBucket.NumIndices, 1, flashBucket.StartIndex, 0);
 
 						_numMoveablesDrawCalls++;
 					}
@@ -1279,12 +1440,6 @@ namespace TEN::Renderer
 		}
 
 		SetBlendMode(BlendMode::Opaque);
-	}
-
-	Texture2D Renderer::CreateDefaultNormalTexture() 
-	{
-		auto data = std::vector<byte>{ 128, 128, 255, 1 };
-		return Texture2D(_device.Get(), 1, 1, data.data());
 	}
 
 	void Renderer::PrepareFootprints(RenderView& view) 
@@ -1359,39 +1514,47 @@ namespace TEN::Renderer
 		auto world = effect->InterpolatedWorld;
 		ReflectMatrixOptionally(world);
 
-		_stStatic.World = world;
-		_stStatic.Color = effect->Color;
-		_stStatic.AmbientLight = effect->AmbientLight;
-		_stStatic.LightMode = (int)LightMode::Dynamic;
-		BindStaticLights(effect->LightsToDraw);
-		_cbStatic.UpdateData(_stStatic, _context.Get());
+		_stInstancedStaticMeshBuffer.StaticMeshes[0].World = world;
+		_stInstancedStaticMeshBuffer.StaticMeshes[0].Color = effect->Color;
+		_stInstancedStaticMeshBuffer.StaticMeshes[0].Ambient = effect->AmbientLight;
+		_stInstancedStaticMeshBuffer.StaticMeshes[0].LightMode = (int)LightMode::Dynamic;
+		BindInstancedStaticLights(effect->LightsToDraw, 0);
+		UpdateConstantBuffer(_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
 
 		auto& mesh = *effect->Mesh;
-		for (auto& bucket : mesh.Buckets) 
+		
+		for (int animated = 0; animated < 2; animated++)
 		{
-			if (bucket.NumVertices == 0)
-				continue;
-
-			int passes = (rendererPass == RendererPass::Opaque && bucket.BlendMode == BlendMode::AlphaTest) ? 2 : 1;
-
-			for (int p = 0; p < passes; p++)
+			for (auto& bucket : mesh.Buckets)
 			{
-				if (!SetupBlendModeAndAlphaTest(bucket.BlendMode, rendererPass, p))
+				if ((animated == 1) ^ bucket.Animated || bucket.NumVertices == 0)
+				{
+					continue;
+				}
+
+				if (bucket.NumVertices == 0)
 					continue;
 
-				BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
-				BindTexture(TextureRegister::NormalMap, &std::get<1>(_moveablesTextures[bucket.Texture]), SamplerStateRegister::AnisotropicClamp);
+				int passes = (rendererPass == RendererPass::Opaque && bucket.BlendMode == BlendMode::AlphaTest) ? 2 : 1;
 
-				DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0); 
-				
-				_numEffectsDrawCalls++;
+				for (int p = 0; p < passes; p++)
+				{
+					if (!SetupBlendModeAndAlphaTest(bucket.BlendMode, rendererPass, p))
+						continue;
+
+					BindBucketTextures(bucket, TextureSource::Moveables, animated);
+
+					DrawIndexedInstancedTriangles(bucket.NumIndices, 1, bucket.StartIndex, 0);
+
+					_numEffectsDrawCalls++;
+				}
 			}
 		}
 	}
 
 	void Renderer::DrawEffects(RenderView& view, RendererPass rendererPass)
 	{
-		_shaders.Bind(Shader::Statics);
+		_shaders.Bind(Shader::InstancedStatics);
 
 		unsigned int stride = sizeof(Vertex);
 		unsigned int offset = 0;
@@ -1409,7 +1572,7 @@ namespace TEN::Renderer
 				const auto& room = _rooms[effectPtr->RoomNumber];
 				const auto& object = Objects[effectPtr->ObjectID];
 
-				if (object.drawRoutine && object.loaded)
+				if (!object.Hidden && object.loaded)
 					DrawEffect(view, effectPtr, rendererPass);
 			}
 		}
@@ -1417,6 +1580,8 @@ namespace TEN::Renderer
 
 	void Renderer::DrawDebris(RenderView& view, RendererPass rendererPass)
 	{
+		TexturesAreNotAnimated();
+
 		bool activeDebrisExist = false;
 		for (auto& deb : DebrisFragments)
 		{
@@ -1432,11 +1597,15 @@ namespace TEN::Renderer
 
 		if (activeDebrisExist)
 		{
-			_shaders.Bind(Shader::Statics);
+			_shaders.Bind(Shader::InstancedStatics);
 
 			SetCullMode(CullMode::None);
 
 			_primitiveBatch->Begin();
+
+			bool lastAnimated = false;
+			int lastTexture = NO_VALUE;
+			bool firstDebris = true;
 
 			for (auto& deb : DebrisFragments)
 			{
@@ -1448,7 +1617,17 @@ namespace TEN::Renderer
 					if (!SetupBlendModeAndAlphaTest(deb.mesh.blendMode, rendererPass, 0))
 						continue;
 
-					if (deb.isStatic)
+					if (!firstDebris && (lastTexture != deb.mesh.tex || lastAnimated != deb.mesh.Animated))
+					{
+						_primitiveBatch->End();
+						_primitiveBatch->Begin();
+					}
+
+					if (deb.mesh.Animated)
+					{
+						BindTexture(TextureRegister::ColorMap, &std::get<0>(_animatedTextures[deb.mesh.tex]), SamplerStateRegister::LinearClamp);
+					}
+					else if (deb.isStatic)
 					{
 						BindTexture(TextureRegister::ColorMap, &std::get<0>(_staticTextures[deb.mesh.tex]), SamplerStateRegister::LinearClamp);
 					}
@@ -1457,12 +1636,20 @@ namespace TEN::Renderer
 						BindTexture(TextureRegister::ColorMap, &std::get<0>(_moveablesTextures[deb.mesh.tex]), SamplerStateRegister::LinearClamp);
 					}
 
-					_stStatic.World = Matrix::Identity;
-					_stStatic.Color = deb.color;
-					_stStatic.AmbientLight = _rooms[deb.roomNumber].AmbientLight;
-					_stStatic.LightMode = (int)deb.lightMode;
+					_stInstancedStaticMeshBuffer.StaticMeshes[0].World = Matrix::Identity;
 
-					_cbStatic.UpdateData(_stStatic, _context.Get());
+					// Update only if parameters are actually changed to reduce overhead.
+					if (firstDebris ||
+						(_stInstancedStaticMeshBuffer.StaticMeshes[0].Color != deb.color ||
+						 _stInstancedStaticMeshBuffer.StaticMeshes[0].Ambient != _rooms[deb.roomNumber].AmbientLight ||
+						 _stInstancedStaticMeshBuffer.StaticMeshes[0].LightMode != (int)deb.lightMode))
+					{
+						_stInstancedStaticMeshBuffer.StaticMeshes[0].Color = deb.color;
+						_stInstancedStaticMeshBuffer.StaticMeshes[0].Ambient = _rooms[deb.roomNumber].AmbientLight;
+						_stInstancedStaticMeshBuffer.StaticMeshes[0].LightMode = (int)deb.lightMode;
+
+						UpdateConstantBuffer(_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
+					}
 
 					auto matrix = Matrix::Lerp(deb.PrevTransform, deb.Transform, GetInterpolationFactor());
 					ReflectMatrixOptionally(matrix);
@@ -1470,26 +1657,30 @@ namespace TEN::Renderer
 					Vertex vtx0;
 					vtx0.Position = Vector3::Transform(deb.mesh.Positions[0], matrix);
 					vtx0.UV = deb.mesh.TextureCoordinates[0];
-					vtx0.Normal = deb.mesh.Normals[0];
-					vtx0.Color = deb.mesh.Colors[0];
+					vtx0.Normal = PackVector3(deb.mesh.Normals[0]);
+					vtx0.Color = VectorColorToRGBA_TempToVector4(deb.mesh.Colors[0]);
 
 					Vertex vtx1;
 					vtx1.Position = Vector3::Transform(deb.mesh.Positions[1], matrix);
 					vtx1.UV = deb.mesh.TextureCoordinates[1];
-					vtx1.Normal = deb.mesh.Normals[1];
-					vtx1.Color = deb.mesh.Colors[1];
+					vtx1.Normal = PackVector3(deb.mesh.Normals[1]);
+					vtx1.Color = VectorColorToRGBA_TempToVector4(deb.mesh.Colors[1]);
 
 					Vertex vtx2;
 					vtx2.Position = Vector3::Transform(deb.mesh.Positions[2], matrix);
 					vtx2.UV = deb.mesh.TextureCoordinates[2];
-					vtx2.Normal = deb.mesh.Normals[2];
-					vtx2.Color = deb.mesh.Colors[2];
+					vtx2.Normal = PackVector3(deb.mesh.Normals[2]);
+					vtx2.Color = VectorColorToRGBA_TempToVector4(deb.mesh.Colors[2]);
 
 					_primitiveBatch->DrawTriangle(vtx0, vtx1, vtx2);
 
 					_numDebrisDrawCalls++;
 					_numDrawCalls++;
 					_numTriangles++;
+
+					lastAnimated = deb.mesh.Animated;
+					lastTexture = deb.mesh.tex;
+					firstDebris = false;
 				}
 			}
 
@@ -1531,11 +1722,6 @@ namespace TEN::Renderer
 
 	void Renderer::PrepareSparkParticles(RenderView& view)
 	{
-		using TEN::Effects::Spark::SparkParticle;
-		using TEN::Effects::Spark::SparkParticles;
-
-		extern std::array<SparkParticle, 128> SparkParticles;
-
 		for (int i = 0; i < SparkParticles.size(); i++) 
 		{
 			auto& s = SparkParticles[i];
@@ -1615,5 +1801,10 @@ namespace TEN::Renderer
 					Lerp(part.PrevSize, part.size, GetInterpolationFactor()) / 2),
 				BlendMode::AlphaBlend, true, view);
 		}
+	}
+
+	Texture2D Renderer::CreateDefaultTexture(std::vector<unsigned char> color)
+	{
+		return Texture2D(_device.Get(), 1, 1, color.data());
 	}
 }

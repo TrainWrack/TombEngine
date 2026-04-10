@@ -1,6 +1,5 @@
 -----
---- Diaries:
--- The module provides functions to create and manage Diaries. It maintains diary definitions and entries through all levels and hubs.
+-- This module provides functions to create and manage diaries. It maintains diary definitions and entries through all levels and hubs.
 -- Each diary is accessed by the object that was used to create it. 
 --
 -- Example usage:
@@ -15,7 +14,14 @@
 --	--This method opens the diary on the 3rd page
 --	diary:showDiary(3)
 --
--- @luautil Diary
+-- @luautil CustomDiary
+
+local debug = false
+
+local function DebugPrint(text)
+    if not debug then return end
+    print(text)
+end
 
 local Type = require("Engine.Type")
 
@@ -26,7 +32,8 @@ LevelFuncs.Engine.Diaries = {}
 GameVars.Engine.Diaries = GameVars.Engine.Diaries or {}
 GameVars.Engine.LastUsedDiary = GameVars.Engine.LastUsedDiary or nil
 
---- Imports diary from an external file. There are different types that must be defined. (diary, background, controls, pageNumbers, notification, image, text, narration). Each of the section's arguements are the same as the functions described in this documentation.
+--- Imports diary from an external file.
+-- There are different types that must be defined. (diary, background, controls, pageNumbers, notification, image, text, narration). Each of the section's arguements are the same as the functions described in this documentation.
 -- Refer to DiarySetup.lua file for a sample script. 
 -- @tparam string fileName Name of file in the script folder without extension to import the diary from.
 
@@ -523,22 +530,22 @@ function CustomDiary.ImportDiary(fileName)
     
     --Unlock the pages as per the template
     importDiary:UnlockPages(unlockCount, false)
-    print("External diary from file: "..tostring(fileName).." imported")
+    DebugPrint("External diary from file: "..tostring(fileName).." imported")
 end
 
 --- Creates a diary with extensive configuration options.
 -- Parameters:
 -- @tparam Objects.ObjID object The pickup object that will be used to create the diary. The diary can be created using PICKUP_ITEMX (596-611) or DIARY_ITEM (986). Access the diary by selecting the item in the inventory. 
 -- @tparam Objects.ObjID objectIdBg Object ID for the diary's sprite.
--- @tparam int spriteIdBg SpriteID from the specified object for the diary's sprite.
+-- @tparam int spriteIdBg Sprite ID from the specified object for the diary's sprite.
 -- @tparam Color colorBg Color of diary's sprite.
--- @tparam Vec2 pos X,Y position of the bar's background in screen percent (0-100).
--- @tparam float rot rotation of the diary's sprite (0-360).
--- @tparam Vec2 scale X,Y Scaling factor for the bar's background sprite.
+-- @tparam Vec2 pos X,Y position of the diary background sprite in screen percent (0-100).
+-- @tparam float rot Rotation of the diary's sprite (0-360).
+-- @tparam Vec2 scale X,Y Scaling factor for the diary background sprite.
 -- @tparam View.AlignMode alignMode Alignment for the diary's sprite.
 -- @tparam View.ScaleMode scaleMode Scaling for the diary's sprite.
 -- @tparam Effects.BlendID blendMode Blending modes for the diary's sprite.
--- @tparam number alpha alpha value for the diary's sprite (0-255).
+-- @tparam int alpha Alpha value for the diary's sprite (0-255).
 -- @tparam Sound pageSound Sound to play with page turn.
 -- @tparam Sound exitSound Sound to play when existing the diary.
 -- @treturn CustomDiary
@@ -639,7 +646,7 @@ CustomDiary.Create = function(object, objectIdBg, spriteIdBg, colorBg, pos, rot,
 	GameVars.Engine.Diaries[dataName].Object		        = object
     GameVars.Engine.Diaries[dataName].CurrentAlpha		    = 0
 	GameVars.Engine.Diaries[dataName].TargetAlpha		    = 255
-    GameVars.Engine.Diaries[dataName].EntryCurrentAlpha	= 0
+    GameVars.Engine.Diaries[dataName].EntryCurrentAlpha	    = 0
 	GameVars.Engine.Diaries[dataName].EntryTargetAlpha     = 255
     GameVars.Engine.Diaries[dataName].Visible              = false
     GameVars.Engine.Diaries[dataName].Notification         = {}
@@ -648,18 +655,21 @@ CustomDiary.Create = function(object, objectIdBg, spriteIdBg, colorBg, pos, rot,
     GameVars.Engine.Diaries[dataName].Background           = {}
     GameVars.Engine.Diaries[dataName].AlphaBlendSpeed      = 100
     GameVars.Engine.Diaries[dataName].EntryFadingIn        = true
+    GameVars.Engine.Diaries[dataName].DiaryVisible         = false
+    GameVars.Engine.Diaries[dataName].NotificationVisible  = false
 
-	print("CustomDiary Constructed for CustomDiary: " .. dataName)
+	DebugPrint("CustomDiary Constructed for CustomDiary: " .. dataName)
     return setmetatable(self, CustomDiary)
 end
 
 --- The function retrieves a diary by its unique object. This function is useful when you need to access or manipulate a diary that has already been created .
--- @tparam Objects.ObjID object The pickup object that was used to create the diary (596-611,986).
+-- @tparam Objects.ObjID object The pickup object that was used to create the diary (596-611, 986).
 -- @treturn CustomDiary The diary created using the object.
 CustomDiary.Get = function(object)
 	local dataName = object .. "_diarydata"
     if GameVars.Engine.Diaries[dataName] then
         local self = {Name = dataName}
+        GameVars.Engine.LastUsedDiary = GameVars.Engine.Diaries[dataName].Object
         return setmetatable(self, CustomDiary)
     else
         TEN.Util.PrintLog("Diary does not exist for object: "..tostring(object), Util.LogLevel.WARNING)
@@ -668,7 +678,7 @@ end
 
 --- The function removes a custom diary and its associated data from the system. It ensures that the diary is no longer tracked or accessible in the LevelVars.Engine.Diaries. 
 -- Please call this once a diary has served its purpose. It helps reduce the savegame size.
--- @tparam Objects.ObjID object The pickup object that was used to create the diary (596-611,986).
+-- @tparam Objects.ObjID object The pickup object that was used to create the diary (596-611, 986).
 CustomDiary.Delete = function (object)
     local dataName = object .. "_diarydata"
 	if GameVars.Engine.Diaries[dataName] then
@@ -683,10 +693,14 @@ CustomDiary.Status = function(value)
     if Type.IsBoolean(value) then
         if GameVars.Engine.Diaries then
             if value == true then
-                TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POSTUSEITEM, LevelFuncs.Engine.Diaries.ActivateDiary)
+                TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.POST_USE_ITEM, LevelFuncs.Engine.Diaries.ActivateDiary)
+                TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_FREEZE, LevelFuncs.Engine.Diaries.ShowDiary)
+                TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.Engine.Diaries.ShowNotification)
                 TEN.Util.PrintLog("Diary system started.", Util.LogLevel.INFO)
             elseif value == false then
-                TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.POSTUSEITEM, LevelFuncs.Engine.Diaries.ActivateDiary)
+                TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.POST_USE_ITEM, LevelFuncs.Engine.Diaries.ActivateDiary)
+                TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PRE_FREEZE, LevelFuncs.Engine.Diaries.ShowDiary)
+                TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PRE_LOOP, LevelFuncs.Engine.Diaries.ShowNotification)
                 TEN.Util.PrintLog("Diary system stopped.", Util.LogLevel.INFO)
             end
         end
@@ -695,8 +709,14 @@ CustomDiary.Status = function(value)
     end
 end
 
+--- Enables or disables debug output for custom diaries.
+-- @tparam bool status If true, debug messages will be printed to the console.
+CustomDiary.Debug = function (status)
+    debug = status or false
+end
+
 --- The function checks whether the specified diary is currently visible.
--- @treturn bool true if the diary is visible and false if it is not.
+-- @treturn bool `true` if the diary is visible and `false` if it is not.
 function CustomDiary:IsVisible()
 
 	if GameVars.Engine.Diaries[self.Name] then
@@ -726,7 +746,7 @@ function CustomDiary:ShowDiary(pageIndex)
 end
 
 --- The function returns the number of unlocked pages in the diary.
--- @treturn int total number of unlocked pages in the diary.
+-- @treturn int Total number of unlocked pages in the diary.
 function CustomDiary:GetUnlockedPageCount()
 
 	if GameVars.Engine.Diaries[self.Name] then
@@ -756,14 +776,15 @@ function CustomDiary:UnlockPages(pageIndex, notification)
 		diary.UnlockedPages = pageIndex
         diary.CurrentPageIndex = pageIndex
         diary.NextPageIndex = pageIndex
-        print("UnlockPages: currentPageIndex = " .. tostring(diary.CurrentPageIndex))
+        DebugPrint("UnlockPages: currentPageIndex = " .. tostring(diary.CurrentPageIndex))
 
         if notification and diary.Notification and next(diary.Notification) then
-            PlaySound(diary.Notification.NotificationSound)
+            TEN.Sound.PlaySound(diary.Notification.NotificationSound)
             diary.Notification.ElapsedTime = 0
             diary.TargetAlpha = 255
             diary.CurrentAlpha = 1
-            TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.Engine.Diaries.ShowNotification)
+            GameVars.Engine.LastUsedDiary = diary.Object
+            diary.NotificationVisible = true
         end
     end
 end
@@ -784,11 +805,11 @@ function CustomDiary:ClearPage(pageIndex)
 end
 
 --- Adds a text entry to the specified page for the diary.
--- @tparam int pageIndex page number to add the text entry to.
+-- @tparam int pageIndex Page number to add the text entry to.
 -- @tparam string text Text entry to be added to the page.
 -- @tparam Vec2 textPos X,Y position of the text.
--- @tparam Strings.DisplayStringOption textOptions alignment and effects for the text. Default: None. Please note text is automatically aligned to the LEFT
--- @tparam number textScale Scale factor for the text.
+-- @tparam Strings.DisplayStringOption textOptions Alignment and effects for the text. Note that text is automatically aligned to the left.
+-- @tparam float textScale Scale factor for the text.
 -- @tparam Color textColor Color of the text.
 function CustomDiary:AddTextEntry(pageIndex, text, textPos, textOptions, textScale, textColor)
     local textEntry = {}
@@ -834,19 +855,19 @@ function CustomDiary:AddTextEntry(pageIndex, text, textPos, textOptions, textSca
             GameVars.Engine.Diaries[self.Name].Pages[pageIndex] = {NarrationTrack=nil, TextEntries = {}, ImageEntries = {}}
         end
         table.insert(GameVars.Engine.Diaries[self.Name].Pages[pageIndex].TextEntries, textEntry)
-        print("Text entry added to page: ".. tostring(pageIndex).." for the diary system: "..tostring(self.Name))
+        DebugPrint("Text entry added to page: ".. tostring(pageIndex).." for the diary system: "..tostring(self.Name))
     else
         TEN.Util.PrintLog("'pageIndex' is in an incorrect format. Expected a number type in function 'addTextEntry' for the diary system: "..tostring(self.Name), Util.LogLevel.WARNING)
     end
 end
 
 --- Adds an image entry to the specified page for the diary.
--- @tparam int pageIndex page number to add the image entry to.
+-- @tparam int pageIndex Page number to add the image entry to.
 -- @tparam Objects.ObjID objectId Object ID for the image entry sprite.
--- @tparam number spriteId SpriteID from the specified object for the image entry.
+-- @tparam int spriteId Sprite ID from the specified object for the image entry.
 -- @tparam Color color Color of image entry.
 -- @tparam Vec2 pos X,Y position of the image entry in screen percent (0-100).
--- @tparam number rot rotation of the image entry (0-360).
+-- @tparam float rot Rotation of the image entry (0-360).
 -- @tparam Vec2 scale X,Y Scaling factor for the image entry.
 -- @tparam View.AlignMode alignMode Alignment for the image entry.
 -- @tparam View.ScaleMode scaleMode Scaling for the image entry.
@@ -914,14 +935,14 @@ function CustomDiary:AddImageEntry(pageIndex, objectId, spriteId, color, pos, ro
             GameVars.Engine.Diaries[self.Name].Pages[pageIndex] = {NarrationTrack=nil, TextEntries = {}, ImageEntries = {}}
         end
         table.insert(GameVars.Engine.Diaries[self.Name].Pages[pageIndex].ImageEntries, imageEntry)
-        print("Image entry added to page: ".. tostring(pageIndex).." for the diary system: "..tostring(self.Name))
+        DebugPrint("Image entry added to page: ".. tostring(pageIndex).." for the diary system: "..tostring(self.Name))
     else
         TEN.Util.PrintLog("'pageIndex' is in an incorrect format. Expected a number type in function 'addImageEntry' for the diary system: "..tostring(self.Name), Util.LogLevel.WARNING)
     end
 end
 
 --- Add a narration track in the voice channel to the page. Track is played with the draw button.
--- @tparam int pageIndex page number to add the narration track to.
+-- @tparam int pageIndex Page number to add the narration track to.
 -- @tparam string trackName of track (without file extension) to play.
 function CustomDiary:AddNarration(pageIndex, trackName)
 
@@ -932,7 +953,7 @@ function CustomDiary:AddNarration(pageIndex, trackName)
 
         if Type.IsString(trackName) then
             GameVars.Engine.Diaries[self.Name].Pages[pageIndex].NarrationTrack = trackName
-            print("Narration added to page: ".. tostring(pageIndex).." for the diary system: "..tostring(self.Name))
+            DebugPrint("Narration added to page: ".. tostring(pageIndex).." for the diary system: "..tostring(self.Name))
         else
             TEN.Util.PrintLog("'trackName' is in an incorrect format. Expected a string type in function 'addNarration' for the diary system: "..tostring(self.Name), Util.LogLevel.WARNING)
             return
@@ -945,7 +966,7 @@ function CustomDiary:AddNarration(pageIndex, trackName)
 end
 
 --- Remove the narration track from the page of the specified diary.
--- @tparam int pageIndex page number to remove the narration track from.
+-- @tparam int pageIndex Page number to remove the narration track from.
 function CustomDiary:RemoveNarration(pageIndex)
 
     if not Type.IsNumber(pageIndex) or pageIndex > #GameVars.Engine.Diaries[self.Name].Pages or pageIndex <=0 then
@@ -956,20 +977,20 @@ function CustomDiary:RemoveNarration(pageIndex)
     if GameVars.Engine.Diaries[self.Name].Pages[pageIndex] then
         GameVars.Engine.Diaries[self.Name].Pages[pageIndex].NarrationTrack = {}
     end
-        print("Narration removed from the page: ".. tostring(pageIndex).." for the diary system: "..tostring(self.Name))
+        DebugPrint("Narration removed from the page: ".. tostring(pageIndex).." for the diary system: "..tostring(self.Name))
  end
 
 --- Add a background image for the diary.
 -- @tparam Objects.ObjID objectId Object ID for the diary's background.
--- @tparam number spriteId SpriteID from the specified object for the diary's background.
+-- @tparam int spriteId Sprite ID from the specified object for the diary's background.
 -- @tparam Color color Color of diary's background.
 -- @tparam Vec2 pos X,Y position of the diary's background in screen percent (0-100).
--- @tparam float rot rotation of the diary's background sprite (0-360).
+-- @tparam float rot Rotation of the diary's background sprite (0-360).
 -- @tparam Vec2 scale X,Y Scaling factor for the diary's background.
 -- @tparam View.AlignMode alignMode Alignment for the diary's background.
 -- @tparam View.ScaleMode scaleMode Scaling for the diary's background.
 -- @tparam Effects.BlendID blendMode Blending modes for the diary's background.
--- @tparam number alpha alpha value for the diary's background (0-255).
+-- @tparam int alpha Alpha value for the diary's background (0-255).
 function CustomDiary:AddBackground(objectId, spriteId, color, pos, rot, scale, alignMode, scaleMode, blendMode, alpha)
     if GameVars.Engine.Diaries[self.Name] then
 
@@ -1033,7 +1054,7 @@ function CustomDiary:AddBackground(objectId, spriteId, color, pos, rot, scale, a
         end
         GameVars.Engine.Diaries[self.Name].Background.Alpha		        = alpha
 
-        print("Background added for the diary system: "..tostring(self.Name))
+        DebugPrint("Background added for the diary system: "..tostring(self.Name))
     end
 end
 
@@ -1042,17 +1063,17 @@ function CustomDiary:ClearBackground()
     if GameVars.Engine.Diaries[self.Name] then
         GameVars.Engine.Diaries[self.Name].Background = {}
 
-        print("Background cleared for the diary system: "..tostring(self.Name))
+        DebugPrint("Background cleared for the diary system: "..tostring(self.Name))
     end
 end
 
 --- Customizes the notification icon and sound for the diary.
--- @tparam number notificationTime Time in seconds the notification icon will show on screen.
+-- @tparam int notificationTime Time in seconds the notification icon will show on screen.
 -- @tparam Objects.ObjID objectId Object ID for the notification icon.
--- @tparam number spriteId SpriteID from the specified object for the notification icon.
+-- @tparam int spriteId Sprite ID from the specified object for the notification icon.
 -- @tparam Color color Color of notification icon.
 -- @tparam Vec2 pos X,Y position of the notification icon in screen percent (0-100).
--- @tparam number rot rotation of the notification icon (0-360).
+-- @tparam float rot Rotation of the notification icon (0-360).
 -- @tparam Vec2 scale X,Y Scaling factor for the notification icon.
 -- @tparam View.AlignMode alignMode Alignment for the notification icon.
 -- @tparam View.ScaleMode scaleMode Scaling for the notification icon.
@@ -1130,7 +1151,7 @@ function CustomDiary:CustomizeNotification(notificationTime, objectId, spriteId,
 
         GameVars.Engine.Diaries[self.Name].Notification.ElapsedTime         = 0
 
-        print("Notification updated for the diary system: "..tostring(self.Name))
+        DebugPrint("Notification updated for the diary system: "..tostring(self.Name))
     end
 end
 
@@ -1139,7 +1160,7 @@ function CustomDiary:ClearNotification()
     if GameVars.Engine.Diaries[self.Name] then
         GameVars.Engine.Diaries[self.Name].Notification = {}
 
-        print("Notifications cleared for the diary system: "..tostring(self.Name))
+        DebugPrint("Notifications cleared for the diary system: "..tostring(self.Name))
     end
 end
 
@@ -1148,8 +1169,8 @@ end
 -- @tparam string prefix Prefix to be added for type 2 of page numbers.
 -- @tparam string separator Separator to be added for type 2 of page numbers.
 -- @tparam Vec2 textPos X,Y position of the page numbers.
--- @tparam Strings.DisplayStringOption textOptions alignment and effects for the text. Default: None. Please note text is automatically aligned to the LEFT
--- @tparam number textScale Scale factor for the page numbers.
+-- @tparam Strings.DisplayStringOption textOptions Alignment and effects for the text. Note that text is automatically aligned to the left.
+-- @tparam float textScale Scale factor for the page numbers.
 -- @tparam Color textColor Color of the page numbers.
 function CustomDiary:CustomizePageNumbers(pageNoType, prefix, separator, textPos, textOptions, textScale, textColor)
 
@@ -1210,7 +1231,7 @@ function CustomDiary:CustomizePageNumbers(pageNoType, prefix, separator, textPos
         TEN.Util.PrintLog("'pageNoType' is in an incorrect format. Expected a number type (1 or 2) in function 'customizePageNumbers' for the diary system: "..tostring(self.Name), Util.LogLevel.WARNING)
         return
     end
-    print("Page Numbers updated for the diary system: "..tostring(self.Name))
+    DebugPrint("Page Numbers updated for the diary system: "..tostring(self.Name))
 end
 
 
@@ -1218,14 +1239,14 @@ end
 function CustomDiary:ClearPageNumbers()
     if GameVars.Engine.Diaries[self.Name] then
         GameVars.Engine.Diaries[self.Name].PageNumbers = nil
-		print("Page Numbers cleared for the diary system: "..tostring(self.Name))
+		DebugPrint("Page Numbers cleared for the diary system: "..tostring(self.Name))
     end
 end
 
 --- Customizes the controls text for the diary.
 -- @tparam Vec2 textPos X,Y position of the controls text.
--- @tparam Strings.DisplayStringOption textOptions alignment and effects for the text. Default: None. Please note text is automatically aligned to the LEFT.
--- @tparam number textScale Scale factor for the controls.
+-- @tparam Strings.DisplayStringOption textOptions Alignment and effects for the text. Note that text is automatically aligned to the left.
+-- @tparam float textScale Scale factor for the controls.
 -- @tparam Color textColor Color of the page controls.
 function CustomDiary:CustomizeControls(textPos, textOptions, textScale, textColor)
     if GameVars.Engine.Diaries[self.Name] then
@@ -1267,7 +1288,7 @@ function CustomDiary:CustomizeControls(textPos, textOptions, textScale, textColo
         GameVars.Engine.Diaries[self.Name].Controls.text3           = "Right Key: Next Page"
         GameVars.Engine.Diaries[self.Name].Controls.text4           = "Esc: Back"
         GameVars.Engine.Diaries[self.Name].Controls.separator       = "|"
-        print("Controls updated for the diary system: "..tostring(self.Name))
+        DebugPrint("Controls updated for the diary system: "..tostring(self.Name))
     end
 end
 
@@ -1309,7 +1330,7 @@ function CustomDiary:CustomizeControlsText(string1, string2, string3, string4, s
             return
         end
         GameVars.Engine.Diaries[self.Name].Controls.separator       = separator
-        print("Controls text updated for the diary system: "..tostring(self.Name))
+        DebugPrint("Controls text updated for the diary system: "..tostring(self.Name))
     end
 end
 
@@ -1319,7 +1340,7 @@ function CustomDiary:ClearControls()
     if GameVars.Engine.Diaries[self.Name] then
         GameVars.Engine.Diaries[self.Name].Controls ={}
 
-        print("Controls cleared for the diary system: "..tostring(self.Name))
+        DebugPrint("Controls cleared for the diary system: "..tostring(self.Name))
     end
 end
 
@@ -1327,11 +1348,18 @@ end
 LevelFuncs.Engine.Diaries.ShowDiary = function()
 
     local objectNumber = GameVars.Engine.LastUsedDiary
-	local dataName = objectNumber .. "_diarydata"
+    if not objectNumber then
+        return
+    end
+
+    local dataName = objectNumber .. "_diarydata"
 
     if GameVars.Engine.Diaries[dataName] then
 
         local diary             = GameVars.Engine.Diaries[dataName]
+        if not diary.DiaryVisible then
+            return
+        end
         local currentIndex      = diary.CurrentPageIndex
         local maxPages          = diary.UnlockedPages
         local narrationTrack    = diary.Pages[currentIndex].NarrationTrack
@@ -1368,28 +1396,28 @@ LevelFuncs.Engine.Diaries.ShowDiary = function()
             end
         end
 
-        if KeyIsHit(ActionID.DRAW) then
+        if TEN.Input.IsKeyHit(ActionID.DRAW) then
             if narrationTrack then
-            PlayAudioTrack(narrationTrack, Sound.SoundTrackType.VOICE)
+            TEN.Sound.PlayAudioTrack(narrationTrack, Sound.SoundTrackType.VOICE)
             end
-        elseif KeyIsHit(ActionID.LEFT) and not (diary.EntryFadingOut or diary.EntryFadingIn) then
+        elseif TEN.Input.IsKeyHit(ActionID.LEFT) and not (diary.EntryFadingOut or diary.EntryFadingIn) then
             -- Initiate fade-out to switch to the previous page
                 if currentIndex > 1 then
                     diary.EntryFadingOut = true
                     diary.NextPageIndex = math.max(1, currentIndex - 1)
-                    StopAudioTrack(Sound.SoundTrackType.VOICE)
-                    PlaySound(diary.PageSound)
+                    TEN.Sound.StopAudioTrack(Sound.SoundTrackType.VOICE)
+                    TEN.Sound.PlaySound(diary.PageSound)
                 end
-        elseif KeyIsHit(ActionID.RIGHT) and not (diary.EntryFadingOut or diary.EntryFadingIn) then
+        elseif TEN.Input.IsKeyHit(ActionID.RIGHT) and not (diary.EntryFadingOut or diary.EntryFadingIn) then
                 -- Initiate fade-out to switch to the next page
                 if currentIndex < maxPages then
                     diary.EntryFadingOut = true
                     diary.NextPageIndex = math.min(maxPages, currentIndex + 1)
-                    StopAudioTrack(Sound.SoundTrackType.VOICE)
-                    PlaySound(diary.PageSound)
+                    TEN.Sound.StopAudioTrack(Sound.SoundTrackType.VOICE)
+                    TEN.Sound.PlaySound(diary.PageSound)
                 end
-        elseif KeyIsHit(ActionID.INVENTORY) then
-            PlaySound(diary.ExitSound)
+        elseif TEN.Input.IsKeyHit(ActionID.INVENTORY) then
+            TEN.Sound.PlaySound(diary.ExitSound)
             diary.TargetAlpha = 0
             diary.EntryFadingOut = true
         end
@@ -1403,10 +1431,10 @@ LevelFuncs.Engine.Diaries.ShowDiary = function()
             diary.Visible = true
         elseif diary.CurrentAlpha == 0 and diary.EntryCurrentAlpha == 0 then
             diary.Visible = false
-            StopAudioTrack(Sound.SoundTrackType.VOICE)
-            PlaySound(diary.ExitSound)
+            TEN.Sound.StopAudioTrack(Sound.SoundTrackType.VOICE)
+            TEN.Sound.PlaySound(diary.ExitSound)
             Flow.SetFreezeMode(Flow.FreezeMode.NONE)
-            TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.Diaries.ShowDiary)
+            GameVars.Engine.Diaries[dataName].DiaryVisible   = false
             return
         end
 
@@ -1414,14 +1442,14 @@ LevelFuncs.Engine.Diaries.ShowDiary = function()
             -- Draw Diary sprite
             local dAlpha = math.min(diary.CurrentAlpha, diary.Alpha)
             local dColor = TEN.Color(diary.ColorBg.r, diary.ColorBg.g, diary.ColorBg.b, dAlpha)
-            local dSprite = TEN.DisplaySprite(diary.ObjectIdBg, diary.SpriteIdBg, diary.Pos, diary.Rot, diary.Scale, dColor)
+            local dSprite = TEN.View.DisplaySprite(diary.ObjectIdBg, diary.SpriteIdBg, diary.Pos, diary.Rot, diary.Scale, dColor)
             dSprite:Draw(1, diary.AlignMode, diary.ScaleMode, diary.BlendMode)
 
             -- Draw Background Image
             if diary.Background and next(diary.Background) then
                 local bgAlpha = math.min(diary.CurrentAlpha, diary.Background.Alpha)
                 local bgColor = TEN.Color(diary.Background.ColorBg.r, diary.Background.ColorBg.g, diary.Background.ColorBg.b, bgAlpha)
-                local bgSprite = TEN.DisplaySprite(diary.Background.ObjectIdBg, diary.Background.SpriteIdBg, diary.Background.Pos, diary.Background.Rot, diary.Background.Scale, bgColor)
+                local bgSprite = TEN.View.DisplaySprite(diary.Background.ObjectIdBg, diary.Background.SpriteIdBg, diary.Background.Pos, diary.Background.Rot, diary.Background.Scale, bgColor)
                 bgSprite:Draw(0, diary.Background.AlignMode, diary.Background.ScaleMode, diary.Background.BlendMode)
             end
 
@@ -1447,7 +1475,7 @@ LevelFuncs.Engine.Diaries.ShowDiary = function()
                 local textColor = TEN.Color(diary.Controls.textColor.r, diary.Controls.textColor.g, diary.Controls.textColor.b, diary.CurrentAlpha)
 
                 local controlsText = TEN.Strings.DisplayString(alignedText, controlPosInPixel, diary.Controls.textScale, textColor, IsString, diary.Controls.textOptions)
-                ShowString(controlsText, 1 / 30)
+                TEN.Strings.ShowString(controlsText, 1 / 30)
 
             end
 
@@ -1467,7 +1495,7 @@ LevelFuncs.Engine.Diaries.ShowDiary = function()
                 local textColor = TEN.Color(pageNo.textColor.r, pageNo.textColor.g, pageNo.textColor.b, diary.CurrentAlpha)
 
                 local pageNumberText = TEN.Strings.DisplayString(pageNumbers, pageNoPosInPixel, pageNo.textScale, textColor, IsString, pageNo.textOptions)
-                ShowString(pageNumberText, 1 / 30)
+                TEN.Strings.ShowString(pageNumberText, 1 / 30)
 
             end
 
@@ -1480,7 +1508,7 @@ LevelFuncs.Engine.Diaries.ShowDiary = function()
                     local textColor = TEN.Color(entry.textColor.r, entry.textColor.g, entry.textColor.b, diary.EntryCurrentAlpha)
 
                     local entryText = TEN.Strings.DisplayString(entry.text, entryPosInPixel, entry.textScale, textColor, IsString, entry.textOptions)
-                    ShowString(entryText, 1 / 30)
+                    TEN.Strings.ShowString(entryText, 1 / 30)
 
                 end
             end
@@ -1489,7 +1517,7 @@ LevelFuncs.Engine.Diaries.ShowDiary = function()
                 for _, entry in ipairs(imageEntries) do
 
                     local entryColor = TEN.Color(entry.color.r,entry.color.g,entry.color.b,diary.EntryCurrentAlpha)
-                    local entrySprite = TEN.DisplaySprite(entry.objectId, entry.spriteId, entry.pos, entry.rot, entry.scale, entryColor)
+                    local entrySprite = TEN.View.DisplaySprite(entry.objectId, entry.spriteId, entry.pos, entry.rot, entry.scale, entryColor)
 
                     entrySprite:Draw(2, entry.alignMode, entry.scaleMode, entry.blendMode)
 
@@ -1509,19 +1537,31 @@ LevelFuncs.Engine.Diaries.ActivateDiary = function(objectNumber)
         TEN.Inventory.ClearUsedItem()
         GameVars.Engine.Diaries[dataName].TargetAlpha = 255
         GameVars.Engine.Diaries[dataName].EntryTargetAlpha = 255
-		TEN.Logic.AddCallback(TEN.Logic.CallbackPoint.PREFREEZE, LevelFuncs.Engine.Diaries.ShowDiary)
+        GameVars.Engine.Diaries[dataName].DiaryVisible  = true
         Flow.SetFreezeMode(Flow.FreezeMode.FULL)
 	end
 
 end
 
 -- !Ignore
-LevelFuncs.Engine.Diaries.ShowNotification = function(dt)
+LevelFuncs.Engine.Diaries.ShowNotification = function()
 
-    local dataName = GameVars.Engine.LastUsedDiary .. "_diarydata"
+    local deltaTime = 1/30
+    local objectNumber = GameVars.Engine.LastUsedDiary
+    
+    if not objectNumber then
+        return
+    end
+
+    local dataName = objectNumber .. "_diarydata"
 
     if GameVars.Engine.Diaries[dataName] then
+
         local diary = GameVars.Engine.Diaries[dataName]
+        
+        if not diary.NotificationVisible then
+            return
+        end
 
         if diary.CurrentAlpha ~= diary.TargetAlpha then
 
@@ -1533,7 +1573,7 @@ LevelFuncs.Engine.Diaries.ShowNotification = function(dt)
 
         end
 
-        GameVars.Engine.Diaries[dataName].Notification.ElapsedTime  = GameVars.Engine.Diaries[dataName].Notification.ElapsedTime + dt
+        GameVars.Engine.Diaries[dataName].Notification.ElapsedTime  = GameVars.Engine.Diaries[dataName].Notification.ElapsedTime + deltaTime
 
         if GameVars.Engine.Diaries[dataName].Notification.ElapsedTime <= GameVars.Engine.Diaries[dataName].Notification.NotificationTime then
             diary.TargetAlpha = 255
@@ -1545,8 +1585,7 @@ LevelFuncs.Engine.Diaries.ShowNotification = function(dt)
             LevelFuncs.Engine.Diaries.PrepareNotification()
         elseif diary.CurrentAlpha == 0 then
             diary.Notification.ElapsedTime = 0
-            TEN.Logic.RemoveCallback(TEN.Logic.CallbackPoint.PRELOOP, LevelFuncs.Engine.Diaries.ShowNotification)
-            --print("Notification Callback removed")
+            GameVars.Engine.Diaries[dataName].NotificationVisible = false
             return
         end
 	end
@@ -1564,7 +1603,7 @@ LevelFuncs.Engine.Diaries.PrepareNotification = function()
         local notif = diary.Notification
         local spriteColor = Color(notif.Color.r, notif.Color.g, notif.Color.b, diary.CurrentAlpha)
 
-        local sprite = TEN.DisplaySprite(notif.ObjectID, notif.SpriteID, notif.Pos, notif.Rot, notif.Scale, spriteColor)
+        local sprite = TEN.View.DisplaySprite(notif.ObjectID, notif.SpriteID, notif.Pos, notif.Rot, notif.Scale, spriteColor)
         sprite:Draw(0, notif.AlignMode,  notif.ScaleMode,  notif.BlendMode)
 
     end

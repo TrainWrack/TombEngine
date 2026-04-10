@@ -18,7 +18,7 @@ namespace TEN::Gui
 	// If it's a weapon, add its ammo handling (variables at the beginning of the file).
 	// If it's combineable, add necessary data to the CombineTable awway and increment MAX_COMBINES.
 
-	InventoryObject InventoryObjectTable[INVENTORY_TABLE_SIZE] =
+	static const InventoryObject DefaultInventoryObjectTable[INVENTORY_TABLE_SIZE] =
 	{
 		// Weapons
 		{ ID_PISTOLS_ITEM, 6, 0.5f, EulerAngles(ANGLE(244.0f), ANGLE(90.0f), ANGLE(276.0f)), OPT_EQUIP | OPT_COMBINABLE | OPT_CHOOSE_AMMO_PISTOLS, STRING_PISTOLS, NO_JOINT_BITS, INV_ROT_Y },
@@ -30,14 +30,14 @@ namespace TEN::Gui
 		{ ID_SHOTGUN_AMMO2_ITEM, 0, 0.5f, EulerAngles(0, ANGLE(-90.0f), 0), OPT_USE, STRING_SHOTGUN_AMMO_2, NO_JOINT_BITS, INV_ROT_Y },
 		{ ID_REVOLVER_ITEM, 0, 0.5f, EulerAngles(ANGLE(60.0f), ANGLE(-90.0f), ANGLE(85.0f)), OPT_EQUIP | OPT_COMBINABLE | OPT_CHOOSE_AMMO_REVOLVER, STRING_REVOLVER , 0x01, INV_ROT_Y },
 		{ ID_REVOLVER_AMMO_ITEM, 0, 0.5f, EulerAngles(ANGLE(-16.0f), ANGLE(180.0f), 0), OPT_USE, STRING_REVOLVER_AMMO, NO_JOINT_BITS, INV_ROT_Y },
-		{ ID_REVOLVER_ITEM, 0, 0.5f, EulerAngles(ANGLE(60.0f), ANGLE(90.0f), ANGLE(85.0f)), OPT_EQUIP | OPT_SEPERABLE | OPT_CHOOSE_AMMO_REVOLVER, STRING_REVOLVER_LASERSIGHT, 0x0B, INV_ROT_Y },
+		{ ID_REVOLVER_ITEM, 0, 0.5f, EulerAngles(ANGLE(60.0f), ANGLE(90.0f), ANGLE(85.0f)), OPT_EQUIP | OPT_SEPARABLE | OPT_CHOOSE_AMMO_REVOLVER, STRING_REVOLVER_LASERSIGHT, 0x0B, INV_ROT_Y },
 		{ ID_CROSSBOW_ITEM, 0, 0.5f, EulerAngles(ANGLE(33.0f), ANGLE(-90.0f), 0), OPT_EQUIP | OPT_COMBINABLE | OPT_CHOOSE_AMMO_CROSSBOW, STRING_CROSSBOW, 0x01, INV_ROT_Y },
-		{ ID_CROSSBOW_ITEM, 0, 0.5f, EulerAngles(ANGLE(33.0f), ANGLE(-90.0f), 0), OPT_EQUIP | OPT_SEPERABLE | OPT_CHOOSE_AMMO_CROSSBOW, STRING_CROSSBOW_LASERSIGHT, 0x03, INV_ROT_Y },
+		{ ID_CROSSBOW_ITEM, 0, 0.5f, EulerAngles(ANGLE(33.0f), ANGLE(-90.0f), 0), OPT_EQUIP | OPT_SEPARABLE | OPT_CHOOSE_AMMO_CROSSBOW, STRING_CROSSBOW_LASERSIGHT, 0x03, INV_ROT_Y },
 		{ ID_CROSSBOW_AMMO1_ITEM, 0, 0.5f, EulerAngles(0, ANGLE(-90.0f), 0), OPT_USE, STRING_CROSSBOW_AMMO_1, NO_JOINT_BITS, INV_ROT_Y },
 		{ ID_CROSSBOW_AMMO2_ITEM, 0, 0.5f, EulerAngles(0, ANGLE(-90.0f), 0), OPT_USE, STRING_CROSSBOW_AMMO_2, NO_JOINT_BITS, INV_ROT_Y },
 		{ ID_CROSSBOW_AMMO3_ITEM, 0, 0.5f, EulerAngles(0, ANGLE(-90.0f), 0), OPT_USE, STRING_CROSSBOW_AMMO_3, NO_JOINT_BITS, INV_ROT_Y },
 		{ ID_HK_ITEM, 0, 0.5f, EulerAngles(ANGLE(280.0f), 0, 0), OPT_EQUIP | OPT_COMBINABLE | OPT_CHOOSE_AMMO_HK, STRING_HK, 0x01, INV_ROT_Y },
-		{ ID_HK_ITEM, 0, 0.5f, EulerAngles(ANGLE(280.0f), ANGLE(-45.0f), 0), OPT_EQUIP | OPT_SEPERABLE | OPT_CHOOSE_AMMO_HK, STRING_HK_LASERSIGHT, NO_JOINT_BITS, INV_ROT_Y },
+		{ ID_HK_ITEM, 0, 0.5f, EulerAngles(ANGLE(280.0f), ANGLE(-45.0f), 0), OPT_EQUIP | OPT_SEPARABLE | OPT_CHOOSE_AMMO_HK, STRING_HK_LASERSIGHT, NO_JOINT_BITS, INV_ROT_Y },
 		{ ID_HK_AMMO_ITEM, 3, 0.5f, EulerAngles(0, ANGLE(90.0f), 0), OPT_USE, STRING_HK_AMMO, NO_JOINT_BITS, INV_ROT_Y },
 		{ ID_HK_AMMO_ITEM, 3, 0.5f, EulerAngles(0, ANGLE(90.0f), 0), OPT_USE, STRING_HK_RAPID_MODE, NO_JOINT_BITS, INV_ROT_Y },
 		{ ID_HK_AMMO_ITEM, 3, 0.5f, EulerAngles(0, ANGLE(90.0f), 0), OPT_USE, STRING_HK_BURST_MODE, NO_JOINT_BITS, INV_ROT_Y },
@@ -59,8 +59,8 @@ namespace TEN::Gui
 		{ ID_BINOCULARS_ITEM, -1, 0.5f, EulerAngles(ANGLE(10.0f), ANGLE(180.0f), 0), OPT_USE, STRING_BINOCULARS, NO_JOINT_BITS, INV_ROT_Y },
 		{ ID_FLARE_INV_ITEM, 52, 0.8f, EulerAngles::Identity, OPT_USE, STRING_FLARES, NO_JOINT_BITS, INV_ROT_Y },
 		{ ID_STOPWATCH_ITEM, 2, 0.8f,  EulerAngles::Identity, OPT_STATS, STRING_STATISTICS, NO_JOINT_BITS, INV_ROT_Y },
-		{ ID_PC_LOAD_INV_ITEM, 52, 0.3f, EulerAngles(0, ANGLE(180.0f), 0), OPT_LOAD, STRING_LOAD_GAME, NO_JOINT_BITS, INV_ROT_Y },
-		{ ID_PC_SAVE_INV_ITEM, 52, 0.3f, EulerAngles(0, ANGLE(180.0f), 0), OPT_SAVE, STRING_SAVE_GAME, NO_JOINT_BITS, INV_ROT_Y },
+		{ ID_PC_LOAD_INV_ITEM, 40, 0.25f, EulerAngles(0, ANGLE(0.0f), 0), OPT_LOAD, STRING_LOAD_GAME, NO_JOINT_BITS, INV_ROT_Y },
+		{ ID_PC_SAVE_INV_ITEM, 40, 0.25f, EulerAngles(0, ANGLE(0.0f), 0), OPT_SAVE, STRING_SAVE_GAME, NO_JOINT_BITS, INV_ROT_Y },
 		{ ID_BURNING_TORCH_ITEM, 14, 0.5f, EulerAngles(ANGLE(90.0f), 0, 0), OPT_USE, STRING_TORCH, NO_JOINT_BITS, INV_ROT_Y },
 		{ ID_CROWBAR_ITEM, 4, 0.5f, EulerAngles(ANGLE(90.0f), 0, 0), OPT_USE, STRING_CROWBAR, NO_JOINT_BITS, INV_ROT_Y },
 		{ ID_DIARY_ITEM, 0, 0.3f, EulerAngles(0, ANGLE(180.0f), 0), OPT_USE, STRING_DIARY, NO_JOINT_BITS, INV_ROT_Y },
@@ -265,7 +265,7 @@ namespace TEN::Gui
 		{ ID_EXAMINE8_COMBO2, 14, 0.5f, EulerAngles::Identity, OPT_USE | OPT_COMBINABLE, STRING_LOAD_GAME, NO_JOINT_BITS, INV_ROT_Y },
 	};
 
-	CombineList CombineTable[MAX_COMBINES] =
+	static const CombineList DefaultCombineTable[MAX_COMBINES] =
 	{
 		{ CombineRevolverLasersight, INV_OBJECT_REVOLVER, INV_OBJECT_LASERSIGHT, INV_OBJECT_REVOLVER_LASER },
 		{ CombineCrossbowLasersight, INV_OBJECT_CROSSBOW, INV_OBJECT_LASERSIGHT, INV_OBJECT_CROSSBOW_LASER },
@@ -328,6 +328,15 @@ namespace TEN::Gui
 		{ CombineExamine8, INV_OBJECT_EXAMINE8_COMBO1, INV_OBJECT_EXAMINE8_COMBO2, INV_OBJECT_EXAMINE8 },
 		{ CombineClockWorkBeetle, INV_OBJECT_BEETLE_PART1, INV_OBJECT_BEETLE_PART2, INV_OBJECT_BEETLE }
 	};
+
+	InventoryObject InventoryObjectTable[INVENTORY_TABLE_SIZE] = {};
+	CombineList CombineTable[MAX_COMBINES] = {};
+
+	void ResetInventoryTablesToDefault()
+	{
+		memcpy(InventoryObjectTable, DefaultInventoryObjectTable, sizeof(DefaultInventoryObjectTable));
+		memcpy(CombineTable, DefaultCombineTable, sizeof(DefaultCombineTable));
+	}
 
 	void CombineRevolverLasersight(ItemInfo* item, bool flag)
 	{
@@ -906,8 +915,8 @@ namespace TEN::Gui
 	{
 		auto& player = GetLaraInfo(*item);
 
-		player.Inventory.BeetleComponents |= BEETLECOMP_FLAG_BEETLE;  // Get beetle.
 		player.Inventory.BeetleComponents &= BEETLECOMP_FLAG_COMBO_1; // Remove combo 1.
 		player.Inventory.BeetleComponents &= BEETLECOMP_FLAG_COMBO_2; // Remove combo 2.
+		player.Inventory.BeetleComponents |= BEETLECOMP_FLAG_BEETLE;  // Get beetle.
 	}
 }
