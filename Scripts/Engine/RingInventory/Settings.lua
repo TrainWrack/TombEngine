@@ -31,7 +31,7 @@ Settings.ColorMap =
 Settings.Background =
 {
     enable = true,
-    objectID = TEN.Objects.ObjID.DIARY_ENTRY_SPRITES,
+    objectID = TEN.Objects.ObjID.INVENTORY_SPRITES,
     spriteID = 0,
     color = TEN.Color(255, 255, 255),
     position = TEN.Vec2(50,50),

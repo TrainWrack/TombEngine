@@ -17,6 +17,7 @@ local COLOR_MAP = Settings.ColorMap
 local Stats = {}
 
 local statisticsType = false
+local endStatistics = false
 
 local LEVEL_HEADER_POS = TEN.Vec2(50, 36)
 local HEADER_TEXT_POS = TEN.Vec2(22.4, 43)
@@ -69,6 +70,15 @@ local STATS_TEXT =
 	translate = false
 }
 
+local GetLevelHeader = function(type)
+    if type then
+        return TEN.Flow.GetString("game_title")
+    else
+        local level = TEN.Flow.GetCurrentLevel()
+        return TEN.Flow.GetString(level.nameKey)
+    end
+end
+
 local GetStatistics = function(type)
     local secretCount = type and TEN.Flow.GetTotalSecretCount() or TEN.Flow.GetCurrentLevel().secrets
     local levelStats = TEN.Flow.GetStatistics(type)
@@ -106,13 +116,11 @@ function Stats.SetupStats()
     Text.AddToGroup("STATISTICS", "HEADER_TEXT")
     Text.AddToGroup("STATISTICS", "STATS_TEXT")
 
-    local level = TEN.Flow.GetCurrentLevel()
-    local levelHeader = TEN.Flow.GetString(level.nameKey)
-    
+    local header = GetLevelHeader(statisticsType)
     local headings = GetLabels(statisticsType)
     local statistics = GetStatistics(statisticsType)
     
-    Text.SetText("LEVEL_HEADER_TEXT", levelHeader, false)
+    Text.SetText("LEVEL_HEADER_TEXT", header, false)
     Text.SetText("HEADER_TEXT", headings, false)
     Text.SetText("STATS_TEXT", statistics, false)
 end
@@ -126,15 +134,10 @@ function Stats.Hide()
 end
 
 function Stats.UpdateStatistics(type, transitionType)
-    if type then
-        Text.SetText("LEVEL_HEADER_TEXT", TEN.Flow.GetString("game_title"), true, transitionType)
-    else
-        local level = TEN.Flow.GetCurrentLevel()
-        Text.SetText("LEVEL_HEADER_TEXT", TEN.Flow.GetString(level.nameKey), true, transitionType)
-    end
-
-    local statistics = GetStatistics(type)
+    local header = GetLevelHeader(type)
     local headings = GetLabels(type)
+    local statistics = GetStatistics(type)
+    Text.SetText("LEVEL_HEADER_TEXT", header, true, transitionType)
     Text.SetText("HEADER_TEXT", headings, true, transitionType)
     Text.SetText("STATS_TEXT", statistics, true, transitionType)
 end
@@ -147,6 +150,19 @@ end
 function Stats.GetType()
     return statisticsType
 end
+
+function Stats.SetType(type)
+    statisticsType = type
+end
+
+function Stats.IsEndStatisticsEnabled()
+    return endStatistics == true
+end
+
+function Stats.SetEndStatistics(value)
+    endStatistics = value
+end
+
 
 function Stats.UpdateIngameTime()
     if Settings.Statistics.progressTime then

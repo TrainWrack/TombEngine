@@ -384,6 +384,12 @@ local HandleInventoryOpening = function(state)
         return
     end
 
+    if Statistics.IsEndStatisticsEnabled() then
+        Sprites.ShowBackground()
+        InventoryStates.SetMode(InventoryStates.MODE.STATISTICS_OPEN)
+        return
+    end
+
     Text.SetText("HEADER", "actions_inventory", true)
     TEN.Sound.PlaySound(SOUND_MAP.inventoryOpen)
     InventoryData.Construct()
@@ -569,7 +575,7 @@ local HandleStatisticsOpen = function(state)
             HideAmmoRing(state.selectedItem)
         end
 
-        if Settings.Statistics.gameStats then
+        if Settings.Statistics.gameStats and not Statistics.IsEndStatisticsEnabled() then
             UpdateActionLabel(nil, "game_statistics")
         else
             Text.Hide("CONTROLS_SELECT")
@@ -585,7 +591,7 @@ local HandleStatisticsOpen = function(state)
 end
 
 local HandleStatistics = function()
-    if InventoryStates.GetActionCheck() then
+    if InventoryStates.GetActionCheck() and not Statistics.IsEndStatisticsEnabled()then
         Statistics.ToggleType(Text.TRANSITION.SWIPE_RIGHT)
 
         if Statistics.GetType() then
@@ -611,7 +617,7 @@ local HandleStatisticsClose = function(state)
         onEnter = false
     end
 
-    if isItemChosen or Animation.Inventory(inventoryMode, state.selectedRing, state.selectedItem) then
+    if Statistics.IsEndStatisticsEnabled() or isItemChosen  or Animation.Inventory(inventoryMode, state.selectedRing, state.selectedItem) then
         onEnter = true
 
         if isItemChosen then
@@ -621,7 +627,12 @@ local HandleStatisticsClose = function(state)
             ShowAmmoRing(state.selectedItem)
             InventoryStates.SetMode(InventoryStates.MODE.ITEM_SELECTED)
         else
-            InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
+            if Statistics.IsEndStatisticsEnabled() then
+                InventoryStates.SetMode(InventoryStates.MODE.INVENTORY_EXIT)
+                Statistics.SetEndStatistics(false)
+            else
+                InventoryStates.SetMode(InventoryStates.MODE.INVENTORY)
+            end
         end
     end
 end

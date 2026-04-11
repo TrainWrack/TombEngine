@@ -21,6 +21,7 @@ local ItemSpin = require("Engine.RingInventory.ItemSpin")
 local RingLight = require("Engine.RingInventory.RingLight")
 local Save = require("Engine.RingInventory.Save")
 local Settings = require("Engine.RingInventory.Settings")
+local Statistics = require("Engine.RingInventory.Statistics")
 local Strings = require("Engine.RingInventory.Strings")
 local Utilities = require("Engine.RingInventory.Utilities")
 
@@ -107,6 +108,13 @@ LevelFuncs.Engine.RingInventory.RunInventory = function()
         inventoryOpen = true
         Save.SetQuickSaveStatus(true)
         Save.SetLoadMenu()
+        inventoryDelay = 0
+    end
+
+    if (Statistics.IsEndStatisticsEnabled()) and 
+       not inventoryOpen and 
+       isNotUsingBinoculars then
+        inventoryOpen = true
         inventoryDelay = 0
     end
     
