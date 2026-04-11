@@ -31,7 +31,7 @@ ID_BADDY1
 4 - Climbs up 4 clicks when triggered
 101-104 - Slides to the left while crouching when triggered (eg. train level � just doesn�t work in trainmode)
 1004 - Climbs up 6 clicks when triggered
-1000 - N x 1000 � Is activated once the baddy with the previous thousand is dead and needs no trigger (have tested up to 20.000). Must be placed in room 2 of a level.
+1000 - N x 1000 - Is activated once the baddy with the previous thousand is dead and needs no trigger (have tested up to 20.000). Must be placed in room 2 of a level.
 This means that:
 2000 - Attacks Lara after she kills 1st baddy triggered
 3000 - Same as above but after she kills 2nd baddy triggered
