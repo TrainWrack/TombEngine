@@ -36,12 +36,12 @@ local Sprites = {}
 local function DrawArrow(list, alpha)
     for _, entry in ipairs(list) do
         local entrySprite = TEN.View.DisplaySprite(
-            TEN.Objects.ObjID.MISC_SPRITES,
-            3,
+            TEN.Objects.ObjID.INVENTORY_SPRITES,
+            0,
             entry[2],
             entry[1],
             Vec2(3, 3),
-            Utilities.ColorCombine(COLOR_MAP.neutral, alpha)
+            Utilities.ColorCombine(COLOR_MAP.arrowColor, alpha)
         )
         entrySprite:Draw(-8, View.AlignMode.CENTER, View.ScaleMode.FIT, TEN.Effects.BlendID.ALPHA_BLEND)
     end

@@ -25,14 +25,15 @@ Settings.ColorMap =
     itemHidden = Color(0, 0, 0, 0),
     itemDeselected = Color(32, 32, 32, 255),
     itemSelected = Color(128, 128, 128, 255),
-    neutral = Color(255, 255, 255, 255)
+    neutral = Color(255, 255, 255, 255),
+    arrowColor = Flow.GetSettings().UI.headerTextColor,
 }
 
 Settings.Background =
 {
     enable = true,
     objectID = TEN.Objects.ObjID.INVENTORY_SPRITES,
-    spriteID = 0,
+    spriteID = 1,
     color = TEN.Color(255, 255, 255),
     position = TEN.Vec2(50,50),
     rotation = 0,
@@ -40,7 +41,7 @@ Settings.Background =
     alignMode = TEN.View.AlignMode.CENTER,
     scaleMode = TEN.View.ScaleMode.STRETCH,
     blendMode = TEN.Effects.BlendID.ALPHA_BLEND,
-    alpha = 255
+    alpha = 64
 }
 
 Settings.Animation =
