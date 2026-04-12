@@ -39,12 +39,12 @@ namespace TEN::Scripting::Objects
 		void SetMood(MoodType mood);
 		void SetTarget(const TypeOrNil<Moveable*> moveable);
 		void SetTargetPosition(const Vec3& position);
+		void SetLocationAI(int value);
 		void SetAlerted(bool enabled);
 		void SetFriendly(bool enabled);
 		void SetHurtByPlayer(bool enabled);
 		void SetPoisoned(bool enabled);
 		void SetAtGoal(bool enabled);
-		void SetLocationAI(int value);
 
 		// Inquirers
 		bool GetValid();

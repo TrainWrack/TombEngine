@@ -328,7 +328,12 @@ namespace TEN::Scripting::Objects
 			creature->ReachedGoal = enabled;
 	}
 
-	/// Gets the creature's AI location index. Used by specific enemies for custom waypoint logic (e.g. Von Croy or Sophia Leigh).
+	/// Get the OCB of the AI object that the enemy is currently trying to reach.
+	// Used by specific enemies for custom waypoint logic:
+	// 
+	// - @{Objects.ObjID.SOPHIA_LEIGH_BOSS}
+	// - @{Objects.ObjID.VON_CROY}
+	// - @{Objects.ObjID.GUIDE}, only if he has ItemFlags[2] bit 1 set.
 	// @function GetLocationAI
 	// @treturn int The current AI location index. If creature is invalid, returns `nil`.
 	std::optional<int> ScriptCreature::GetLocationAI()
@@ -340,7 +345,12 @@ namespace TEN::Scripting::Objects
 			return std::nullopt;
 	}
 
-	/// Sets the creature's AI location index. Used by specific enemies for custom waypoint logic.
+	/// Updates the AI object OCB that the creature should try to reach.
+	// Used by specific enemies for custom waypoint logic:
+	// 
+	// - @{Objects.ObjID.SOPHIA_LEIGH_BOSS}
+	// - @{Objects.ObjID.VON_CROY}
+	// - @{Objects.ObjID.GUIDE}, only if he has ItemFlags[2] bit 1 set (otherwise, he ignores it and simply look for the next AI object OCB until he reaches the one set by the last call to flipeffect 30).
 	// @function SetLocationAI
 	// @tparam int value The AI location index to set.
 	void ScriptCreature::SetLocationAI(int value)
