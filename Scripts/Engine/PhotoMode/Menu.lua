@@ -183,15 +183,25 @@ function Menu.DrawHeaders(position, scale, alpha)
         local isActive = (i == ActiveHeader)
 
         local color = isActive and COLOR_MAP.headerText or COLOR_MAP.dimmed
-        local displayText = isActive and ("[ " .. header.name .. " ]") or header.name
         local flags = isActive
             and { Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER }
             or  { Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER }
 
         local pos = TEN.Util.PercentToScreen(TEN.Vec2(x, position.y))
+
+        -- Draw translated name; wrap active header in brackets
+        if isActive then
+            -- Bracket prefix
+            local bracketL = TEN.Strings.DisplayString(
+                "[ ", pos, scale or 1.0,
+                ColorCombine(color, alpha), false, flags
+            )
+            TEN.Strings.ShowString(bracketL, 1 / 30)
+        end
+
         local textObj = TEN.Strings.DisplayString(
-            displayText, pos, scale or 1.0,
-            ColorCombine(color, alpha), false, flags
+            header.name, pos, scale or 1.0,
+            ColorCombine(color, alpha), true, flags
         )
         TEN.Strings.ShowString(textObj, 1 / 30)
     end
