@@ -1,26 +1,26 @@
 #pragma once
-
+#include "framework.h"
 #include "Game/itemdata/creature_info.h"
 
 #include "Scripting/Internal/TEN/Objects/Moveable/MoveableObject.h"
-#include "Scripting/Internal/TEN\Types/Vec3/Vec3.h"
+#include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
 #include "Scripting/Internal/ScriptUtil.h"
 
 namespace sol { class state; };
 
 namespace TEN::Scripting::Objects
 {
-    class ScriptCreature
-    {
-    private:
+	class ScriptCreature
+	{
+	private:
 		int _itemNumber = NO_VALUE;
 		CreatureInfo* GetCreature() const;
 
-    public:
+	public:
 		static void Register(sol::table& parent);
 		static bool TestCreature(int itemNumber);
 
-        // Constructors
+		// Constructors
 		ScriptCreature() = default;
 		ScriptCreature(const Moveable& mov);
 
@@ -50,5 +50,5 @@ namespace TEN::Scripting::Objects
 		bool GetValid();
 		std::optional<bool> GetJumping();
 		std::optional<bool> GetMonkeying();
-    };
+	};
 }

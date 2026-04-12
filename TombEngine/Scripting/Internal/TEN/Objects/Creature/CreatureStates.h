@@ -15,7 +15,7 @@ namespace TEN::Scripting::Objects
 	{
 		/// Creature is not attacking or stalking any enemies and randomly roams around the area.
 		// @mem BORED
-        {"BORED", MoodType::Bored},
+		{"BORED", MoodType::Bored},
 
 		/// Creature is searching for an enemy, but does not directly attack it yet.
 		// @mem STALK
@@ -23,10 +23,10 @@ namespace TEN::Scripting::Objects
 
 		/// Creature is attacking an enemy.
 		// @mem ATTACK
-        {"ATTACK", MoodType::Attack},
+		{"ATTACK", MoodType::Attack},
 
 		/// Creature is escaping from the enemy and trying to find a safe place.
 		// @mem ESCAPE
-        {"ESCAPE", MoodType::Escape},
+		{"ESCAPE", MoodType::Escape},
 	};
 }
