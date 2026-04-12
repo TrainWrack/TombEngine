@@ -235,8 +235,10 @@ namespace TEN::Scripting::Objects
 	}
 
 	/// Gets the creature's friendly state.
+	// If creature was attacked by player, friendly state alone is not enough to know whether a creature is violent. For such cases,
+	// @{Objects.Creature.GetHurtByPlayer} must also be used in combination with this method.
 	// @function GetFriendly
-	// @treturn bool `true` if the creature is friendly, `false` if not friendly. If creature is invalid, returns `nil`.
+	// @treturn bool `true` if the creature is marked as friendly, `false` if it is marked as not friendly. If creature is invalid, returns `nil`.
 	std::optional<bool> ScriptCreature::GetFriendly()
 	{
 		auto* creature = GetCreature();
@@ -247,8 +249,8 @@ namespace TEN::Scripting::Objects
 	}
 
 	/// Sets the creature's friendly state.
-	// Friendly creatures will not attack the player unless player attacks them, except special cases when behaviour is hardcoded.
-	// If a creature was attacked by player, @{Objects.Creature.SetHurtByPlayer} must be set to `false` as well to make a creature friendly.
+	// Friendly creatures will not attack the player unless player attacks them first, except special cases when behavior is hardcoded.
+	// If a friendly creature was attacked by player, @{Objects.Creature.SetHurtByPlayer} must be set to `false` as well to stop them attacking player.
 	// @function SetFriendly
 	// @tparam bool enabled `true` sets creature as friendly, `false` sets it as hostile.
 	void ScriptCreature::SetFriendly(bool enabled)
