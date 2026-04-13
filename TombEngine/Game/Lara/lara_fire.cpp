@@ -440,6 +440,42 @@ HolsterSlot GetWeaponHolsterSlot(LaraWeaponType weaponType)
 	}
 }
 
+LaraWeaponType GetHolsterSlotWeapon(HolsterSlot slot)
+{
+	switch (slot)
+	{
+	case HolsterSlot::Pistols:
+		return LaraWeaponType::Pistol;
+
+	case HolsterSlot::Uzis:
+		return LaraWeaponType::Uzi;
+
+	case HolsterSlot::Revolver:
+		return LaraWeaponType::Revolver;
+
+	case HolsterSlot::Shotgun:
+		return LaraWeaponType::Shotgun;
+
+	case HolsterSlot::HK:
+		return LaraWeaponType::HK;
+
+	case HolsterSlot::Harpoon:
+		return LaraWeaponType::HarpoonGun;
+
+	case HolsterSlot::Crossbow:
+		return LaraWeaponType::Crossbow;
+
+	case HolsterSlot::GrenadeLauncher:
+		return LaraWeaponType::GrenadeLauncher;
+
+	case HolsterSlot::RocketLauncher:
+		return LaraWeaponType::RocketLauncher;
+
+	default:
+		return LaraWeaponType::None;
+	}
+}
+
 GAME_OBJECT_ID GetWeaponObjectID(LaraWeaponType weaponType)
 {
 	switch (weaponType)

@@ -5,6 +5,7 @@
 #include "Game/collision/collide_item.h"
 #include "Game/Gui.h"
 #include "Game/Hud/Hud.h"
+#include "Game/effects/hair.h"
 #include "Game/effects/item_fx.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_fire.h"
@@ -22,6 +23,7 @@
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
 #include "Specific/Input/Input.h"
 #include "Specific/Input/InputAction.h"
+#include "Specific/clock.h"
 #include "Specific/level.h"
 
 using namespace TEN::Gui;
@@ -636,6 +638,62 @@ std::unique_ptr<Moveable> LaraObject::GetPlayerInteractedMoveable() const
 	return std::make_unique<Moveable>(player.Context.InteractedItem);
 }
 
+/// Get currently holstered weapon types in left holster, right holster and back holster.
+// @function LaraObject:GetHolsterWeapon
+// @treturn Objects.WeaponType Left holster weapon type.
+// @treturn Objects.WeaponType Right holster weapon type.
+// @treturn Objects.WeaponType Back holster weapon type.
+// @usage
+// local left, right, back = Lara:GetHolsterWeapon()
+std::tuple<LaraWeaponType, LaraWeaponType, LaraWeaponType> LaraObject::GetHolsterWeapon() const
+{
+	const auto& player = GetLaraInfo(*_moveable);
+
+	auto left = GetHolsterSlotWeapon(player.Control.Weapon.HolsterInfo.LeftHolster);
+	auto right = GetHolsterSlotWeapon(player.Control.Weapon.HolsterInfo.RightHolster);
+	auto back = GetHolsterSlotWeapon(player.Control.Weapon.HolsterInfo.BackHolster);
+
+	return std::make_tuple(left, right, back);
+}
+
+/// Set holstered weapon meshes for left holster, right holster and back holster.
+// Pass nil for any slot to leave it unchanged.
+// Use WeaponType.NONE to clear a holster slot.
+// @function LaraObject:SetHolsterWeapon
+// @tparam[opt] Objects.WeaponType left Left holster weapon type (nil to leave unchanged).
+// @tparam[opt] Objects.WeaponType right Right holster weapon type (nil to leave unchanged).
+// @tparam[opt] Objects.WeaponType back Back holster weapon type (nil to leave unchanged).
+// @usage
+// Lara:SetHolsterWeapon(WeaponType.PISTOLS, WeaponType.PISTOLS, WeaponType.SHOTGUN)
+// Lara:SetHolsterWeapon(nil, nil, WeaponType.NONE) -- Clear back holster only.
+void LaraObject::SetHolsterWeapon(TypeOrNil<LaraWeaponType> left, TypeOrNil<LaraWeaponType> right, TypeOrNil<LaraWeaponType> back)
+{
+	auto& player = GetLaraInfo(*_moveable);
+
+	if (std::holds_alternative<LaraWeaponType>(left))
+		player.Control.Weapon.HolsterInfo.LeftHolster = GetWeaponHolsterSlot(std::get<LaraWeaponType>(left));
+
+	if (std::holds_alternative<LaraWeaponType>(right))
+		player.Control.Weapon.HolsterInfo.RightHolster = GetWeaponHolsterSlot(std::get<LaraWeaponType>(right));
+
+	if (std::holds_alternative<LaraWeaponType>(back))
+		player.Control.Weapon.HolsterInfo.BackHolster = GetWeaponHolsterSlot(std::get<LaraWeaponType>(back));
+}
+
+/// Reset player hair to default state.
+// Useful after changing animations in spectator or freeze mode to fix hair positioning.
+// @function LaraObject:ResetHair
+// @usage
+// Lara:ResetHair()
+void LaraObject::ResetHair()
+{
+	using namespace TEN::Effects::Hair;
+
+	//HairEffect.Initialize();
+	for (int i = 0; i < FPS; i++)
+		HairEffect.Update(*_moveable);
+}
+
 /// Check if a held torch is lit.
 // @function LaraObject:IsTorchLit
 // @treturn bool True if lit, otherwise false (also false if there is no torch in hand).
@@ -872,6 +930,9 @@ void LaraObject::Register(sol::table& parent)
 		ScriptReserved_GetAmmoCount, &LaraObject::GetAmmoCount,
 		ScriptReserved_GetWeaponMode, & LaraObject::GetWeaponMode,
 		ScriptReserved_SetWeaponMode, & LaraObject::SetWeaponMode,
+		ScriptReserved_GetHolsterWeapon, &LaraObject::GetHolsterWeapon,
+		ScriptReserved_SetHolsterWeapon, &LaraObject::SetHolsterWeapon,
+		ScriptReserved_ResetHair, &LaraObject::ResetHair,
 		ScriptReserved_GetVehicle, &LaraObject::GetVehicle,
 		ScriptReserved_GetTarget, &LaraObject::GetTarget,
 		ScriptReserved_GetPlayerInteractedMoveable, &LaraObject::GetPlayerInteractedMoveable,

@@ -36,6 +36,10 @@ public:
 	int GetWeaponMode(TypeOrNil<LaraWeaponType> weaponType) const;
 	void SetWeaponMode(LaraWeaponType weaponType, PlayerWeaponMode weaponMode);
 
+	std::tuple<LaraWeaponType, LaraWeaponType, LaraWeaponType> GetHolsterWeapon() const;
+	void SetHolsterWeapon(TypeOrNil<LaraWeaponType> left, TypeOrNil<LaraWeaponType> right, TypeOrNil<LaraWeaponType> back);
+	void ResetHair();
+
 	void UndrawWeapon();
 	void DiscardTorch();
 	bool IsTorchLit() const;

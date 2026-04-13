@@ -491,6 +491,7 @@ void MoveObjCamera(GameVector* ideal, ItemInfo* camSlotId, int camMeshId, ItemIn
 		OldCam.actualElevation != Camera.actualElevation ||
 		OldCam.actualAngle != Camera.actualAngle ||
 		OldCam.target != Camera.target.ToVector3i() ||
+		LastTarget.ToVector3i() != pos2 ||
 		Camera.oldType != Camera.type ||
 		Lara.Control.Look.IsUsingBinoculars)
 	{
