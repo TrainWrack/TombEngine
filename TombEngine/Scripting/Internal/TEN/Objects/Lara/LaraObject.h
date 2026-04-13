@@ -39,6 +39,7 @@ public:
 	std::tuple<LaraWeaponType, LaraWeaponType, LaraWeaponType> GetHolsterWeapon() const;
 	void SetHolsterWeapon(TypeOrNil<LaraWeaponType> left, TypeOrNil<LaraWeaponType> right, TypeOrNil<LaraWeaponType> back);
 	void ResetHair();
+	void SpawnGunFlash(LaraWeaponType weaponType);
 
 	void UndrawWeapon();
 	void DiscardTorch();

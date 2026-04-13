@@ -9,6 +9,7 @@
 #include "Game/control/los.h"
 #include "Game/control/lot.h"
 #include "Game/effects/effects.h"
+#include "Game/effects/Light.h"
 #include "Game/itemdata/creature_info.h"
 #include "Game/items.h"
 #include "Game/Lara/lara_flare.h"
@@ -474,6 +475,51 @@ LaraWeaponType GetHolsterSlotWeapon(HolsterSlot slot)
 	default:
 		return LaraWeaponType::None;
 	}
+}
+
+void SpawnWeaponFlash(ItemInfo& laraItem, LaraWeaponType weaponType)
+{
+	if (weaponType == LaraWeaponType::None ||
+		weaponType == LaraWeaponType::Flare ||
+		weaponType == LaraWeaponType::Torch ||
+		weaponType == LaraWeaponType::Snowmobile)
+	{
+		return;
+	}
+
+	const auto& settings = g_GameFlow->GetSettings()->Weapons[(int)weaponType - 1];
+
+	if (!settings.MuzzleFlash)
+		return;
+
+	auto& player = GetLaraInfo(laraItem);
+
+	bool isDualWield = (weaponType == LaraWeaponType::Pistol || weaponType == LaraWeaponType::Uzi);
+
+	player.RightArm.GunFlash = 1;
+	if (isDualWield)
+		player.LeftArm.GunFlash = 1;
+
+	auto color = Color(settings.FlashColor);
+	color += Color(Random::GenerateFloat(-0.2f, 0.2f));
+
+	if (isDualWield)
+	{
+		auto basePos = GetJointPosition(&laraItem, LM_RHAND).ToVector3();
+		SpawnDynamicPointLight(basePos, color, CLICK(settings.FlashRange));
+	}
+	else
+	{
+		auto offset = (weaponType == LaraWeaponType::Revolver) ? Vector3i(0, -32, 0) : Vector3i(0, -64, 0);
+		auto pos = GetJointPosition(&laraItem, LM_RHAND, offset);
+		SpawnDynamicPointLight(pos.ToVector3(), color, CLICK(settings.FlashRange));
+	}
+
+	player.RightArm.GunFlash = 0;
+	if (isDualWield)
+		player.LeftArm.GunFlash = 0;
+
+
 }
 
 GAME_OBJECT_ID GetWeaponObjectID(LaraWeaponType weaponType)

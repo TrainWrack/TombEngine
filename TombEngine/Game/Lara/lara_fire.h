@@ -59,6 +59,7 @@ HolsterSlot		  GetWeaponHolsterSlot(LaraWeaponType weaponType);
 LaraWeaponType	  GetHolsterSlotWeapon(HolsterSlot slot);
 GAME_OBJECT_ID	  GetWeaponObjectID(LaraWeaponType weaponType);
 GAME_OBJECT_ID	  GetWeaponObjectMeshID(ItemInfo& laraItem, LaraWeaponType weaponType);
+void SpawnWeaponFlash(ItemInfo& laraItem, LaraWeaponType weaponType);
 
 void HandleWeapon(ItemInfo& laraItem);
 void AimWeapon(ItemInfo& laraItem, ArmInfo& arm, const WeaponInfo& weaponInfo);

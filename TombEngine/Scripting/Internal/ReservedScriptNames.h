@@ -139,6 +139,7 @@ static constexpr char ScriptReserved_SetWeaponMode[]		= "SetWeaponMode";
 static constexpr char ScriptReserved_GetHolsterWeapon[]	= "GetHolsterWeapon";
 static constexpr char ScriptReserved_SetHolsterWeapon[]	= "SetHolsterWeapon";
 static constexpr char ScriptReserved_ResetHair[]			= "ResetHair";
+static constexpr char ScriptReserved_SpawnGunFlash[]	= "SpawnGunFlash";
 static constexpr char ScriptReserved_GetVehicle[]			= "GetVehicle";
 static constexpr char ScriptReserved_GetTarget[]			= "GetTarget";
 static constexpr char ScriptReserved_GetWaterSkinStatus[]	= "GetWaterSkinStatus";
