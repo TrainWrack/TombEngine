@@ -169,13 +169,22 @@ end
 -- Movement (called from Input module)
 -- ============================================================================
 
-function Camera.MoveForward(speed)
+-- Move camera + target as a rigid pair. If collision is on and either
+-- new position is inside solid geometry, the entire move is rejected
+-- so the pair never desyncs (which would cause view-direction jerk).
+local function MoveRigid(offset)
     local state = States.Get()
-    local dir = Camera.GetDirection()
-    local newCam = Vec3Add(state.cameraMesh:GetPosition(), Vec3Scale(dir, speed))
-    local newTgt = Vec3Add(state.cameraTarget:GetPosition(), Vec3Scale(dir, speed))
-    SafeMove(state.cameraMesh, newCam, state.collisionOn)
-    SafeMove(state.cameraTarget, newTgt, state.collisionOn)
+    local newCam = Vec3Add(state.cameraMesh:GetPosition(), offset)
+    local newTgt = Vec3Add(state.cameraTarget:GetPosition(), offset)
+    if state.collisionOn then
+        if IsInsideSolid(newCam) or IsInsideSolid(newTgt) then return end
+    end
+    state.cameraMesh:SetPosition(newCam)
+    state.cameraTarget:SetPosition(newTgt)
+end
+
+function Camera.MoveForward(speed)
+    MoveRigid(Vec3Scale(Camera.GetDirection(), speed))
 end
 
 function Camera.MoveBack(speed)
@@ -183,13 +192,7 @@ function Camera.MoveBack(speed)
 end
 
 function Camera.Strafe(speed)
-    local state = States.Get()
-    local right = Camera.GetRightVector()
-    local offset = Vec3Scale(right, speed)
-    local newCam = Vec3Add(state.cameraMesh:GetPosition(), offset)
-    local newTgt = Vec3Add(state.cameraTarget:GetPosition(), offset)
-    SafeMove(state.cameraMesh, newCam, state.collisionOn)
-    SafeMove(state.cameraTarget, newTgt, state.collisionOn)
+    MoveRigid(Vec3Scale(Camera.GetRightVector(), speed))
 end
 
 function Camera.OrbitHorizontal(angle)
@@ -206,14 +209,16 @@ function Camera.OrbitHorizontal(angle)
         targetPos.y,
         camPos.z + dx * sinA + dz * cosA
     )
-    SafeMove(state.cameraTarget, newTarget, state.collisionOn)
+    -- Orbit is rotational — always bypass collision so look direction is never blocked
+    state.cameraTarget:SetPosition(newTarget)
 end
 
 function Camera.AdjustTargetVertical(speed)
     local state = States.Get()
     local tp = state.cameraTarget:GetPosition()
     local newTarget = TEN.Vec3(tp.x, tp.y + speed, tp.z)
-    SafeMove(state.cameraTarget, newTarget, state.collisionOn)
+    -- Vertical pivot is rotational — always bypass collision so look direction is never blocked
+    state.cameraTarget:SetPosition(newTarget)
 end
 
 return Camera
