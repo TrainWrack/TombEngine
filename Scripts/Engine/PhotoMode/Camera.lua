@@ -13,36 +13,12 @@ local Camera = {}
 -- Helpers
 -- ============================================================================
 
-local function ForwardFromYaw(yawDeg)
-    local rad = math.rad(yawDeg)
-    return TEN.Vec3(math.sin(rad), 0, math.cos(rad))
-end
-
-local function RightFromYaw(yawDeg)
-    local rad = math.rad(yawDeg + 90)
-    return TEN.Vec3(math.sin(rad), 0, math.cos(rad))
-end
-
-local function Vec3Add(a, b)
-    return TEN.Vec3(a.x + b.x, a.y + b.y, a.z + b.z)
-end
-
-local function Vec3Scale(v, s)
-    return TEN.Vec3(v.x * s, v.y * s, v.z * s)
-end
+local UP = TEN.Vec3(0, -1, 0) -- negative Y is up in TEN
 
 local function IsInsideSolid(pos)
     local ok, probe = pcall(TEN.Collision.Probe, pos)
     if not ok then return false end
     return probe:IsInsideSolidGeometry()
-end
-
-local function SafeMove(moveable, newPos, collisionOn)
-    if collisionOn then
-        if IsInsideSolid(newPos) then return false end
-    end
-    moveable:SetPosition(newPos)
-    return true
 end
 
 -- ============================================================================
@@ -87,14 +63,7 @@ function Camera.PlaceInitial()
     local state = States.Get()
     if not state.cameraMesh or not state.cameraTarget then return end
 
-    local laraPos = Lara:GetPosition()
-    local laraRot = Lara:GetRotation()
-    local fwd     = ForwardFromYaw(laraRot.y)
-
-    local cfg = Settings.Camera
-
-    local camPos = TEN.View.GetCameraPosition()
-
+    local camPos    = TEN.View.GetCameraPosition()
     local targetPos = TEN.View.GetCameraTarget()
 
     state.cameraMesh:SetPosition(camPos)
@@ -143,48 +112,40 @@ function Camera.GetDirection()
     if not state.cameraMesh or not state.cameraTarget then
         return TEN.Vec3(0, 0, 1)
     end
-    local cp = state.cameraMesh:GetPosition()
-    local tp = state.cameraTarget:GetPosition()
-    local dx = tp.x - cp.x
-    local dy = tp.y - cp.y
-    local dz = tp.z - cp.z
-    local len = math.sqrt(dx * dx + dy * dy + dz * dz)
-    if len < 1 then return TEN.Vec3(0, 0, 1) end
-    return TEN.Vec3(dx / len, dy / len, dz / len)
+    return state.cameraMesh:GetPosition():Direction(state.cameraTarget:GetPosition())
 end
 
 function Camera.GetRightVector()
     local dir = Camera.GetDirection()
-    local rx = dir.z
-    local rz = -dir.x
-    local rLen = math.sqrt(rx * rx + rz * rz)
-    if rLen > 0.001 then
-        rx = rx / rLen
-        rz = rz / rLen
+    local right = dir:Cross(UP)
+    if right:Length() < 0.001 then
+        return TEN.Vec3(1, 0, 0)
     end
-    return TEN.Vec3(rx, 0, rz)
+    return right:Normalize()
 end
 
 -- ============================================================================
 -- Movement (called from Input module)
 -- ============================================================================
 
--- Move camera + target as a rigid pair. If collision is on and either
--- new position is inside solid geometry, the entire move is rejected
--- so the pair never desyncs (which would cause view-direction jerk).
-local function MoveRigid(offset)
+-- Apply both positions atomically.  Always sets BOTH moveables so
+-- the engine re-evaluates the object camera view.
+local function ApplyPositions(newCam, newTgt)
     local state = States.Get()
-    local newCam = Vec3Add(state.cameraMesh:GetPosition(), offset)
-    local newTgt = Vec3Add(state.cameraTarget:GetPosition(), offset)
     if state.collisionOn then
-        if IsInsideSolid(newCam) or IsInsideSolid(newTgt) then return end
+        if IsInsideSolid(newCam) or IsInsideSolid(newTgt) then return false end
     end
     state.cameraMesh:SetPosition(newCam)
     state.cameraTarget:SetPosition(newTgt)
+    return true
 end
 
 function Camera.MoveForward(speed)
-    MoveRigid(Vec3Scale(Camera.GetDirection(), speed))
+    local state = States.Get()
+    local dir    = Camera.GetDirection()
+    local newCam = state.cameraMesh:GetPosition():Translate(dir, speed)
+    local newTgt = state.cameraTarget:GetPosition():Translate(dir, speed)
+    ApplyPositions(newCam, newTgt)
 end
 
 function Camera.MoveBack(speed)
@@ -192,33 +153,33 @@ function Camera.MoveBack(speed)
 end
 
 function Camera.Strafe(speed)
-    MoveRigid(Vec3Scale(Camera.GetRightVector(), speed))
+    local state  = States.Get()
+    local right  = Camera.GetRightVector()
+    local newCam = state.cameraMesh:GetPosition():Translate(right, speed)
+    local newTgt = state.cameraTarget:GetPosition():Translate(right, speed)
+    ApplyPositions(newCam, newTgt)
 end
 
 function Camera.OrbitHorizontal(angle)
-    local state = States.Get()
+    local state  = States.Get()
     local camPos = state.cameraMesh:GetPosition()
-    local targetPos = state.cameraTarget:GetPosition()
-    local dx = targetPos.x - camPos.x
-    local dz = targetPos.z - camPos.z
-    local rad = math.rad(angle)
-    local cosA = math.cos(rad)
-    local sinA = math.sin(rad)
-    local newTarget = TEN.Vec3(
-        camPos.x + dx * cosA - dz * sinA,
-        targetPos.y,
-        camPos.z + dx * sinA + dz * cosA
-    )
-    -- Orbit is rotational — always bypass collision so look direction is never blocked
-    state.cameraTarget:SetPosition(newTarget)
+    local tgtPos = state.cameraTarget:GetPosition()
+    local offset = TEN.Vec3(tgtPos.x - camPos.x, tgtPos.y - camPos.y, tgtPos.z - camPos.z)
+    local rotated = offset:Rotate(TEN.Rotation(0, angle, 0))
+    local newTgt  = TEN.Vec3(camPos.x + rotated.x, camPos.y + rotated.y, camPos.z + rotated.z)
+    -- Set both so the engine refreshes the object camera
+    state.cameraMesh:SetPosition(camPos)
+    state.cameraTarget:SetPosition(newTgt)
 end
 
 function Camera.AdjustTargetVertical(speed)
-    local state = States.Get()
-    local tp = state.cameraTarget:GetPosition()
-    local newTarget = TEN.Vec3(tp.x, tp.y + speed, tp.z)
-    -- Vertical pivot is rotational — always bypass collision so look direction is never blocked
-    state.cameraTarget:SetPosition(newTarget)
+    local state  = States.Get()
+    local camPos = state.cameraMesh:GetPosition()
+    local tgtPos = state.cameraTarget:GetPosition()
+    local newTgt = TEN.Vec3(tgtPos.x, tgtPos.y + speed, tgtPos.z)
+    -- Set both so the engine refreshes the object camera
+    state.cameraMesh:SetPosition(camPos)
+    state.cameraTarget:SetPosition(newTgt)
 end
 
 return Camera

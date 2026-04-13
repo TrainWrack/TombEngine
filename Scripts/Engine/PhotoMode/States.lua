@@ -99,6 +99,9 @@ local State = {
     entryFov       = Settings.Lens.defaultFOV,
     entryRoll      = Settings.Lens.defaultRoll,
     entryLight     = nil,
+
+    -- Sunglasses
+    sunglassesEnabled = false,
 }
 
 -- ============================================================================
@@ -147,6 +150,12 @@ function States.CaptureSnapshot()
     snap.fov  = TEN.View.GetFOV()
     snap.roll = 0
 
+    -- Holster state
+    local left, right, back = Lara:GetHolsterWeapon()
+    snap.holsterLeft  = left
+    snap.holsterRight = right
+    snap.holsterBack  = back
+
     snap.filterIndex    = 1
     snap.filterStrength = 1.0
     snap.tintIndex      = 1
@@ -184,6 +193,11 @@ function States.RestoreSnapshot()
     for _, meshIdx in ipairs(State.swappedExpressionMeshes) do
         pcall(function() Lara:UnswapMesh(meshIdx) end)
     end
+
+    -- Restore holster state
+    pcall(function()
+        Lara:SetHolsterWeapon(snap.holsterLeft, snap.holsterRight, snap.holsterBack)
+    end)
 
     TEN.View.SetFOV(snap.fov)
     TEN.View.SetRoll(0)
@@ -226,8 +240,9 @@ function States.ResetToEntry()
     State.dofEnabled       = Settings.DepthOfField.defaultEnabled
     State.dofFocusDistance = Settings.DepthOfField.defaultFocusDistance
     State.dofBlurStrength  = Settings.DepthOfField.defaultBlurStrength
-    State.frameIndex    = 1
-    State.entryHoldCount = 0
+    State.frameIndex        = 1
+    State.sunglassesEnabled = false
+    State.entryHoldCount    = 0
 end
 
 return States

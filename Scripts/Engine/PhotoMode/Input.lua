@@ -116,8 +116,15 @@ local function UpdatePlayerInput()
     if TEN.Input.IsKeyHeld(ActionID.CROUCH) then
         newPos = TEN.Vec3(newPos.x, newPos.y + speed, newPos.z)
     end
+    if TEN.Input.IsKeyHeld(ActionID.STEP_LEFT) then
+        Camera.Strafe(-speed)
+    end
+    if TEN.Input.IsKeyHeld(ActionID.STEP_RIGHT) then
+        Camera.Strafe(speed)
+    end
 
     Lara:SetPosition(newPos)
+    pcall(function() Lara:ResetHair() end)
 end
 
 -- ============================================================================

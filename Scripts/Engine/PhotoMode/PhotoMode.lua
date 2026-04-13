@@ -109,6 +109,7 @@ local function ApplyOutfit(state)
     if preset and preset.objID then
         pcall(function() Lara:SwapSkinnedMesh(preset.objID) end)
     end
+    pcall(function() Lara:ResetHair() end)
 end
 
 local function ApplyWeapon(state)
@@ -125,6 +126,33 @@ local function ApplyWeapon(state)
             state.swappedWeaponMeshes[#state.swappedWeaponMeshes + 1] = meshIdx
         end
     end
+
+    -- Adjust holster slots based on which visual slots the weapon occupies.
+    -- Clear the slots that are now visually shown as drawn; retain the rest.
+    -- For "none" (default), restore entry snapshot holster state.
+    pcall(function()
+        local slot = preset and preset.type or "none"
+        local snap = state.snapshot
+        if slot == "holsters" then
+            -- Pistols in both hand holsters: clear left + right, leave back alone
+            Lara:SetHolsterWeapon(TEN.Objects.WeaponType.NONE, TEN.Objects.WeaponType.NONE, nil)
+        elseif slot == "right" then
+            -- Weapon in right holster only: clear right, leave left + back alone
+            Lara:SetHolsterWeapon(nil, TEN.Objects.WeaponType.NONE, nil)
+        elseif slot == "back" then
+            -- Weapon on back: clear back, leave left + right alone
+            Lara:SetHolsterWeapon(nil, nil, TEN.Objects.WeaponType.NONE)
+        elseif slot == "left" then
+            -- Weapon in left holster only: clear left, leave right + back alone
+            Lara:SetHolsterWeapon(TEN.Objects.WeaponType.NONE, nil, nil)
+        else
+            -- No weapon / default: restore entry holster state
+            if snap then
+                Lara:SetHolsterWeapon(snap.holsterLeft, snap.holsterRight, snap.holsterBack)
+            end
+        end
+    end)
+    pcall(function() Lara:ResetHair() end)
 end
 
 local function ApplyPosePreset(state)
@@ -133,6 +161,7 @@ local function ApplyPosePreset(state)
         pcall(function() Lara:SetAnim(preset.animNumber, preset.objID) end)
         pcall(function() Lara:SetFrame(preset.frameNumber) end)
     end
+    pcall(function() Lara:ResetHair() end)
 end
 
 local function ApplyExpression(state)
@@ -148,6 +177,50 @@ local function ApplyExpression(state)
             state.swappedExpressionMeshes[#state.swappedExpressionMeshes + 1] = meshIdx
         end
     end
+    pcall(function() Lara:ResetHair() end)
+end
+
+local function GetOrCreateSunglasses(state)
+    local name = Settings.Sunglasses.meshName
+    if state.sunglassesMesh then return state.sunglassesMesh end
+    if TEN.Objects.IsNameInUse(name) then
+        local mov = TEN.Objects.GetMoveableByName(name)
+        state.sunglassesMesh = mov
+        return mov
+    end
+    local pos  = Lara:GetPosition()
+    local rot  = Lara:GetRotation()
+    local room = Lara:GetRoomNumber()
+    local ok, mov = pcall(TEN.Objects.Moveable, Settings.Sunglasses.objID, name, pos, rot, room)
+    if ok and mov then
+        mov:Enable()
+        pcall(function() mov:SetColor(TEN.Color(255, 255, 255, 0)) end)
+        state.sunglassesMesh = mov
+        return mov
+    end
+    return nil
+end
+
+local function ApplySunglasses(state)
+    local mov = GetOrCreateSunglasses(state)
+    if not mov then return end
+    if state.sunglassesEnabled then
+        pcall(function() mov:SetPosition(Lara:GetPosition()) end)
+        pcall(function() mov:SetRotation(Lara:GetRotation()) end)
+        pcall(function() mov:SetAnim(Lara:GetAnim(), Lara:GetAnimSlot()) end)
+        pcall(function() mov:SetFrame(Lara:GetFrame()) end)
+        pcall(function() mov:SetColor(TEN.Color(255, 255, 255, 255)) end)
+    else
+        pcall(function() mov:SetColor(TEN.Color(255, 255, 255, 0)) end)
+    end
+end
+
+local function UpdateSunglasses(state)
+    if not state.sunglassesEnabled or not state.sunglassesMesh then return end
+    pcall(function() state.sunglassesMesh:SetPosition(Lara:GetPosition()) end)
+    pcall(function() state.sunglassesMesh:SetRotation(Lara:GetRotation()) end)
+    pcall(function() state.sunglassesMesh:SetAnim(Lara:GetAnim(), Lara:GetAnimSlot()) end)
+    pcall(function() state.sunglassesMesh:SetFrame(Lara:GetFrame()) end)
 end
 
 local function ApplyDOF(state)
@@ -189,6 +262,8 @@ local function ResetCharacter()
     state.outfitIndex     = 1
     state.weaponIndex     = 1
     state.expressionIndex = 1
+    state.sunglassesEnabled = false
+    ApplySunglasses(state)
 end
 
 local function ResetEffects()
@@ -324,12 +399,13 @@ local function BuildAllMenus()
     LevelFuncs.Engine.PhotoMode.OnCharacterAccept = function()
         local m = Menu.Get(MENU_CHARACTER)
         if not m then return end
-        if m:GetCurrentItemIndex() == 5 then
+        if m:GetCurrentItemIndex() == 6 then
             ResetCharacter()
             m:SetOptionIndexForItem(1, state.animIndex)
             m:SetOptionIndexForItem(2, state.outfitIndex)
             m:SetOptionIndexForItem(3, state.weaponIndex)
             m:SetOptionIndexForItem(4, state.expressionIndex)
+            m:SetOptionIndexForItem(5, BoolToIndex(state.sunglassesEnabled))
         end
     end
 
@@ -403,6 +479,9 @@ local function BuildAllMenus()
         elseif idx == 4 then
             state.expressionIndex = m:GetCurrentOptionIndex()
             ApplyExpression(state)
+        elseif idx == 5 then
+            state.sunglassesEnabled = IndexToBool(m:GetCurrentOptionIndex())
+            ApplySunglasses(state)
         end
     end
 
@@ -481,6 +560,7 @@ local function BuildAllMenus()
         { itemName = "pm_outfit",     options = OUTFIT_NAMES,     currentOption = state.outfitIndex },
         { itemName = "pm_weapons",    options = WEAPON_NAMES,     currentOption = state.weaponIndex },
         { itemName = "pm_expression", options = EXPRESSION_NAMES, currentOption = state.expressionIndex },
+        { itemName = "pm_sunglasses", options = BoolOptions(),     currentOption = BoolToIndex(state.sunglassesEnabled) },
         { itemName = "pm_reset",      options = { acceptString }, currentOption = 1 },
     }, "Engine.PhotoMode.OnCharacterAccept", "Engine.PhotoMode.OnCharacterOptionChange")
 
@@ -635,6 +715,15 @@ function PhotoMode.Exit()
         TEN.Effects.EmitLight(state.lightPos, TEN.Color(0, 0, 0), 0, false, Settings.Light.lightName)
     end)
 
+    -- Hide sunglasses
+    pcall(function()
+        local state = States.Get()
+        if state.sunglassesMesh then
+            state.sunglassesMesh:SetColor(TEN.Color(255, 255, 255, 0))
+            state.sunglassesEnabled = false
+        end
+    end)
+
     -- Clean up menus
     Menu.DeleteAll()
 
@@ -671,7 +760,7 @@ LevelFuncs.Engine.PhotoMode.OnLoop = function()
     if States.IsActive() then return end
 
     local state = States.Get()
-    local walkHeld = TEN.Input.IsKeyHeld(TEN.Input.ActionID.WALK)
+    local walkHeld = TEN.Input.IsKeyHeld(TEN.Input.ActionID.Q)
     local invHeld  = TEN.Input.IsKeyHeld(TEN.Input.ActionID.INVENTORY)
 
     if walkHeld or invHeld then
@@ -717,6 +806,9 @@ LevelFuncs.Engine.PhotoMode.OnFreeze = function()
 
     -- Emit light
     UpdateLightEmission()
+
+    -- Update sunglasses position to follow joint
+    UpdateSunglasses(state)
 
     -- Update and draw frames
     Frames.Update()
