@@ -56,6 +56,7 @@ local ANIM_NAMES       = BuildNames(Settings.Animations)
 local OUTFIT_NAMES     = BuildNames(Settings.Outfits)
 local WEAPON_NAMES     = BuildNames(Settings.Weapons)
 local FRAME_NAMES      = BuildNames(Settings.Frames.presets)
+local EXPRESSION_NAMES = BuildNames(Settings.Expressions)
 
 -- ============================================================================
 -- LevelFuncs callbacks for menu option changes
@@ -134,6 +135,26 @@ local function ApplyPosePreset(state)
     end
 end
 
+local function ApplyExpression(state)
+    for _, meshIdx in ipairs(state.swappedExpressionMeshes) do
+        pcall(function() Lara:UnswapMesh(meshIdx) end)
+    end
+    state.swappedExpressionMeshes = {}
+
+    local preset = Settings.Expressions[state.expressionIndex]
+    if preset and preset.objID and preset.meshIndices then
+        for _, meshIdx in ipairs(preset.meshIndices) do
+            pcall(function() Lara:SwapMesh(meshIdx, preset.objID, meshIdx) end)
+            state.swappedExpressionMeshes[#state.swappedExpressionMeshes + 1] = meshIdx
+        end
+    end
+end
+
+local function ApplyDOF(state)
+    -- Depth of Field is not yet implemented in TEN.
+    -- State values are stored for future use.
+end
+
 -- ============================================================================
 -- Reset Functions
 -- ============================================================================
@@ -142,31 +163,52 @@ local function ResetCamera()
     Camera.Reset()
 end
 
-local function ResetLens()
-    local state = States.Get()
-    state.fov  = state.entryFov
-    state.roll = state.entryRoll
-    ApplyFOV(state)
-    ApplyRoll(state)
-end
-
-local function ResetPose()
+local function ResetCharacter()
     local state = States.Get()
     if state.snapshot then
         pcall(function() Lara:SetAnim(state.snapshot.laraAnim, state.snapshot.laraAnimSlot) end)
         pcall(function() Lara:SetFrame(state.snapshot.laraFrame) end)
     end
     state.animIndex = 1
+
+    for _, meshIdx in ipairs(state.swappedMeshes) do
+        pcall(function() Lara:UnswapSkinnedMesh(meshIdx) end)
+    end
+    state.swappedMeshes = {}
+
+    for _, meshIdx in ipairs(state.swappedWeaponMeshes) do
+        pcall(function() Lara:UnswapMesh(meshIdx) end)
+    end
+    state.swappedWeaponMeshes = {}
+
+    for _, meshIdx in ipairs(state.swappedExpressionMeshes) do
+        pcall(function() Lara:UnswapMesh(meshIdx) end)
+    end
+    state.swappedExpressionMeshes = {}
+
+    state.outfitIndex     = 1
+    state.weaponIndex     = 1
+    state.expressionIndex = 1
 end
 
-local function ResetFilters()
+local function ResetEffects()
     local state = States.Get()
+    state.fov  = state.entryFov
+    state.roll = state.entryRoll
+    ApplyFOV(state)
+    ApplyRoll(state)
+
     state.filterIndex    = 1
     state.filterStrength = 1.0
     state.tintIndex      = 1
     ApplyFilter(state)
     ApplyFilterStrength(state)
     ApplyTint(state)
+
+    state.frameIndex       = 1
+    state.dofEnabled       = Settings.DepthOfField.defaultEnabled
+    state.dofFocusDistance = Settings.DepthOfField.defaultFocusDistance
+    state.dofBlurStrength  = Settings.DepthOfField.defaultBlurStrength
 end
 
 local function ResetLight()
@@ -179,22 +221,6 @@ local function ResetLight()
         state.lightShadows    = state.entryLight.shadows
         state.lightColorIndex = state.entryLight.colorIndex
     end
-end
-
-local function ResetAppearance()
-    local state = States.Get()
-    for _, meshIdx in ipairs(state.swappedMeshes) do
-        pcall(function() Lara:UnswapSkinnedMesh(meshIdx) end)
-    end
-    state.swappedMeshes = {}
-
-    for _, meshIdx in ipairs(state.swappedWeaponMeshes) do
-        pcall(function() Lara:UnswapMesh(meshIdx) end)
-    end
-    state.swappedWeaponMeshes = {}
-
-    state.outfitIndex = 1
-    state.weaponIndex = 1
 end
 
 local function PlaceLightAtCamera()
@@ -220,14 +246,11 @@ end
 -- Each header maps to one menu. Menu items use ITEMS_AND_OPTIONS type so
 -- left/right changes values while forward/back navigates items.
 
-local MENU_CAMERA  = "pm_camera"
-local MENU_LENS    = "pm_lens"
-local MENU_POSE    = "pm_pose"
-local MENU_LIGHT   = "pm_light"
-local MENU_FILTERS = "pm_filters"
-local MENU_OUTFIT  = "pm_outfit"
-local MENU_FRAMES  = "pm_frames"
-local MENU_UI      = "pm_ui"
+local MENU_CAMERA    = "pm_camera"
+local MENU_CHARACTER = "pm_character"
+local MENU_EFFECTS   = "pm_effects"
+local MENU_LIGHT     = "pm_light"
+local MENU_UI        = "pm_ui"
 
 local function NumberRange(min, max, step, format)
     local opts = {}
@@ -298,22 +321,32 @@ local function BuildAllMenus()
         if m:GetCurrentItemIndex() == 5 then ResetCamera() end
     end
 
-    LevelFuncs.Engine.PhotoMode.OnLensAccept = function()
-        local m = Menu.Get(MENU_LENS)
+    LevelFuncs.Engine.PhotoMode.OnCharacterAccept = function()
+        local m = Menu.Get(MENU_CHARACTER)
         if not m then return end
-        if m:GetCurrentItemIndex() == 3 then
-            ResetLens()
-            m:SetOptionIndexForItem(1, ValueToOptionIndex(state.fov, cfg.Lens.minFOV, cfg.Lens.fovStep))
-            m:SetOptionIndexForItem(2, ValueToOptionIndex(state.roll, cfg.Lens.minRoll, cfg.Lens.rollStep))
+        if m:GetCurrentItemIndex() == 5 then
+            ResetCharacter()
+            m:SetOptionIndexForItem(1, state.animIndex)
+            m:SetOptionIndexForItem(2, state.outfitIndex)
+            m:SetOptionIndexForItem(3, state.weaponIndex)
+            m:SetOptionIndexForItem(4, state.expressionIndex)
         end
     end
 
-    LevelFuncs.Engine.PhotoMode.OnPoseAccept = function()
-        local m = Menu.Get(MENU_POSE)
+    LevelFuncs.Engine.PhotoMode.OnEffectsAccept = function()
+        local m = Menu.Get(MENU_EFFECTS)
         if not m then return end
-        if m:GetCurrentItemIndex() == 2 then
-            ResetPose()
-            m:SetOptionIndexForItem(1, state.animIndex)
+        if m:GetCurrentItemIndex() == 10 then
+            ResetEffects()
+            m:SetOptionIndexForItem(1, ValueToOptionIndex(state.fov, cfg.Lens.minFOV, cfg.Lens.fovStep))
+            m:SetOptionIndexForItem(2, ValueToOptionIndex(state.roll, cfg.Lens.minRoll, cfg.Lens.rollStep))
+            m:SetOptionIndexForItem(3, state.filterIndex)
+            m:SetOptionIndexForItem(4, ValueToOptionIndex(state.filterStrength, 0, 0.05))
+            m:SetOptionIndexForItem(5, state.tintIndex)
+            m:SetOptionIndexForItem(6, state.frameIndex)
+            m:SetOptionIndexForItem(7, BoolToIndex(state.dofEnabled))
+            m:SetOptionIndexForItem(8, ValueToOptionIndex(state.dofFocusDistance, cfg.DepthOfField.minFocusDistance, cfg.DepthOfField.focusDistanceStep))
+            m:SetOptionIndexForItem(9, ValueToOptionIndex(state.dofBlurStrength, cfg.DepthOfField.minBlurStrength, cfg.DepthOfField.blurStrengthStep))
         end
     end
 
@@ -330,27 +363,6 @@ local function BuildAllMenus()
             m:SetOptionIndexForItem(3, ValueToOptionIndex(state.lightRadius, cfg.Light.minRadius, cfg.Light.radiusStep))
             m:SetOptionIndexForItem(4, BoolToIndex(state.lightShadows))
             m:SetOptionIndexForItem(5, state.lightColorIndex)
-        end
-    end
-
-    LevelFuncs.Engine.PhotoMode.OnFiltersAccept = function()
-        local m = Menu.Get(MENU_FILTERS)
-        if not m then return end
-        if m:GetCurrentItemIndex() == 4 then
-            ResetFilters()
-            m:SetOptionIndexForItem(1, state.filterIndex)
-            m:SetOptionIndexForItem(2, ValueToOptionIndex(state.filterStrength, 0, 0.05))
-            m:SetOptionIndexForItem(3, state.tintIndex)
-        end
-    end
-
-    LevelFuncs.Engine.PhotoMode.OnOutfitAccept = function()
-        local m = Menu.Get(MENU_OUTFIT)
-        if not m then return end
-        if m:GetCurrentItemIndex() == 3 then
-            ResetAppearance()
-            m:SetOptionIndexForItem(1, state.outfitIndex)
-            m:SetOptionIndexForItem(2, state.weaponIndex)
         end
     end
 
@@ -375,8 +387,27 @@ local function BuildAllMenus()
         end
     end
 
-    LevelFuncs.Engine.PhotoMode.OnLensOptionChange = function()
-        local m = Menu.Get(MENU_LENS)
+    LevelFuncs.Engine.PhotoMode.OnCharacterOptionChange = function()
+        local m = Menu.Get(MENU_CHARACTER)
+        if not m then return end
+        local idx = m:GetCurrentItemIndex()
+        if idx == 1 then
+            state.animIndex = m:GetCurrentOptionIndex()
+            ApplyPosePreset(state)
+        elseif idx == 2 then
+            state.outfitIndex = m:GetCurrentOptionIndex()
+            ApplyOutfit(state)
+        elseif idx == 3 then
+            state.weaponIndex = m:GetCurrentOptionIndex()
+            ApplyWeapon(state)
+        elseif idx == 4 then
+            state.expressionIndex = m:GetCurrentOptionIndex()
+            ApplyExpression(state)
+        end
+    end
+
+    LevelFuncs.Engine.PhotoMode.OnEffectsOptionChange = function()
+        local m = Menu.Get(MENU_EFFECTS)
         if not m then return end
         local idx = m:GetCurrentItemIndex()
         if idx == 1 then
@@ -385,15 +416,26 @@ local function BuildAllMenus()
         elseif idx == 2 then
             state.roll = OptionIndexToValue(m:GetCurrentOptionIndex(), cfg.Lens.minRoll, cfg.Lens.rollStep)
             ApplyRoll(state)
-        end
-    end
-
-    LevelFuncs.Engine.PhotoMode.OnPoseOptionChange = function()
-        local m = Menu.Get(MENU_POSE)
-        if not m then return end
-        if m:GetCurrentItemIndex() == 1 then
-            state.animIndex = m:GetCurrentOptionIndex()
-            ApplyPosePreset(state)
+        elseif idx == 3 then
+            state.filterIndex = m:GetCurrentOptionIndex()
+            ApplyFilter(state)
+        elseif idx == 4 then
+            state.filterStrength = OptionIndexToValue(m:GetCurrentOptionIndex(), 0, 0.05)
+            ApplyFilterStrength(state)
+        elseif idx == 5 then
+            state.tintIndex = m:GetCurrentOptionIndex()
+            ApplyTint(state)
+        elseif idx == 6 then
+            state.frameIndex = m:GetCurrentOptionIndex()
+        elseif idx == 7 then
+            state.dofEnabled = IndexToBool(m:GetCurrentOptionIndex())
+            ApplyDOF(state)
+        elseif idx == 8 then
+            state.dofFocusDistance = OptionIndexToValue(m:GetCurrentOptionIndex(), cfg.DepthOfField.minFocusDistance, cfg.DepthOfField.focusDistanceStep)
+            ApplyDOF(state)
+        elseif idx == 9 then
+            state.dofBlurStrength = OptionIndexToValue(m:GetCurrentOptionIndex(), cfg.DepthOfField.minBlurStrength, cfg.DepthOfField.blurStrengthStep)
+            ApplyDOF(state)
         end
     end
 
@@ -409,41 +451,6 @@ local function BuildAllMenus()
         end
     end
 
-    LevelFuncs.Engine.PhotoMode.OnFilterOptionChange = function()
-        local m = Menu.Get(MENU_FILTERS)
-        if not m then return end
-        local idx = m:GetCurrentItemIndex()
-        if idx == 1 then
-            state.filterIndex = m:GetCurrentOptionIndex()
-            ApplyFilter(state)
-        elseif idx == 2 then
-            state.filterStrength = OptionIndexToValue(m:GetCurrentOptionIndex(), 0, 0.05)
-            ApplyFilterStrength(state)
-        elseif idx == 3 then
-            state.tintIndex = m:GetCurrentOptionIndex()
-            ApplyTint(state)
-        end
-    end
-
-    LevelFuncs.Engine.PhotoMode.OnOutfitOptionChange = function()
-        local m = Menu.Get(MENU_OUTFIT)
-        if not m then return end
-        local idx = m:GetCurrentItemIndex()
-        if idx == 1 then
-            state.outfitIndex = m:GetCurrentOptionIndex()
-            ApplyOutfit(state)
-        elseif idx == 2 then
-            state.weaponIndex = m:GetCurrentOptionIndex()
-            ApplyWeapon(state)
-        end
-    end
-
-    LevelFuncs.Engine.PhotoMode.OnFrameOptionChange = function()
-        local m = Menu.Get(MENU_FRAMES)
-        if not m then return end
-        state.frameIndex = m:GetCurrentOptionIndex()
-    end
-
     LevelFuncs.Engine.PhotoMode.OnUIOptionChange = function()
         local m = Menu.Get(MENU_UI)
         if not m then return end
@@ -456,34 +463,48 @@ local function BuildAllMenus()
     -- CAMERA menu
     -- ================================================================
     CreateMenu(MENU_CAMERA, {
-        { itemName = "pm_mode",         options = CTRL_MODE_NAMES, currentOption = state.controlMode },
-        { itemName = "pm_move_speed",   options = NumberRange(cfg.Camera.minMoveSpeed, cfg.Camera.maxMoveSpeed, cfg.Camera.moveSpeedStep),
+        { itemName = "pm_mode",       options = CTRL_MODE_NAMES, currentOption = state.controlMode },
+        { itemName = "pm_move_speed", options = NumberRange(cfg.Camera.minMoveSpeed, cfg.Camera.maxMoveSpeed, cfg.Camera.moveSpeedStep),
           currentOption = ValueToOptionIndex(state.moveSpeed, cfg.Camera.minMoveSpeed, cfg.Camera.moveSpeedStep) },
-        { itemName = "pm_look_speed",   options = NumberRange(cfg.Camera.minLookSpeed, cfg.Camera.maxLookSpeed, cfg.Camera.lookSpeedStep,
+        { itemName = "pm_look_speed", options = NumberRange(cfg.Camera.minLookSpeed, cfg.Camera.maxLookSpeed, cfg.Camera.lookSpeedStep,
               function(v) return string.format("%.1f", v) end),
           currentOption = ValueToOptionIndex(state.lookSpeed, cfg.Camera.minLookSpeed, cfg.Camera.lookSpeedStep) },
-        { itemName = "pm_collision",    options = BoolOptions(), currentOption = BoolToIndex(state.collisionOn) },
-        { itemName = "pm_reset_camera", options = { acceptString }, currentOption = 1 },
+        { itemName = "pm_collision",  options = BoolOptions(), currentOption = BoolToIndex(state.collisionOn) },
+        { itemName = "pm_reset",      options = { acceptString }, currentOption = 1 },
     }, "Engine.PhotoMode.OnCameraAccept", "Engine.PhotoMode.OnCameraOptionChange")
 
     -- ================================================================
-    -- LENS menu
+    -- CHARACTER menu
     -- ================================================================
-    CreateMenu(MENU_LENS, {
+    CreateMenu(MENU_CHARACTER, {
+        { itemName = "pm_animation",  options = ANIM_NAMES,       currentOption = state.animIndex },
+        { itemName = "pm_outfit",     options = OUTFIT_NAMES,     currentOption = state.outfitIndex },
+        { itemName = "pm_weapons",    options = WEAPON_NAMES,     currentOption = state.weaponIndex },
+        { itemName = "pm_expression", options = EXPRESSION_NAMES, currentOption = state.expressionIndex },
+        { itemName = "pm_reset",      options = { acceptString }, currentOption = 1 },
+    }, "Engine.PhotoMode.OnCharacterAccept", "Engine.PhotoMode.OnCharacterOptionChange")
+
+    -- ================================================================
+    -- EFFECTS menu
+    -- ================================================================
+    CreateMenu(MENU_EFFECTS, {
         { itemName = "pm_fov",        options = NumberRange(cfg.Lens.minFOV, cfg.Lens.maxFOV, cfg.Lens.fovStep),
           currentOption = ValueToOptionIndex(state.fov, cfg.Lens.minFOV, cfg.Lens.fovStep) },
         { itemName = "pm_roll",       options = NumberRange(cfg.Lens.minRoll, cfg.Lens.maxRoll, cfg.Lens.rollStep),
           currentOption = ValueToOptionIndex(state.roll, cfg.Lens.minRoll, cfg.Lens.rollStep) },
-        { itemName = "pm_reset_lens", options = { acceptString }, currentOption = 1 },
-    }, "Engine.PhotoMode.OnLensAccept", "Engine.PhotoMode.OnLensOptionChange")
-
-    -- ================================================================
-    -- POSE menu
-    -- ================================================================
-    CreateMenu(MENU_POSE, {
-        { itemName = "pm_animation",  options = ANIM_NAMES, currentOption = state.animIndex },
-        { itemName = "pm_reset_pose", options = { acceptString }, currentOption = 1 },
-    }, "Engine.PhotoMode.OnPoseAccept", "Engine.PhotoMode.OnPoseOptionChange")
+        { itemName = "pm_preset",     options = FILTER_NAMES, currentOption = state.filterIndex },
+        { itemName = "pm_strength",   options = NumberRange(0, 1.0, 0.05, function(v) return string.format("%.2f", v) end),
+          currentOption = ValueToOptionIndex(state.filterStrength, 0, 0.05) },
+        { itemName = "pm_tint",       options = TINT_NAMES, currentOption = state.tintIndex },
+        { itemName = "pm_frame_overlay", options = FRAME_NAMES, currentOption = state.frameIndex },
+        { itemName = "pm_dof_enabled",options = BoolOptions(), currentOption = BoolToIndex(state.dofEnabled) },
+        { itemName = "pm_dof_focus",  options = NumberRange(cfg.DepthOfField.minFocusDistance, cfg.DepthOfField.maxFocusDistance, cfg.DepthOfField.focusDistanceStep),
+          currentOption = ValueToOptionIndex(state.dofFocusDistance, cfg.DepthOfField.minFocusDistance, cfg.DepthOfField.focusDistanceStep) },
+        { itemName = "pm_dof_blur",   options = NumberRange(cfg.DepthOfField.minBlurStrength, cfg.DepthOfField.maxBlurStrength, cfg.DepthOfField.blurStrengthStep,
+              function(v) return string.format("%.2f", v) end),
+          currentOption = ValueToOptionIndex(state.dofBlurStrength, cfg.DepthOfField.minBlurStrength, cfg.DepthOfField.blurStrengthStep) },
+        { itemName = "pm_reset",      options = { acceptString }, currentOption = 1 },
+    }, "Engine.PhotoMode.OnEffectsAccept", "Engine.PhotoMode.OnEffectsOptionChange")
 
     -- ================================================================
     -- LIGHT menu
@@ -497,35 +518,8 @@ local function BuildAllMenus()
         { itemName = "pm_color",        options = COLOR_NAMES, currentOption = state.lightColorIndex },
         { itemName = "pm_place_camera", options = { acceptString }, currentOption = 1 },
         { itemName = "pm_place_lara",   options = { acceptString }, currentOption = 1 },
-        { itemName = "pm_reset_light",  options = { acceptString }, currentOption = 1 },
+        { itemName = "pm_reset",        options = { acceptString }, currentOption = 1 },
     }, "Engine.PhotoMode.OnLightAccept", "Engine.PhotoMode.OnLightOptionChange")
-
-    -- ================================================================
-    -- FILTERS menu
-    -- ================================================================
-    CreateMenu(MENU_FILTERS, {
-        { itemName = "pm_preset",        options = FILTER_NAMES, currentOption = state.filterIndex },
-        { itemName = "pm_strength",      options = NumberRange(0, 1.0, 0.05, function(v) return string.format("%.2f", v) end),
-          currentOption = ValueToOptionIndex(state.filterStrength, 0, 0.05) },
-        { itemName = "pm_tint",          options = TINT_NAMES, currentOption = state.tintIndex },
-        { itemName = "pm_reset_filters", options = { acceptString }, currentOption = 1 },
-    }, "Engine.PhotoMode.OnFiltersAccept", "Engine.PhotoMode.OnFilterOptionChange")
-
-    -- ================================================================
-    -- OUTFIT menu
-    -- ================================================================
-    CreateMenu(MENU_OUTFIT, {
-        { itemName = "pm_outfit",  options = OUTFIT_NAMES, currentOption = state.outfitIndex },
-        { itemName = "pm_weapons", options = WEAPON_NAMES, currentOption = state.weaponIndex },
-        { itemName = "pm_reset",   options = { acceptString }, currentOption = 1 },
-    }, "Engine.PhotoMode.OnOutfitAccept", "Engine.PhotoMode.OnOutfitOptionChange")
-
-    -- ================================================================
-    -- FRAMES menu
-    -- ================================================================
-    CreateMenu(MENU_FRAMES, {
-        { itemName = "pm_frame_overlay", options = FRAME_NAMES, currentOption = state.frameIndex },
-    }, nil, "Engine.PhotoMode.OnFrameOptionChange")
 
     -- ================================================================
     -- UI menu
@@ -539,14 +533,11 @@ local function BuildAllMenus()
     -- Set up headers (STEP_LEFT / STEP_RIGHT to navigate)
     -- ================================================================
     Menu.SetHeaders({
-        { name = "pm_header_camera",  menuName = MENU_CAMERA },
-        { name = "pm_header_lens",    menuName = MENU_LENS },
-        { name = "pm_header_pose",    menuName = MENU_POSE },
-        --{ name = "pm_header_light",   menuName = MENU_LIGHT },
-        { name = "pm_header_filters", menuName = MENU_FILTERS },
-        { name = "pm_header_outfit",  menuName = MENU_OUTFIT },
-        { name = "pm_header_frames",  menuName = MENU_FRAMES },
-        { name = "pm_header_ui",      menuName = MENU_UI },
+        { name = "pm_header_camera",    menuName = MENU_CAMERA },
+        { name = "pm_header_character", menuName = MENU_CHARACTER },
+        { name = "pm_header_effects",   menuName = MENU_EFFECTS },
+        { name = "pm_header_light",     menuName = MENU_LIGHT },
+        { name = "pm_header_ui",        menuName = MENU_UI },
     })
 
     Menu.SetHeaderSpacing(12)

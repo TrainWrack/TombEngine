@@ -160,6 +160,11 @@ Settings.Weapons =
     { name = "Shotgun",  objID = TEN.Objects.ObjID.SHOTGUN_ANIM, meshIndices = {10} },
 }
 
+Settings.Expressions =
+{
+    { name = "Default", objID = nil, meshIndices = {} },
+}
+
 Settings.Animations =
 {
     { name = "Default",        objID = TEN.Objects.ObjID.LARA, animNumber = 0, frameNumber = 0 },
@@ -190,6 +195,23 @@ Settings.Frames =
         { name = "Polaroid", spriteID = 2 },
         { name = "Recording", spriteID = 3 }
     },
+}
+
+-- ============================================================================
+-- Depth of Field (placeholder -- not yet implemented in TEN)
+-- ============================================================================
+
+Settings.DepthOfField =
+{
+    defaultEnabled       = false,
+    defaultFocusDistance = 1024,
+    minFocusDistance     = 64,
+    maxFocusDistance     = 8192,
+    focusDistanceStep    = 64,
+    defaultBlurStrength  = 0.5,
+    minBlurStrength      = 0.0,
+    maxBlurStrength      = 1.0,
+    blurStrengthStep     = 0.05,
 }
 
 -- ============================================================================

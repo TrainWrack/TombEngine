@@ -5,30 +5,40 @@
 local strings =
 {
     -- Header tabs
-    pm_header_camera  = {"Camera"},
-    pm_header_lens    = {"Lens"},
-    pm_header_pose    = {"Pose"},
-    pm_header_light   = {"Light"},
-    pm_header_filters = {"Filters"},
-    pm_header_outfit  = {"Outfit"},
-    pm_header_frames  = {"Frames"},
-    pm_header_ui      = {"UI"},
+    pm_header_camera    = {"Camera"},
+    pm_header_character = {"Character"},
+    pm_header_effects   = {"Effects"},
+    pm_header_light     = {"Light"},
+    pm_header_ui        = {"UI"},
 
     -- Camera menu items
     pm_mode           = {"Mode"},
     pm_move_speed     = {"Move Speed"},
     pm_look_speed     = {"Look Speed"},
     pm_collision      = {"Collision"},
-    pm_reset_camera   = {"Reset Camera"},
 
-    -- Lens menu items
+    -- Character menu items
+    pm_animation      = {"Animation"},
+    pm_outfit         = {"Outfit"},
+    pm_weapons        = {"Weapons"},
+    pm_expression     = {"Expression"},
+
+    -- Effects menu items (Lens)
     pm_fov            = {"FOV"},
     pm_roll           = {"Roll"},
-    pm_reset_lens     = {"Reset Lens"},
 
-    -- Pose menu items
-    pm_animation      = {"Animation"},
-    pm_reset_pose     = {"Reset Pose"},
+    -- Effects menu items (Filters)
+    pm_preset         = {"Preset"},
+    pm_strength       = {"Strength"},
+    pm_tint           = {"Tint"},
+
+    -- Effects menu items (Frames)
+    pm_frame_overlay  = {"Frame"},
+
+    -- Effects menu items (Depth of Field)
+    pm_dof_enabled    = {"Depth of Field"},
+    pm_dof_focus      = {"Focus Distance"},
+    pm_dof_blur       = {"Blur Strength"},
 
     -- Light menu items
     pm_enabled        = {"Enabled"},
@@ -38,27 +48,13 @@ local strings =
     pm_color          = {"Color"},
     pm_place_camera   = {"Place at Camera"},
     pm_place_lara     = {"Place at Lara"},
-    pm_reset_light    = {"Reset Light"},
-
-    -- Filter menu items
-    pm_preset         = {"Preset"},
-    pm_strength       = {"Strength"},
-    pm_tint           = {"Tint"},
-    pm_reset_filters  = {"Reset Filters"},
-
-    -- Outfit menu items
-    pm_outfit         = {"Outfit"},
-    pm_weapons        = {"Weapons"},
-    pm_reset          = {"Reset"},
-
-    -- Frames menu items
-    pm_frame_overlay  = {"Frame"},
 
     -- UI menu items
     pm_hide_ui        = {"Hide UI"},
     pm_exit           = {"Exit Photo Mode"},
 
     -- Common
+    pm_reset          = {"Reset"},
     pm_press          = {"Accept"},
 
     -- Display strings

@@ -84,6 +84,15 @@ local State = {
     -- Frame overlay
     frameIndex = 1, -- index into Settings.Frames.presets (1 = None)
 
+    -- Expressions
+    expressionIndex         = 1,
+    swappedExpressionMeshes = {},
+
+    -- Depth of Field (placeholder)
+    dofEnabled       = false,
+    dofFocusDistance = Settings.DepthOfField.defaultFocusDistance,
+    dofBlurStrength  = Settings.DepthOfField.defaultBlurStrength,
+
     -- Entry camera state (for Reset Camera)
     entryCamPos    = nil,
     entryTargetPos = nil,
@@ -171,6 +180,11 @@ function States.RestoreSnapshot()
         pcall(function() Lara:UnswapMesh(meshIdx) end)
     end
 
+    -- Restore swapped meshes (expression - per-mesh)
+    for _, meshIdx in ipairs(State.swappedExpressionMeshes) do
+        pcall(function() Lara:UnswapMesh(meshIdx) end)
+    end
+
     TEN.View.SetFOV(snap.fov)
     TEN.View.SetRoll(0)
 
@@ -207,6 +221,11 @@ function States.ResetToEntry()
     State.swappedWeaponMeshes = {}
     State.outfitIndex         = 1
     State.weaponIndex         = 1
+    State.expressionIndex         = 1
+    State.swappedExpressionMeshes = {}
+    State.dofEnabled       = Settings.DepthOfField.defaultEnabled
+    State.dofFocusDistance = Settings.DepthOfField.defaultFocusDistance
+    State.dofBlurStrength  = Settings.DepthOfField.defaultBlurStrength
     State.frameIndex    = 1
     State.entryHoldCount = 0
 end
