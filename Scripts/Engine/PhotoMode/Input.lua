@@ -20,6 +20,11 @@ local function ForwardFromYaw(yawDeg)
     return TEN.Vec3(math.sin(rad), 0, math.cos(rad))
 end
 
+local function RightFromYaw(yawDeg)
+    local rad = math.rad(yawDeg)
+    return TEN.Vec3(math.cos(rad), 0, -math.sin(rad))
+end
+
 local function Vec3Add(a, b)
     return TEN.Vec3(a.x + b.x, a.y + b.y, a.z + b.z)
 end
@@ -43,6 +48,13 @@ local function UpdateCameraInput()
     end
     if TEN.Input.IsKeyHeld(ActionID.BACK) then
         Camera.MoveBack(speed)
+    end
+
+    -- Mouse free-look (always active)
+    local mouse = TEN.Input.GetAnalogAxisValue(TEN.Input.AxisID.MOUSE)
+    if math.abs(mouse.x) > 0.001 or math.abs(mouse.y) > 0.001 then
+        local scale = state.lookSpeed * Settings.Camera.mouseSensitivity
+        Camera.RotateView(mouse.x * scale, mouse.y * scale)
     end
 
     -- Mouse scroll dolly
@@ -117,10 +129,12 @@ local function UpdatePlayerInput()
         newPos = TEN.Vec3(newPos.x, newPos.y + speed, newPos.z)
     end
     if TEN.Input.IsKeyHeld(ActionID.STEP_LEFT) then
-        Camera.Strafe(-speed)
+        local right = RightFromYaw(laraRot.y)
+        newPos = Vec3Add(newPos, Vec3Scale(right, -speed))
     end
     if TEN.Input.IsKeyHeld(ActionID.STEP_RIGHT) then
-        Camera.Strafe(speed)
+        local right = RightFromYaw(laraRot.y)
+        newPos = Vec3Add(newPos, Vec3Scale(right, speed))
     end
 
     Lara:SetPosition(newPos)

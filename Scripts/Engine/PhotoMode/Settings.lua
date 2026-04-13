@@ -56,10 +56,11 @@ Settings.Camera =
     minMoveSpeed     = 8,
     maxMoveSpeed     = 512,
     moveSpeedStep    = 8,
-    defaultLookSpeed = 2.0,
-    minLookSpeed     = 0.5,
-    maxLookSpeed     = 5.0,
-    lookSpeedStep    = 0.5,
+    defaultLookSpeed  = 2.0,
+    minLookSpeed      = 0.5,
+    maxLookSpeed      = 5.0,
+    lookSpeedStep     = 0.5,
+    mouseSensitivity  = 30,
     offsetForward    = -512,
     offsetUp         = -256,
     targetForward    = 512,
@@ -160,6 +161,7 @@ Settings.Weapons =
     { name = "Pistols (Left)",  objID = TEN.Objects.ObjID.PISTOLS_ANIM, meshIndices = {13}, weaponType = TEN.Objects.WeaponType.PISTOLS, type = "left" },
     { name = "Pistols (Right)",  objID = TEN.Objects.ObjID.PISTOLS_ANIM, meshIndices = {10}, weaponType = TEN.Objects.WeaponType.PISTOLS, type = "right" },
     { name = "Shotgun",  objID = TEN.Objects.ObjID.SHOTGUN_ANIM, meshIndices = {10}, weaponType = TEN.Objects.WeaponType.SHOTGUN, type = "back" },
+    { name = "Uzis",  objID = TEN.Objects.ObjID.UZI_ANIM, meshIndices = {10, 13}, weaponType = TEN.Objects.WeaponType.UZIS, type = "holsters" },
     { name = "Revolver",  objID = TEN.Objects.ObjID.REVOLVER_ANIM, meshIndices = {10}, weaponType = TEN.Objects.WeaponType.REVOLVER, type = "right" },
 }
 

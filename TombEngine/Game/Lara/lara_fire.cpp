@@ -496,12 +496,15 @@ void SpawnWeaponFlash(ItemInfo& laraItem, LaraWeaponType weaponType)
 
 	bool isDualWield = (weaponType == LaraWeaponType::Pistol || weaponType == LaraWeaponType::Uzi);
 
-	player.RightArm.GunFlash = 1;
+	// Reset both arms first to clear any previously set flash from a different weapon type.
+	player.LeftArm.GunFlash = 0;
+	player.RightArm.GunFlash = 0;
+
+	player.RightArm.GunFlash = settings.FlashDuration;
 	if (isDualWield)
-		player.LeftArm.GunFlash = 1;
+		player.LeftArm.GunFlash = settings.FlashDuration;
 
 	auto color = Color(settings.FlashColor);
-	color += Color(Random::GenerateFloat(-0.2f, 0.2f));
 
 	if (isDualWield)
 	{
@@ -514,10 +517,6 @@ void SpawnWeaponFlash(ItemInfo& laraItem, LaraWeaponType weaponType)
 		auto pos = GetJointPosition(&laraItem, LM_RHAND, offset);
 		SpawnDynamicPointLight(pos.ToVector3(), color, CLICK(settings.FlashRange));
 	}
-
-	player.RightArm.GunFlash = 0;
-	if (isDualWield)
-		player.LeftArm.GunFlash = 0;
 
 
 }

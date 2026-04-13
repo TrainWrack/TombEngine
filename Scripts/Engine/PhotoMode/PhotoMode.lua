@@ -223,6 +223,13 @@ local function UpdateSunglasses(state)
     pcall(function() state.sunglassesMesh:SetFrame(Lara:GetFrame()) end)
 end
 
+local function UpdateGunFlash(state)
+    if not state.gunflashEnabled then return end
+    local preset = Settings.Weapons[state.weaponIndex]
+    if not preset or preset.weaponType == TEN.Objects.WeaponType.NONE then return end
+    pcall(function() Lara:SpawnGunFlash(preset.weaponType) end)
+end
+
 local function ApplyDOF(state)
     -- Depth of Field is not yet implemented in TEN.
     -- State values are stored for future use.
@@ -263,6 +270,7 @@ local function ResetCharacter()
     state.weaponIndex     = 1
     state.expressionIndex = 1
     state.sunglassesEnabled = false
+    state.gunflashEnabled   = false
     ApplySunglasses(state)
 end
 
@@ -399,13 +407,14 @@ local function BuildAllMenus()
     LevelFuncs.Engine.PhotoMode.OnCharacterAccept = function()
         local m = Menu.Get(MENU_CHARACTER)
         if not m then return end
-        if m:GetCurrentItemIndex() == 6 then
+        if m:GetCurrentItemIndex() == 7 then
             ResetCharacter()
             m:SetOptionIndexForItem(1, state.animIndex)
             m:SetOptionIndexForItem(2, state.outfitIndex)
             m:SetOptionIndexForItem(3, state.weaponIndex)
             m:SetOptionIndexForItem(4, state.expressionIndex)
             m:SetOptionIndexForItem(5, BoolToIndex(state.sunglassesEnabled))
+            m:SetOptionIndexForItem(6, BoolToIndex(state.gunflashEnabled))
         end
     end
 
@@ -482,6 +491,8 @@ local function BuildAllMenus()
         elseif idx == 5 then
             state.sunglassesEnabled = IndexToBool(m:GetCurrentOptionIndex())
             ApplySunglasses(state)
+        elseif idx == 6 then
+            state.gunflashEnabled = IndexToBool(m:GetCurrentOptionIndex())
         end
     end
 
@@ -561,6 +572,7 @@ local function BuildAllMenus()
         { itemName = "pm_weapons",    options = WEAPON_NAMES,     currentOption = state.weaponIndex },
         { itemName = "pm_expression", options = EXPRESSION_NAMES, currentOption = state.expressionIndex },
         { itemName = "pm_sunglasses", options = BoolOptions(),     currentOption = BoolToIndex(state.sunglassesEnabled) },
+        { itemName = "pm_gunflash",   options = BoolOptions(),     currentOption = BoolToIndex(state.gunflashEnabled) },
         { itemName = "pm_reset",      options = { acceptString }, currentOption = 1 },
     }, "Engine.PhotoMode.OnCharacterAccept", "Engine.PhotoMode.OnCharacterOptionChange")
 
@@ -809,6 +821,9 @@ LevelFuncs.Engine.PhotoMode.OnFreeze = function()
 
     -- Update sunglasses position to follow joint
     UpdateSunglasses(state)
+
+    -- Emit gun flash if enabled
+    UpdateGunFlash(state)
 
     -- Update and draw frames
     Frames.Update()

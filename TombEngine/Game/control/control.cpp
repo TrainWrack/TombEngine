@@ -310,6 +310,17 @@ GameStatus FreezePhase()
 	// Track previous player animation to queue hair update if needed.
 	int lastAnimNumber = LaraItem->Animation.AnimNumber;
 
+	// Decrement gun flash counters for spectator mode before the script runs, as HandleWeapon is not called there.
+	// Values set by SpawnWeaponFlash in the script will then survive to render time.
+	if (g_GameFlow->LastFreezeMode == FreezeMode::Spectator)
+	{
+		auto& player = GetLaraInfo(*LaraItem);
+		if (player.LeftArm.GunFlash > 0)
+			--player.LeftArm.GunFlash;
+		if (player.RightArm.GunFlash > 0)
+			--player.RightArm.GunFlash;
+	}
+
 	// Poll controls and call scripting events.
 	HandleControls(false);
 	g_GameScript->OnFreeze();

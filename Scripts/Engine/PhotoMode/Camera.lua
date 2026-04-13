@@ -182,4 +182,18 @@ function Camera.AdjustTargetVertical(speed)
     state.cameraTarget:SetPosition(newTgt)
 end
 
+-- Rotate the camera view freely (yaw = horizontal, pitch = vertical).
+function Camera.RotateView(yawDeg, pitchDeg)
+    local state  = States.Get()
+    local camPos = state.cameraMesh:GetPosition()
+    local tgtPos = state.cameraTarget:GetPosition()
+
+    local offset  = TEN.Vec3(tgtPos.x - camPos.x, tgtPos.y - camPos.y, tgtPos.z - camPos.z)
+    local rotated = offset:Rotate(TEN.Rotation(pitchDeg, yawDeg, 0))
+    local newTgt  = TEN.Vec3(camPos.x + rotated.x, camPos.y + rotated.y, camPos.z + rotated.z)
+
+    state.cameraMesh:SetPosition(camPos)
+    state.cameraTarget:SetPosition(newTgt)
+end
+
 return Camera

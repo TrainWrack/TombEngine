@@ -102,6 +102,9 @@ local State = {
 
     -- Sunglasses
     sunglassesEnabled = false,
+
+    -- Gun Flash
+    gunflashEnabled = false,
 }
 
 -- ============================================================================
@@ -242,6 +245,7 @@ function States.ResetToEntry()
     State.dofBlurStrength  = Settings.DepthOfField.defaultBlurStrength
     State.frameIndex        = 1
     State.sunglassesEnabled = false
+    State.gunflashEnabled   = false
     State.entryHoldCount    = 0
 end
 

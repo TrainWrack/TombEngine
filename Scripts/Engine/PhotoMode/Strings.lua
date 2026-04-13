@@ -23,6 +23,7 @@ local strings =
     pm_weapons        = {"Weapons"},
     pm_expression     = {"Expression"},
     pm_sunglasses     = {"Sunglasses"},
+    pm_gunflash       = {"Gun Flash"},
 
     -- Effects menu items (Lens)
     pm_fov            = {"FOV"},
