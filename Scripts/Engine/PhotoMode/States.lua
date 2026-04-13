@@ -60,8 +60,7 @@ local State = {
     roll = Settings.Lens.defaultRoll,
 
     -- Pose
-    animIndex = 0,
-    animFrame = 0,
+    animIndex = 1,
 
     -- Light
     lightEnabled    = Settings.Light.defaultEnabled,
@@ -77,9 +76,10 @@ local State = {
     tintIndex      = 1,
 
     -- Outfit / Weapons
-    swappedMeshes = {},
-    outfitIndex   = 1,
-    weaponIndex   = 1,
+    swappedMeshes       = {},
+    swappedWeaponMeshes = {},
+    outfitIndex         = 1,
+    weaponIndex         = 1,
 
     -- Frame overlay
     frameIndex = 1, -- index into Settings.Frames.presets (1 = None)
@@ -161,9 +161,14 @@ function States.RestoreSnapshot()
     pcall(function() Lara:SetFrame(snap.laraFrame) end)
     pcall(function() Lara:SetState(snap.laraState) end)
 
-    -- Restore swapped meshes
+    -- Restore swapped meshes (outfit - skinned)
     for _, meshIdx in ipairs(State.swappedMeshes) do
         pcall(function() Lara:UnswapSkinnedMesh(meshIdx) end)
+    end
+
+    -- Restore swapped meshes (weapon - per-mesh)
+    for _, meshIdx in ipairs(State.swappedWeaponMeshes) do
+        pcall(function() Lara:UnswapMesh(meshIdx) end)
     end
 
     TEN.View.SetFOV(snap.fov)
@@ -188,8 +193,7 @@ function States.ResetToEntry()
     State.collisionOn   = true
     State.fov           = State.snapshot and State.snapshot.fov or Settings.Lens.defaultFOV
     State.roll          = Settings.Lens.defaultRoll
-    State.animIndex     = State.snapshot and State.snapshot.laraAnim or 0
-    State.animFrame     = State.snapshot and State.snapshot.laraFrame or 0
+    State.animIndex     = 1
     State.lightEnabled  = Settings.Light.defaultEnabled
     State.lightSource   = States.LightSource.MANUAL
     State.lightRadius   = Settings.Light.defaultRadius
@@ -198,10 +202,11 @@ function States.ResetToEntry()
     State.filterIndex   = 1
     State.filterStrength = 1.0
     State.tintIndex     = 1
-    State.hideUI        = false
-    State.swappedMeshes = {}
-    State.outfitIndex   = 1
-    State.weaponIndex   = 1
+    State.hideUI             = false
+    State.swappedMeshes       = {}
+    State.swappedWeaponMeshes = {}
+    State.outfitIndex         = 1
+    State.weaponIndex         = 1
     State.frameIndex    = 1
     State.entryHoldCount = 0
 end

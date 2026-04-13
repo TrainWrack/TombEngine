@@ -134,10 +134,12 @@ Settings.Filters =
     tints =
     {
         { name = "Neutral", color = TEN.Color(255, 255, 255) },
-        { name = "Warm",    color = TEN.Color(255, 230, 200) },
-        { name = "Cool",    color = TEN.Color(200, 220, 255) },
-        { name = "Green",   color = TEN.Color(200, 255, 200) },
-        { name = "Magenta", color = TEN.Color(255, 200, 255) },
+        { name = "Warm",    color = TEN.Color(255, 160,  80) },
+        { name = "Cool",    color = TEN.Color( 80, 160, 255) },
+        { name = "Green",   color = TEN.Color( 80, 255,  80) },
+        { name = "Magenta", color = TEN.Color(255,  80, 255) },
+        { name = "Red",     color = TEN.Color(255,  80,  80) },
+        { name = "Sepia",   color = TEN.Color(255, 200, 120) },
     },
 }
 
@@ -153,10 +155,16 @@ Settings.Outfits =
 
 Settings.Weapons =
 {
-    { name = "Default",  meshIndices = {} },
-    { name = "Pistols",  meshIndices = {1, 4} },
-    { name = "Shotgun",  meshIndices = {7} },
-    { name = "Unarmed",  meshIndices = {} },
+    { name = "Default", objID = TEN.Objects.ObjID.LARA_SKIN, meshIndices = {} },
+    { name = "Pistols",  objID = TEN.Objects.ObjID.PISTOLS_ANIM, meshIndices = {10, 13} },
+    { name = "Shotgun",  objID = TEN.Objects.ObjID.SHOTGUN_ANIM, meshIndices = {10} },
+}
+
+Settings.Animations =
+{
+    { name = "Default",        objID = TEN.Objects.ObjID.LARA, animNumber = 0, frameNumber = 0 },
+    { name = "Alternate Skin", objID = TEN.Objects.ObjID.LARA, animNumber = 1, frameNumber = 0 },
+    { name = "Waking Up", objID = TEN.Objects.ObjID.LARA_EXTRA_ANIMS, animNumber = 1, frameNumber = 149 },
 }
 
 -- ============================================================================
@@ -165,7 +173,7 @@ Settings.Weapons =
 
 Settings.Frames =
 {
-    objectID  = TEN.Objects.ObjID.CUSTOM_SPRITES,
+    objectID  = TEN.Objects.ObjID.DIARY_ENTRY_SPRITES,
     position  = TEN.Vec2(50, 50),
     rotation  = 0,
     scale     = TEN.Vec2(100, 100),
@@ -177,9 +185,10 @@ Settings.Frames =
     presets   =
     {
         { name = "None",    spriteID = -1 },
-        { name = "Frame 1", spriteID = 0 },
-        { name = "Frame 2", spriteID = 1 },
-        { name = "Frame 3", spriteID = 2 },
+        { name = "Cinematic Bars", spriteID = 0 },
+        { name = "Tomb Raider Logo", spriteID = 1 },
+        { name = "Polaroid", spriteID = 2 },
+        { name = "Recording", spriteID = 3 }
     },
 }
 

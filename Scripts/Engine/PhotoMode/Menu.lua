@@ -99,6 +99,12 @@ function Menu.SetHeaders(headerList)
     ActiveHeader = 1
 end
 
+function Menu.SetHeaderSpacing(spacing)
+
+    Headers.spacing = spacing
+
+end
+
 --- Get the currently selected header index.
 function Menu.GetActiveHeaderIndex()
     return ActiveHeader
@@ -174,7 +180,7 @@ end
 function Menu.DrawHeaders(position, scale, alpha)
     if #Headers == 0 or alpha < 1 then return end
 
-    local spacing = 18  -- percent spacing between header labels
+    local spacing = Headers.spacing or 18  -- percent spacing between header labels
     local totalWidth = (#Headers - 1) * spacing
     local startX = position.x - totalWidth / 2
 
@@ -188,20 +194,12 @@ function Menu.DrawHeaders(position, scale, alpha)
             or  { Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER }
 
         local pos = TEN.Util.PercentToScreen(TEN.Vec2(x, position.y))
-
-        -- Draw translated name; wrap active header in brackets
-        if isActive then
-            -- Bracket prefix
-            local bracketL = TEN.Strings.DisplayString(
-                "[ ", pos, scale or 1.0,
-                ColorCombine(color, alpha), false, flags
-            )
-            TEN.Strings.ShowString(bracketL, 1 / 30)
-        end
+        local string = TEN.Flow.GetString(header.name)
+        local displayText = isActive and ("[ " .. string .. " ]") or string
 
         local textObj = TEN.Strings.DisplayString(
-            header.name, pos, scale or 1.0,
-            ColorCombine(color, alpha), true, flags
+            displayText, pos, scale or 1.0,
+            ColorCombine(color, alpha), false, flags
         )
         TEN.Strings.ShowString(textObj, 1 / 30)
     end

@@ -27,8 +27,7 @@ local strings =
     pm_reset_lens     = {"Reset Lens"},
 
     -- Pose menu items
-    pm_anim_index     = {"Anim Index"},
-    pm_frame          = {"Frame"},
+    pm_animation      = {"Animation"},
     pm_reset_pose     = {"Reset Pose"},
 
     -- Light menu items
@@ -60,7 +59,7 @@ local strings =
     pm_exit           = {"Exit Photo Mode"},
 
     -- Common
-    pm_press          = {"[Action]"},
+    pm_press          = {"Accept"},
 
     -- Display strings
     pm_help           = {"StepL/R=Tab  Up/Down=Select  Left/Right=Adjust  Look=Hide UI  Inventory=Exit"},

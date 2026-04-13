@@ -93,17 +93,9 @@ function Camera.PlaceInitial()
 
     local cfg = Settings.Camera
 
-    local camPos = TEN.Vec3(
-        laraPos.x + fwd.x * cfg.offsetForward,
-        laraPos.y + cfg.offsetUp,
-        laraPos.z + fwd.z * cfg.offsetForward
-    )
+    local camPos = TEN.View.GetCameraPosition()
 
-    local targetPos = TEN.Vec3(
-        laraPos.x + fwd.x * cfg.targetForward,
-        laraPos.y + cfg.targetUp,
-        laraPos.z + fwd.z * cfg.targetForward
-    )
+    local targetPos = TEN.View.GetCameraTarget()
 
     state.cameraMesh:SetPosition(camPos)
     state.cameraTarget:SetPosition(targetPos)
