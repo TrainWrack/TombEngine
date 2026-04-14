@@ -213,6 +213,7 @@ void Moveable::Register(sol::state& state, sol::table& parent)
 		ScriptReserved_SetSkinnedMesh, & Moveable::SetSkinnedMesh,
 		ScriptReserved_SwapSkinnedMesh, &Moveable::SwapSkinnedMesh,
 		ScriptReserved_UnswapSkinnedMesh, &Moveable::UnswapSkinnedMesh,
+		ScriptReserved_ClearSkinnedMesh, & Moveable::ClearSkinnedMesh,
 		ScriptReserved_Destroy, &Moveable::Destroy,
 		ScriptReserved_AttachObjCamera, &Moveable::AttachObjCamera,
 		ScriptReserved_AnimFromObject, &Moveable::AnimFromObject,

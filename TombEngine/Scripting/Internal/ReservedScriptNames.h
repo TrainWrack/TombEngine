@@ -208,6 +208,7 @@ static constexpr char ScriptReserved_GetSkinnedMesh[]		= "GetSkinnedMesh";
 static constexpr char ScriptReserved_SetSkinnedMesh[]		= "SetSkinnedMesh";
 static constexpr char ScriptReserved_SwapSkinnedMesh[]		= "SwapSkinnedMesh";
 static constexpr char ScriptReserved_UnswapSkinnedMesh[]	= "UnswapSkinnedMesh";
+static constexpr char ScriptReserved_ClearSkinnedMesh[]		= "ClearSkinnedMesh";
 static constexpr char ScriptReserved_GetHitStatus[]			= "GetHitStatus";
 static constexpr char ScriptReserved_GetActive[]			= "GetActive";
 static constexpr char ScriptReserved_GetRoom[]				= "GetRoom";
