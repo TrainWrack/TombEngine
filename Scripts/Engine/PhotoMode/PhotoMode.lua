@@ -103,7 +103,12 @@ end
 
 local function ResetCurrentOutfit(state)
     if state.appliedOutfitType == "skin" then
-        pcall(function() Lara:UnswapSkinnedMesh() end)
+        -- Restore visibility of any classic mesh slots we hid for this outfit.
+        for _, i in ipairs(state.hiddenMeshesForOutfit or {}) do
+            pcall(function() Lara:SetMeshVisible(i, true) end)
+        end
+        state.hiddenMeshesForOutfit = {}
+        pcall(function() Lara:ClearSkinnedMesh() end)
     elseif state.appliedOutfitType == "classic" then
         pcall(function() Lara:SetSkin(nil, nil, nil, nil, nil) end)
     end
@@ -111,24 +116,51 @@ local function ResetCurrentOutfit(state)
 end
 
 local function ApplyOutfit(state)
+    local prevType = state.appliedOutfitType
     ResetCurrentOutfit(state)
 
-    local preset = Settings.Outfits[state.outfitIndex]
+    local preset  = Settings.Outfits[state.outfitIndex]
+    local snap    = state.snapshot
+
+    -- Default outfit: restore entry appearance.
     if not preset or not preset.objID then
+        if snap and snap.skinnedMeshIndex then
+            pcall(function() Lara:SetSkinnedMesh(snap.skinnedMeshIndex) end)
+        end
         pcall(function() Lara:ResetHair() end)
         return
     end
 
     if preset.type == "skin" then
-        -- objID table: first element is the slot; preset.index is optional swapIndex
+        -- SwapSkinnedMesh replaces whatever skinned mesh is currently active,
+        -- so no extra clear is needed when coming from skin → skin or from the
+        -- entry skinned mesh. objectID may be nil (engine uses no-object swap).
         local objectID = preset.objID[1]
-        if objectID then
-            pcall(function() Lara:SwapSkinnedMesh(objectID, preset.index) end)
-            state.appliedOutfitType = "skin"
+        pcall(function() Lara:SwapSkinnedMesh(objectID, preset.index) end)
+        state.appliedOutfitType = "skin"
+
+        -- Hide all classic mesh slots except those listed in keepMeshes.
+        state.hiddenMeshesForOutfit = {}
+        local keep = {}
+        if preset.keepMeshes then
+            for _, idx in ipairs(preset.keepMeshes) do keep[idx] = true end
         end
+        for i = 0, 14 do
+            if not keep[i] then
+                pcall(function() Lara:SetMeshVisible(i, false) end)
+                state.hiddenMeshesForOutfit[#state.hiddenMeshesForOutfit + 1] = i
+            end
+        end
+
     elseif preset.type == "classic" then
-        -- Unpack up to 5 positional args: skin, skinJoints, skinScream, hair1, hair2
-        -- Missing entries are nil, which SetSkin treats as "leave unchanged"
+        -- If entering classic mode while the entry skinned mesh is still active
+        -- (prevType == nil means no photo-mode outfit was applied yet), clear it
+        -- first so both systems are not active simultaneously.
+        if prevType == nil and snap and snap.skinnedMeshIndex then
+            pcall(function() Lara:ClearSkinnedMesh() end)
+        end
+        -- Unpack up to 5 positional args: skin, skinJoints, skinScream, hair1, hair2.
+        -- Missing table entries are nil, treated by SetSkin as "leave unchanged".
         local ids = preset.objID
         pcall(function()
             Lara:SetSkin(ids[1], ids[2], ids[3], ids[4], ids[5])
@@ -281,6 +313,12 @@ local function ResetCharacter()
     state.animIndex = 1
 
     ResetCurrentOutfit(state)
+
+    -- Restore the skinned mesh that was active when photo mode was entered.
+    local snap = state.snapshot
+    if snap and snap.skinnedMeshIndex then
+        pcall(function() Lara:SetSkinnedMesh(snap.skinnedMeshIndex) end)
+    end
 
     for _, meshIdx in ipairs(state.swappedWeaponMeshes) do
         pcall(function() Lara:UnswapMesh(meshIdx) end)

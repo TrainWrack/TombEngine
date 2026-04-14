@@ -76,10 +76,11 @@ local State = {
     tintIndex      = 1,
 
     -- Outfit / Weapons
-    appliedOutfitType   = nil,
-    swappedWeaponMeshes = {},
-    outfitIndex         = 1,
-    weaponIndex         = 1,
+    appliedOutfitType      = nil,
+    hiddenMeshesForOutfit  = {},
+    swappedWeaponMeshes    = {},
+    outfitIndex            = 1,
+    weaponIndex            = 1,
 
     -- Frame overlay
     frameIndex = 1, -- index into Settings.Frames.presets (1 = None)
@@ -165,6 +166,10 @@ function States.CaptureSnapshot()
     snap.camPos         = nil
     snap.targetPos      = nil
     snap.hideUI         = false
+    -- Capture skinned mesh state (GPU skinning slot)
+    local ok, skinIdx = pcall(function() return Lara:GetSkinnedMesh() end)
+    snap.skinnedMeshIndex = (ok and skinIdx ~= nil) and skinIdx or nil
+
     -- Capture per-mesh swap state for all 15 Lara meshes (0-14)
     snap.meshSwaps = {}
     for i = 0, 14 do
@@ -189,13 +194,21 @@ function States.RestoreSnapshot()
     pcall(function() Lara:SetFrame(snap.laraFrame) end)
     pcall(function() Lara:SetState(snap.laraState) end)
 
-    -- Restore outfit swap on exit
+    -- Restore outfit swap on exit.
     if State.appliedOutfitType == "skin" then
-        pcall(function() Lara:UnswapSkinnedMesh() end)
+        -- Restore visibility of any classic mesh slots that were hidden.
+        for _, i in ipairs(State.hiddenMeshesForOutfit or {}) do
+            pcall(function() Lara:SetMeshVisible(i, true) end)
+        end
+        pcall(function() Lara:ClearSkinnedMesh() end)
     elseif State.appliedOutfitType == "classic" then
         pcall(function() Lara:SetSkin(nil, nil, nil, nil, nil) end)
     end
 
+    -- Restore original skinned mesh if one was active at entry.
+    if snap.skinnedMeshIndex then
+        pcall(function() Lara:SetSkinnedMesh(snap.skinnedMeshIndex) end)
+    end
     -- Restore swapped meshes (weapon - per-mesh)
     for _, meshIdx in ipairs(State.swappedWeaponMeshes) do
         pcall(function() Lara:UnswapMesh(meshIdx) end)
@@ -249,9 +262,10 @@ function States.ResetToEntry()
     State.filterStrength = 1.0
     State.tintIndex     = 1
     State.hideUI             = false
-    State.appliedOutfitType   = nil
-    State.swappedWeaponMeshes = {}
-    State.outfitIndex         = 1
+    State.appliedOutfitType      = nil
+    State.hiddenMeshesForOutfit  = {}
+    State.swappedWeaponMeshes    = {}
+    State.outfitIndex            = 1
     State.weaponIndex         = 1
     State.expressionIndex         = 1
     State.swappedExpressionMeshes = {}

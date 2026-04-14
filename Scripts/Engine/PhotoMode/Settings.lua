@@ -149,9 +149,21 @@ Settings.Filters =
 
 Settings.Outfits =
 {
-    { name = "Default",        objID = nil },
-    { name = "Alternate Skin", objID = {TEN.Objects.ObjID.LARA_SKIN, TEN.Objects.ObjID.LARA_SKIN_JOINTS, TEN.Objects.ObjID.LARA_SCREAM, TEN.Objects.ObjID.HAIR_PRIMARY,  TEN.Objects.ObjID.HAIR_SECONDARY}, type = "classic" },
-    { name = "Alternate Skin 2", objID = {TEN.Objects.ObjID.LARA_SKIN}, index = 0, type = "skin" },
+    -- Default: restores whatever skinned/classic outfit was active on entry.
+    { name = "Default",         objID = nil },
+
+    -- Classic type: uses Lara:SetSkin to swap the classic skin/hair objects.
+    -- Provide objIDs in order: skin, skinJoints, skinScream, hair1, hair2.
+    -- Omit or set nil for any you don't want to change.
+    { name = "Alternate Skin",  objID = {TEN.Objects.ObjID.LARA_SKIN, TEN.Objects.ObjID.LARA_SKIN_JOINTS, TEN.Objects.ObjID.LARA_SCREAM, TEN.Objects.ObjID.HAIR_PRIMARY,  TEN.Objects.ObjID.HAIR_SECONDARY}, type = "classic" },
+
+    -- Skin type: uses Lara:SwapSkinnedMesh (GPU skinning slot).
+    -- objID[1]    = the object slot to pull the skinned mesh from.
+    -- index       = bone-mesh index inside that slot (nil = no index passed).
+    -- keepMeshes  = classic mesh slot indices (0-14) to leave visible alongside
+    --               the skinned mesh. All others are hidden while this outfit is active.
+    { name = "TEN",   objID = {TEN.Objects.ObjID.LARA_EXTRA_MESH1}, index = 0,  type = "skin", keepMeshes = {} },
+    { name = "Jeans", objID = {TEN.Objects.ObjID.LARA_EXTRA_MESH2}, index = 15, type = "skin", keepMeshes = {} },
 }
 
 Settings.Weapons =
@@ -185,49 +197,49 @@ Settings.Animations =
 {
     { name = "Default",        objID = TEN.Objects.ObjID.LARA, animNumber = 0, frameNumber = 0 },
     { name = "Waking Up", objID = TEN.Objects.ObjID.LARA_EXTRA_ANIMS, animNumber = 1, frameNumber = 149 },
-    { name = "0",   objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 0,  frameNumber = 0 },
-    { name = "1",   objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 1,  frameNumber = 0 },
-    { name = "2",   objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 2,  frameNumber = 0 },
-    { name = "3",   objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 3,  frameNumber = 0 },
-    { name = "4",   objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 4,  frameNumber = 0 },
-    { name = "5",   objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 5,  frameNumber = 0 },
-    { name = "6",   objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 6,  frameNumber = 0 },
-    { name = "7",   objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 7,  frameNumber = 0 },
-    { name = "8",   objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 8,  frameNumber = 0 },
-    { name = "9",   objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 9,  frameNumber = 0 },
-    { name = "10",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 10, frameNumber = 0 },
-    { name = "11",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 11, frameNumber = 0 },
-    { name = "12",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 12, frameNumber = 0 },
-    { name = "13",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 13, frameNumber = 0 },
-    { name = "14",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 14, frameNumber = 0 },
-    { name = "15",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 15, frameNumber = 0 },
-    { name = "16",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 16, frameNumber = 0 },
-    { name = "17",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 17, frameNumber = 0 },
-    { name = "18",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 18, frameNumber = 0 },
-    { name = "19",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 19, frameNumber = 0 },
-    { name = "20",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 20, frameNumber = 0 },
-    { name = "21",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 21, frameNumber = 0 },
-    { name = "22",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 22, frameNumber = 0 },
-    { name = "23",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 23, frameNumber = 0 },
-    { name = "24",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 24, frameNumber = 0 },
-    { name = "25",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 25, frameNumber = 0 },
-    { name = "26",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 26, frameNumber = 0 },
-    { name = "27",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 27, frameNumber = 0 },
-    { name = "28",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 28, frameNumber = 0 },
-    { name = "29",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 29, frameNumber = 0 },
-    { name = "30",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 30, frameNumber = 0 },
-    { name = "31",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 31, frameNumber = 0 },
-    { name = "32",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 32, frameNumber = 0 },
-    { name = "33",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 33, frameNumber = 0 },
-    { name = "34",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 34, frameNumber = 0 },
-    { name = "35",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 35, frameNumber = 0 },
-    { name = "36",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 36, frameNumber = 0 },
-    { name = "37",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 37, frameNumber = 0 },
-    { name = "38",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 38, frameNumber = 0 },
-    { name = "39",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 39, frameNumber = 0 },
-    { name = "40",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 40, frameNumber = 0 },
-    { name = "41",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 41, frameNumber = 0 },
-    { name = "42",  objID = TEN.Objects.ObjID.LARA_SKIN, animNumber = 42, frameNumber = 0 },
+    { name = "0",   objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 0,  frameNumber = 0 },
+    { name = "1",   objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 1,  frameNumber = 0 },
+    { name = "2",   objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 2,  frameNumber = 0 },
+    { name = "3",   objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 3,  frameNumber = 0 },
+    { name = "4",   objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 4,  frameNumber = 0 },
+    { name = "5",   objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 5,  frameNumber = 0 },
+    { name = "6",   objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 6,  frameNumber = 0 },
+    { name = "7",   objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 7,  frameNumber = 0 },
+    { name = "8",   objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 8,  frameNumber = 0 },
+    { name = "9",   objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 9,  frameNumber = 0 },
+    { name = "10",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 10, frameNumber = 0 },
+    { name = "11",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 11, frameNumber = 0 },
+    { name = "12",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 12, frameNumber = 0 },
+    { name = "13",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 13, frameNumber = 0 },
+    { name = "14",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 14, frameNumber = 0 },
+    { name = "15",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 15, frameNumber = 0 },
+    { name = "16",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 16, frameNumber = 0 },
+    { name = "17",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 17, frameNumber = 0 },
+    { name = "18",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 18, frameNumber = 0 },
+    { name = "19",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 19, frameNumber = 0 },
+    { name = "20",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 20, frameNumber = 0 },
+    { name = "21",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 21, frameNumber = 0 },
+    { name = "22",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 22, frameNumber = 0 },
+    { name = "23",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 23, frameNumber = 0 },
+    { name = "24",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 24, frameNumber = 0 },
+    { name = "25",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 25, frameNumber = 0 },
+    { name = "26",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 26, frameNumber = 0 },
+    { name = "27",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 27, frameNumber = 0 },
+    { name = "28",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 28, frameNumber = 0 },
+    { name = "29",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 29, frameNumber = 0 },
+    { name = "30",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 30, frameNumber = 0 },
+    { name = "31",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 31, frameNumber = 0 },
+    { name = "32",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 32, frameNumber = 0 },
+    { name = "33",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 33, frameNumber = 0 },
+    { name = "34",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 34, frameNumber = 0 },
+    { name = "35",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 35, frameNumber = 0 },
+    { name = "36",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 36, frameNumber = 0 },
+    { name = "37",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 37, frameNumber = 0 },
+    { name = "38",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 38, frameNumber = 0 },
+    { name = "39",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 39, frameNumber = 0 },
+    { name = "40",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 40, frameNumber = 0 },
+    { name = "41",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 41, frameNumber = 0 },
+    { name = "42",  objID = TEN.Objects.ObjID.LARA_BIGGUN_ANIM, animNumber = 42, frameNumber = 0 },
 }
 
 -- ============================================================================

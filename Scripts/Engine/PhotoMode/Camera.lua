@@ -25,21 +25,32 @@ end
 -- Create / Destroy
 -- ============================================================================
 
-local function GetOrCreate(name)
-    local exists = TEN.Objects.IsNameInUse(name)
-    if exists then return TEN.Objects.GetMoveableByName(name), false end
+local function IsValidPosition(pos)
+    local ok, probe = pcall(TEN.Collision.Probe, pos)
+    return ok and probe ~= nil
+end
 
+local function CreateAtLara(name)
     local pos  = Lara:GetPosition()
     local rot  = TEN.Rotation(0, 0, 0)
     local room = Lara:GetRoomNumber()
-
     local ok, mov = pcall(TEN.Objects.Moveable,
         TEN.Objects.ObjID.CAMERA_TARGET, name, pos, rot, room)
     if ok and mov then
         mov:Enable()
-        return mov, true
+        return mov
     end
-    return nil, false
+    return nil
+end
+
+local function GetOrCreate(name)
+    if TEN.Objects.IsNameInUse(name) then
+        local mov = TEN.Objects.GetMoveableByName(name)
+        if mov then return mov, false end
+        -- Name registered but moveable is invalid (was OOB-killed); recreate it.
+        TEN.Util.PrintLog("PhotoMode: Recreating invalid object '" .. name .. "'.", TEN.Util.LogLevel.WARNING)
+    end
+    return CreateAtLara(name), true
 end
 
 function Camera.Init()
@@ -59,12 +70,37 @@ function Camera.Init()
     return true
 end
 
+local function LaraOffsetPosition(forwardOffset, upOffset)
+    local pos = Lara:GetPosition()
+    local rot = Lara:GetRotation()
+    local forward = TEN.Vec3(0, 0, 1):Rotate(rot)
+    return TEN.Vec3(
+        pos.x + forward.x * forwardOffset,
+        pos.y + upOffset,
+        pos.z + forward.z * forwardOffset
+    )
+end
+
 function Camera.PlaceInitial()
     local state = States.Get()
     if not state.cameraMesh or not state.cameraTarget then return end
 
+    local cfg = Settings.Camera
+
+    -- Try to start from the current game camera; fall back to Lara-based offsets
+    -- if those positions are out of the level bounds.
     local camPos    = TEN.View.GetCameraPosition()
     local targetPos = TEN.View.GetCameraTarget()
+
+    if not IsValidPosition(camPos) then
+        TEN.Util.PrintLog("PhotoMode: Camera position out of bounds, falling back to Lara offset.", TEN.Util.LogLevel.WARNING)
+        camPos = LaraOffsetPosition(cfg.offsetForward, cfg.offsetUp)
+    end
+
+    if not IsValidPosition(targetPos) then
+        TEN.Util.PrintLog("PhotoMode: Camera target out of bounds, falling back to Lara offset.", TEN.Util.LogLevel.WARNING)
+        targetPos = LaraOffsetPosition(cfg.targetForward, cfg.targetUp)
+    end
 
     state.cameraMesh:SetPosition(camPos)
     state.cameraTarget:SetPosition(targetPos)

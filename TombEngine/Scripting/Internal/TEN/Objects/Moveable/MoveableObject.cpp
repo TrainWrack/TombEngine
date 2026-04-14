@@ -1122,21 +1122,20 @@ void Moveable::UnswapMesh(int meshId)
 /// Get the skinned mesh swap state of a moveable.
 // Returns whether a skinned mesh swap is currently active and global index.
 // @function Moveable:GetSkinnedMesh
-// @treturn bool true if the skinned mesh is currently swapped, false otherwise.
 // @treturn[opt] int The skinned mesh current active. Nil if not being used.
-std::tuple<bool, sol::optional<int>> Moveable::GetSkinnedMesh() const
+sol::optional<int> Moveable::GetSkinnedMesh() const
 {
 	auto currentIndex = _moveable->Model.SkinIndex;
 	if (currentIndex != NO_VALUE)
-		return { true, currentIndex };
+		return currentIndex;
 
-	return { false, sol::nullopt };
+	return sol::nullopt;
 }
 
 /// Set the skinned mesh of a moveable.
-// Warning, to be used only with the returned value from Moveable::GetSkinnedMesh.
+// Warning, to be used only with the returned value from Moveable:GetSkinnedMesh.
 // @function Moveable:SetSkinnedMesh
-// @tparam int skinIndex Global index of skin returned from Moveable::GetSkinnedMesh.
+// @tparam int skinIndex Global index of skin returned from Moveable:GetSkinnedMesh.
 void Moveable::SetSkinnedMesh(int skinIndex)
 {
 	_moveable->Model.SkinIndex = skinIndex;
@@ -1181,7 +1180,7 @@ void Moveable::UnswapSkinnedMesh()
 	_moveable->Model.SkinIndex = Objects[realID].skinIndex;
 }
 
-/// Clear skinned mesh of a moveable. Warning all player meshes will be hidden, please unhide them using Moveable:SetMeshVisible.
+/// Clear skinned mesh of a moveable.
 // @function Moveable:ClearSkinnedMesh
 void Moveable::ClearSkinnedMesh()
 {
