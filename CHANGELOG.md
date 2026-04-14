@@ -3,6 +3,14 @@
 The dates are in European standard format where date is presented as **YYYY-MM-DD**.
 TombEngine releases are located in this repository (alongside with Tomb Editor): https://github.com/TombEngine/TombEditorReleases
 
+## [Version 2.0]
+
+### Bug fixes
+* Fixed empty inventory screen after exiting examine mode.
+
+### Lua API changes
+* Fixed incorrect error message when using `Moveable:SetFrame` with a frame number equal to the end frame.
+
 ## [Version 1.11.1]
 
 ### Bug fixes
