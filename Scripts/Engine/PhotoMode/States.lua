@@ -167,6 +167,15 @@ function States.CaptureSnapshot()
     snap.hideUI         = false
     snap.swappedMeshes  = {}
 
+    -- Capture per-mesh swap state for all 15 Lara meshes (0-14)
+    snap.meshSwaps = {}
+    for i = 0, 14 do
+        local ok, swapped, sourceObjID = pcall(function() return Lara:GetMeshSwapped(i) end)
+        if ok and swapped and sourceObjID then
+            snap.meshSwaps[#snap.meshSwaps + 1] = { index = i, sourceObjID = sourceObjID }
+        end
+    end
+
     State.snapshot = snap
     return snap
 end
@@ -195,6 +204,13 @@ function States.RestoreSnapshot()
     -- Restore swapped meshes (expression - per-mesh)
     for _, meshIdx in ipairs(State.swappedExpressionMeshes) do
         pcall(function() Lara:UnswapMesh(meshIdx) end)
+    end
+
+    -- Re-apply any mesh swaps that were active before entering photo mode
+    if snap.meshSwaps then
+        for _, entry in ipairs(snap.meshSwaps) do
+            pcall(function() Lara:SwapMesh(entry.index, entry.sourceObjID, entry.index) end)
+        end
     end
 
     -- Restore holster state

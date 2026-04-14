@@ -24,6 +24,9 @@ LevelFuncs.Engine.PhotoMode = LevelFuncs.Engine.PhotoMode or {}
 
 local PhotoMode = {}
 
+-- Guards LevelFuncs registration to once per Lua session (resets on level/savegame reload).
+local _callbacksRegistered = false
+
 -- ============================================================================
 -- Helpers
 -- ============================================================================
@@ -400,6 +403,9 @@ local function BuildAllMenus()
     -- Accept callbacks (one per menu, handles button/[Press] items)
     -- ================================================================
 
+    if not _callbacksRegistered then
+    _callbacksRegistered = true
+
     LevelFuncs.Engine.PhotoMode.OnCameraAccept = function()
         local m = Menu.Get(MENU_CAMERA)
         if not m then return end
@@ -549,6 +555,8 @@ local function BuildAllMenus()
             state.hideUI = IndexToBool(m:GetCurrentOptionIndex())
         end
     end
+
+    end -- _callbacksRegistered
 
     -- ================================================================
     -- CAMERA menu

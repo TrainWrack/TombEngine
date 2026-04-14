@@ -1044,15 +1044,31 @@ void Moveable::ShatterMesh(int meshId)
 
 /// Get state of specified mesh swap of a moveable.
 // Returns true if specified mesh is swapped on a moveable, and false if it is not swapped.
+// Also returns the object slot ID the mesh was swapped from, or nil if no swap is active.
 // @function Moveable:GetMeshSwapped
 // @tparam int index Index of a mesh.
 // @treturn bool Mesh swap status.
-bool Moveable::GetMeshSwapped(int meshId) const
+// @treturn[opt] int Object slot ID the mesh was swapped from. Nil if not swapped.
+std::tuple<bool, sol::optional<int>> Moveable::GetMeshSwapped(int meshId) const
 {
 	if (!MeshExists(meshId))
-		return false;
+		return { false, sol::nullopt };
 
-	return _moveable->Model.MeshIndex[meshId] != _moveable->Model.BaseMesh + meshId;
+	auto currentIndex = _moveable->Model.MeshIndex[meshId];
+	if (currentIndex == _moveable->Model.BaseMesh + meshId)
+		return { false, sol::nullopt };
+
+	for (int i = 0; i < ID_NUMBER_OBJECTS; i++)
+	{
+		const auto& obj = Objects[i];
+		if (!obj.loaded || obj.nmeshes <= 0)
+			continue;
+
+		if (currentIndex >= obj.meshIndex && currentIndex < obj.meshIndex + obj.nmeshes)
+			return { true, i };
+	}
+
+	return { true, sol::nullopt };
 }
 
 /// Set state of specified mesh swap of a moveable. Use this to swap specified mesh of a moveable.
