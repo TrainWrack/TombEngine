@@ -1048,8 +1048,8 @@ void Moveable::ShatterMesh(int meshId)
 // @function Moveable:GetMeshSwapped
 // @tparam int index Index of a mesh.
 // @treturn bool Mesh swap status.
-// @treturn[opt] int Object slot ID the mesh was swapped from. Nil if not swapped.
-std::tuple<bool, sol::optional<int>> Moveable::GetMeshSwapped(int meshId) const
+// @treturn[opt] Objects.ObjID Object slot ID the mesh was swapped from. Nil if not swapped.
+std::tuple<bool, sol::optional<GAME_OBJECT_ID>> Moveable::GetMeshSwapped(int meshId) const
 {
 	if (!MeshExists(meshId))
 		return { false, sol::nullopt };
@@ -1065,7 +1065,7 @@ std::tuple<bool, sol::optional<int>> Moveable::GetMeshSwapped(int meshId) const
 			continue;
 
 		if (currentIndex >= obj.meshIndex && currentIndex < obj.meshIndex + obj.nmeshes)
-			return { true, i };
+			return { true, (GAME_OBJECT_ID)i };
 	}
 
 	return { true, sol::nullopt };
