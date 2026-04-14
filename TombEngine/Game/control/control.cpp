@@ -315,10 +315,10 @@ GameStatus FreezePhase()
 	if (g_GameFlow->LastFreezeMode == FreezeMode::Spectator)
 	{
 		auto& player = GetLaraInfo(*LaraItem);
-		if (player.LeftArm.GunFlash > 0)
-			--player.LeftArm.GunFlash;
-		if (player.RightArm.GunFlash > 0)
-			--player.RightArm.GunFlash;
+		if (player.LeftArm.GunFlash > 0 && --player.LeftArm.GunFlash == 0)
+			player.LeftArm.GunFlashType = LaraWeaponType::None;
+		if (player.RightArm.GunFlash > 0 && --player.RightArm.GunFlash == 0)
+			player.RightArm.GunFlashType = LaraWeaponType::None;
 	}
 
 	// Poll controls and call scripting events.
@@ -593,6 +593,7 @@ void CleanUp()
 	g_Renderer.SetPostProcessMode(PostProcessMode::None);
 	g_Renderer.SetPostProcessStrength(1.0f);
 	g_Renderer.SetPostProcessTint(Vector3::One);
+	g_Renderer.SetDepthOfField(0.0f, 1.0f, 0.0f);
 
 	// Reset Itemcamera
 	ClearObjCamera();

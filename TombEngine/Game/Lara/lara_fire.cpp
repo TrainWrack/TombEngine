@@ -498,11 +498,17 @@ void SpawnWeaponFlash(ItemInfo& laraItem, LaraWeaponType weaponType)
 
 	// Reset both arms first to clear any previously set flash from a different weapon type.
 	player.LeftArm.GunFlash = 0;
+	player.LeftArm.GunFlashType = LaraWeaponType::None;
 	player.RightArm.GunFlash = 0;
+	player.RightArm.GunFlashType = LaraWeaponType::None;
 
-	player.RightArm.GunFlash = settings.FlashDuration;
+	player.RightArm.GunFlash = 1;
+	player.RightArm.GunFlashType = weaponType;
 	if (isDualWield)
-		player.LeftArm.GunFlash = settings.FlashDuration;
+	{
+		player.LeftArm.GunFlash = 1;
+		player.LeftArm.GunFlashType = weaponType;
+	}
 
 	auto color = Color(settings.FlashColor);
 
@@ -605,11 +611,11 @@ void HandleWeapon(ItemInfo& laraItem)
 {
 	auto& player = *GetLaraInfo(&laraItem);
 
-	if (player.LeftArm.GunFlash > 0)
-		--player.LeftArm.GunFlash;
+	if (player.LeftArm.GunFlash > 0 && --player.LeftArm.GunFlash == 0)
+		player.LeftArm.GunFlashType = LaraWeaponType::None;
 
-	if (player.RightArm.GunFlash > 0)
-		--player.RightArm.GunFlash;
+	if (player.RightArm.GunFlash > 0 && --player.RightArm.GunFlash == 0)
+		player.RightArm.GunFlashType = LaraWeaponType::None;
 
 	if (player.RightArm.GunSmoke > 0)
 		--player.RightArm.GunSmoke;
