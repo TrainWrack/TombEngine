@@ -170,6 +170,7 @@ void Moveable::Register(sol::state& state, sol::table& parent)
 		ScriptReserved_GetMeshCount, &Moveable::GetMeshCount,
 		ScriptReserved_GetMeshVisible, &Moveable::GetMeshVisible,
 		ScriptReserved_GetMeshSwapped, &Moveable::GetMeshSwapped,
+		ScriptReserved_GetSkinnedMesh, & Moveable::GetSkinnedMesh,
 		ScriptReserved_GetHitStatus, &Moveable::GetHitStatus,
 		ScriptReserved_GetActive, &Moveable::GetActive,
 		ScriptReserved_GetValid, &Moveable::GetValid,
@@ -209,6 +210,7 @@ void Moveable::Register(sol::state& state, sol::table& parent)
 		ScriptReserved_ShatterMesh, &Moveable::ShatterMesh,
 		ScriptReserved_SwapMesh, &Moveable::SwapMesh,
 		ScriptReserved_UnswapMesh, &Moveable::UnswapMesh,
+		ScriptReserved_SetSkinnedMesh, & Moveable::SetSkinnedMesh,
 		ScriptReserved_SwapSkinnedMesh, &Moveable::SwapSkinnedMesh,
 		ScriptReserved_UnswapSkinnedMesh, &Moveable::UnswapSkinnedMesh,
 		ScriptReserved_Destroy, &Moveable::Destroy,
@@ -1116,6 +1118,29 @@ void Moveable::UnswapMesh(int meshId)
 	_moveable->Model.MeshIndex[meshId] = _moveable->Model.BaseMesh + meshId;
 }
 
+/// Get the skinned mesh swap state of a moveable.
+// Returns whether a skinned mesh swap is currently active and global index.
+// @function Moveable:GetSkinnedMesh
+// @treturn bool true if the skinned mesh is currently swapped, false otherwise.
+// @treturn[opt] int The skinned mesh current active. Nil if not being used.
+std::tuple<bool, sol::optional<int>> Moveable::GetSkinnedMesh() const
+{
+	auto currentIndex = _moveable->Model.SkinIndex;
+	if (currentIndex != NO_VALUE)
+		return { true, currentIndex };
+
+	return { false, sol::nullopt };
+}
+
+/// Set the skinned mesh of a moveable.
+// Warning, to be used only with the returned value from Moveable::GetSkinnedMesh.
+// @function Moveable:SetSkinnedMesh
+// @tparam int skinIndex Global index of skin returned from Moveable::GetSkinnedMesh.
+void Moveable::SetSkinnedMesh(int skinIndex)
+{
+	_moveable->Model.SkinIndex = skinIndex;
+}
+
 /// Swap skinned mesh of a moveable. Use this to replace one skinned mesh with another.
 // @function Moveable:SwapSkinnedMesh
 // @tparam int objectID ID of a slot to get skinned meshswap from.
@@ -1153,6 +1178,14 @@ void Moveable::UnswapSkinnedMesh()
 {
 	int realID = _moveable->ObjectNumber == GAME_OBJECT_ID::ID_LARA ? GAME_OBJECT_ID::ID_LARA_SKIN : _moveable->ObjectNumber;
 	_moveable->Model.SkinIndex = Objects[realID].skinIndex;
+}
+
+/// Clear skinned mesh of a moveable. Warning all player meshes will be hidden, please unhide them using Moveable:SetMeshVisible.
+// @function Moveable:ClearSkinnedMesh
+void Moveable::ClearSkinnedMesh()
+{
+	int realID = _moveable->ObjectNumber == GAME_OBJECT_ID::ID_LARA ? GAME_OBJECT_ID::ID_LARA_SKIN : _moveable->ObjectNumber;
+	_moveable->Model.SkinIndex = NO_VALUE;
 }
 
 /// Enable the item, as if a trigger for it had been stepped on.
