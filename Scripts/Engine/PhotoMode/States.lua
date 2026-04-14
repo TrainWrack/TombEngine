@@ -228,7 +228,6 @@ function States.ResetToEntry()
     State.lightEnabled  = Settings.Light.defaultEnabled
     State.lightSource   = States.LightSource.MANUAL
     State.lightRadius   = Settings.Light.defaultRadius
-    State.lightShadows  = Settings.Light.defaultShadows
     State.lightColorIndex = 1
     State.filterIndex   = 1
     State.filterStrength = 1.0

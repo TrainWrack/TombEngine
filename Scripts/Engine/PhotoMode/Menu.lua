@@ -41,6 +41,8 @@ local LINE_SPACING = 6
 local SCROLL_SPEED = 0.2
 local FADE_SPEED   = Settings.Animation.fadeSpeed
 
+local ITEM_FLAGS_NORMAL = { Strings.DisplayStringOption.SHADOW }
+
 local TEXT_FLAGS_NORMAL = { Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER }
 local TEXT_FLAGS_SELECT = { Strings.DisplayStringOption.BLINK, Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER }
 
@@ -190,7 +192,7 @@ function Menu.DrawHeaders(position, scale, alpha)
 
         local color = isActive and COLOR_MAP.headerText or COLOR_MAP.dimmed
         local flags = isActive
-            and { Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER }
+            and { Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER, Strings.DisplayStringOption.BLINK }
             or  { Strings.DisplayStringOption.SHADOW, Strings.DisplayStringOption.CENTER }
 
         local pos = TEN.Util.PercentToScreen(TEN.Vec2(x, position.y))
@@ -234,8 +236,8 @@ function Menu.Create(menuName, title, items, acceptFunction, exitFunction, menuT
         maxVisibleItems   = 16,
         lineSpacing       = LINE_SPACING,
         itemsPosition     = Vec2(10, 20),
-        itemsTextFlags    = TEXT_FLAGS_NORMAL,
-        itemsSelectedFlags = TEXT_FLAGS_SELECT,
+        itemsTextFlags    = ITEM_FLAGS_NORMAL,
+        itemsSelectedFlags = ITEM_FLAGS_NORMAL,
         itemsTextColor    = COLOR_MAP.plainText,
         itemsTextScale    = 1,
         itemsTranslate    = false,

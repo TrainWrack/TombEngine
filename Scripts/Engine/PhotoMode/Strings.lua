@@ -30,9 +30,9 @@ local strings =
     pm_roll           = {"Roll"},
 
     -- Effects menu items (Filters)
-    pm_preset         = {"Preset"},
-    pm_strength       = {"Strength"},
-    pm_tint           = {"Tint"},
+    pm_preset         = {"Filter Type"},
+    pm_strength       = {"Filter Strength"},
+    pm_tint           = {"Filter Tint"},
 
     -- Effects menu items (Frames)
     pm_frame_overlay  = {"Frame"},
@@ -46,7 +46,6 @@ local strings =
     pm_enabled        = {"Enabled"},
     pm_source         = {"Source"},
     pm_radius         = {"Radius"},
-    pm_shadows        = {"Shadows"},
     pm_color          = {"Color"},
     pm_place_camera   = {"Place at Camera"},
     pm_place_lara     = {"Place at Lara"},

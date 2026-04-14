@@ -13,10 +13,10 @@ local Settings = {}
 
 Settings.ColorMap =
 {
-    plainText    = RingSettings.ColorMap.plainText,
-    headerText   = RingSettings.ColorMap.headerText,
-    optionText   = RingSettings.ColorMap.optionText,
-    neutral      = RingSettings.ColorMap.neutral,
+    plainText = Flow.GetSettings().UI.plainTextColor,
+    headerText = Flow.GetSettings().UI.headerTextColor,
+    optionText = Flow.GetSettings().UI.optionTextColor,
+    neutral      = Color(255, 255, 255, 255),
     dimmed       = Color(120, 120, 120, 255),
     highlight    = Color(255, 255, 80, 255),
 }
@@ -78,8 +78,8 @@ Settings.Lens =
     maxFOV      = 120,
     fovStep     = 2,
     defaultRoll = 0,
-    minRoll     = -45,
-    maxRoll     = 45,
+    minRoll     = -180,
+    maxRoll     = 180,
     rollStep    = 1,
 }
 
@@ -103,7 +103,6 @@ Settings.Light =
     minRadius      = 1,
     maxRadius      = 80,
     radiusStep     = 1,
-    defaultShadows = false,
     defaultEnabled = false,
     lightName      = "PHOTO_MODE_LIGHT",
     colorPresets   =
@@ -163,6 +162,12 @@ Settings.Weapons =
     { name = "Shotgun",  objID = TEN.Objects.ObjID.SHOTGUN_ANIM, meshIndices = {10}, weaponType = TEN.Objects.WeaponType.SHOTGUN, type = "back" },
     { name = "Uzis",  objID = TEN.Objects.ObjID.UZI_ANIM, meshIndices = {10, 13}, weaponType = TEN.Objects.WeaponType.UZIS, type = "holsters" },
     { name = "Revolver",  objID = TEN.Objects.ObjID.REVOLVER_ANIM, meshIndices = {10}, weaponType = TEN.Objects.WeaponType.REVOLVER, type = "right" },
+    { name = "HK",  objID = TEN.Objects.ObjID.HK_ANIM, meshIndices = {10}, weaponType = TEN.Objects.WeaponType.HK, type = "back" },
+    { name = "Crossbow",  objID = TEN.Objects.ObjID.CROSSBOW_ANIM, meshIndices = {10}, weaponType = TEN.Objects.WeaponType.CROSSBOW, type = "back" },
+    { name = "Harpoon",  objID = TEN.Objects.ObjID.HARPOON_ANIM, meshIndices = {10}, weaponType = TEN.Objects.WeaponType.HARPOON_GUN, type = "back" },
+    { name = "Grenade Launcher",  objID = TEN.Objects.ObjID.GRENADE_ANIM, meshIndices = {10}, weaponType = TEN.Objects.WeaponType.GRENADE_LAUNCHER, type = "back" },
+    { name = "Rocket Launcher",  objID = TEN.Objects.ObjID.ROCKET_ANIM, meshIndices = {10}, weaponType = TEN.Objects.WeaponType.ROCKET_LAUNCHER, type = "back" },
+    
 }
 
 Settings.Expressions =
@@ -263,7 +268,7 @@ Settings.DepthOfField =
     defaultBlurStrength  = 0.5,
     minBlurStrength      = 0.0,
     maxBlurStrength      = 1.0,
-    blurStrengthStep     = 0.05,
+    blurStrengthStep     = 0.05
 }
 
 -- ============================================================================

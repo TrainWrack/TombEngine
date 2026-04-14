@@ -107,7 +107,7 @@ local function ApplyOutfit(state)
 
     local preset = Settings.Outfits[state.outfitIndex]
     if preset and preset.objID then
-        pcall(function() Lara:SwapSkinnedMesh(preset.objID) end)
+        pcall(function() Lara:SetSkin(preset.objID) end)
     end
     pcall(function() Lara:ResetHair() end)
 end
@@ -231,8 +231,10 @@ local function UpdateGunFlash(state)
 end
 
 local function ApplyDOF(state)
-    -- Depth of Field is not yet implemented in TEN.
-    -- State values are stored for future use.
+    if state.dofEnabled then
+        --state.dofFocusDistance, state.dofFocusRange, state.dofBlurStrength
+ 
+    end
 end
 
 -- ============================================================================
@@ -439,9 +441,9 @@ local function BuildAllMenus()
         local m = Menu.Get(MENU_LIGHT)
         if not m then return end
         local idx = m:GetCurrentItemIndex()
-        if idx == 6 then PlaceLightAtCamera()
-        elseif idx == 7 then PlaceLightAtLara()
-        elseif idx == 8 then
+        if idx == 5 then PlaceLightAtCamera()
+        elseif idx == 6 then PlaceLightAtLara()
+        elseif idx == 7 then
             ResetLight()
             m:SetOptionIndexForItem(1, BoolToIndex(state.lightEnabled))
             m:SetOptionIndexForItem(2, state.lightSource)
@@ -536,8 +538,7 @@ local function BuildAllMenus()
         if idx == 1 then state.lightEnabled = IndexToBool(m:GetCurrentOptionIndex())
         elseif idx == 2 then state.lightSource = m:GetCurrentOptionIndex()
         elseif idx == 3 then state.lightRadius = OptionIndexToValue(m:GetCurrentOptionIndex(), cfg.Light.minRadius, cfg.Light.radiusStep)
-        elseif idx == 4 then state.lightShadows = IndexToBool(m:GetCurrentOptionIndex())
-        elseif idx == 5 then state.lightColorIndex = m:GetCurrentOptionIndex()
+        elseif idx == 4 then state.lightColorIndex = m:GetCurrentOptionIndex()
         end
     end
 
@@ -606,7 +607,6 @@ local function BuildAllMenus()
         { itemName = "pm_source",       options = LIGHT_SRC_NAMES, currentOption = state.lightSource },
         { itemName = "pm_radius",       options = NumberRange(cfg.Light.minRadius, cfg.Light.maxRadius, cfg.Light.radiusStep),
           currentOption = ValueToOptionIndex(state.lightRadius, cfg.Light.minRadius, cfg.Light.radiusStep) },
-        { itemName = "pm_shadows",      options = BoolOptions(), currentOption = BoolToIndex(state.lightShadows) },
         { itemName = "pm_color",        options = COLOR_NAMES, currentOption = state.lightColorIndex },
         { itemName = "pm_place_camera", options = { acceptString }, currentOption = 1 },
         { itemName = "pm_place_lara",   options = { acceptString }, currentOption = 1 },
@@ -632,7 +632,7 @@ local function BuildAllMenus()
         { name = "pm_header_ui",        menuName = MENU_UI },
     })
 
-    Menu.SetHeaderSpacing(12)
+    Menu.SetHeaderSpacing(15)
     -- Activate the first header's menu
     Menu.SetActiveHeader(1)
 end
