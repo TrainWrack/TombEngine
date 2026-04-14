@@ -1220,16 +1220,20 @@ namespace TEN::Renderer
 		if (Lara.Control.Look.OpticRange > 0 && _currentMirror == nullptr)
 			return false;
 
-		if (Lara.Control.Weapon.GunType == LaraWeaponType::Flare)
+		auto flashWeaponType = (Lara.RightArm.GunFlashType != LaraWeaponType::None)
+			? Lara.RightArm.GunFlashType
+			: Lara.Control.Weapon.GunType;
+
+		if (flashWeaponType == LaraWeaponType::None || flashWeaponType == LaraWeaponType::Flare)
 			return false;
 
-		const auto& settings = g_GameFlow->GetSettings()->Weapons[(int)Lara.Control.Weapon.GunType - 1];
+		const auto& settings = g_GameFlow->GetSettings()->Weapons[(int)flashWeaponType - 1];
 		if (!settings.MuzzleFlash)
 			return false;
 
 		// Use MP5 flash if available.
 		auto gunflash = GAME_OBJECT_ID::ID_GUN_FLASH;
-		if (Lara.Control.Weapon.GunType == LaraWeaponType::HK && Objects[GAME_OBJECT_ID::ID_GUN_FLASH2].loaded)
+		if (flashWeaponType == LaraWeaponType::HK && Objects[GAME_OBJECT_ID::ID_GUN_FLASH2].loaded)
 			gunflash = GAME_OBJECT_ID::ID_GUN_FLASH2;
 
 		if (!_moveableObjects[gunflash].has_value())
