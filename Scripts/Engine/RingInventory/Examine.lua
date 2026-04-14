@@ -34,6 +34,7 @@ local examineTargetRotation = Rotation(0, 0, 0)
 local examineScaler = EXAMINE_DEFAULT_SCALE
 local examineTargetScale = EXAMINE_DEFAULT_SCALE
 local examineShowString = false
+local examineStringPresent = false
 local alpha = 0
 local targetAlpha = 0
 
@@ -116,11 +117,13 @@ function Examine.SetupText(itemData)
     local objectName = Objects.GetSlotName(item)
     local stringKey = objectName:lower().."_text"
     local localizedString = Flow.IsStringPresent(stringKey) and Flow.GetString(stringKey) or nil
+    examineStringPresent = false
 
     if localizedString then
         examineShowString = true
         Text.Create(EXAMINE_TEXT)
         Text.SetText("EXAMINE_TEXT", localizedString, true)
+        examineStringPresent = true
     end
 
     Text.Create(EXAMINE_CONTROLS)
@@ -128,8 +131,13 @@ function Examine.SetupText(itemData)
 end
 
 function Examine.ToggleText()
+    
+    if not examineStringPresent then
+        return
+    end
+    
     examineShowString = not examineShowString
-
+    TEN.Sound.PlaySound(Settings.SoundMap.menuChoose)
     if examineShowString then
         Text.Show("EXAMINE_TEXT")
     else

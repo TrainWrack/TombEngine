@@ -165,7 +165,6 @@ function Inputs.Update(mode, timeInMenu)
             InventoryStates.SetActionCheck(true)
         elseif InputHelpers.GuiIsPulsed(TEN.Input.ActionID.ACTION, timer) then
             Examine.ToggleText()
-            TEN.Sound.PlaySound(SOUND_MAP.menuChoose)
         elseif InputHelpers.GuiIsPulsed(TEN.Input.ActionID.INVENTORY, timer) then
             TEN.Sound.PlaySound(SOUND_MAP.menuChoose)
             InventoryStates.SetMode(INVENTORY_MODE.EXAMINE_CLOSE)
