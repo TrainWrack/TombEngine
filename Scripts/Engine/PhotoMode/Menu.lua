@@ -244,7 +244,7 @@ function Menu.Create(menuName, title, items, acceptFunction, exitFunction, menuT
         optionsPosition   = Vec2(50, 20),
         optionsTextFlags  = TEXT_FLAGS_NORMAL,
         optionsSelectedFlags = TEXT_FLAGS_SELECT,
-        optionsTextColor  = COLOR_MAP.optionText,
+        optionsTextColor  = COLOR_MAP.plainText,
         optionsTextScale  = 1,
         optionsTranslate  = false,
         titlePosition     = Vec2(50, 10),

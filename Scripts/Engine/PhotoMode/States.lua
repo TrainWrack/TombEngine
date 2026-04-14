@@ -76,7 +76,7 @@ local State = {
     tintIndex      = 1,
 
     -- Outfit / Weapons
-    swappedMeshes       = {},
+    appliedOutfitType   = nil,
     swappedWeaponMeshes = {},
     outfitIndex         = 1,
     weaponIndex         = 1,
@@ -165,8 +165,6 @@ function States.CaptureSnapshot()
     snap.camPos         = nil
     snap.targetPos      = nil
     snap.hideUI         = false
-    snap.swappedMeshes  = {}
-
     -- Capture per-mesh swap state for all 15 Lara meshes (0-14)
     snap.meshSwaps = {}
     for i = 0, 14 do
@@ -191,9 +189,11 @@ function States.RestoreSnapshot()
     pcall(function() Lara:SetFrame(snap.laraFrame) end)
     pcall(function() Lara:SetState(snap.laraState) end)
 
-    -- Restore swapped meshes (outfit - skinned)
-    for _, meshIdx in ipairs(State.swappedMeshes) do
-        pcall(function() Lara:UnswapSkinnedMesh(meshIdx) end)
+    -- Restore outfit swap on exit
+    if State.appliedOutfitType == "skin" then
+        pcall(function() Lara:UnswapSkinnedMesh() end)
+    elseif State.appliedOutfitType == "classic" then
+        pcall(function() Lara:SetSkin(nil, nil, nil, nil, nil) end)
     end
 
     -- Restore swapped meshes (weapon - per-mesh)
@@ -249,7 +249,7 @@ function States.ResetToEntry()
     State.filterStrength = 1.0
     State.tintIndex     = 1
     State.hideUI             = false
-    State.swappedMeshes       = {}
+    State.appliedOutfitType   = nil
     State.swappedWeaponMeshes = {}
     State.outfitIndex         = 1
     State.weaponIndex         = 1

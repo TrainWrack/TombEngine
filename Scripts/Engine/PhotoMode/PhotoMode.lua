@@ -101,17 +101,41 @@ local function ApplyTint(state)
     end
 end
 
-local function ApplyOutfit(state)
-    -- Reset existing swaps
-    for _, meshIdx in ipairs(state.swappedMeshes) do
-        pcall(function() Lara:UnswapSkinnedMesh(meshIdx) end)
+local function ResetCurrentOutfit(state)
+    if state.appliedOutfitType == "skin" then
+        pcall(function() Lara:UnswapSkinnedMesh() end)
+    elseif state.appliedOutfitType == "classic" then
+        pcall(function() Lara:SetSkin(nil, nil, nil, nil, nil) end)
     end
-    state.swappedMeshes = {}
+    state.appliedOutfitType = nil
+end
+
+local function ApplyOutfit(state)
+    ResetCurrentOutfit(state)
 
     local preset = Settings.Outfits[state.outfitIndex]
-    if preset and preset.objID then
-        pcall(function() Lara:SetSkin(preset.objID) end)
+    if not preset or not preset.objID then
+        pcall(function() Lara:ResetHair() end)
+        return
     end
+
+    if preset.type == "skin" then
+        -- objID table: first element is the slot; preset.index is optional swapIndex
+        local objectID = preset.objID[1]
+        if objectID then
+            pcall(function() Lara:SwapSkinnedMesh(objectID, preset.index) end)
+            state.appliedOutfitType = "skin"
+        end
+    elseif preset.type == "classic" then
+        -- Unpack up to 5 positional args: skin, skinJoints, skinScream, hair1, hair2
+        -- Missing entries are nil, which SetSkin treats as "leave unchanged"
+        local ids = preset.objID
+        pcall(function()
+            Lara:SetSkin(ids[1], ids[2], ids[3], ids[4], ids[5])
+        end)
+        state.appliedOutfitType = "classic"
+    end
+
     pcall(function() Lara:ResetHair() end)
 end
 
@@ -256,10 +280,7 @@ local function ResetCharacter()
     end
     state.animIndex = 1
 
-    for _, meshIdx in ipairs(state.swappedMeshes) do
-        pcall(function() Lara:UnswapSkinnedMesh(meshIdx) end)
-    end
-    state.swappedMeshes = {}
+    ResetCurrentOutfit(state)
 
     for _, meshIdx in ipairs(state.swappedWeaponMeshes) do
         pcall(function() Lara:UnswapMesh(meshIdx) end)

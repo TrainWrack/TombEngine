@@ -150,7 +150,8 @@ Settings.Filters =
 Settings.Outfits =
 {
     { name = "Default",        objID = nil },
-    { name = "Alternate Skin", objID = TEN.Objects.ObjID.LARA_SKIN },
+    { name = "Alternate Skin", objID = {TEN.Objects.ObjID.LARA_SKIN, TEN.Objects.ObjID.LARA_SKIN_JOINTS, TEN.Objects.ObjID.LARA_SCREAM, TEN.Objects.ObjID.HAIR_PRIMARY,  TEN.Objects.ObjID.HAIR_SECONDARY}, type = "classic" },
+    { name = "Alternate Skin 2", objID = {TEN.Objects.ObjID.LARA_SKIN}, index = 0, type = "skin" },
 }
 
 Settings.Weapons =
