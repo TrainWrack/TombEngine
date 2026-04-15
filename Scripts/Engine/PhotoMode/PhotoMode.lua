@@ -182,6 +182,20 @@ local function ApplyOutfit(state)
         end
     end
 
+    -- Re-apply weapon and expression mesh swaps (SetSkin resets classic meshes).
+    for _, meshIdx in ipairs(state.swappedWeaponMeshes) do
+        local wp = Settings.Weapons[state.weaponIndex]
+        if wp and wp.objID then
+            pcall(function() Lara:SwapMesh(meshIdx, wp.objID, meshIdx) end)
+        end
+    end
+    for _, meshIdx in ipairs(state.swappedExpressionMeshes) do
+        local ep = Settings.Expressions[state.expressionIndex]
+        if ep and ep.objID then
+            pcall(function() Lara:SwapMesh(meshIdx, ep.objID, meshIdx) end)
+        end
+    end
+
     pcall(function() Lara:ResetHair() end)
 end
 
