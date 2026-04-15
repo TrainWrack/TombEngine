@@ -149,21 +149,58 @@ Settings.Filters =
 
 Settings.Outfits =
 {
-    -- Default: restores whatever skinned/classic outfit was active on entry.
-    { name = "Default",         objID = nil },
+    -- Index 1: Default — restores whatever state was active on photo mode entry.
+    { name = "Default" },
 
-    -- Classic type: uses Lara:SetSkin to swap the classic skin/hair objects.
-    -- Provide objIDs in order: skin, skinJoints, skinScream, hair1, hair2.
-    -- Omit or set nil for any you don't want to change.
-    { name = "Alternate Skin",  objID = {TEN.Objects.ObjID.LARA_SKIN, TEN.Objects.ObjID.LARA_SKIN_JOINTS, TEN.Objects.ObjID.LARA_SCREAM, TEN.Objects.ObjID.HAIR_PRIMARY,  TEN.Objects.ObjID.HAIR_SECONDARY}, type = "classic" },
+    -- skin:              Array of up to 5 ObjIDs → Lara:SetSkin(skin, skinJoints, skinScream, hair1, hair2).
+    --                    Nil entries leave that slot unchanged.
+    -- skinnedMesh:       ObjID → Lara:SwapSkinnedMesh(objID [, skinnedMeshIndex]).
+    --                    "clear" → Lara:ClearSkinnedMesh() (disables GPU skin entirely).
+    -- skinnedMeshIndex:  Optional sub-index for SwapSkinnedMesh.
+    -- meshVisible:       Controls classic mesh visibility.
+    --                    "none"     → hide all classic meshes.
+    --                    "all"      → keep all classic meshes visible.
+    --                    { i, ... } → keep only listed indices visible, hide the rest.
 
-    -- Skin type: uses Lara:SwapSkinnedMesh (GPU skinning slot).
-    -- objID[1]    = the object slot to pull the skinned mesh from.
-    -- index       = bone-mesh index inside that slot (nil = no index passed).
-    -- keepMeshes  = classic mesh slot indices (0-14) to leave visible alongside
-    --               the skinned mesh. All others are hidden while this outfit is active.
-    { name = "TEN",   objID = {TEN.Objects.ObjID.LARA_EXTRA_MESH1}, index = 0,  type = "skin", keepMeshes = {} },
-    { name = "Jeans", objID = {TEN.Objects.ObjID.LARA_EXTRA_MESH2}, index = 15, type = "skin", keepMeshes = {} },
+    { name = "Classic TR4",
+      skin = { TEN.Objects.ObjID.ANIMATING1, TEN.Objects.ObjID.ANIMATING2,
+               TEN.Objects.ObjID.ANIMATING3, TEN.Objects.ObjID.ANIMATING4 },
+        meshVisible = "all",
+    },
+
+        { name = "Classic TR2",
+      skin = { TEN.Objects.ObjID.ANIMATING18, TEN.Objects.ObjID.ANIMATING19,
+               TEN.Objects.ObjID.ANIMATING20, TEN.Objects.ObjID.ANIMATING21 },
+        meshVisible = "all",
+    },
+
+    { name = "Remastered",
+      skin = { TEN.Objects.ObjID.ANIMATING14, TEN.Objects.ObjID.ANIMATING15,
+               TEN.Objects.ObjID.ANIMATING16, TEN.Objects.ObjID.ANIMATING17 },
+        meshVisible = "all",
+    },
+
+    { name = "Dark Raider",
+      skin = { TEN.Objects.ObjID.ANIMATING10, TEN.Objects.ObjID.ANIMATING11,
+               TEN.Objects.ObjID.ANIMATING12, TEN.Objects.ObjID.ANIMATING13 },
+        meshVisible = "all",
+    },
+
+    { name = "Underworld Casual",
+      skin = { TEN.Objects.ObjID.ANIMATING6, TEN.Objects.ObjID.ANIMATING7,
+               TEN.Objects.ObjID.ANIMATING8, TEN.Objects.ObjID.ANIMATING9 },
+        meshVisible = "all",
+    },
+
+    { name = "TEN Lara",
+      skinnedMesh = TEN.Objects.ObjID.LARA_EXTRA_MESH1,
+      meshVisible = {10,13},
+    },
+
+    { name = "Jeans",
+      skinnedMesh = TEN.Objects.ObjID.LARA_EXTRA_MESH2,
+      meshVisible = "none",
+    },
 }
 
 Settings.Weapons =
@@ -180,7 +217,7 @@ Settings.Weapons =
     { name = "Harpoon",  objID = TEN.Objects.ObjID.HARPOON_ANIM, meshIndices = {10}, weaponType = TEN.Objects.WeaponType.HARPOON_GUN, type = "back" },
     { name = "Grenade Launcher",  objID = TEN.Objects.ObjID.GRENADE_ANIM, meshIndices = {10}, weaponType = TEN.Objects.WeaponType.GRENADE_LAUNCHER, type = "back" },
     { name = "Rocket Launcher",  objID = TEN.Objects.ObjID.ROCKET_ANIM, meshIndices = {10}, weaponType = TEN.Objects.WeaponType.ROCKET_LAUNCHER, type = "back" },
-    
+    { name = "Flare",  objID = TEN.Objects.ObjID.FLARE_ANIM, meshIndices = {13}, weaponType = TEN.Objects.WeaponType.FLARE, type = "none" },
 }
 
 Settings.Expressions =

@@ -76,11 +76,12 @@ local State = {
     tintIndex      = 1,
 
     -- Outfit / Weapons
-    appliedOutfitType      = nil,
-    hiddenMeshesForOutfit  = {},
-    swappedWeaponMeshes    = {},
-    outfitIndex            = 1,
-    weaponIndex            = 1,
+    appliedSkin        = false,
+    appliedSkinnedMesh = false,
+    hiddenMeshes       = {},
+    swappedWeaponMeshes = {},
+    outfitIndex        = 1,
+    weaponIndex        = 1,
 
     -- Frame overlay
     frameIndex = 1, -- index into Settings.Frames.presets (1 = None)
@@ -170,6 +171,12 @@ function States.CaptureSnapshot()
     local ok, skinIdx = pcall(function() return Lara:GetSkinnedMesh() end)
     snap.skinnedMeshIndex = (ok and skinIdx ~= nil) and skinIdx or nil
 
+    -- Capture classic skin state (SetSkin parameters)
+    local okSkin, skinTable = pcall(function() return Lara:GetSkin() end)
+    if okSkin then
+        snap.skin = skinTable
+    end
+
     -- Capture per-mesh swap state for all 15 Lara meshes (0-14)
     snap.meshSwaps = {}
     for i = 0, 14 do
@@ -177,6 +184,13 @@ function States.CaptureSnapshot()
         if ok and swapped and sourceObjID then
             snap.meshSwaps[#snap.meshSwaps + 1] = { index = i, sourceObjID = sourceObjID }
         end
+    end
+
+    -- Capture per-mesh visibility state for all 15 Lara meshes (0-14).
+    snap.meshVisible = {}
+    for i = 0, 14 do
+        local ok, vis = pcall(function() return Lara:GetMeshVisible(i) end)
+        snap.meshVisible[i] = not (ok and vis == false)
     end
 
     State.snapshot = snap
@@ -194,32 +208,32 @@ function States.RestoreSnapshot()
     pcall(function() Lara:SetFrame(snap.laraFrame) end)
     pcall(function() Lara:SetState(snap.laraState) end)
 
-    -- Restore outfit swap on exit.
-    if State.appliedOutfitType == "skin" then
-        -- Restore visibility of any classic mesh slots that were hidden.
-        for _, i in ipairs(State.hiddenMeshesForOutfit or {}) do
-            pcall(function() Lara:SetMeshVisible(i, true) end)
-        end
-        pcall(function() Lara:ClearSkinnedMesh() end)
-    elseif State.appliedOutfitType == "classic" then
-        pcall(function() Lara:SetSkin(nil, nil, nil, nil, nil) end)
+    -- Restore classic skin to entry state.
+    if snap.skin then
+        pcall(function() Lara:SetSkin(snap.skin[1], snap.skin[2], snap.skin[3], snap.skin[4], snap.skin[5]) end)
     end
 
-    -- Restore original skinned mesh if one was active at entry.
+    -- Restore skinned mesh to entry state.
     if snap.skinnedMeshIndex then
         pcall(function() Lara:SetSkinnedMesh(snap.skinnedMeshIndex) end)
+    else
+        pcall(function() Lara:ClearSkinnedMesh() end)
     end
-    -- Restore swapped meshes (weapon - per-mesh)
+
+    -- Restore per-mesh visibility to entry state.
+    if snap.meshVisible then
+        for i = 0, 14 do
+            pcall(function() Lara:SetMeshVisible(i, snap.meshVisible[i] ~= false) end)
+        end
+    end
+
+    -- Undo weapon and expression mesh swaps, then re-apply entry swaps.
     for _, meshIdx in ipairs(State.swappedWeaponMeshes) do
         pcall(function() Lara:UnswapMesh(meshIdx) end)
     end
-
-    -- Restore swapped meshes (expression - per-mesh)
     for _, meshIdx in ipairs(State.swappedExpressionMeshes) do
         pcall(function() Lara:UnswapMesh(meshIdx) end)
     end
-
-    -- Re-apply any mesh swaps that were active before entering photo mode
     if snap.meshSwaps then
         for _, entry in ipairs(snap.meshSwaps) do
             pcall(function() Lara:SwapMesh(entry.index, entry.sourceObjID, entry.index) end)
@@ -262,10 +276,11 @@ function States.ResetToEntry()
     State.filterStrength = 1.0
     State.tintIndex     = 1
     State.hideUI             = false
-    State.appliedOutfitType      = nil
-    State.hiddenMeshesForOutfit  = {}
-    State.swappedWeaponMeshes    = {}
-    State.outfitIndex            = 1
+    State.appliedSkin        = false
+    State.appliedSkinnedMesh = false
+    State.hiddenMeshes       = {}
+    State.swappedWeaponMeshes = {}
+    State.outfitIndex                  = 1
     State.weaponIndex         = 1
     State.expressionIndex         = 1
     State.swappedExpressionMeshes = {}

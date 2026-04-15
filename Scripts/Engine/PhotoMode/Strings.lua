@@ -18,7 +18,7 @@ local strings =
     pm_collision      = {"Collision"},
 
     -- Character menu items
-    pm_animation      = {"Animation"},
+    pm_animation      = {"Pose"},
     pm_outfit         = {"Outfit"},
     pm_weapons        = {"Weapons"},
     pm_expression     = {"Expression"},
