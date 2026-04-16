@@ -1407,6 +1407,7 @@ namespace TEN::Renderer
 		CollectDisplaySprites(_gameCamera);
 		DrawDisplaySprites(_gameCamera, false);
 		DrawDisplayItems();
+		DrawDebugDisplayRects();
 		DrawDisplaySprites(_gameCamera, true);
 		DrawAllStrings();
 
