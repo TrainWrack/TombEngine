@@ -40,5 +40,6 @@ namespace TEN::Scripting::DisplayArea
 
 		// Utilities
 		void Draw();
+		void Debug(sol::optional<ScriptColor> color);
 	};
 }

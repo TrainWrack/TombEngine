@@ -40,6 +40,7 @@ namespace TEN::Scripting::DisplayArea
 		ScriptReserved_AddItem, &ScriptDisplayArea::AddItem,
 		ScriptReserved_RemoveItem, &ScriptDisplayArea::RemoveItem,
 		ScriptReserved_Clear, &ScriptDisplayArea::Clear,
+		ScriptReserved_Debug, &ScriptDisplayArea::Debug,
 		ScriptReserved_DisplaySpriteDraw, &ScriptDisplayArea::Draw);
 	}
 
@@ -189,9 +190,21 @@ namespace TEN::Scripting::DisplayArea
 			sol::protected_function_result result;
 
 			if (args.is<sol::table>())
-				result = drawFunc(item, sol::as_args(args.as<sol::table>()));
+			{
+				auto argsTable = args.as<sol::table>();
+				auto argCount = (int)argsTable.size();
+
+				std::vector<sol::object> argVec;
+				argVec.reserve(argCount);
+				for (int i = 1; i <= argCount; i++)
+					argVec.push_back(argsTable.raw_get<sol::object>(i));
+
+				result = drawFunc(item, sol::as_args(argVec));
+			}
 			else
+			{
 				result = drawFunc(item);
+			}
 
 			if (!result.valid())
 			{
@@ -201,5 +214,27 @@ namespace TEN::Scripting::DisplayArea
 		}
 
 		ClearActiveDisplayScissor();
+	}
+
+	/// Draw a debug overlay showing the area bounds for the current frame.
+	// @function DisplayArea:Debug
+	// @tparam[opt=Color(255, 0, 0, 128)] Color color Fill color of the debug overlay.
+	void ScriptDisplayArea::Debug(sol::optional<ScriptColor> colorOpt)
+	{
+		auto color = colorOpt.value_or(ScriptColor(255, 0, 0, 128));
+
+		auto screenRes = g_Renderer.GetScreenResolution();
+		float screenWidth  = (float)screenRes.x;
+		float screenHeight = (float)screenRes.y;
+
+		int left   = (int)(_position.x * screenWidth  / 100.0f);
+		int top    = (int)(_position.y * screenHeight / 100.0f);
+		int right  = (int)((_position.x + _size.x) * screenWidth  / 100.0f);
+		int bottom = (int)((_position.y + _size.y) * screenHeight / 100.0f);
+
+		auto rect  = RendererRectangle(left, top, right, bottom);
+		auto rgba  = Vector4(color.GetR(), color.GetG(), color.GetB(), color.GetA()) / (float)UCHAR_MAX;
+
+		g_Renderer.AddDebugDisplayRect(rect, rgba);
 	}
 }

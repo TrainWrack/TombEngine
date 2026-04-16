@@ -333,6 +333,28 @@ namespace TEN::Renderer
 		DrawFullScreenQuad(texture, Vector3(fade), true);
 	}
 
+	void Renderer::AddDebugDisplayRect(const RendererRectangle& rect, const Vector4& color)
+	{
+		_debugDisplayRects.push_back({ rect, color });
+	}
+
+	void Renderer::DrawDebugDisplayRects()
+	{
+		if (_debugDisplayRects.empty())
+			return;
+
+		ResetScissor();
+		_spriteBatch->Begin(SpriteSortMode_Deferred, _renderStates->NonPremultiplied(), nullptr, nullptr, _cullNoneRasterizerState.Get());
+
+		for (const auto& [rect, color] : _debugDisplayRects)
+		{
+			auto destRect = RECT{ rect.Left, rect.Top, rect.Right, rect.Bottom };
+			_spriteBatch->Draw(_whiteTexture.ShaderResourceView.Get(), destRect, DirectX::XMLoadFloat4(&color));
+		}
+
+		_spriteBatch->End();
+	}
+
 	void Renderer::DrawDisplaySprites(RenderView& renderView, bool negativePriority)
 	{
 		constexpr auto VERTEX_COUNT = 4;

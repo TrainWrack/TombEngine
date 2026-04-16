@@ -252,6 +252,7 @@ namespace TEN::Renderer
 		std::vector<RendererLine2D>		_lines2DToDraw = {};
 		std::vector<RendererLine3D>		_lines3DToDraw = {};
 		std::vector<RendererTriangle3D> _triangles3DToDraw = {};
+		std::vector<std::pair<RendererRectangle, Vector4>> _debugDisplayRects = {};
 
 		// Textures, objects and sprites
 
@@ -430,6 +431,7 @@ namespace TEN::Renderer
 		void InitializeMenuBars(int y);
 		void InitializeSky();
 		void DrawAllStrings();
+		void DrawDebugDisplayRects();
 		void AddStringInternal(const std::string& string, const Vector2& pos, const Vector2& prevPos, const Vector2& area,
 							  const Color& color, const Vector2& scale, float rotation, int flags,
 							  int priority, BlendMode blendMode);
@@ -775,6 +777,7 @@ namespace TEN::Renderer
 		void AddDebugCylinder(const Vector3& center, const Quaternion& orient, float radius, float length, const Color& color, RendererDebugPage page = RendererDebugPage::None, bool isWireframe = true);
 		void AddDebugSphere(const Vector3& center, float radius, const Color& color, RendererDebugPage page = RendererDebugPage::None, bool isWireframe = true);
 		void AddDebugSphere(const BoundingSphere& sphere, const Color& color, RendererDebugPage page = RendererDebugPage::None, bool isWireframe = true);
+		void AddDebugDisplayRect(const RendererRectangle& rect, const Vector4& color);
 
 		void PrintDebugMessage(LPCSTR msg, va_list args);
 		void PrintDebugMessage(LPCSTR msg, ...);

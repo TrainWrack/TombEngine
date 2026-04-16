@@ -227,7 +227,8 @@ namespace TEN::Renderer
 		float shadowOffset = 1.5f / (REFERENCE_FONT_SIZE / _gameFont->GetLineSpacing());
 		auto shadowColor = (Vector4)g_GameFlow->GetSettings()->UI.ShadowTextColor;
 
-		_spriteBatch->Begin();
+		ResetScissor();
+		_spriteBatch->Begin(SpriteSortMode_Deferred, nullptr, nullptr, nullptr, _cullNoneRasterizerState.Get());
 
 		auto currentBlend = BlendMode::AlphaBlend;
 		SetBlendMode(currentBlend);
@@ -243,7 +244,7 @@ namespace TEN::Renderer
 				_spriteBatch->End();
 				currentBlend = rString.Blend;
 				SetBlendMode(currentBlend);
-				_spriteBatch->Begin();
+				_spriteBatch->Begin(SpriteSortMode_Deferred, nullptr, nullptr, nullptr, _cullNoneRasterizerState.Get());
 			}
 
 			// Handle scissor rect changes.
@@ -265,7 +266,7 @@ namespace TEN::Renderer
 
 				currentHasScissor = rString.HasScissor;
 				currentScissor = rString.ScissorRect;
-				_spriteBatch->Begin();
+				_spriteBatch->Begin(SpriteSortMode_Deferred, nullptr, nullptr, nullptr, _cullNoneRasterizerState.Get());
 			}
 
 			auto drawPos = Vector2::Lerp(rString.PrevPosition, rString.Position, GetInterpolationFactor());

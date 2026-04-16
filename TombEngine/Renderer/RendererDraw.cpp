@@ -1758,6 +1758,7 @@ namespace TEN::Renderer
 		_lines3DToDraw.clear();
 		_triangles3DToDraw.clear();
 		_stringsToDraw.clear();
+		_debugDisplayRects.clear();
 
 		_currentCausticsFrame++;
 		_currentCausticsFrame %= 32;
@@ -2034,6 +2035,7 @@ namespace TEN::Renderer
 			DrawDisplaySprites(view, false);
 
 			DrawDebugRenderTargets(view);
+			DrawDebugDisplayRects();
 			DrawAllStrings();
 			DrawDisplaySprites(view, true);
 		}
