@@ -2,12 +2,15 @@
 #include "Scripting/Internal/TEN/View/DisplayString/ScriptDisplayString.h"
 
 #include "Game/effects/DisplaySprite.h"
+#include "Game/Setup.h"
 #include "Renderer/Renderer.h"
+#include "Renderer/RendererEnums.h"
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
 #include "Scripting/Internal/LuaHandler.h"
 #include "Scripting/Internal/ReservedScriptNames.h"
 #include "Scripting/Internal/TEN/Types/Color/Color.h"
 #include "Scripting/Internal/TEN/Types/Vec2/Vec2.h"
+#include "Scripting/Internal/TEN/View/DisplayAnchors/ScriptDisplayAnchors.h"
 
 using namespace TEN::Effects::DisplaySprite;
 using namespace TEN::Scripting::Types;
@@ -79,6 +82,7 @@ namespace TEN::Scripting::DisplayString
 		ScriptReserved_SetArea, &ScriptDisplayString::SetArea,
 		ScriptReserved_GetFlags, &ScriptDisplayString::GetFlags,
 		ScriptReserved_SetFlags, &ScriptDisplayString::SetFlags,
+		ScriptReserved_DisplayStringGetAnchors, &ScriptDisplayString::GetAnchors,
 		ScriptReserved_DisplaySpriteDraw, &ScriptDisplayString::Draw);
 	}
 
@@ -256,6 +260,101 @@ namespace TEN::Scripting::DisplayString
 			if (i < _flags.size())
 				_flags[i] = true;
 		}
+	}
+
+	/// Get the anchors of the display string.
+	// Returns the nine anchor points of the display string bounding box in percent.
+	// @function DisplayString:GetAnchors
+	// @tparam[opt=View.AlignMode.Center] View.AlignMode alignMode Alignment mode.
+	// @tparam[opt=View.ScaleMode.Fit] View.ScaleMode scaleMode Scaling mode.
+	// @treturn View.DisplayAnchors An object containing the anchor points of the display string bounding box.
+	ScriptDisplayAnchors ScriptDisplayString::GetAnchors(sol::optional<DisplaySpriteAlignMode> alignModeOpt, sol::optional<DisplaySpriteScaleMode> scaleModeOpt) const
+	{
+		constexpr auto DISPLAY_ASPECT = DISPLAY_SPACE_RES.x / DISPLAY_SPACE_RES.y;
+		constexpr auto DEFAULT_ALIGN_MODE = DisplaySpriteAlignMode::Center;
+		constexpr auto DEFAULT_SCALE_MODE = DisplaySpriteScaleMode::Fit;
+
+		auto resolvedText = _isTranslated ? std::string(g_GameFlow->GetString(_text.c_str())) : _text;
+
+		// Measure text in display space units (800x600).
+		auto convertedScale = Vector2(_scale.x, _scale.y) * SCALE_CONVERSION_COEFF;
+		auto textSize = g_Renderer.GetDisplayStringSize(resolvedText, convertedScale);
+
+		// Text bounding box aspect ratio.
+		float textAspect = (textSize.y > 0.0f) ? (textSize.x / textSize.y) : 1.0f;
+
+		// Screen aspect data.
+		auto screenRes = Vector2((float)g_Configuration.ScreenWidth, (float)g_Configuration.ScreenHeight);
+		float screenAspect = screenRes.x / screenRes.y;
+		float aspectCorrectionBase = screenAspect / DISPLAY_ASPECT;
+
+		// Convert position and rotation.
+		auto convertedPos = Vector2(_position.x, _position.y) * POS_CONVERSION_COEFF;
+		short convertedRot = ANGLE(_rotation);
+
+		// Get modes.
+		auto alignMode = alignModeOpt.value_or(DEFAULT_ALIGN_MODE);
+		auto scaleMode = scaleModeOpt.value_or(DEFAULT_SCALE_MODE);
+
+		// Calculate layout using shared helper.
+		auto layout = CalculateDisplaySpriteLayout(
+			textAspect, convertedScale, convertedRot,
+			alignMode, scaleMode, screenAspect, aspectCorrectionBase);
+
+		// Calculate final position and size.
+		auto position = convertedPos + layout.Offset;
+		auto size = layout.HalfSize * 2.0f;
+
+		// Build vertices centered around origin (top-left, top-right, bottom-right, bottom-left).
+		std::array<Vector2, 4> vertices = {
+			size / 2.0f,
+			Vector2(-size.x,  size.y) / 2.0f,
+			-size / 2.0f,
+			Vector2(size.x, -size.y) / 2.0f
+		};
+
+		// Apply rotation + aspect correction + position offset.
+		auto rotMatrix = Matrix::CreateRotationZ(TO_RAD(convertedRot + ANGLE(180.0f)));
+		for (auto& vertex : vertices)
+		{
+			vertex = Vector2::Transform(vertex, rotMatrix);
+			vertex *= layout.AspectCorrection;
+			vertex += position;
+		}
+
+		// Scale to screen resolution.
+		auto screenScale = screenRes / DISPLAY_SPACE_RES;
+		for (auto& vertex : vertices)
+		{
+			vertex.x *= screenScale.x;
+			vertex.y *= screenScale.y;
+		}
+
+		auto toPercent = [&screenRes](const Vector2& pos) -> Vec2
+		{
+			return Vec2(std::round((pos.x / screenRes.x) * 10000.0f) / 100.0f, std::round((pos.y / screenRes.y) * 10000.0f) / 100.0f);
+		};
+
+		// Calculate edge midpoints.
+		auto center = (vertices[0] + vertices[2]) / 2.0f;
+		auto centerTop = (vertices[0] + vertices[1]) / 2.0f;
+		auto centerLeft = (vertices[0] + vertices[3]) / 2.0f;
+		auto centerRight = (vertices[1] + vertices[2]) / 2.0f;
+		auto centerBottom = (vertices[2] + vertices[3]) / 2.0f;
+
+		// Populate and return anchors.
+		ScriptDisplayAnchors anchors;
+		anchors.TOP_LEFT = toPercent(vertices[0]);
+		anchors.TOP_CENTER = toPercent(centerTop);
+		anchors.TOP_RIGHT = toPercent(vertices[1]);
+		anchors.CENTER_LEFT = toPercent(centerLeft);
+		anchors.CENTER = toPercent(center);
+		anchors.CENTER_RIGHT = toPercent(centerRight);
+		anchors.BOTTOM_RIGHT = toPercent(vertices[2]);
+		anchors.BOTTOM_CENTER = toPercent(centerBottom);
+		anchors.BOTTOM_LEFT = toPercent(vertices[3]);
+
+		return anchors;
 	}
 
 	/// Draw the display string in display space for the current frame.

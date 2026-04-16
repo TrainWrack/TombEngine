@@ -2032,12 +2032,10 @@ namespace TEN::Renderer
 		if (renderMode == SceneRenderMode::Full && g_GameFlow->LastGameStatus == GameStatus::Normal)
 		{
 			CollectDisplaySprites(view);
-			DrawDisplaySprites(view, false);
+			DrawAllDisplayLayers(view);
 
 			DrawDebugRenderTargets(view);
 			DrawDebugDisplayRects();
-			DrawAllStrings();
-			DrawDisplaySprites(view, true);
 		}
 
 		time2 = std::chrono::high_resolution_clock::now();

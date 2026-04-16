@@ -465,6 +465,7 @@ namespace TEN::Renderer
 		void DrawSprites(RenderView& view, RendererPass rendererPass);
 		void DrawDisplaySprites(RenderView& view, bool negativePriority);
 		void DrawDisplayItems();
+		void DrawAllDisplayLayers(RenderView& view);
 		void DrawSortedFaces(RenderView& view);
 		void DrawSingleSprite(RendererSortableObject* object, RendererObjectType lastObjectType, RenderView& view);
 		void DrawRoomSorted(RendererSortableObject* objectInfo, RendererObjectType lastObjectType, RenderView& view);
@@ -750,6 +751,7 @@ namespace TEN::Renderer
 					   const Color& color, const Vector2& scale, float rotation, int flags,
 					   int priority = 0, BlendMode blendMode = BlendMode::AlphaBlend);
 		void AddDebugString(const std::string& string, const Vector2& pos, const Color& color, float scale, RendererDebugPage page = RendererDebugPage::None);
+		Vector2 GetDisplayStringSize(const std::string& text, const Vector2& scale) const;
 		void FreeRendererData();
 		void AddDynamicPointLight(const Vector3& pos, float radius, const Color& color, bool castShadows, int hash = 0);
 		void AddDynamicFogBulb(const Vector3& pos, float radius, float density, const Color& color, int hash = 0);

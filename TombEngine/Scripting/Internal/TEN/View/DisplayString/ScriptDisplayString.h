@@ -3,6 +3,7 @@
 #include "Scripting/Internal/TEN/Strings/DisplayString/DisplayString.h"
 #include "Scripting/Internal/TEN/Types/Color/Color.h"
 #include "Scripting/Internal/TEN/Types/Vec2/Vec2.h"
+#include "Scripting/Internal/TEN/View/DisplayAnchors/ScriptDisplayAnchors.h"
 
 using namespace TEN::Scripting::Types;
 
@@ -53,7 +54,7 @@ namespace TEN::Scripting::DisplayString
 		void SetFlags(const sol::table& flags);
 
 		// Utilities
-		void Draw(sol::optional<int> priority, sol::optional<int> alignMode,
-				  sol::optional<int> blendMode);
+		ScriptDisplayAnchors GetAnchors(sol::optional<DisplaySpriteAlignMode> alignModeOpt, sol::optional<DisplaySpriteScaleMode> scaleModeOpt) const;
+		void Draw(sol::optional<int> priority, sol::optional<int> alignMode, sol::optional<int> blendMode);
 	};
 }

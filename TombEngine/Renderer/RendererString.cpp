@@ -29,6 +29,26 @@ namespace TEN::Renderer
 		AddString(string, Vector2(x, y), Color(color), 1.0f, flags);
 	}
 
+	Vector2 Renderer::GetDisplayStringSize(const std::string& text, const Vector2& scale) const
+	{
+		if (text.empty() || _gameFont == nullptr)
+			return Vector2::Zero;
+
+		auto screenRes = GetScreenResolution();
+		auto factor = Vector2((float)screenRes.x / DISPLAY_SPACE_RES.x, (float)screenRes.y / DISPLAY_SPACE_RES.y);
+		float uiScale = (screenRes.x > screenRes.y) ? factor.y : factor.x;
+		float fontSpacing = _gameFont->GetLineSpacing();
+		float fontScale = REFERENCE_FONT_SIZE / fontSpacing;
+		auto stringScale = Vector2(uiScale * fontScale) * scale;
+		float baseScale = stringScale.y;
+
+		auto wtext = TEN::Utils::ToWString(text);
+		auto measured = Vector2(_gameFont->MeasureString(wtext.c_str())) * baseScale;
+
+		// Convert pixel size back to display space (800x600 units).
+		return Vector2(measured.x / factor.x, measured.y / factor.y);
+	}
+
 	void Renderer::AddString(const std::string& string, const Vector2& pos, const Color& color, float scale, int flags)
 	{
 		AddString(string, pos, Vector2::Zero, Color(color), scale, flags);
