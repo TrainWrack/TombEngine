@@ -176,9 +176,15 @@ namespace TEN::Scripting::DisplayString
 	/// Get the display string option flags.
 	// @function DisplayString:GetFlags
 	// @treturn table Array of DisplayStringOption values.
-	FlagArray ScriptDisplayString::GetFlags() const
+	sol::table ScriptDisplayString::GetFlags(sol::this_state state) const
 	{
-		return _flags;
+		auto table = sol::state_view(state).create_table();
+		for (int i = 0; i < (int)_flags.size(); i++)
+		{
+			if (_flags[i])
+				table.add(i);
+		}
+		return table;
 	}
 
 	/// Set the text of the display string.
@@ -241,9 +247,15 @@ namespace TEN::Scripting::DisplayString
 	/// Set the display string option flags.
 	// @function DisplayString:SetFlags
 	// @tparam table flags Array of DisplayStringOption values.
-	void ScriptDisplayString::SetFlags(const FlagArray& flags)
+	void ScriptDisplayString::SetFlags(const sol::table& flags)
 	{
-		_flags = flags;
+		_flags = {};
+		for (const auto& val : flags)
+		{
+			auto i = val.second.as<size_t>();
+			if (i < _flags.size())
+				_flags[i] = true;
+		}
 	}
 
 	/// Draw the display string in display space for the current frame.

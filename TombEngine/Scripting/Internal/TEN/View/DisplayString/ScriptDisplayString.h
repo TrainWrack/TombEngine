@@ -40,7 +40,7 @@ namespace TEN::Scripting::DisplayString
 		Vec2		GetScale() const;
 		ScriptColor GetColor() const;
 		Vec2		GetArea() const;
-		FlagArray	GetFlags() const;
+		sol::table	GetFlags(sol::this_state state) const;
 
 		// Setters
 		void SetText(const std::string& text);
@@ -50,7 +50,7 @@ namespace TEN::Scripting::DisplayString
 		void SetScale(const Vec2& scale);
 		void SetColor(const ScriptColor& color);
 		void SetArea(const Vec2& area);
-		void SetFlags(const FlagArray& flags);
+		void SetFlags(const sol::table& flags);
 
 		// Utilities
 		void Draw(sol::optional<int> priority, sol::optional<int> alignMode,
