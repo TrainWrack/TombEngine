@@ -13,6 +13,30 @@ namespace TEN::Effects::DisplaySprite
 {
 	std::vector<DisplaySprite> DisplaySprites = {};
 
+	static bool g_hasActiveDisplayScissor = false;
+	static TEN::Renderer::Structures::RendererRectangle g_activeDisplayScissorRect = {};
+
+	void SetActiveDisplayScissor(const TEN::Renderer::Structures::RendererRectangle& rect)
+	{
+		g_hasActiveDisplayScissor = true;
+		g_activeDisplayScissorRect = rect;
+	}
+
+	void ClearActiveDisplayScissor()
+	{
+		g_hasActiveDisplayScissor = false;
+	}
+
+	bool HasActiveDisplayScissor()
+	{
+		return g_hasActiveDisplayScissor;
+	}
+
+	const TEN::Renderer::Structures::RendererRectangle& GetActiveDisplayScissor()
+	{
+		return g_activeDisplayScissorRect;
+	}
+
 	void AddDisplaySprite(GAME_OBJECT_ID objectID, int spriteID, const Vector2& pos, short orient, const Vector2& scale, const Vector4& color,
 						  int priority, DisplaySpriteAlignMode alignMode, DisplaySpriteScaleMode scaleMode, 
 						  BlendMode blendMode, DisplaySpritePhase source)
@@ -29,6 +53,8 @@ namespace TEN::Effects::DisplaySprite
 		displaySprite.ScaleMode = scaleMode;
 		displaySprite.BlendMode = blendMode;
 		displaySprite.Source = source;
+		displaySprite.HasScissor = g_hasActiveDisplayScissor;
+		displaySprite.ScissorRect = g_activeDisplayScissorRect;
 
 		DisplaySprites.push_back(displaySprite);
 	}

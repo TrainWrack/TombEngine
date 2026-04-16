@@ -17,8 +17,10 @@
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
 #include "Scripting/Internal/TEN/View/AlignModes.h"
 #include "Scripting/Internal/TEN/View/CameraTypes.h"
+#include "Scripting/Internal/TEN/View/DisplayArea/ScriptDisplayArea.h"
 #include "Scripting/Internal/TEN/View/DisplayItem/ScriptDisplayItem.h"
 #include "Scripting/Internal/TEN/View/DisplaySprite/ScriptDisplaySprite.h"
+#include "Scripting/Internal/TEN/View/DisplayString/ScriptDisplayString.h"
 #include "Scripting/Internal/TEN/View/ScaleModes.h"
 #include "Scripting/Internal/TEN/View/PostProcessEffects.h"
 #include "Specific/clock.h"
@@ -26,7 +28,9 @@
 #include "Specific/trutils.h"
 
 using namespace TEN::Effects::Environment;
+using namespace TEN::Scripting::DisplayArea;
 using namespace TEN::Scripting::DisplaySprite;
+using namespace TEN::Scripting::DisplayString;
 using namespace TEN::Scripting::DisplayItem;
 using namespace TEN::Scripting::View;
 using namespace TEN::Utils;
@@ -369,7 +373,9 @@ namespace TEN::Scripting::View
 		tableView.set_function("PlayFlyBy", &PlayFlyby);
 
 		// Register types.
+		ScriptDisplayArea::Register(*state, tableView);
 		ScriptDisplaySprite::Register(*state, tableView);
+		ScriptDisplayString::Register(*state, tableView);
 		ScriptDisplayItem::Register(*state, tableView);
 		ScriptDisplayAnchors::Register(tableView);
 

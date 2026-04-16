@@ -341,10 +341,21 @@ namespace TEN::Renderer
 			return;
 
 		Texture2D* texture2DPtr = nullptr;
+		bool currentHasScissor = false;
+		auto currentScissor = RendererRectangle{};
+
 		for (const auto& spriteToDraw : renderView.DisplaySpritesToDraw)
 		{
 			if ((spriteToDraw.Priority >= 0) == negativePriority)
 				continue;
+
+			// Handle scissor rect changes.
+			bool scissorChanged = (spriteToDraw.HasScissor != currentHasScissor) ||
+								  (spriteToDraw.HasScissor &&
+								   (spriteToDraw.ScissorRect.Left != currentScissor.Left ||
+									spriteToDraw.ScissorRect.Top != currentScissor.Top ||
+									spriteToDraw.ScissorRect.Right != currentScissor.Right ||
+									spriteToDraw.ScissorRect.Bottom != currentScissor.Bottom));
 
 			if (texture2DPtr == nullptr)
 			{
@@ -353,14 +364,32 @@ namespace TEN::Renderer
 				_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 				_context->IASetInputLayout(_inputLayout.Get());
 
+				if (spriteToDraw.HasScissor)
+					SetScissor(spriteToDraw.ScissorRect);
+
+				currentHasScissor = spriteToDraw.HasScissor;
+				currentScissor = spriteToDraw.ScissorRect;
+
 				_primitiveBatch->Begin();
 
 				BindTexture(TextureRegister::ColorMap, spriteToDraw.SpritePtr->Texture, SamplerStateRegister::AnisotropicClamp);
 				SetBlendMode(spriteToDraw.BlendMode);
 			}
-			else if (texture2DPtr != spriteToDraw.SpritePtr->Texture || _lastBlendMode != spriteToDraw.BlendMode)
+			else if (texture2DPtr != spriteToDraw.SpritePtr->Texture || _lastBlendMode != spriteToDraw.BlendMode || scissorChanged)
 			{
 				_primitiveBatch->End();
+
+				if (scissorChanged)
+				{
+					if (spriteToDraw.HasScissor)
+						SetScissor(spriteToDraw.ScissorRect);
+					else
+						ResetScissor();
+
+					currentHasScissor = spriteToDraw.HasScissor;
+					currentScissor = spriteToDraw.ScissorRect;
+				}
+
 				_primitiveBatch->Begin();
 
 				BindTexture(TextureRegister::ColorMap, spriteToDraw.SpritePtr->Texture, SamplerStateRegister::AnisotropicClamp);
@@ -408,6 +437,10 @@ namespace TEN::Renderer
 		
 		if (texture2DPtr != nullptr)
 			_primitiveBatch->End();
+
+		// Reset scissor if it was active.
+		if (currentHasScissor)
+			ResetScissor();
 	}
 
 	void Renderer::DrawFullScreenQuad(ID3D11ShaderResourceView* texture, Vector3 color, bool fit, float customAspect)
@@ -570,6 +603,7 @@ namespace TEN::Renderer
 		spriteToDraw.Priority = priority;
 		spriteToDraw.BlendMode = blendMode;
 		spriteToDraw.AspectCorrection = aspectCorrection;
+		spriteToDraw.HasScissor = false;
 
 		renderView.DisplaySpritesToDraw.push_back(spriteToDraw);
 	}
@@ -612,6 +646,14 @@ namespace TEN::Renderer
 				displaySprite.BlendMode,
 				layout.AspectCorrection,
 				renderView);
+
+			// Transfer scissor rect from source sprite.
+			if (displaySprite.HasScissor)
+			{
+				auto& last = renderView.DisplaySpritesToDraw.back();
+				last.HasScissor = true;
+				last.ScissorRect = displaySprite.ScissorRect;
+			}
 		}
 
 		std::sort(
