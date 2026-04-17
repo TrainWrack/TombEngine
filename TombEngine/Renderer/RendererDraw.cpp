@@ -2329,6 +2329,9 @@ namespace TEN::Renderer
 		ClearScene();
 
 		_context->ClearState();
+		_lastBlendMode = BlendMode::Unknown;
+		_lastCullMode = CullMode::Unknown;
+		_lastDepthState = DepthState::Unknown;
 		_swapChain->Present(1, 0);
 	}
 
@@ -3368,6 +3371,9 @@ namespace TEN::Renderer
 		RenderScene(&_backBuffer, _gameCamera);
 
 		_context->ClearState();
+		_lastBlendMode = BlendMode::Unknown;
+		_lastCullMode = CullMode::Unknown;
+		_lastDepthState = DepthState::Unknown;
 		_swapChain->Present(1, 0);
 	}
 

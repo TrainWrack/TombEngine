@@ -1,10 +1,12 @@
 #pragma once
 
+#include "Game/effects/DisplaySprite.h"
 #include "Scripting/Internal/TEN/Strings/DisplayString/DisplayString.h"
 #include "Scripting/Internal/TEN/Types/Color/Color.h"
 #include "Scripting/Internal/TEN/Types/Vec2/Vec2.h"
 #include "Scripting/Internal/TEN/View/DisplayAnchors/ScriptDisplayAnchors.h"
 
+using namespace TEN::Effects::DisplaySprite;
 using namespace TEN::Scripting::Types;
 
 namespace TEN::Scripting::DisplayString

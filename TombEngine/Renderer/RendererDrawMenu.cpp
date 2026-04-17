@@ -1421,6 +1421,9 @@ namespace TEN::Renderer
 		ClearScene();
 
 		_context->ClearState();
+		_lastBlendMode = BlendMode::Unknown;
+		_lastCullMode = CullMode::Unknown;
+		_lastDepthState = DepthState::Unknown;
 		_swapChain->Present(1, 0);
 	}
 
