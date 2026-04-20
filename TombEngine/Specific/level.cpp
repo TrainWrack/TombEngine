@@ -18,6 +18,7 @@
 #include "Game/Setup.h"
 #include "Game/Sink.h"
 #include "Game/spotcam.h"
+#include "Game/waypoint.h"
 #include "Objects/Generic/Doors/generic_doors.h"
 #include "Physics/Physics.h"
 #include "Renderer/Renderer.h"
@@ -610,6 +611,39 @@ void LoadCameras()
 	SpotCam.resize(numSpotcams);
 	if (numSpotcams != 0)
 		ReadBytes(SpotCam.data(), numSpotcams * sizeof(SPOTCAM));
+
+	// Load waypoints
+	int waypointCount = ReadCount();
+	TENLog("Waypoint count: " + std::to_string(waypointCount), LogLevel::Info);
+	
+	if (waypointCount < 0 || waypointCount > MAX_WAYPOINTS)
+	{
+		TENLog("Invalid waypoint count: " + std::to_string(waypointCount), LogLevel::Error);
+		waypointCount = 0;
+	}
+	
+	WayPoints.clear();
+	WayPoints.reserve(waypointCount);
+	
+	for (int i = 0; i < waypointCount; i++)
+	{
+		WAYPOINT waypoint;
+		waypoint.x = ReadInt32();
+		waypoint.y = ReadInt32();
+		waypoint.z = ReadInt32();
+		waypoint.roomNumber = ReadInt32();
+		waypoint.rotationX = ReadFloat();
+		waypoint.rotationY = ReadFloat();
+		waypoint.roll = ReadFloat();
+		waypoint.sequence = ReadUInt16();
+		waypoint.number = ReadUInt16();
+		waypoint.type = ReadInt32();
+		waypoint.radius1 = ReadFloat();
+		waypoint.radius2 = ReadFloat();
+		waypoint.name = ReadString();
+		
+		WayPoints.push_back(waypoint);
+	}
 
 	int sinkCount = ReadCount();
 	TENLog("Sink count: " + std::to_string(sinkCount), LogLevel::Info);
