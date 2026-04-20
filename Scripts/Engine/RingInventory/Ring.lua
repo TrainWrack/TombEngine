@@ -91,8 +91,15 @@ function Ring:RemoveItem(objectID)
     return false
 end
 
+function Ring:ClearDisplayItems()
+    for _, item in ipairs(self.items) do
+        item:ClearDisplayItem()
+    end
+end
+
 -- Clear all items
 function Ring:Clear()
+    self:ClearDisplayItems()
     self.items = {}
     self.selectedItemIndex = 1
     self.currentAngle = 0

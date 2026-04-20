@@ -402,6 +402,12 @@ function InventoryData.Clear(ringType)
     end
 end
 
+function InventoryData.ClearDisplayItems()
+    for _, ring in pairs(rings) do
+        ring:ClearDisplayItems()
+    end
+end
+
 function InventoryData.ClearAll()
     for ringType, ring in pairs(rings) do
         ring:Clear()

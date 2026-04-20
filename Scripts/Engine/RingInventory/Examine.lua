@@ -199,6 +199,12 @@ function Examine.Hide()
     targetAlpha = 0
 end
 
+function Examine.Clear()
+    Examine.item = nil
+    Text.Destroy("EXAMINE_TEXT")
+    Text.Destroy("EXAMINE_CONTROLS")
+end
+
 function Examine.Update()
     if not Examine.item then return end
 

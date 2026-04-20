@@ -346,6 +346,8 @@ local ResetInventorySession = function()
         end
     end
 
+    Examine.Clear()
+    InventoryData.ClearDisplayItems()
     InventoryData.Reset()
     Sprites.Clear()
     TEN.Inventory.SetFocusedItem(Constants.NO_VALUE)
