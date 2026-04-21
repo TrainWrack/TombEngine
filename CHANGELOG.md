@@ -5,7 +5,16 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ## [Version 2.0]
 
+### New features
+* Added ease-in and ease-out to flyby camera movement when the "Freeze camera" flag is set.
+* Added gamma correction setting.
+ 
+### Bug fixes
+* Fixed incorrect dynamic range for vertex colors, ambient light, dynamic lights and particle effects.
+* Fixed flyby camera jitter by converting the spline type to floating-point.
+
 ### Lua API changes
+* Added `GlobalVars` namespace for globally persistent variables across game sessions, including the title level.
 * Added `Objects.Creature` class to fetch and set various enemy AI state parameters.
 
 ## [Version 1.11.1]
