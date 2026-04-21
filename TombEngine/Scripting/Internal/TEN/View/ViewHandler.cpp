@@ -33,6 +33,7 @@ using namespace TEN::Scripting::DisplaySprite;
 using namespace TEN::Scripting::DisplayString;
 using namespace TEN::Scripting::DisplayItem;
 using namespace TEN::Scripting::View;
+using namespace TEN::SpotCam;
 using namespace TEN::Utils;
 using namespace TEN::Video;
 
@@ -179,14 +180,14 @@ namespace TEN::Scripting::View
 	{
 		constexpr auto PROGRESS_MAX = 100.0f;
 
-		return Vec3(GetCameraTransform(seqID, progress / PROGRESS_MAX, ValueOr<bool>(loop, false)).Position);
+		return Vec3(GetSpotCamSequenceTransform(seqID, progress / PROGRESS_MAX, ValueOr<bool>(loop, false)).Position);
 	}
 
 	static Rotation GetFlybyRotation(int seqID, float progress, TypeOrNil<bool> loop)
 	{
 		constexpr auto PROGRESS_MAX = 100.0f;
 
-		return Rotation(GetCameraTransform(seqID, progress / PROGRESS_MAX, ValueOr<bool>(loop, false)).Orientation);
+		return Rotation(GetSpotCamSequenceTransform(seqID, progress / PROGRESS_MAX, ValueOr<bool>(loop, false)).Orientation);
 	}
 
 	static void FlashScreen(TypeOrNil<ScriptColor> col, TypeOrNil<float> speed)
