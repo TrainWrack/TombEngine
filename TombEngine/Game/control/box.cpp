@@ -2812,8 +2812,17 @@ void GetCreatureMood(ItemInfo* item, AI_INFO* AI, bool isViolent)
 	auto mood = creature->Mood;
 
 	// MOOD DECISION LOGIC
-	// Based on enemy state, creature state, and zone relationships.
-	if (enemy)
+	// Based on mood override, enemy state, creature state, and zone relationships.
+	if (creature->ForcedMood.has_value())
+	{
+		// Override the mood with forced mood.
+		auto forcedMood = creature->ForcedMood.value();
+		if (enemy == nullptr && forcedMood != MoodType::Bored)
+			forcedMood = MoodType::Bored;
+
+		creature->Mood = forcedMood;
+	}
+	else if (enemy)
 	{
 		// Enemy is dead - go back to idle wandering.
 		if (enemy->HitPoints <= 0 && enemy == LaraItem) // TODO: deal with LaraItem global !

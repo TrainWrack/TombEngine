@@ -11,22 +11,35 @@
 
 namespace TEN::Scripting::Objects
 {
-	static const auto CREATURE_MOOD = std::unordered_map<std::string, MoodType>
+	enum class ScriptMoodType
+	{
+		Bored,
+		Attack,
+		Escape,
+		Stalk,
+		Auto
+	};
+
+	static const auto CREATURE_MOOD = std::unordered_map<std::string, ScriptMoodType>
 	{
 		/// Creature is not attacking or stalking any enemies and randomly roams around the area.
 		// @mem BORED
-		{"BORED", MoodType::Bored},
+		{"BORED", ScriptMoodType::Bored},
 
 		/// Creature is searching for an enemy, but does not directly attack it yet.
 		// @mem STALK
-		{"STALK", MoodType::Stalk},
+		{"STALK", ScriptMoodType::Stalk},
 
 		/// Creature is attacking an enemy.
 		// @mem ATTACK
-		{"ATTACK", MoodType::Attack},
+		{"ATTACK", ScriptMoodType::Attack},
 
 		/// Creature is escaping from the enemy and trying to find a safe place.
 		// @mem ESCAPE
-		{"ESCAPE", MoodType::Escape},
+		{"ESCAPE", ScriptMoodType::Escape},
+
+		/// Creature's mood is determined automatically by the AI.
+		// @mem AUTO
+		{"AUTO", ScriptMoodType::Auto}
 	};
 }

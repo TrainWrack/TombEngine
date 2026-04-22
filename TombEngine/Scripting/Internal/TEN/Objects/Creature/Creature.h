@@ -2,6 +2,7 @@
 #include "framework.h"
 #include "Game/itemdata/creature_info.h"
 
+#include "Scripting/Internal/TEN/Objects/Creature/CreatureStates.h"
 #include "Scripting/Internal/TEN/Objects/Moveable/MoveableObject.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
 #include "Scripting/Internal/ScriptUtil.h"
@@ -25,7 +26,7 @@ namespace TEN::Scripting::Objects
 		ScriptCreature(const Moveable& mov);
 
 		// Getters
-		std::optional<MoodType> GetMood();
+		std::optional<ScriptMoodType> GetMood();
 		std::optional<Moveable>	GetTarget();
 		std::optional<Vec3> GetTargetPosition();
 		std::optional<int>	GetLocationAI();
@@ -36,7 +37,7 @@ namespace TEN::Scripting::Objects
 		std::optional<bool> GetAtGoal();
 
 		// Setters
-		void SetMood(MoodType mood);
+		void SetMood(ScriptMoodType mood);
 		void SetTarget(const TypeOrNil<Moveable*> moveable);
 		void SetTargetPosition(const Vec3& position);
 		void SetLocationAI(int value);

@@ -147,11 +147,13 @@ struct CreatureInfo
 	int ItemNumber = NO_VALUE;
 
 	LOTInfo		 LOT			= {};
-	MoodType	 Mood			= MoodType::Bored;
 	EnemyHandler Enemy			= {};
 	ItemInfo*	 AITarget		= nullptr;
 	int			 AITargetNumber	= NO_VALUE;
 	Vector3i	 Target			= Vector3i::Zero;
+
+	MoodType Mood = MoodType::Bored;
+	std::optional<MoodType> ForcedMood = std::nullopt;
 
 	int   FlyRate		   = 0;
 	short MaxTurn		   = 0;
