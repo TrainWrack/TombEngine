@@ -205,7 +205,7 @@ ObjectsHandler::ObjectsHandler(sol::state* lua, sol::table& parent) :
 	_handler.MakeReadOnlyTable(_table_objects, ScriptReserved_HandStatus, HAND_STATUSES);
 	_handler.MakeReadOnlyTable(_table_objects, ScriptReserved_WaterStatus, WATER_STATUSES);
 	_handler.MakeReadOnlyTable(_table_objects, ScriptReserved_MoveableStatus, MOVEABLE_STATUSES);
-	_handler.MakeReadOnlyTable(_table_objects, ScriptReserved_CreatureMood, CREATURE_MOOD);
+	_handler.MakeReadOnlyTable(_table_objects, ScriptReserved_MoodType, MOOD_TYPES);
 	_handler.MakeReadOnlyTable(_table_objects, ScriptReserved_InteractionType, INTERACTION_TYPE);
 }
 

@@ -100,7 +100,7 @@ namespace TEN::Scripting::Objects
 
 	/// Gets the current mood of the creature.
 	// @function GetMood
-	// @treturn Objects.CreatureMood The current mood of the creature. If creature is invalid, returns `nil`.
+	// @treturn Objects.MoodType The current mood of the creature. If creature is invalid, returns `nil`.
 	std::optional<ScriptMoodType> ScriptCreature::GetMood()
 	{
 		auto* creature = GetCreature();
@@ -112,9 +112,9 @@ namespace TEN::Scripting::Objects
 
 	/// Sets the mood of the creature.
 	// Overrides the automatic mood management and forces the creature's mood to the specified value.
-	// Setting the mood to @{Objects.CreatureMood.Auto} will clear any mood override and allow the creature to manage the mood according to the AI.
+	// Setting the mood to @{Objects.MoodType.Auto} will clear any mood override and allow the creature to manage the mood according to the AI.
 	// @function SetMood
-	// @tparam Objects.CreatureMood mood The mood to set.
+	// @tparam Objects.MoodType mood The mood to set.
 	void ScriptCreature::SetMood(ScriptMoodType mood)
 	{
 		auto* creature = GetCreature();

@@ -290,7 +290,7 @@ static constexpr char ScriptReserved_GetAtGoal[]			= "GetAtGoal";
 static constexpr char ScriptReserved_SetAtGoal[]			= "SetAtGoal";
 static constexpr char ScriptReserved_GetJumping[]			= "GetJumping";
 static constexpr char ScriptReserved_GetMonkeying[]			= "GetMonkeying";
-static constexpr char ScriptReserved_CreatureMood[]			= "CreatureMood";
+static constexpr char ScriptReserved_MoodType[]				= "MoodType";
 
 // Flow Functions
 static constexpr char ScriptReserved_SetStrings[]			= "SetStrings";

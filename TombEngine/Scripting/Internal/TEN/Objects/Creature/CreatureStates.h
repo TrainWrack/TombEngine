@@ -6,7 +6,7 @@
 
 /// Constants for creature mood.
 // To be used with @{Objects.Creature.GetMood} and @{Objects.Creature.SetMood} functions.
-// @enum Objects.CreatureMood
+// @enum Objects.MoodType
 // @pragma nostrip
 
 namespace TEN::Scripting::Objects
@@ -20,7 +20,7 @@ namespace TEN::Scripting::Objects
 		Auto
 	};
 
-	static const auto CREATURE_MOOD = std::unordered_map<std::string, ScriptMoodType>
+	static const auto MOOD_TYPES = std::unordered_map<std::string, ScriptMoodType>
 	{
 		/// Creature is not attacking or stalking any enemies and randomly roams around the area.
 		// @mem BORED
