@@ -21,12 +21,10 @@
 #include "Renderer/ConstantBuffers/HUDBuffer.h"
 #include "Renderer/ConstantBuffers/ShadowLightBuffer.h"
 #include "Renderer/ConstantBuffers/RoomBuffer.h"
-#include "Renderer/ConstantBuffers/ItemBuffer.h"
-#include "Renderer/ConstantBuffers/AnimatedBuffer.h"
-#include "Renderer/ConstantBuffers/BlendingBuffer.h"
+#include "Renderer/ConstantBuffers/ObjectsBuffer.h"
 #include "Renderer/ConstantBuffers/CameraMatrixBuffer.h"
-#include "Renderer/ConstantBuffers/MaterialBuffer.h"
-#include "Renderer/ConstantBuffers/InstancedStaticBuffer.h"
+#include "Renderer/Structures/AnimatedFrame.h"
+#include "Renderer/ConstantBuffers/PerDrawBuffer.h"
 #include "Renderer/ConstantBuffers/InstancedSpriteBuffer.h"
 #include "Renderer/ConstantBuffers/PostProcessBuffer.h"
 #include "Renderer/ConstantBuffers/SMAABuffer.h"
@@ -121,12 +119,12 @@ namespace TEN::Renderer
 		RenderView _oldGameCamera;
 		RenderView _currentGameCamera;
 		std::unique_ptr<IConstantBuffer> _cbCameraMatrices;
-		CItemBuffer _stItem;
-		std::unique_ptr<IConstantBuffer> _cbItem;
+		CObjectsBuffer _stObjects;
+		std::unique_ptr<IConstantBuffer> _cbObjects;
 		CRoomBuffer _stRoom;
 		std::unique_ptr<IConstantBuffer> _cbRoom;
-		CAnimatedBuffer _stAnimated;
-		std::unique_ptr<IConstantBuffer> _cbAnimated;
+		std::array<AnimatedFrame, MAX_ANIMATED_FRAMES> _animatedFrames = {};
+		std::unique_ptr<IStructuredBuffer> _animatedFramesBuffer;
 		CShadowLightBuffer _stShadowMap;
 		std::unique_ptr<IConstantBuffer> _cbShadowMap;
 		CHUDBuffer _stHUD;
@@ -137,16 +135,12 @@ namespace TEN::Renderer
 		std::unique_ptr<IConstantBuffer> _cbPostProcessBuffer;
 		CInstancedSpriteBuffer _stInstancedSpriteBuffer;
 		std::unique_ptr<IConstantBuffer> _cbInstancedSpriteBuffer;
-		CBlendingBuffer _stBlending;
-		std::unique_ptr<IConstantBuffer> _cbBlending;
-		CInstancedStaticMeshBuffer _stInstancedStaticMeshBuffer;
-		std::unique_ptr<IConstantBuffer> _cbInstancedStaticMeshBuffer;
+		CPerDrawBuffer _stPerDraw;
+		std::unique_ptr<IConstantBuffer> _cbPerDraw;
 		CSMAABuffer _stSMAABuffer;
 		std::unique_ptr<IConstantBuffer> _cbSMAABuffer;
 		CSkyBuffer _stSky;
 		std::unique_ptr<IConstantBuffer> _cbSky;
-		CMaterialBuffer _stMaterial;
-		std::unique_ptr<IConstantBuffer> _cbMaterial;
 
 		// Primitive batches
 
@@ -601,10 +595,10 @@ namespace TEN::Renderer
 
 		inline void TexturesAreNotAnimated()
 		{
-			if (_stAnimated.Animated == 0)
+			if (_stPerDraw.Animated == 0)
 				return;
-			_stAnimated.Animated = 0;
-			UpdateConstantBuffer(&_stAnimated, _cbAnimated.get());
+			_stPerDraw.Animated = 0;
+			UpdateConstantBuffer(&_stPerDraw, _cbPerDraw.get());
 		}
 
 		static inline bool IsWaterfall(short objectNumber)
