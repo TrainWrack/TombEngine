@@ -183,6 +183,7 @@ namespace TEN::Renderer
 		std::vector<int> _roomsIndices;
 		std::vector<Vertex> _moveablesVertices;
 		std::vector<int> _moveablesIndices;
+		std::unordered_map<int, std::vector<Vertex>> _skinVertexBackups;
 		std::vector<Vertex> _staticsVertices;
 		std::vector<int> _staticsIndices;
 
@@ -474,6 +475,9 @@ namespace TEN::Renderer
 		void PackSpriteTextureCoordinates(int instanceId, RendererSprite* sprite);
 		void ApplyGlow(IRenderSurface2D* renderTarget, RenderView& view);
 
+		void ProcessSkinJoints(RendererObject& jointsMoveable, RendererObject& skinMoveable, ObjectInfo& jointsObj);
+		void Renderer::ProcessHair(GAME_OBJECT_ID hairID, RendererObject& skinMoveable, bool isSecond);
+
 		void AddSpriteBillboard(RendererSprite* sprite, const Vector3& pos, const Vector4& color, float orient2D, float scale,
 			Vector2 size, BlendMode blendMode, bool isSoftParticle, RenderView& view, SpriteRenderType renderType = SpriteRenderType::Default);
 		void AddSpriteBillboardConstrained(RendererSprite* sprite, const Vector3& pos, const Vector4& color, float orient2D,
@@ -497,6 +501,8 @@ namespace TEN::Renderer
 		Matrix GetWorldMatrixForSprite(const RendererSpriteToDraw& sprite, RenderView& view);
 		RendererObject& GetRendererObject(GAME_OBJECT_ID id);
 		RendererMesh* GetMesh(int meshIndex);
+		void BackupObjectVertices(GAME_OBJECT_ID objectID);
+		void RestoreObjectVertices(GAME_OBJECT_ID objectID);
 		Vector4 GetPortalRect(Vector4 v, Vector4 vp);
 		bool SphereBoxIntersection(BoundingBox box, Vector3 sphereCentre, float sphereRadius);
 		void InitializeSpriteQuad();
@@ -692,6 +698,7 @@ namespace TEN::Renderer
 		void UpdateVideoTexture(ITexture2D* texture);
 		void ClearVideoTexture();
 		void UpdateProgress(float value);
+		void UpdatePlayerSkinVertices(GAME_OBJECT_ID skinID, GAME_OBJECT_ID skinJointsID, GAME_OBJECT_ID hairPrimaryID, GAME_OBJECT_ID hairSecondaryID);
 		void ToggleFullScreen(bool force = false);
 		void SetFullScreen();
 		bool IsFullsScreen();
