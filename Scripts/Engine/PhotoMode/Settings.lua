@@ -65,6 +65,13 @@ Settings.Camera =
     offsetUp         = -256,
     targetForward    = 512,
     targetUp         = -256,
+
+    -- Distance limit from Lara's entry position (snap.laraPos)
+    defaultLimitDistance = true,
+    defaultMaxDistance   = 4096,
+    minMaxDistance       = 512,
+    maxMaxDistance       = 16384,
+    distanceStep         = 512,
 }
 
 -- ============================================================================
@@ -133,12 +140,12 @@ Settings.Filters =
     },
     tints =
     {
-        { name = "Neutral", color = TEN.Color(255, 255, 255) },
+        { name = "Neutral", color = TEN.Color(128, 128, 128) },
         { name = "Warm",    color = TEN.Color(255, 160,  80) },
         { name = "Cool",    color = TEN.Color( 80, 160, 255) },
         { name = "Green",   color = TEN.Color( 80, 255,  80) },
-        { name = "Magenta", color = TEN.Color(255,  80, 255) },
-        { name = "Red",     color = TEN.Color(255,  80,  80) },
+        { name = "Magenta", color = TEN.Color(128,  40, 128) },
+        { name = "Red",     color = TEN.Color(128,  40,  40) },
         { name = "Sepia",   color = TEN.Color(255, 200, 120) },
     },
 }
@@ -158,9 +165,10 @@ Settings.Outfits =
     --                    "clear" → Lara:ClearSkinnedMesh() (disables GPU skin entirely).
     -- skinnedMeshIndex:  Optional sub-index for SwapSkinnedMesh.
     -- meshVisible:       Controls classic mesh visibility.
-    --                    "none"     → hide all classic meshes.
-    --                    "all"      → keep all classic meshes visible.
-    --                    { i, ... } → keep only listed indices visible, hide the rest.
+    --                    "none" or nil → hide all classic meshes.
+    --                    "all"         → keep all classic meshes visible.
+    --                    { i, ... }    → keep only listed indices visible, hide the rest.
+    -- onEnter:           Optional function() called after the outfit is applied.
 
     { name = "Classic TR4",
       skin = { TEN.Objects.ObjID.ANIMATING1, TEN.Objects.ObjID.ANIMATING2,
@@ -194,7 +202,7 @@ Settings.Outfits =
 
     { name = "TEN Lara",
       skinnedMesh = TEN.Objects.ObjID.LARA_EXTRA_MESH1,
-      meshVisible = {10,13},
+      meshVisible = {10, 13},
     },
 
     { name = "Jeans",
@@ -305,20 +313,38 @@ Settings.Frames =
 }
 
 -- ============================================================================
--- Depth of Field (placeholder -- not yet implemented in TEN)
+-- Depth of Field
 -- ============================================================================
 
 Settings.DepthOfField =
 {
-    defaultEnabled       = false,
-    defaultFocusDistance = 1024,
+    -- Mode selector: index into modes table (1 = Off / NONE)
+    modes =
+    {
+        { name = "Off",   mode = TEN.View.DOFMode.NONE  },
+        { name = "Full",  mode = TEN.View.DOFMode.FULL  },
+        { name = "Front", mode = TEN.View.DOFMode.FRONT },
+        { name = "Back",  mode = TEN.View.DOFMode.BACK  },
+    },
+    defaultMode          = 1,     -- index into modes (1 = Off)
+
+    -- Focus distance: world units to the sharp focal plane
+    defaultFocusDistance = 1536,
     minFocusDistance     = 64,
     maxFocusDistance     = 8192,
     focusDistanceStep    = 64,
-    defaultBlurStrength  = 0.5,
-    minBlurStrength      = 0.0,
-    maxBlurStrength      = 1.0,
-    blurStrengthStep     = 0.05
+
+    -- Range: width of the sharp focus region in world units
+    defaultRange         = 2048,
+    minRange             = 64,
+    maxRange             = 8192,
+    rangeStep            = 64,
+
+    -- Strength: maximum bokeh radius (clamped to [0, 1])
+    defaultStrength      = 0.5,
+    minStrength          = 0.0,
+    maxStrength          = 1.0,
+    strengthStep         = 0.05,
 }
 
 -- ============================================================================

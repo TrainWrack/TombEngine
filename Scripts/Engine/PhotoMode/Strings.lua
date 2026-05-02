@@ -12,10 +12,12 @@ local strings =
     pm_header_ui        = {"UI"},
 
     -- Camera menu items
-    pm_mode           = {"Mode"},
-    pm_move_speed     = {"Move Speed"},
-    pm_look_speed     = {"Look Speed"},
-    pm_collision      = {"Collision"},
+    pm_mode             = {"Mode"},
+    pm_move_speed       = {"Move Speed"},
+    pm_look_speed       = {"Look Speed"},
+    pm_collision        = {"Collision"},
+    pm_limit_distance   = {"Limit Distance"},
+    pm_max_distance     = {"Max Distance"},
 
     -- Character menu items
     pm_animation      = {"Pose"},
@@ -38,9 +40,10 @@ local strings =
     pm_frame_overlay  = {"Frame"},
 
     -- Effects menu items (Depth of Field)
-    pm_dof_enabled    = {"Depth of Field"},
+    pm_dof_mode       = {"Depth of Field"},
     pm_dof_focus      = {"Focus Distance"},
-    pm_dof_blur       = {"Blur Strength"},
+    pm_dof_range      = {"Focus Range"},
+    pm_dof_strength   = {"Blur Strength"},
 
     -- Light menu items
     pm_enabled        = {"Enabled"},
@@ -59,6 +62,7 @@ local strings =
     pm_press          = {"Accept"},
 
     -- Display strings
+    pm_mode_prefix    = {"Mode: "},
     pm_help           = {"StepL/R=Tab  Up/Down=Select  Left/Right=Adjust  Look=Hide UI  Inventory=Exit"},
 }
 

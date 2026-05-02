@@ -171,6 +171,18 @@ local function ApplyPositions(newCam, newTgt)
     if state.collisionOn then
         if IsInsideSolid(newCam) or IsInsideSolid(newTgt) then return false end
     end
+
+    -- Distance limit: prevent camera moving beyond maxCameraDistance from Lara's entry position.
+    if state.limitCameraDistance and state.snapshot and state.snapshot.laraPos then
+        local origin = state.snapshot.laraPos
+        local dx = newCam.x - origin.x
+        local dy = newCam.y - origin.y
+        local dz = newCam.z - origin.z
+        local distSq = dx * dx + dy * dy + dz * dz
+        local maxDist = state.maxCameraDistance or Settings.Camera.defaultMaxDistance
+        if distSq > maxDist * maxDist then return false end
+    end
+
     state.cameraMesh:SetPosition(newCam)
     state.cameraTarget:SetPosition(newTgt)
     return true

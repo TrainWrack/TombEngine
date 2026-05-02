@@ -51,9 +51,11 @@ local State = {
     controlMode = States.Mode.CAMERA,
 
     -- Camera settings
-    moveSpeed   = Settings.Camera.defaultMoveSpeed,
-    lookSpeed   = Settings.Camera.defaultLookSpeed,
-    collisionOn = true,
+    moveSpeed         = Settings.Camera.defaultMoveSpeed,
+    lookSpeed         = Settings.Camera.defaultLookSpeed,
+    collisionOn       = true,
+    limitCameraDistance = Settings.Camera.defaultLimitDistance,
+    maxCameraDistance   = Settings.Camera.defaultMaxDistance,
 
     -- Lens
     fov  = Settings.Lens.defaultFOV,
@@ -90,10 +92,11 @@ local State = {
     expressionIndex         = 1,
     swappedExpressionMeshes = {},
 
-    -- Depth of Field (placeholder)
-    dofEnabled       = false,
+    -- Depth of Field
+    dofMode          = Settings.DepthOfField.defaultMode,
     dofFocusDistance = Settings.DepthOfField.defaultFocusDistance,
-    dofBlurStrength  = Settings.DepthOfField.defaultBlurStrength,
+    dofRange         = Settings.DepthOfField.defaultRange,
+    dofStrength      = Settings.DepthOfField.defaultStrength,
 
     -- Entry camera state (for Reset Camera)
     entryCamPos    = nil,
@@ -261,10 +264,12 @@ end
 -- ============================================================================
 
 function States.ResetToEntry()
-    State.controlMode   = States.Mode.CAMERA
-    State.moveSpeed     = Settings.Camera.defaultMoveSpeed
-    State.lookSpeed     = Settings.Camera.defaultLookSpeed
-    State.collisionOn   = true
+    State.controlMode         = States.Mode.CAMERA
+    State.moveSpeed           = Settings.Camera.defaultMoveSpeed
+    State.lookSpeed           = Settings.Camera.defaultLookSpeed
+    State.collisionOn         = true
+    State.limitCameraDistance = Settings.Camera.defaultLimitDistance
+    State.maxCameraDistance   = Settings.Camera.defaultMaxDistance
     State.fov           = State.snapshot and State.snapshot.fov or Settings.Lens.defaultFOV
     State.roll          = Settings.Lens.defaultRoll
     State.animIndex     = 1
@@ -284,9 +289,10 @@ function States.ResetToEntry()
     State.weaponIndex         = 1
     State.expressionIndex         = 1
     State.swappedExpressionMeshes = {}
-    State.dofEnabled       = Settings.DepthOfField.defaultEnabled
+    State.dofMode          = Settings.DepthOfField.defaultMode
     State.dofFocusDistance = Settings.DepthOfField.defaultFocusDistance
-    State.dofBlurStrength  = Settings.DepthOfField.defaultBlurStrength
+    State.dofRange         = Settings.DepthOfField.defaultRange
+    State.dofStrength      = Settings.DepthOfField.defaultStrength
     State.frameIndex        = 1
     State.sunglassesEnabled = false
     State.gunflashEnabled   = false

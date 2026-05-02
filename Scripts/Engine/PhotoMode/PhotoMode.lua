@@ -50,6 +50,7 @@ local function BuildNames(list, key)
     return t
 end
 
+local DOF_MODE_NAMES   = BuildNames(Settings.DepthOfField.modes)
 local CTRL_MODE_NAMES  = States.ModeNames
 local LIGHT_SRC_NAMES  = Settings.Light.sourceNames
 local FILTER_NAMES     = BuildNames(Settings.Filters.presets)
@@ -196,6 +197,11 @@ local function ApplyOutfit(state)
         end
     end
 
+    -- Execute outfit-specific hook if provided.
+    if preset.onEnter and type(preset.onEnter) == "function" then
+        pcall(preset.onEnter)
+    end
+
     pcall(function() Lara:ResetHair() end)
 end
 
@@ -325,9 +331,13 @@ local function UpdateGunFlash(state)
 end
 
 local function ApplyDOF(state)
-    if state.dofEnabled then
-        --state.dofFocusDistance, state.dofFocusRange, state.dofBlurStrength
- 
+    local cfg = Settings.DepthOfField
+    local modePreset = cfg.modes[state.dofMode]
+    local mode = modePreset and modePreset.mode or TEN.View.DOFMode.NONE
+    if mode == TEN.View.DOFMode.NONE then
+        pcall(function() TEN.View.SetDOF(TEN.View.DOFMode.NONE) end)
+    else
+        pcall(function() TEN.View.SetDOF(mode, state.dofFocusDistance, state.dofRange, state.dofStrength) end)
     end
 end
 
@@ -394,9 +404,11 @@ local function ResetEffects()
     ApplyTint(state)
 
     state.frameIndex       = 1
-    state.dofEnabled       = Settings.DepthOfField.defaultEnabled
+    state.dofMode          = Settings.DepthOfField.defaultMode
     state.dofFocusDistance = Settings.DepthOfField.defaultFocusDistance
-    state.dofBlurStrength  = Settings.DepthOfField.defaultBlurStrength
+    state.dofRange         = Settings.DepthOfField.defaultRange
+    state.dofStrength      = Settings.DepthOfField.defaultStrength
+    ApplyDOF(state)
 end
 
 local function ResetLight()
@@ -509,7 +521,7 @@ local function BuildAllMenus()
     LevelFuncs.Engine.PhotoMode.OnCameraAccept = function()
         local m = Menu.Get(MENU_CAMERA)
         if not m then return end
-        if m:GetCurrentItemIndex() == 5 then ResetCamera() end
+        if m:GetCurrentItemIndex() == 7 then ResetCamera() end
     end
 
     LevelFuncs.Engine.PhotoMode.OnCharacterAccept = function()
@@ -529,7 +541,7 @@ local function BuildAllMenus()
     LevelFuncs.Engine.PhotoMode.OnEffectsAccept = function()
         local m = Menu.Get(MENU_EFFECTS)
         if not m then return end
-        if m:GetCurrentItemIndex() == 10 then
+        if m:GetCurrentItemIndex() == 11 then
             ResetEffects()
             m:SetOptionIndexForItem(1, ValueToOptionIndex(state.fov, cfg.Lens.minFOV, cfg.Lens.fovStep))
             m:SetOptionIndexForItem(2, ValueToOptionIndex(state.roll, cfg.Lens.minRoll, cfg.Lens.rollStep))
@@ -537,9 +549,10 @@ local function BuildAllMenus()
             m:SetOptionIndexForItem(4, ValueToOptionIndex(state.filterStrength, 0, 0.05))
             m:SetOptionIndexForItem(5, state.tintIndex)
             m:SetOptionIndexForItem(6, state.frameIndex)
-            m:SetOptionIndexForItem(7, BoolToIndex(state.dofEnabled))
+            m:SetOptionIndexForItem(7, state.dofMode)
             m:SetOptionIndexForItem(8, ValueToOptionIndex(state.dofFocusDistance, cfg.DepthOfField.minFocusDistance, cfg.DepthOfField.focusDistanceStep))
-            m:SetOptionIndexForItem(9, ValueToOptionIndex(state.dofBlurStrength, cfg.DepthOfField.minBlurStrength, cfg.DepthOfField.blurStrengthStep))
+            m:SetOptionIndexForItem(9, ValueToOptionIndex(state.dofRange, cfg.DepthOfField.minRange, cfg.DepthOfField.rangeStep))
+            m:SetOptionIndexForItem(10, ValueToOptionIndex(state.dofStrength, cfg.DepthOfField.minStrength, cfg.DepthOfField.strengthStep))
         end
     end
 
@@ -577,6 +590,8 @@ local function BuildAllMenus()
         elseif idx == 2 then state.moveSpeed = OptionIndexToValue(m:GetCurrentOptionIndex(), cfg.Camera.minMoveSpeed, cfg.Camera.moveSpeedStep)
         elseif idx == 3 then state.lookSpeed = OptionIndexToValue(m:GetCurrentOptionIndex(), cfg.Camera.minLookSpeed, cfg.Camera.lookSpeedStep)
         elseif idx == 4 then state.collisionOn = IndexToBool(m:GetCurrentOptionIndex())
+        elseif idx == 5 then state.limitCameraDistance = IndexToBool(m:GetCurrentOptionIndex())
+        elseif idx == 6 then state.maxCameraDistance = OptionIndexToValue(m:GetCurrentOptionIndex(), cfg.Camera.minMaxDistance, cfg.Camera.distanceStep)
         end
     end
 
@@ -626,13 +641,16 @@ local function BuildAllMenus()
         elseif idx == 6 then
             state.frameIndex = m:GetCurrentOptionIndex()
         elseif idx == 7 then
-            state.dofEnabled = IndexToBool(m:GetCurrentOptionIndex())
+            state.dofMode = m:GetCurrentOptionIndex()
             ApplyDOF(state)
         elseif idx == 8 then
             state.dofFocusDistance = OptionIndexToValue(m:GetCurrentOptionIndex(), cfg.DepthOfField.minFocusDistance, cfg.DepthOfField.focusDistanceStep)
             ApplyDOF(state)
         elseif idx == 9 then
-            state.dofBlurStrength = OptionIndexToValue(m:GetCurrentOptionIndex(), cfg.DepthOfField.minBlurStrength, cfg.DepthOfField.blurStrengthStep)
+            state.dofRange = OptionIndexToValue(m:GetCurrentOptionIndex(), cfg.DepthOfField.minRange, cfg.DepthOfField.rangeStep)
+            ApplyDOF(state)
+        elseif idx == 10 then
+            state.dofStrength = OptionIndexToValue(m:GetCurrentOptionIndex(), cfg.DepthOfField.minStrength, cfg.DepthOfField.strengthStep)
             ApplyDOF(state)
         end
     end
@@ -662,14 +680,17 @@ local function BuildAllMenus()
     -- CAMERA menu
     -- ================================================================
     CreateMenu(MENU_CAMERA, {
-        { itemName = "pm_mode",       options = CTRL_MODE_NAMES, currentOption = state.controlMode },
-        { itemName = "pm_move_speed", options = NumberRange(cfg.Camera.minMoveSpeed, cfg.Camera.maxMoveSpeed, cfg.Camera.moveSpeedStep),
+        { itemName = "pm_mode",            options = CTRL_MODE_NAMES, currentOption = state.controlMode },
+        { itemName = "pm_move_speed",      options = NumberRange(cfg.Camera.minMoveSpeed, cfg.Camera.maxMoveSpeed, cfg.Camera.moveSpeedStep),
           currentOption = ValueToOptionIndex(state.moveSpeed, cfg.Camera.minMoveSpeed, cfg.Camera.moveSpeedStep) },
-        { itemName = "pm_look_speed", options = NumberRange(cfg.Camera.minLookSpeed, cfg.Camera.maxLookSpeed, cfg.Camera.lookSpeedStep,
+        { itemName = "pm_look_speed",      options = NumberRange(cfg.Camera.minLookSpeed, cfg.Camera.maxLookSpeed, cfg.Camera.lookSpeedStep,
               function(v) return string.format("%.1f", v) end),
           currentOption = ValueToOptionIndex(state.lookSpeed, cfg.Camera.minLookSpeed, cfg.Camera.lookSpeedStep) },
-        { itemName = "pm_collision",  options = BoolOptions(), currentOption = BoolToIndex(state.collisionOn) },
-        { itemName = "pm_reset",      options = { acceptString }, currentOption = 1 },
+        { itemName = "pm_collision",       options = BoolOptions(), currentOption = BoolToIndex(state.collisionOn) },
+        { itemName = "pm_limit_distance",  options = BoolOptions(), currentOption = BoolToIndex(state.limitCameraDistance) },
+        { itemName = "pm_max_distance",    options = NumberRange(cfg.Camera.minMaxDistance, cfg.Camera.maxMaxDistance, cfg.Camera.distanceStep),
+          currentOption = ValueToOptionIndex(state.maxCameraDistance, cfg.Camera.minMaxDistance, cfg.Camera.distanceStep) },
+        { itemName = "pm_reset",           options = { acceptString }, currentOption = 1 },
     }, "Engine.PhotoMode.OnCameraAccept", "Engine.PhotoMode.OnCameraOptionChange")
 
     -- ================================================================
@@ -697,14 +718,16 @@ local function BuildAllMenus()
         { itemName = "pm_strength",   options = NumberRange(0, 1.0, 0.05, function(v) return string.format("%.2f", v) end),
           currentOption = ValueToOptionIndex(state.filterStrength, 0, 0.05) },
         { itemName = "pm_tint",       options = TINT_NAMES, currentOption = state.tintIndex },
-        { itemName = "pm_frame_overlay", options = FRAME_NAMES, currentOption = state.frameIndex },
-        { itemName = "pm_dof_enabled",options = BoolOptions(), currentOption = BoolToIndex(state.dofEnabled) },
-        { itemName = "pm_dof_focus",  options = NumberRange(cfg.DepthOfField.minFocusDistance, cfg.DepthOfField.maxFocusDistance, cfg.DepthOfField.focusDistanceStep),
+        { itemName = "pm_frame_overlay",  options = FRAME_NAMES, currentOption = state.frameIndex },
+        { itemName = "pm_dof_mode",        options = DOF_MODE_NAMES, currentOption = state.dofMode },
+        { itemName = "pm_dof_focus",       options = NumberRange(cfg.DepthOfField.minFocusDistance, cfg.DepthOfField.maxFocusDistance, cfg.DepthOfField.focusDistanceStep),
           currentOption = ValueToOptionIndex(state.dofFocusDistance, cfg.DepthOfField.minFocusDistance, cfg.DepthOfField.focusDistanceStep) },
-        { itemName = "pm_dof_blur",   options = NumberRange(cfg.DepthOfField.minBlurStrength, cfg.DepthOfField.maxBlurStrength, cfg.DepthOfField.blurStrengthStep,
+        { itemName = "pm_dof_range",       options = NumberRange(cfg.DepthOfField.minRange, cfg.DepthOfField.maxRange, cfg.DepthOfField.rangeStep),
+          currentOption = ValueToOptionIndex(state.dofRange, cfg.DepthOfField.minRange, cfg.DepthOfField.rangeStep) },
+        { itemName = "pm_dof_strength",    options = NumberRange(cfg.DepthOfField.minStrength, cfg.DepthOfField.maxStrength, cfg.DepthOfField.strengthStep,
               function(v) return string.format("%.2f", v) end),
-          currentOption = ValueToOptionIndex(state.dofBlurStrength, cfg.DepthOfField.minBlurStrength, cfg.DepthOfField.blurStrengthStep) },
-        { itemName = "pm_reset",      options = { acceptString }, currentOption = 1 },
+          currentOption = ValueToOptionIndex(state.dofStrength, cfg.DepthOfField.minStrength, cfg.DepthOfField.strengthStep) },
+        { itemName = "pm_reset",           options = { acceptString }, currentOption = 1 },
     }, "Engine.PhotoMode.OnEffectsAccept", "Engine.PhotoMode.OnEffectsOptionChange")
 
     -- ================================================================
@@ -828,6 +851,9 @@ function PhotoMode.Exit()
 
     -- Detach camera
     Camera.Detach()
+
+    -- Disable depth of field
+    pcall(function() TEN.View.SetDOF(TEN.View.DOFMode.NONE) end)
 
     -- Stop light
     pcall(function()
@@ -953,7 +979,7 @@ LevelFuncs.Engine.PhotoMode.OnFreeze = function()
         Menu.DrawActiveMenus()
 
         -- Draw mode indicator at top
-        local modeText = "Mode: " .. States.GetModeName()
+        local modeText = TEN.Flow.GetString("pm_mode_prefix") .. States.GetModeName()
         local modePos  = TEN.Util.PercentToScreen(TEN.Vec2(50, 10))
         local modeStr  = TEN.Strings.DisplayString(
             modeText, modePos, 0.9,

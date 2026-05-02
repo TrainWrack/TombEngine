@@ -14,6 +14,25 @@ local ALPHA_MAX  = 255
 local ALPHA_MIN  = 0
 local ActionID   = TEN.Input.ActionID
 
+-- Acceleration thresholds for option left/right navigation (hold to repeat faster).
+local ACCEL_INITIAL_DELAY  = 0.25   -- seconds before first repeat
+local ACCEL_SLOW_REPEAT    = 0.15   -- repeat rate at the start of hold
+local ACCEL_MED_REPEAT     = 0.07   -- repeat rate after ACCEL_MED_TIME seconds held
+local ACCEL_FAST_REPEAT    = 0.03   -- repeat rate after ACCEL_FAST_TIME seconds held
+local ACCEL_MED_TIME       = 0.7    -- hold time to reach medium speed
+local ACCEL_FAST_TIME      = 1.5    -- hold time to reach fast speed
+
+local function IsOptionPulsed(actionID)
+    local t = TEN.Input.GetActionTimeActive(actionID)
+    if t > ACCEL_FAST_TIME then
+        return TEN.Input.IsKeyPulsed(actionID, ACCEL_INITIAL_DELAY, ACCEL_FAST_REPEAT)
+    elseif t > ACCEL_MED_TIME then
+        return TEN.Input.IsKeyPulsed(actionID, ACCEL_INITIAL_DELAY, ACCEL_MED_REPEAT)
+    else
+        return TEN.Input.IsKeyPulsed(actionID, ACCEL_INITIAL_DELAY, ACCEL_SLOW_REPEAT)
+    end
+end
+
 local Menu = {}
 Menu.__index = Menu
 
@@ -586,8 +605,8 @@ local function HandleInput(menuName)
             PerformFunction(menu.itemChangeFunction)
         end
 
-    -- Navigate options: LEFT / RIGHT
-    elseif InputHelpers.GuiIsPulsed(ActionID.LEFT, menu.inputTimer) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
+    -- Navigate options: LEFT / RIGHT (with hold acceleration)
+    elseif IsOptionPulsed(ActionID.LEFT) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
         local currentItem = menu.items[menu.currentItem]
         if currentItem.options and #currentItem.options > 1 then
             PlaySound(menu.sounds and menu.sounds.menuSelect)
@@ -601,7 +620,7 @@ local function HandleInput(menuName)
             end
         end
 
-    elseif InputHelpers.GuiIsPulsed(ActionID.RIGHT, menu.inputTimer) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
+    elseif IsOptionPulsed(ActionID.RIGHT) and menu.menuType ~= Menu.Type.ITEMS_ONLY then
         local currentItem = menu.items[menu.currentItem]
         if currentItem.options and #currentItem.options > 1 then
             PlaySound(menu.sounds and menu.sounds.menuSelect)
