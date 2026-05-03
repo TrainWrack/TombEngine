@@ -109,6 +109,7 @@ local function UpdatePlayerInput()
     local fwd     = ForwardFromYaw(laraRot.y)
 
     local newPos = TEN.Vec3(laraPos.x, laraPos.y, laraPos.z)
+    local newRot = TEN.Rotation(laraRot.x, laraRot.y, laraRot.z)
 
     if TEN.Input.IsKeyHeld(ActionID.FORWARD) then
         newPos = Vec3Add(newPos, Vec3Scale(fwd, speed))
@@ -117,10 +118,10 @@ local function UpdatePlayerInput()
         newPos = Vec3Add(newPos, Vec3Scale(fwd, -speed))
     end
     if TEN.Input.IsKeyHeld(ActionID.LEFT) then
-        Lara:SetRotation(TEN.Rotation(laraRot.x, laraRot.y - rotSpeed, laraRot.z))
+        newRot = TEN.Rotation(laraRot.x, laraRot.y - rotSpeed, laraRot.z)
     end
     if TEN.Input.IsKeyHeld(ActionID.RIGHT) then
-        Lara:SetRotation(TEN.Rotation(laraRot.x, laraRot.y + rotSpeed, laraRot.z))
+        newRot = TEN.Rotation(laraRot.x, laraRot.y + rotSpeed, laraRot.z)
     end
     if TEN.Input.IsKeyHeld(ActionID.JUMP) then
         newPos = TEN.Vec3(newPos.x, newPos.y - speed, newPos.z)
@@ -137,8 +138,15 @@ local function UpdatePlayerInput()
         newPos = Vec3Add(newPos, Vec3Scale(right, speed))
     end
 
-    Lara:SetPosition(newPos)
-    pcall(function() Lara:ResetHair() end)
+    local posChanged = newPos.x ~= laraPos.x or newPos.y ~= laraPos.y or newPos.z ~= laraPos.z
+    local rotChanged = newRot.y ~= laraRot.y 
+
+    if posChanged or rotChanged then
+        if posChanged then Lara:SetPosition(newPos) end
+        if rotChanged then Lara:SetRotation(newRot) end
+        pcall(function() Lara:ResetHair() end)
+    end
+
 end
 
 -- ============================================================================

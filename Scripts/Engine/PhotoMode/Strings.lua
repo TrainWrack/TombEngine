@@ -16,8 +16,6 @@ local strings =
     pm_move_speed       = {"Move Speed"},
     pm_look_speed       = {"Look Speed"},
     pm_collision        = {"Collision"},
-    pm_limit_distance   = {"Limit Distance"},
-    pm_max_distance     = {"Max Distance"},
 
     -- Character menu items
     pm_animation      = {"Pose"},

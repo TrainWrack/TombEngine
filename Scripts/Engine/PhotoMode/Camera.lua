@@ -173,13 +173,13 @@ local function ApplyPositions(newCam, newTgt)
     end
 
     -- Distance limit: prevent camera moving beyond maxCameraDistance from Lara's entry position.
-    if state.limitCameraDistance and state.snapshot and state.snapshot.laraPos then
+    if Settings.Camera.limitDistance and state.snapshot and state.snapshot.laraPos then
         local origin = state.snapshot.laraPos
         local dx = newCam.x - origin.x
         local dy = newCam.y - origin.y
         local dz = newCam.z - origin.z
         local distSq = dx * dx + dy * dy + dz * dz
-        local maxDist = state.maxCameraDistance or Settings.Camera.defaultMaxDistance
+        local maxDist = Settings.Camera.maxDistance
         if distSq > maxDist * maxDist then return false end
     end
 

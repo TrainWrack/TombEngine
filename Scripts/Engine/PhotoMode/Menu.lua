@@ -218,10 +218,7 @@ function Menu.DrawHeaders(position, scale, alpha)
         local string = TEN.Flow.GetString(header.name)
         local displayText = isActive and ("[ " .. string .. " ]") or string
 
-        local textObj = TEN.Strings.DisplayString(
-            displayText, pos, scale or 1.0,
-            ColorCombine(color, alpha), false, flags
-        )
+        local textObj = TEN.Strings.DisplayString(displayText, pos, scale or 1.0, ColorCombine(color, alpha), false, flags)
         TEN.Strings.ShowString(textObj, 1 / 30)
     end
 end
@@ -705,7 +702,7 @@ function Menu.DrawMenu(menuName)
     -- Title
     if menu.titleString and menu.titleString ~= "" then
         local pos = TEN.Util.PercentToScreen(TEN.Vec2(menu.titlePosition.x, menu.titlePosition.y))
-        local titleNode = DisplayString(
+        local titleNode = TEN.Strings.DisplayString(
             menu.titleString, pos, menu.titleTextScale,
             ColorCombine(menu.titleTextColor, actualTransparency),
             menu.titleTranslate, menu.titleTextFlags
@@ -727,7 +724,7 @@ function Menu.DrawMenu(menuName)
         -- Item names
         if menu.menuType == Menu.Type.ITEMS_ONLY or menu.menuType == Menu.Type.ITEMS_AND_OPTIONS then
             local position = TEN.Vec2(menu.itemsPosition.x, yItems)
-            local itemNode = DisplayString(
+            local itemNode = TEN.Strings.DisplayString(
                 item.itemName,
                 TEN.Util.PercentToScreen(position),
                 menu.itemsTextScale,
@@ -749,7 +746,7 @@ function Menu.DrawMenu(menuName)
             local selectedOption = item.options and item.options[item.currentOption] or ""
 
             local position = TEN.Vec2(menu.optionsPosition.x, yOptions)
-            local optNode = DisplayString(
+            local optNode = TEN.Strings.DisplayString(
                 selectedOption,
                 TEN.Util.PercentToScreen(position),
                 menu.optionsTextScale,

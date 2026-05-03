@@ -13,9 +13,9 @@ local Settings = {}
 
 Settings.ColorMap =
 {
-    plainText = Flow.GetSettings().UI.plainTextColor,
-    headerText = Flow.GetSettings().UI.headerTextColor,
-    optionText = Flow.GetSettings().UI.optionTextColor,
+    plainText = TEN.Flow.GetSettings().UI.plainTextColor,
+    headerText = TEN.Flow.GetSettings().UI.headerTextColor,
+    optionText = TEN.Flow.GetSettings().UI.optionTextColor,
     neutral      = Color(255, 255, 255, 255),
     dimmed       = Color(120, 120, 120, 255),
     highlight    = Color(255, 255, 80, 255),
@@ -67,11 +67,8 @@ Settings.Camera =
     targetUp         = -256,
 
     -- Distance limit from Lara's entry position (snap.laraPos)
-    defaultLimitDistance = true,
-    defaultMaxDistance   = 4096,
-    minMaxDistance       = 512,
-    maxMaxDistance       = 16384,
-    distanceStep         = 512,
+    limitDistance = true,
+    maxDistance   = 4096,
 }
 
 -- ============================================================================

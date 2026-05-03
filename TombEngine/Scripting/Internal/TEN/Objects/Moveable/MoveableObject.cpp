@@ -1184,7 +1184,6 @@ void Moveable::UnswapSkinnedMesh()
 // @function Moveable:ClearSkinnedMesh
 void Moveable::ClearSkinnedMesh()
 {
-	int realID = _moveable->ObjectNumber == GAME_OBJECT_ID::ID_LARA ? GAME_OBJECT_ID::ID_LARA_SKIN : _moveable->ObjectNumber;
 	_moveable->Model.SkinIndex = NO_VALUE;
 }
 

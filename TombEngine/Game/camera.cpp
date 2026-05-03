@@ -240,7 +240,7 @@ void AlterRoll(short value)
 	Camera.Roll = TO_RAD(value);
 }
 
-float GetCurrentRoll()
+short GetCurrentRoll()
 {
 	return FROM_RAD(Camera.Roll);
 }

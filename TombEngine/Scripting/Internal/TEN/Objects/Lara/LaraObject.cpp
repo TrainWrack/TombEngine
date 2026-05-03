@@ -689,7 +689,6 @@ void LaraObject::ResetHair()
 {
 	using namespace TEN::Effects::Hair;
 
-	//HairEffect.Initialize();
 	for (int i = 0; i < FPS; i++)
 		HairEffect.Update(*_moveable);
 }
@@ -698,7 +697,7 @@ void LaraObject::ResetHair()
 // Useful in photo mode or freeze mode to show a gun firing effect without the weapon actually being fired.
 // The weapon type should match the one currently equipped by the player; the renderer uses the active
 // weapon type for the correct mesh offset and rotation.
-// @function LaraObject:SpawnWeaponFlash
+// @function LaraObject:SpawnGunFlash
 // @tparam Objects.WeaponType weaponType Weapon type to spawn the flash for.
 // @usage
 // Lara:SpawnGunFlash(WeaponType.PISTOLS)

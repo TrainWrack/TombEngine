@@ -54,8 +54,6 @@ local State = {
     moveSpeed         = Settings.Camera.defaultMoveSpeed,
     lookSpeed         = Settings.Camera.defaultLookSpeed,
     collisionOn       = true,
-    limitCameraDistance = Settings.Camera.defaultLimitDistance,
-    maxCameraDistance   = Settings.Camera.defaultMaxDistance,
 
     -- Lens
     fov  = Settings.Lens.defaultFOV,
@@ -147,6 +145,9 @@ end
 function States.CaptureSnapshot()
     local snap = {}
 
+    --save all settings in case user overrides settings for outfits via onEnter
+    snap.settings = TEN.Flow.GetSettings()
+
     snap.laraPos      = Lara:GetPosition()
     snap.laraRot      = Lara:GetRotation()
     snap.laraVelocity = Lara:GetVelocity()
@@ -156,7 +157,7 @@ function States.CaptureSnapshot()
     snap.laraState    = Lara:GetState()
 
     snap.fov  = TEN.View.GetFOV()
-    snap.roll = 0
+    snap.roll = TEN.View.GetRoll()
 
     -- Holster state
     local left, right, back = Lara:GetHolsterWeapon()
@@ -204,6 +205,8 @@ function States.RestoreSnapshot()
     local snap = State.snapshot
     if not snap then return end
 
+    TEN.Flow.SetSettings(snap.settings)
+
     Lara:SetPosition(snap.laraPos)
     Lara:SetRotation(snap.laraRot)
     Lara:SetVelocity(snap.laraVelocity)
@@ -249,7 +252,7 @@ function States.RestoreSnapshot()
     end)
 
     TEN.View.SetFOV(snap.fov)
-    TEN.View.SetRoll(0)
+    TEN.View.SetRoll(snap.roll)
 
     -- Reset post-process
     pcall(function()
@@ -268,8 +271,6 @@ function States.ResetToEntry()
     State.moveSpeed           = Settings.Camera.defaultMoveSpeed
     State.lookSpeed           = Settings.Camera.defaultLookSpeed
     State.collisionOn         = true
-    State.limitCameraDistance = Settings.Camera.defaultLimitDistance
-    State.maxCameraDistance   = Settings.Camera.defaultMaxDistance
     State.fov           = State.snapshot and State.snapshot.fov or Settings.Lens.defaultFOV
     State.roll          = Settings.Lens.defaultRoll
     State.animIndex     = 1

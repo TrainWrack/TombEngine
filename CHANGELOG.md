@@ -15,8 +15,10 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ### Lua API changes
 * Added ring inventory module.
+* Added photo mode module.
 * Added `GlobalVars` namespace for globally persistent variables across game sessions, including the title level.
 * Fixed incorrect behaviour of `DisplayItem.SetFOV` function.
+* Added `SetRoll` and `GetRoll` functions to `View`.
 
 ## [Version 1.11.1]
 
@@ -27,7 +29,6 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ### Lua API changes
 * Fixed `Timer` class not working correctly with single frame intervals.
-* Added `SetRoll` and `GetRoll` functions to `View`.
 * Fixed alpha value being ignored for `Flow.Settings.UI.shadowTextColor` parameter.
 
 ## [Version 1.11]

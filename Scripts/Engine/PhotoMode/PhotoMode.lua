@@ -26,6 +26,7 @@ local PhotoMode = {}
 
 -- Guards LevelFuncs registration to once per Lua session (resets on level/savegame reload).
 local _callbacksRegistered = false
+local _photoModeExited = false
 
 -- ============================================================================
 -- Helpers
@@ -322,9 +323,9 @@ local function UpdateGunFlash(state)
     if not preset or preset.weaponType == TEN.Objects.WeaponType.NONE then return end
 
     if preset.weaponType == TEN.Objects.WeaponType.FLARE then
-        local flare = Flow.GetSettings().Flare
+        local flare = TEN.Flow.GetSettings().Flare
         local position = Lara:GetJointPosition(preset.meshIndices[1], flare.offset)
-        pcall(function() Effects.EmitLight(position, flare.color, flare.range) end)
+        pcall(function() TEN.Effects.EmitLight(position, flare.color, flare.range) end)
     else
         pcall(function() Lara:SpawnGunFlash(preset.weaponType) end)
     end
@@ -521,7 +522,7 @@ local function BuildAllMenus()
     LevelFuncs.Engine.PhotoMode.OnCameraAccept = function()
         local m = Menu.Get(MENU_CAMERA)
         if not m then return end
-        if m:GetCurrentItemIndex() == 7 then ResetCamera() end
+        if m:GetCurrentItemIndex() == 5 then ResetCamera() end
     end
 
     LevelFuncs.Engine.PhotoMode.OnCharacterAccept = function()
@@ -590,8 +591,6 @@ local function BuildAllMenus()
         elseif idx == 2 then state.moveSpeed = OptionIndexToValue(m:GetCurrentOptionIndex(), cfg.Camera.minMoveSpeed, cfg.Camera.moveSpeedStep)
         elseif idx == 3 then state.lookSpeed = OptionIndexToValue(m:GetCurrentOptionIndex(), cfg.Camera.minLookSpeed, cfg.Camera.lookSpeedStep)
         elseif idx == 4 then state.collisionOn = IndexToBool(m:GetCurrentOptionIndex())
-        elseif idx == 5 then state.limitCameraDistance = IndexToBool(m:GetCurrentOptionIndex())
-        elseif idx == 6 then state.maxCameraDistance = OptionIndexToValue(m:GetCurrentOptionIndex(), cfg.Camera.minMaxDistance, cfg.Camera.distanceStep)
         end
     end
 
@@ -687,9 +686,6 @@ local function BuildAllMenus()
               function(v) return string.format("%.1f", v) end),
           currentOption = ValueToOptionIndex(state.lookSpeed, cfg.Camera.minLookSpeed, cfg.Camera.lookSpeedStep) },
         { itemName = "pm_collision",       options = BoolOptions(), currentOption = BoolToIndex(state.collisionOn) },
-        { itemName = "pm_limit_distance",  options = BoolOptions(), currentOption = BoolToIndex(state.limitCameraDistance) },
-        { itemName = "pm_max_distance",    options = NumberRange(cfg.Camera.minMaxDistance, cfg.Camera.maxMaxDistance, cfg.Camera.distanceStep),
-          currentOption = ValueToOptionIndex(state.maxCameraDistance, cfg.Camera.minMaxDistance, cfg.Camera.distanceStep) },
         { itemName = "pm_reset",           options = { acceptString }, currentOption = 1 },
     }, "Engine.PhotoMode.OnCameraAccept", "Engine.PhotoMode.OnCameraOptionChange")
 
@@ -905,6 +901,11 @@ local HEADER_SCALE = 1.0
 LevelFuncs.Engine.PhotoMode.OnLoop = function()
     if States.IsActive() then return end
 
+    if _photoModeExited then
+        TEN.Input.ClearAllKeys()
+        _photoModeExited = false
+    end
+
     local state = States.Get()
     local walkHeld = TEN.Input.IsKeyHeld(TEN.Input.ActionID.Q)
     local invHeld  = TEN.Input.IsKeyHeld(TEN.Input.ActionID.INVENTORY)
@@ -934,6 +935,7 @@ LevelFuncs.Engine.PhotoMode.OnFreeze = function()
     -- Exit with Inventory key (always available)
     if TEN.Input.IsKeyHit(TEN.Input.ActionID.INVENTORY) then
         PhotoMode.Exit()
+        _photoModeExited = true
         return
     end
 
