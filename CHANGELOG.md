@@ -14,8 +14,10 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed flyby camera jitter by converting the spline type to floating-point.
 
 ### Lua API changes
+* Added ring inventory module.
 * Added `GlobalVars` namespace for globally persistent variables across game sessions, including the title level.
 * Added `Objects.Creature` class to fetch and set various enemy AI state parameters.
+* Fixed incorrect behaviour of `DisplayItem.SetFOV` function.
 
 ## [Version 1.11.1]
 
@@ -25,6 +27,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed YETI misaligning with Lara during kill animation.
 
 ### Lua API changes
+* Added `Lara.SetSkin` to swap classic outfits.
 * Fixed `Timer` class not working correctly with single frame intervals.
 * Fixed alpha value being ignored for `Flow.Settings.UI.shadowTextColor` parameter.
 
