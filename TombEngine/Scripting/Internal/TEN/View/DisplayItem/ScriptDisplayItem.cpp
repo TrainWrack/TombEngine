@@ -29,11 +29,11 @@ namespace TEN::Scripting::DisplayItem
 	void ScriptDisplayItem::Register(sol::state& state, sol::table& parent)
 	{
 		using ctors = sol::constructors<
-			ScriptDisplayItem(std::string, GAME_OBJECT_ID, const Vec3&, const Rotation&, const Vec3&, int),
-			ScriptDisplayItem(std::string, GAME_OBJECT_ID, const Vec3&, const Rotation&, const Vec3&),
-			ScriptDisplayItem(std::string, GAME_OBJECT_ID, const Vec3&, const Rotation&),
-			ScriptDisplayItem(std::string, GAME_OBJECT_ID, const Vec3&),
-			ScriptDisplayItem(std::string, GAME_OBJECT_ID)>;
+			ScriptDisplayItem(GAME_OBJECT_ID, const Vec3&, const Rotation&, const Vec3&, int),
+			ScriptDisplayItem(GAME_OBJECT_ID, const Vec3&, const Rotation&, const Vec3&),
+			ScriptDisplayItem(GAME_OBJECT_ID, const Vec3&, const Rotation&),
+			ScriptDisplayItem(GAME_OBJECT_ID, const Vec3&),
+			ScriptDisplayItem(GAME_OBJECT_ID)>;
 
 		// Register type.
 		parent.new_usertype<ScriptDisplayItem>(
@@ -79,16 +79,10 @@ namespace TEN::Scripting::DisplayItem
 
 	const TEN::Hud::DisplayItem* ScriptDisplayItem::TryGetItem() const
 	{
-		if (_name.empty())
-		{
-			TENLog("DisplayItem operation failed: name is empty.", LogLevel::Warning);
-			return nullptr;
-		}
-
-		auto* item = g_DrawItems.GetItemByName(_name);
+		auto* item = g_DrawItems.GetItemByID(_id);
 		if (item == nullptr)
 		{
-			TENLog("DisplayItem operation failed: item '" + _name + "' does not exist.", LogLevel::Warning);
+			TENLog(fmt::format("DisplayItem operation failed: item {} does not exist.", _id), LogLevel::Warning);
 			return nullptr;
 		}
 
@@ -136,15 +130,15 @@ namespace TEN::Scripting::DisplayItem
 
 	/// Set the field of view for all display items.
 	// @function DisplayItem.SetFOV
-	// @tparam[opt=80] float fov Field of view angle in degrees (clamped to [10, 170]).
+	// @tparam[opt=25] float fov Field of view angle in degrees (clamped to [10, 170]).
 	// @bool[opt=false] disableInterpolation Disable interpolation to allow snap movements.
 	// @usage
-	// TEN.View.DisplayItem.SetFOV(80)
+	// TEN.View.DisplayItem.SetFOV(25)
 	void ScriptDisplayItem::SetFOV(TypeOrNil<float> fov, TypeOrNil<bool> disableInterpolation)
 	{
-		auto convertedFOV = ValueOr<float>(fov, 80.0f);
+		auto convertedFOV = ValueOr<float>(fov, 25.0f);
 		auto convertedBool = ValueOr<bool>(disableInterpolation, false);
-		auto clampedFov = ANGLE(std::clamp(abs(convertedFOV), 10.0f, 170.0f));
+		auto clampedFov = DEG_TO_RAD(std::clamp(abs(convertedFOV), 10.0f, 170.0f));
 		g_DrawItems.SetFOV(clampedFov, convertedBool);
 	}
 
@@ -185,7 +179,7 @@ namespace TEN::Scripting::DisplayItem
 	// local fieldOfView = TEN.View.DisplayItem.GetFOV()
 	float ScriptDisplayItem::GetFOV()
 	{
-		return TO_DEGREES(g_DrawItems.GetFov());
+		return RAD_TO_DEG(g_DrawItems.GetFov());
 	}
 
 	/// Reset the camera position, camera target position, and field of view.
@@ -201,11 +195,9 @@ namespace TEN::Scripting::DisplayItem
 	/// Class
 	// @section Class
 	// Methods for DisplayItem instances.
-	
 
 	/// Create a DisplayItem object.
 	// @function DisplayItem
-	// @tparam string name Lua name of the display item.
 	// @tparam Objects.ObjID objectID Slot object ID.
 	// @tparam[opt=Vec3(0&#44; 0&#44; 0)] Vec3 pos Position in 3D display space.
 	// @tparam[opt=Rotation(0&#44; 0&#44; 0)] Rotation rot Rotation on the XYZ axes.
@@ -213,36 +205,36 @@ namespace TEN::Scripting::DisplayItem
 	// @tparam[opt] int meshBits Packed meshbits.
 	// @treturn DisplayItem A new DisplayItem object.
 	// @usage
-	// local item = TEN.View.DisplayItem("My name", -- name
-	//	TEN.Objects.ObjID.PISTOLS_ITEM, -- object ID) 
+	// local item = TEN.View.DisplayItem(TEN.Objects.ObjID.PISTOLS_ITEM)
 
-	ScriptDisplayItem::ScriptDisplayItem(const std::string& name, GAME_OBJECT_ID objectID, const Vec3& pos, const Rotation& rot, const Vec3& scale, int meshBits)
+	ScriptDisplayItem::ScriptDisplayItem(GAME_OBJECT_ID objectID, const Vec3& pos, const Rotation& rot, const Vec3& scale, int meshBits)
 	{
-		_name = name;
-		g_DrawItems.AddItem(name, objectID, pos, rot.ToEulerAngles(), scale, meshBits);
+		auto potentialID = g_DrawItems.AddItem(objectID, pos, rot.ToEulerAngles(), scale, meshBits);
+		ScriptAssertTerminateF(potentialID, "Creation of display item failed. Possibly too many display items already active?");
+		_id = potentialID;
 	}
 
-	ScriptDisplayItem::ScriptDisplayItem(const std::string& name, GAME_OBJECT_ID objectID, const Vec3& pos, const Rotation& rot, const Vec3& scale) :
-		ScriptDisplayItem(name, objectID, pos, rot, scale, ALL_JOINT_BITS) { }
+	ScriptDisplayItem::ScriptDisplayItem(GAME_OBJECT_ID objectID, const Vec3& pos, const Rotation& rot, const Vec3& scale) :
+		ScriptDisplayItem(objectID, pos, rot, scale, ALL_JOINT_BITS) { }
 
-	ScriptDisplayItem::ScriptDisplayItem(const std::string& name, GAME_OBJECT_ID objectID, const Vec3& pos, const Rotation& rot) :
-		ScriptDisplayItem(name, objectID, pos, rot, Vector3::One, ALL_JOINT_BITS) { }
+	ScriptDisplayItem::ScriptDisplayItem(GAME_OBJECT_ID objectID, const Vec3& pos, const Rotation& rot) :
+		ScriptDisplayItem(objectID, pos, rot, Vector3::One, ALL_JOINT_BITS) { }
 
-	ScriptDisplayItem::ScriptDisplayItem(const std::string& name, GAME_OBJECT_ID objectID, const Vec3& pos) :
-		ScriptDisplayItem(name, objectID, pos, EulerAngles::Identity, Vector3::One, ALL_JOINT_BITS) { }
+	ScriptDisplayItem::ScriptDisplayItem(GAME_OBJECT_ID objectID, const Vec3& pos) :
+		ScriptDisplayItem(objectID, pos, EulerAngles::Identity, Vector3::One, ALL_JOINT_BITS) { }
 
-	ScriptDisplayItem::ScriptDisplayItem(const std::string& name, GAME_OBJECT_ID objectID) :
-		ScriptDisplayItem(name, objectID, Vector3::Zero, EulerAngles::Identity, Vector3::One, ALL_JOINT_BITS) { }
+	ScriptDisplayItem::ScriptDisplayItem(GAME_OBJECT_ID objectID) :
+		ScriptDisplayItem(objectID, Vector3::Zero, EulerAngles::Identity, Vector3::One, ALL_JOINT_BITS) { }
 
 	ScriptDisplayItem::~ScriptDisplayItem()
 	{
-		if (_name.empty() || !g_DrawItems.TestItemExists(_name))
+		if (!g_DrawItems.TestItemExists(_id))
 		{
-			TENLog("Attempt to remove display item with invalid name.", LogLevel::Warning);
+			TENLog(fmt::format("Attempt to remove display item with invalid ID {}.", _id), LogLevel::Warning);
 			return;
 		}
 
-		g_DrawItems.RemoveItem(_name);
+		g_DrawItems.RemoveItem(_id);
 	}
 
 	/// Change the display item's object ID. 
@@ -374,8 +366,7 @@ namespace TEN::Scripting::DisplayItem
 	// local objectID = item:GetObjectID()
 	GAME_OBJECT_ID ScriptDisplayItem::GetObjectID() const
 	{
-		auto* item = g_DrawItems.GetItemByName(_name);
-		if (item != nullptr)
+		if (auto* item = TryGetItem())
 			return item->GetObjectID();
 
 		return ID_NO_OBJECT;
@@ -552,7 +543,7 @@ namespace TEN::Scripting::DisplayItem
 	/// Draw the display item in display space for the current frame.
 	// @function DisplayItem:Draw
 	// @usage
-	// local endFrame = item:Draw()
+	// item:Draw()
 	void ScriptDisplayItem::Draw()
 	{
 		if (auto* item = TryGetItem())

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Math/Constants.h"
 #include "Objects/game_object_ids.h"
 #include "Specific/Structures/BitField.h"
 
@@ -15,16 +16,17 @@ namespace TEN::Hud
 	private:
 		// Fields
 
-		std::string    _itemName = {};
+		unsigned int _id = 0;
 		GAME_OBJECT_ID _objectID = GAME_OBJECT_ID::ID_NO_OBJECT;
 
 		bool _visible = false;
 		bool _disposing = false;
+		bool _wasInterpolated = false;
 
 		Vector3                              _position         = Vector3::Zero;
 		EulerAngles                          _orientation      = EulerAngles::Identity;
 		Vector3                              _scale            = Vector3::Zero;
-		Color                                _color            = Vector4::One;
+		Color                                _color            = NEUTRAL_COLOR;
 		BitField                             _meshBits         = BitField::Default;
 		std::unordered_map<int, EulerAngles> _meshOrientations = {};
 
@@ -35,18 +37,18 @@ namespace TEN::Hud
 		Vector3                              _prevPosition         = Vector3::Zero;
 		EulerAngles                          _prevOrientation      = EulerAngles::Identity;
 		Vector3                              _prevScale            = Vector3::Zero;
-		Color                                _prevColor            = Vector4::One;
+		Color                                _prevColor            = NEUTRAL_COLOR;
 		std::unordered_map<int, EulerAngles> _prevMeshOrientations = {};
 
 	public:
 		// Constructors
 
 		DisplayItem() = default;
-		DisplayItem(const std::string& name, GAME_OBJECT_ID objectID, const Vector3& pos, const EulerAngles& orient, const Vector3& scale);
+		DisplayItem(unsigned int id, GAME_OBJECT_ID objectID, const Vector3& pos, const EulerAngles& orient, const Vector3& scale);
 
 		// Getters
 
-		const std::string&                         GetName() const;
+		unsigned int                               GetID() const;
 		GAME_OBJECT_ID                             GetObjectID() const;
 		const Vector3&                             GetPosition() const;
 		std::optional<std::pair<Vector2, Vector2>> GetBounds() const;
@@ -74,7 +76,6 @@ namespace TEN::Hud
 
 		// Setters
 
-		void SetName(const std::string& name);
 		void SetObjectID(GAME_OBJECT_ID objectID);
 		void SetPosition(const Vector3& pos, bool disableInterpolation);
 		void SetOrientation(const EulerAngles& orient, bool disableInterpolation);
