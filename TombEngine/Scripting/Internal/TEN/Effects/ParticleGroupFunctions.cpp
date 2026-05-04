@@ -332,20 +332,39 @@ namespace TEN::Scripting::Effects::ParticleGroups
 				}
 			},
 
-			/// Set initial mesh scale for mesh particles.
-			// Only affects mesh groups; ignored for sprite groups.
-			// @function ParticleGroup:SetInitialMeshScale
-			// @tparam float scale Mesh scale factor.
-			ScriptReserved_ParticleGroupSetInitialMeshScale, [](ParticleGroupHandle& handle, float scale)
+			/// Set the HP damage dealt to Lara per second when a particle is in contact.
+			// Set to 0 to disable. New particles inherit this value.
+			// @function ParticleGroup:SetDamage
+			// @tparam float damage HP per second. Use 0 to disable.
+			ScriptReserved_ParticleGroupSetDamage, [](ParticleGroupHandle& handle, float damage)
 			{
-				if (auto* group = handle.Get()) group->InitMeshScale = std::max(0.01f, scale);
+				if (auto* group = handle.Get()) group->InitDamage = std::max(0.0f, damage);
+			},
+
+			/// Set the poison level applied to Lara per second when a particle is in contact.
+			// Clamped to [0, LARA_POISON_MAX]. Set to 0 to disable. New particles inherit this value.
+			// @function ParticleGroup:SetPoison
+			// @tparam int poison Poison units per second. Use 0 to disable.
+			ScriptReserved_ParticleGroupSetPoison, [](ParticleGroupHandle& handle, int poison)
+			{
+				if (auto* group = handle.Get()) group->InitPoison = std::max(0, poison);
+			},
+
+			/// Set whether particles set Lara on fire on contact.
+			// New particles inherit this value.
+			// @function ParticleGroup:SetFire
+			// @tparam bool enabled True to enable fire on contact.
+			ScriptReserved_ParticleGroupSetFire, [](ParticleGroupHandle& handle, bool enabled)
+			{
+				if (auto* group = handle.Get()) group->InitFire = enabled;
 			},
 
 			/// Get a specific particle's data as a table.
 			// @function ParticleGroup:GetParticle
 			// @tparam int index Particle index (0-based).
 			// @treturn table|nil Particle data table with fields: position, velocity, acceleration,
-			// size, color (in degrees), age, lifetime, ageNormalized, spriteIndex, orientation, meshScale.
+			// size, rotation (in degrees), color, age, lifetime, ageNormalized, spriteIndex, spriteSequence,
+			// orientation (in degrees), damage, poison, fire.
 			// Returns nil if the index is out of range, the particle is inactive, or the group is invalid.
 			ScriptReserved_ParticleGroupGetParticle, [](ParticleGroupHandle& handle, int index, sol::this_state s) -> sol::object
 			{
@@ -359,19 +378,22 @@ namespace TEN::Scripting::Effects::ParticleGroups
 				const auto& particle = group->Particles[index];
 				sol::state_view lua(s);
 				auto tbl = lua.create_table();
-				tbl["id"]            = particle.ID;
-				tbl["position"]      = Vec3(particle.Position);
-				tbl["velocity"]      = Vec3(particle.Velocity);
-				tbl["acceleration"]  = Vec3(particle.Acceleration);
-				tbl["size"]          = particle.Size;
-				tbl["rotation"]      = particle.Rotation / RADIAN;
-				tbl["color"]		 = ScriptColor(particle.ParticleColor);
-				tbl["age"]           = particle.Age;
-				tbl["lifetime"]      = particle.Lifetime;
-				tbl["ageNormalized"] = particle.AgeNormalized;
-				tbl["spriteIndex"]   = particle.SpriteIndex;
-				tbl["orientation"]   = Vec3(particle.Orientation.x / RADIAN, particle.Orientation.y / RADIAN, particle.Orientation.z / RADIAN);
-				tbl["meshScale"]     = particle.MeshScale;
+				tbl["id"]             = particle.ID;
+				tbl["position"]       = Vec3(particle.Position);
+				tbl["velocity"]       = Vec3(particle.Velocity);
+				tbl["acceleration"]   = Vec3(particle.Acceleration);
+				tbl["size"]           = particle.Size;
+				tbl["rotation"]       = particle.Rotation / RADIAN;
+				tbl["color"]          = ScriptColor(particle.ParticleColor);
+				tbl["age"]            = particle.Age;
+				tbl["lifetime"]       = particle.Lifetime;
+				tbl["ageNormalized"]  = particle.AgeNormalized;
+				tbl["spriteIndex"]    = particle.SpriteIndex;
+				tbl["spriteSequence"] = particle.SpriteSequence;
+				tbl["orientation"]    = Vec3(particle.Orientation.x / RADIAN, particle.Orientation.y / RADIAN, particle.Orientation.z / RADIAN);
+				tbl["damage"]         = particle.Damage;
+				tbl["poison"]         = particle.Poison;
+				tbl["fire"]           = particle.Fire;
 				return tbl;
 			},
 
@@ -380,7 +402,8 @@ namespace TEN::Scripting::Effects::ParticleGroups
 			// @function ParticleGroup:SetParticle
 			// @tparam int index Particle index (0-based).
 			// @tparam table data Table with properties to set: position, velocity, acceleration,
-			// size, color, rotation (degrees), spriteIndex, orientation (degrees), meshScale.
+			// size, color, rotation (degrees), spriteIndex, spriteSequence, orientation (degrees),
+			// damage, poison, fire.
 			ScriptReserved_ParticleGroupSetParticle, [](ParticleGroupHandle& handle, int index, sol::table data)
 			{
 				auto* group = handle.Get();
@@ -404,12 +427,18 @@ namespace TEN::Scripting::Effects::ParticleGroups
 					particle.Rotation = *rot * RADIAN;
 				if (auto sprite = data.get<sol::optional<int>>("spriteIndex"))
 					particle.SpriteIndex = *sprite;
+				if (auto seq = data.get<sol::optional<GAME_OBJECT_ID>>("spriteSequence"))
+					particle.SpriteSequence = *seq;
 				if (auto color = data.get<sol::optional<ScriptColor>>("color"))
 					particle.ParticleColor = Color(*color);
 				if (auto orient = data.get<sol::optional<Vec3>>("orientation"))
 					particle.Orientation = Vector3(orient->x * RADIAN, orient->y * RADIAN, orient->z * RADIAN);
-				if (auto scale = data.get<sol::optional<float>>("meshScale"))
-					particle.MeshScale = *scale;
+				if (auto dmg = data.get<sol::optional<float>>("damage"))
+					particle.Damage = std::max(0.0f, *dmg);
+				if (auto psn = data.get<sol::optional<int>>("poison"))
+					particle.Poison = std::max(0, *psn);
+				if (auto fire = data.get<sol::optional<bool>>("fire"))
+					particle.Fire = *fire;
 			},
 
 			/// Iterate over all active particles, calling a function for each.
@@ -431,19 +460,22 @@ namespace TEN::Scripting::Effects::ParticleGroups
 
 					const auto& particle = group->Particles[i];
 					auto tbl = lua.create_table();
-					tbl["id"]            = particle.ID;
-					tbl["position"]      = Vec3(particle.Position);
-					tbl["velocity"]      = Vec3(particle.Velocity);
-					tbl["acceleration"]  = Vec3(particle.Acceleration);
-					tbl["size"]          = particle.Size;
-					tbl["rotation"]      = particle.Rotation / RADIAN;
-					tbl["color"]         = ScriptColor(particle.ParticleColor);
-					tbl["age"]           = particle.Age;
-					tbl["lifetime"]      = particle.Lifetime;
-					tbl["ageNormalized"] = particle.AgeNormalized;
-					tbl["spriteIndex"]   = particle.SpriteIndex;
-					tbl["orientation"]   = Vec3(particle.Orientation.x / RADIAN, particle.Orientation.y / RADIAN, particle.Orientation.z / RADIAN);
-					tbl["meshScale"]     = particle.MeshScale;
+					tbl["id"]             = particle.ID;
+					tbl["position"]       = Vec3(particle.Position);
+					tbl["velocity"]       = Vec3(particle.Velocity);
+					tbl["acceleration"]   = Vec3(particle.Acceleration);
+					tbl["size"]           = particle.Size;
+					tbl["rotation"]       = particle.Rotation / RADIAN;
+					tbl["color"]          = ScriptColor(particle.ParticleColor);
+					tbl["age"]            = particle.Age;
+					tbl["lifetime"]       = particle.Lifetime;
+					tbl["ageNormalized"]  = particle.AgeNormalized;
+					tbl["spriteIndex"]    = particle.SpriteIndex;
+					tbl["spriteSequence"] = particle.SpriteSequence;
+					tbl["orientation"]    = Vec3(particle.Orientation.x / RADIAN, particle.Orientation.y / RADIAN, particle.Orientation.z / RADIAN);
+					tbl["damage"]         = particle.Damage;
+					tbl["poison"]         = particle.Poison;
+					tbl["fire"]           = particle.Fire;
 
 					auto result = callback(i, tbl);
 
@@ -465,12 +497,18 @@ namespace TEN::Scripting::Effects::ParticleGroups
 							mp.Rotation = *rot * RADIAN;
 						if (auto sprite = changes.get<sol::optional<int>>("spriteIndex"))
 							mp.SpriteIndex = *sprite;
+						if (auto seq = changes.get<sol::optional<GAME_OBJECT_ID>>("spriteSequence"))
+							mp.SpriteSequence = *seq;
 						if (auto color = changes.get<sol::optional<ScriptColor>>("color"))
 							mp.ParticleColor = Color(*color);
 						if (auto orient = changes.get<sol::optional<Vec3>>("orientation"))
 							mp.Orientation = Vector3(orient->x * RADIAN, orient->y * RADIAN, orient->z * RADIAN);
-						if (auto scale = changes.get<sol::optional<float>>("meshScale"))
-							mp.MeshScale = *scale;
+						if (auto dmg = changes.get<sol::optional<float>>("damage"))
+							mp.Damage = std::max(0.0f, *dmg);
+						if (auto psn = changes.get<sol::optional<int>>("poison"))
+							mp.Poison = std::max(0, *psn);
+						if (auto fire = changes.get<sol::optional<bool>>("fire"))
+							mp.Fire = *fire;
 					}
 				}
 			},
@@ -492,19 +530,22 @@ namespace TEN::Scripting::Effects::ParticleGroups
 
 		/// Structure for a Particle table.
 		// @table Particle
-		// @tfield int id Unique particle ID.
+		// @tfield int id Unique particle ID. Read-only.
 		// @tfield Vec3 position World position of the particle.
 		// @tfield Vec3 velocity Directional velocity in world units per second.
 		// @tfield Vec3 acceleration Acceleration applied to velocity in world units per second squared.
-		// @tfield float size Current size of the particle.
-		// @tfield float rotation Current rotation in degrees.
+		// @tfield float size Current size of the particle in world units. For mesh particles, this also controls the uniform mesh scale.
+		// @tfield float rotation Current rotation in degrees. Applies to sprite particles only.
 		// @tfield Color color Current color of the particle.
-		// @tfield float age Current age of the particle in seconds.
-		// @tfield float lifetime Total lifespan of the particle in seconds.
-		// @tfield float ageNormalized Current age as a normalized value between 0 and 1, where 0 is birth and 1 is death.
-		// @tfield int spriteIndex Current sprite index in the sprite sequence.
-		// @tfield Vec3 orientation Current orientation in degrees along the X, Y, and Z axes.
-		// @tfield float meshScale Scale of the particle mesh.
+		// @tfield float age Current age of the particle in seconds. Read-only.
+		// @tfield float lifetime Total lifespan of the particle in seconds. Read-only.
+		// @tfield float ageNormalized Current age as a normalized value between 0 and 1, where 0 is birth and 1 is death. Read-only.
+		// @tfield int spriteIndex Current sprite or mesh index within the sprite sequence or mesh object.
+		// @tfield Objects.ObjID spriteSequence Object slot used to render this particle. Overrides the group default per particle.
+		// @tfield Vec3 orientation Current orientation in degrees along the X, Y, and Z axes. Applies to mesh particles only.
+		// @tfield float damage HP damage dealt to Lara per second when this particle is in contact. Use 0 to disable.
+		// @tfield int poison Poison units added to Lara per second when this particle is in contact. Use 0 to disable.
+		// @tfield bool fire If true, sets Lara on fire while this particle is in contact.
 		
 		// Register CreateParticleGroup as a free function.
 		parent.set_function(ScriptReserved_CreateParticleGroup, &LuaCreateParticleGroup);

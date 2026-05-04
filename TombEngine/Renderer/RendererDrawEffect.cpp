@@ -1820,11 +1820,13 @@ namespace TEN::Renderer
 			if (group.IsMeshGroup())
 				continue;
 
-			int spriteCount = Objects[group.ObjectID].nmeshes;
-
 			for (const auto& p : group.Particles)
 			{
 				if (!p.Active)
+					continue;
+
+				// Validate per-particle sprite sequence.
+				if (!Objects[p.SpriteSequence].loaded || Objects[p.SpriteSequence].nmeshes == 0)
 					continue;
 
 				auto interpPos = Vector3::Lerp(p.PrevPosition, p.Position, GetInterpolationFactor());
@@ -1833,13 +1835,14 @@ namespace TEN::Renderer
 				if (dist > DEFAULT_RENDER_DISTANCE)
 					continue;
 
-				auto interpSize = Lerp(p.PrevSize, p.Size, GetInterpolationFactor());
+				auto interpSize     = Lerp(p.PrevSize, p.Size, GetInterpolationFactor());
 				auto interpRotation = Lerp(p.PrevRotation, p.Rotation, GetInterpolationFactor());
 
+				int spriteCount        = Objects[p.SpriteSequence].nmeshes;
 				int clampedSpriteIndex = std::clamp(p.SpriteIndex, 0, spriteCount - 1);
 
 				AddSpriteBillboard(
-					&_sprites[Objects[group.ObjectID].meshIndex + clampedSpriteIndex],
+					&_sprites[Objects[p.SpriteSequence].meshIndex + clampedSpriteIndex],
 					interpPos,
 					Vector4(p.ParticleColor.R(), p.ParticleColor.G(), p.ParticleColor.B(), p.ParticleColor.A()),
 					interpRotation, 1.0f,

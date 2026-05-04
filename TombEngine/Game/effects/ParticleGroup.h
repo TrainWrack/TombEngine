@@ -31,16 +31,22 @@ namespace TEN::Effects::ParticleGroups
 		Vector3 Acceleration = Vector3::Zero;
 
 		// Visuals
-		Color   ParticleColor = Color(1.0f, 1.0f, 1.0f, 1.0f);
-		float   Size          = 1.0f;
-		float   Rotation      = 0.0f;
-		int     SpriteIndex   = 0;
+		Color          ParticleColor  = Color(1.0f, 1.0f, 1.0f, 1.0f);
+		float          Size           = 1.0f;
+		float          Rotation       = 0.0f;
+		int            SpriteIndex    = 0;
+		GAME_OBJECT_ID SpriteSequence = GAME_OBJECT_ID::ID_DEFAULT_SPRITES;
 
 		// Mesh orientation (used when group renders meshes).
-		Vector3 Orientation  = Vector3::Zero;
-		float   MeshScale    = 1.0f;
-		Matrix  Transform    = Matrix::Identity;
+		Vector3 Orientation   = Vector3::Zero;
+		Matrix  Transform     = Matrix::Identity;
 		Matrix  PrevTransform = Matrix::Identity;
+
+		// Gameplay effects (applied on Lara contact).
+		float Damage      = 0.0f;
+		int   Poison      = 0;
+		bool  Fire        = false;
+		float EffectTimer = 0.0f;
 
 		// Lifetime
 		float Age           = 0.0f;
@@ -100,7 +106,11 @@ namespace TEN::Effects::ParticleGroups
 
 		// Mesh-specific initial templates.
 		Vector3 InitOrientation = Vector3::Zero;
-		float   InitMeshScale   = 1.0f;
+
+		// Initial gameplay effects.
+		float InitDamage = 0.0f;
+		int   InitPoison = 0;
+		bool  InitFire   = false;
 
 		// Rendering. Blend mode applies to sprite groups only; mesh groups use per-material blend modes.
 		BlendMode RenderBlendMode = BlendMode::AlphaBlend;

@@ -1,6 +1,9 @@
 #include "framework.h"
 #include "Game/effects/ParticleGroup.h"
 
+#include "Game/effects/item_fx.h"
+#include "Game/items.h"
+#include "Game/Lara/lara.h"
 #include "Game/Setup.h"
 #include "Math/Math.h"
 #include "Specific/clock.h"
@@ -165,11 +168,16 @@ namespace TEN::Effects::ParticleGroups
 		particle->PrevRotation = InitRotation;
 
 		// Sprite / Mesh index.
-		particle->SpriteIndex = InitSpriteIndex;
+		particle->SpriteIndex    = InitSpriteIndex;
+		particle->SpriteSequence = ObjectID;
 
-		// Mesh orientation and scale.
+		// Mesh orientation.
 		particle->Orientation = InitOrientation;
-		particle->MeshScale = InitMeshScale;
+
+		// Gameplay effects.
+		particle->Damage = InitDamage;
+		particle->Poison = InitPoison;
+		particle->Fire   = InitFire;
 
 		// Room.
 		particle->RoomNumber = RoomNumber;
@@ -177,9 +185,9 @@ namespace TEN::Effects::ParticleGroups
 		// Build initial transform for mesh particles.
 		if (IsMeshGroup())
 		{
-			auto rotMatrix = Matrix::CreateFromYawPitchRoll(
+			auto rotMatrix   = Matrix::CreateFromYawPitchRoll(
 				particle->Orientation.y, particle->Orientation.x, particle->Orientation.z);
-			auto scaleMatrix = Matrix::CreateScale(particle->MeshScale);
+			auto scaleMatrix = Matrix::CreateScale(particle->Size);
 			particle->Transform = scaleMatrix * rotMatrix * Matrix::CreateTranslation(particle->Position);
 			particle->PrevTransform = particle->Transform;
 		}
@@ -233,10 +241,35 @@ namespace TEN::Effects::ParticleGroups
 			// Rebuild transform for mesh particles.
 			if (isMesh)
 			{
-				auto rotMatrix = Matrix::CreateFromYawPitchRoll(
+				auto rotMatrix   = Matrix::CreateFromYawPitchRoll(
 					p.Orientation.y, p.Orientation.x, p.Orientation.z);
-				auto scaleMatrix = Matrix::CreateScale(p.MeshScale);
+				auto scaleMatrix = Matrix::CreateScale(p.Size);
 				p.Transform = scaleMatrix * rotMatrix * Matrix::CreateTranslation(p.Position);
+			}
+
+			// Apply gameplay effects on Lara contact.
+			if (p.Damage > 0.0f || p.Poison > 0 || p.Fire)
+			{
+				float dist = Vector3::Distance(p.Position, LaraItem->Pose.Position.ToVector3());
+				if (dist <= p.Size)
+				{
+					if (p.Fire)
+						TEN::Effects::Items::ItemBurn(LaraItem);
+
+					p.EffectTimer += dt;
+					if (p.EffectTimer >= 1.0f)
+					{
+						p.EffectTimer -= 1.0f;
+						if (p.Damage > 0.0f)
+							DoDamage(LaraItem, (int)p.Damage);
+						if (p.Poison > 0)
+							Lara.Status.Poison = std::min(Lara.Status.Poison + p.Poison, (int)LARA_POISON_MAX);
+					}
+				}
+				else
+				{
+					p.EffectTimer = 0.0f;
+				}
 			}
 		}
 	}
