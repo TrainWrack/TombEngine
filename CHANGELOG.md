@@ -15,6 +15,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ### Lua API changes
 * Added ring inventory module.
+* Added `Effects.ParticleGroup` class for managing particles via lua.
 * Added `GlobalVars` namespace for globally persistent variables across game sessions, including the title level.
 * Fixed incorrect behaviour of `DisplayItem.SetFOV` function.
 
