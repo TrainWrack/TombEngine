@@ -30,7 +30,7 @@ function FlockingBoids.Create(origin, spriteID)
     spriteID = spriteID or TEN.Objects.ObjID.DEFAULT_SPRITES
 
     group = TEN.Effects.CreateParticleGroup(spriteID, 64)
-    if not group then return end
+    if not group.active then return end
 
     group:SetPosition(origin)
     group:SetEmissionRate(0)      -- No auto-emission; we burst-spawn the flock.

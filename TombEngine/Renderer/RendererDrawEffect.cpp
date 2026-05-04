@@ -1829,6 +1829,10 @@ namespace TEN::Renderer
 				if (!Objects[p.SpriteSequence].loaded)
 					continue;
 
+				// Validate that it's a sprite sequence (negative nmeshes).
+				if (Objects[p.SpriteSequence].nmeshes >= 0)
+					continue;
+
 				auto interpPos = Vector3::Lerp(p.PrevPosition, p.Position, GetInterpolationFactor());
 
 				float dist = Vector3::Distance(interpPos, view.Camera.WorldPosition);
@@ -1838,7 +1842,7 @@ namespace TEN::Renderer
 				auto interpSize     = Lerp(p.PrevSize, p.Size, GetInterpolationFactor());
 				auto interpRotation = Lerp(p.PrevRotation, p.Rotation, GetInterpolationFactor());
 
-				int spriteCount        = std::max(1, Objects[p.SpriteSequence].nmeshes);
+				int spriteCount        = std::max(1, abs(Objects[p.SpriteSequence].nmeshes));
 				int clampedSpriteIndex = std::clamp(p.SpriteIndex, 0, spriteCount - 1);
 
 				AddSpriteBillboard(
