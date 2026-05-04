@@ -396,6 +396,7 @@ static constexpr char ScriptReserved_ParticleGroupSetInitialOrientation[]	= "Set
 static constexpr char ScriptReserved_ParticleGroupSetDamage[]				= "SetDamage";
 static constexpr char ScriptReserved_ParticleGroupSetPoison[]				= "SetPoison";
 static constexpr char ScriptReserved_ParticleGroupSetFire[]					= "SetFire";
+static constexpr char ScriptReserved_ParticleGroupSetContactRadius[]		= "SetContactRadius";
 static constexpr char ScriptReserved_ParticleGroupGetParticle[]				= "GetParticle";
 static constexpr char ScriptReserved_ParticleGroupSetParticle[]				= "SetParticle";
 static constexpr char ScriptReserved_ParticleGroupForEachParticle[]			= "ForEachParticle";

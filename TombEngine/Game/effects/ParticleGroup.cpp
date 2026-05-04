@@ -175,9 +175,10 @@ namespace TEN::Effects::ParticleGroups
 		particle->Orientation = InitOrientation;
 
 		// Gameplay effects.
-		particle->Damage = InitDamage;
-		particle->Poison = InitPoison;
-		particle->Fire   = InitFire;
+		particle->Damage        = InitDamage;
+		particle->Poison        = InitPoison;
+		particle->Fire          = InitFire;
+		particle->ContactRadius = InitContactRadius;
 
 		// Room.
 		particle->RoomNumber = RoomNumber;
@@ -251,7 +252,7 @@ namespace TEN::Effects::ParticleGroups
 			if ((p.Damage > 0.0f || p.Poison > 0 || p.Fire) && LaraItem.Get() != nullptr)
 			{
 				float dist = Vector3::Distance(p.Position, LaraItem->Pose.Position.ToVector3());
-				if (dist <= p.Size)
+				if (dist <= p.ContactRadius)
 				{
 					if (p.Fire)
 						TEN::Effects::Items::ItemBurn(LaraItem);

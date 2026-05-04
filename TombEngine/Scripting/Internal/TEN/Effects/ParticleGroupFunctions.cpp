@@ -359,12 +359,20 @@ namespace TEN::Scripting::Effects::ParticleGroups
 				if (auto* group = handle.Get()) group->InitFire = enabled;
 			},
 
+			/// Set the contact radius used to detect Lara overlap with a particle.
+			// When Lara's position is within this distance of a particle, damage, poison, and fire
+			// effects are applied. Default is 128 world units. New particles inherit this value.
+			// @function ParticleGroup:SetContactRadius
+			// @tparam float radius Distance in world units. Must be greater than 0.
+			ScriptReserved_ParticleGroupSetContactRadius, [](ParticleGroupHandle& handle, float radius)
+			{
+				if (auto* group = handle.Get()) group->InitContactRadius = std::max(1.0f, radius);
+			},
+
 			/// Get a specific particle's data as a table.
 			// @function ParticleGroup:GetParticle
 			// @tparam int index Particle index (0-based).
-			// @treturn table|nil Particle data table with fields: position, velocity, acceleration,
-			// size, rotation (in degrees), color, age, lifetime, ageNormalized, spriteIndex, spriteSequence,
-			// orientation (in degrees), damage, poison, fire.
+			// @treturn table|nil Particle data table.
 			// Returns nil if the index is out of range, the particle is inactive, or the group is invalid.
 			ScriptReserved_ParticleGroupGetParticle, [](ParticleGroupHandle& handle, int index, sol::this_state s) -> sol::object
 			{
@@ -394,16 +402,18 @@ namespace TEN::Scripting::Effects::ParticleGroups
 				tbl["damage"]         = particle.Damage;
 				tbl["poison"]         = particle.Poison;
 				tbl["fire"]           = particle.Fire;
+				tbl["contactRadius"]  = particle.ContactRadius;
 				return tbl;
 			},
 
 			/// Set a specific particle's properties from a table.
 			// All rotation and orientation values are in degrees.
+			// Set `teleport = true` to snap interpolation (no lerp artifact on large position jumps).
 			// @function ParticleGroup:SetParticle
 			// @tparam int index Particle index (0-based).
 			// @tparam table data Table with properties to set: position, velocity, acceleration,
 			// size, color, rotation (degrees), spriteIndex, spriteSequence, orientation (degrees),
-			// damage, poison, fire.
+			// age, lifetime, damage, poison, fire, contactRadius, teleport.
 			ScriptReserved_ParticleGroupSetParticle, [](ParticleGroupHandle& handle, int index, sol::table data)
 			{
 				auto* group = handle.Get();
@@ -433,12 +443,20 @@ namespace TEN::Scripting::Effects::ParticleGroups
 					particle.ParticleColor = Color(*color);
 				if (auto orient = data.get<sol::optional<Vec3>>("orientation"))
 					particle.Orientation = Vector3(orient->x * RADIAN, orient->y * RADIAN, orient->z * RADIAN);
+				if (auto age = data.get<sol::optional<float>>("age"))
+					particle.Age = std::clamp(*age, 0.0f, particle.Lifetime);
+				if (auto lt = data.get<sol::optional<float>>("lifetime"))
+					particle.Lifetime = std::max(0.01f, *lt);
 				if (auto dmg = data.get<sol::optional<float>>("damage"))
 					particle.Damage = std::max(0.0f, *dmg);
 				if (auto psn = data.get<sol::optional<int>>("poison"))
 					particle.Poison = std::max(0, *psn);
 				if (auto fire = data.get<sol::optional<bool>>("fire"))
 					particle.Fire = *fire;
+				if (auto cr = data.get<sol::optional<float>>("contactRadius"))
+					particle.ContactRadius = std::max(1.0f, *cr);
+				if (auto tp = data.get<sol::optional<bool>>("teleport"); tp && *tp)
+					particle.StoreInterpolationData();
 			},
 
 			/// Iterate over all active particles, calling a function for each.
@@ -476,6 +494,7 @@ namespace TEN::Scripting::Effects::ParticleGroups
 					tbl["damage"]         = particle.Damage;
 					tbl["poison"]         = particle.Poison;
 					tbl["fire"]           = particle.Fire;
+					tbl["contactRadius"]  = particle.ContactRadius;
 
 					auto result = callback(i, tbl);
 
@@ -509,6 +528,14 @@ namespace TEN::Scripting::Effects::ParticleGroups
 							mp.Poison = std::max(0, *psn);
 						if (auto fire = changes.get<sol::optional<bool>>("fire"))
 							mp.Fire = *fire;
+						if (auto age = changes.get<sol::optional<float>>("age"))
+							mp.Age = std::clamp(*age, 0.0f, mp.Lifetime);
+						if (auto lt = changes.get<sol::optional<float>>("lifetime"))
+							mp.Lifetime = std::max(0.01f, *lt);
+						if (auto cr = changes.get<sol::optional<float>>("contactRadius"))
+							mp.ContactRadius = std::max(1.0f, *cr);
+						if (auto tp = changes.get<sol::optional<bool>>("teleport"); tp && *tp)
+							mp.StoreInterpolationData();
 					}
 				}
 			},
@@ -537,15 +564,17 @@ namespace TEN::Scripting::Effects::ParticleGroups
 		// @tfield float size Current size of the particle in world units. For mesh particles, this also controls the uniform mesh scale.
 		// @tfield float rotation Current rotation in degrees. Applies to sprite particles only.
 		// @tfield Color color Current color of the particle.
-		// @tfield float age Current age of the particle in seconds. Read-only.
-		// @tfield float lifetime Total lifespan of the particle in seconds. Read-only.
-		// @tfield float ageNormalized Current age as a normalized value between 0 and 1, where 0 is birth and 1 is death. Read-only.
+		// @tfield float age Current age of the particle in seconds. Clamped to [0, lifetime] when set.
+		// @tfield float lifetime Total lifespan of the particle in seconds. Must be greater than 0 when set.
+		// @tfield float ageNormalized Current age as a normalized value between 0 and 1. Recalculated each frame; direct writes are ignored.
 		// @tfield int spriteIndex Current sprite or mesh index within the sprite sequence or mesh object.
 		// @tfield Objects.ObjID spriteSequence Object slot used to render this particle. Overrides the group default per particle.
 		// @tfield Vec3 orientation Current orientation in degrees along the X, Y, and Z axes. Applies to mesh particles only.
 		// @tfield float damage HP damage dealt to Lara per second when this particle is in contact. Use 0 to disable.
 		// @tfield int poison Poison units added to Lara per second when this particle is in contact. Use 0 to disable.
 		// @tfield bool fire If true, sets Lara on fire while this particle is in contact.
+		// @tfield float contactRadius Distance in world units at which damage, poison, and fire effects are applied. Default is 128.
+		// @tfield bool teleport Write-only control. Set to true to suppress interpolation after a large position, size, or rotation change.
 		
 		// Register CreateParticleGroup as a free function.
 		parent.set_function(ScriptReserved_CreateParticleGroup, &LuaCreateParticleGroup);
