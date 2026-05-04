@@ -170,6 +170,7 @@ namespace TEN::Effects::ParticleGroups
 
 	// Management functions.
 	int  CreateParticleGroup(GAME_OBJECT_ID objectID, int maxParticles);
+	void StoreParticleGroupsInterpolationData();
 	void UpdateParticleGroups();
 	void ClearParticleGroups();
 }

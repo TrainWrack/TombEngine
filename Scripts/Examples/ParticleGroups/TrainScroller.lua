@@ -35,50 +35,25 @@ local TRAIN_MAP = {
     38, 38, 38, 38, 38, 37, 36, 36, 36, 39, 38
 }
 
--- NO_ITEM sentinel.
-local NO_ITEM = -1
-
--- Obstacle map: {objID, zOffset} pairs.
--- ROCK0=40, ROCK2=42, ROCK3=43 (adjust ObjID values to match your project).
--- local ROCK0 = TEN.Objects.ObjID.ROCK0
--- local ROCK2 = TEN.Objects.ObjID.ROCK2
--- local ROCK3 = TEN.Objects.ObjID.ROCK3
-
--- local TRAIN_MAP2 = {
---     {ROCK2,  4096}, {NO_ITEM, 0}, {NO_ITEM, 0},
---     {ROCK0, -3072}, {NO_ITEM, 0}, {NO_ITEM, 0}, {NO_ITEM, 0},
---     {ROCK0,  4096}, {NO_ITEM, 0}, {NO_ITEM, 0}, {NO_ITEM, 0}, {NO_ITEM, 0}, {NO_ITEM, 0},
---     {ROCK0, -3072}, {NO_ITEM, 0}, {NO_ITEM, 0}, {NO_ITEM, 0},
---     {ROCK0,  4096}, {NO_ITEM, 0},
---     {ROCK3, -3072}, {NO_ITEM, 0},
---     {ROCK0, -3072}, {NO_ITEM, 0}, {NO_ITEM, 0},
---     {ROCK0,  4096}, {NO_ITEM, 0}, {NO_ITEM, 0},
---     {ROCK0,  4096},
---     {ROCK3, -2048}, {NO_ITEM, 0}, {NO_ITEM, 0}, {NO_ITEM, 0},
---     {ROCK2,  4096}, {NO_ITEM, 0}, {NO_ITEM, 0},
---     {ROCK0, -3072}, {NO_ITEM, 0}, {NO_ITEM, 0}, {NO_ITEM, 0},
---     {ROCK0,  4096}, {NO_ITEM, 0}, {NO_ITEM, 0}, {NO_ITEM, 0}, {NO_ITEM, 0}, {NO_ITEM, 0},
---     {ROCK0, -3072}, {NO_ITEM, 0}, {NO_ITEM, 0}, {NO_ITEM, 0},
---     {ROCK0,  4096}, {NO_ITEM, 0},
---     {ROCK3, -3072}, {NO_ITEM, 0},
---     {ROCK0, -3072}, {NO_ITEM, 0}, {NO_ITEM, 0},
---     {ROCK0,  4096}, {NO_ITEM, 0}, {NO_ITEM, 0},
---     {ROCK0,  4096},
---     {ROCK3, -2048}, {NO_ITEM, 0}, {NO_ITEM, 0}, {NO_ITEM, 0}
--- }
-
 -- ============================================================
 -- Constants (matching original world-space values)
 -- ============================================================
 
 local TILE_SIZE    = 6144   -- Width of one architecture tile
-local VISIBLE_TILES = 8     -- How many tiles are drawn at once (+ 1 lookahead)
+local VISIBLE_TILES = 10     -- How many tiles are drawn at once (+ 1 lookahead)
 local Z_FRONT      = 47168  -- Z position of the front scenery row
 local Z_BACK       = 58304  -- Z position of the back scenery row
 local Z_OBSTACLES  = 52224  -- Z base for obstacle objects
 local Y_LEVEL      = 256    -- World Y for all train objects
-local SCROLL_SPEED = 32     -- Equivalent to gfUVRotate << 5; tune to taste
+local SCROLL_SPEED = 256     -- Equivalent to gfUVRotate << 5; tune to taste
 
+-- Obstacle configuration
+local OBSTACLE_POSITIONS    = {Z_OBSTACLES - 2048,       -- lane A (near front row)
+                                Z_OBSTACLES + 2048}      -- lane B (near back row)
+local OBSTACLE_INTERVAL_MIN = 256   -- minimum frames between obstacle spawns
+local OBSTACLE_INTERVAL_MAX = 512   -- maximum frames between obstacle spawns
+local MAX_OBSTACLE_SLOTS    = 6     -- maximum simultaneous obstacles
+local OBSTACLE_MESHCOUNT = 5
 -- ============================================================
 -- State
 -- ============================================================
@@ -87,6 +62,17 @@ local groupFront    = nil
 local groupBack     = nil
 local groupObstacle = nil
 local trainmappos   = 0
+local prevTileDiv   = 0
+local frontSlots    = {}  -- ring buffer: {worldX, meshVal, teleport}
+local backSlots     = {}
+local frontMapIdx   = 0   -- next map index for the tile entering from the left
+local backMapIdx    = 0
+local frontRightIdx = 1   -- which array slot is currently the rightmost
+local backRightIdx  = 1
+local rowsInitialized = false
+local obstaclePool      = {}
+local obstacleTimer     = 0
+local obstacleMeshCount = 1
 
 -- ============================================================
 -- Helpers
@@ -115,36 +101,53 @@ end
 -- @tparam Item laraItem  The Lara item (used for position reference).
 function TrainScroller.Create()
     -- Front row: 9 mesh-particle slots (8 visible + 1 lookahead).
-    groupFront = TEN.Effects.CreateParticleGroup(TEN.Objects.ObjID.ANIMATING12, VISIBLE_TILES + 1)
+    groupFront = TEN.Effects.CreateParticleGroup(TEN.Objects.ObjID.ANIMATING2, VISIBLE_TILES + 1)
     if groupFront then
         groupFront:SetPosition(Vec3(0, Y_LEVEL, Z_FRONT))
         groupFront:SetEmissionRate(0)
-        groupFront:SetLifetime(99999)
+        groupFront:SetLifetime(20)
         groupFront:EmitBurst(VISIBLE_TILES + 1)
         groupFront:Start()
     end
 
     -- Back row: same count, different Z, rotated 180° around Y.
-    groupBack = TEN.Effects.CreateParticleGroup(TEN.Objects.ObjID.ANIMATING12, VISIBLE_TILES + 1)
+    groupBack = TEN.Effects.CreateParticleGroup(TEN.Objects.ObjID.ANIMATING2, VISIBLE_TILES + 1)
     if groupBack then
         groupBack:SetPosition(Vec3(0, Y_LEVEL, Z_BACK))
         groupBack:SetEmissionRate(0)
-        groupBack:SetLifetime(99999)
+        groupBack:SetLifetime(20)
         groupBack:EmitBurst(VISIBLE_TILES + 1)
         groupBack:Start()
     end
 
-    -- Obstacle row: one slot per potential obstacle in the visible window.
-    -- groupObstacle = TEN.Effects.CreateParticleGroup(TEN.Objects.ObjID.ROCK0, VISIBLE_TILES + 1)
-    -- if groupObstacle then
-    --     groupObstacle:SetPosition(Vec3(0, Y_LEVEL, Z_OBSTACLES))
-    --     groupObstacle:SetEmissionRate(0)
-    --     groupObstacle:SetLifetime(99999)
-    --     groupObstacle:EmitBurst(VISIBLE_TILES + 1)
-    --     groupObstacle:Start()
-    -- end
+    -- Discover how many meshes ANIMATING1 has at runtime.
+    obstacleMeshCount = OBSTACLE_MESHCOUNT
 
-    trainmappos = 0
+    -- Obstacle row: pool of MAX_OBSTACLE_SLOTS mesh particles (ANIMATING1).
+    obstaclePool = {}
+    for i = 1, MAX_OBSTACLE_SLOTS do
+        obstaclePool[i] = {active = false, x = 0, z = Z_OBSTACLES, meshIdx = 0}
+    end
+    obstacleTimer = OBSTACLE_INTERVAL_MIN
+
+    groupObstacle = TEN.Effects.CreateParticleGroup(TEN.Objects.ObjID.ANIMATING1, MAX_OBSTACLE_SLOTS)
+    if groupObstacle then
+        groupObstacle:SetPosition(Vec3(0, Y_LEVEL, Z_OBSTACLES))
+        groupObstacle:SetEmissionRate(0)
+        groupObstacle:SetLifetime(99999)
+        groupObstacle:EmitBurst(MAX_OBSTACLE_SLOTS)
+        groupObstacle:Start()
+    end
+
+    frontSlots      = {}
+    backSlots       = {}
+    frontMapIdx     = 0
+    backMapIdx      = 0
+    frontRightIdx   = VISIBLE_TILES + 1
+    backRightIdx    = VISIBLE_TILES + 1
+    rowsInitialized = false
+    trainmappos     = 0
+    prevTileDiv     = 0
 end
 
 --- Update the train scroll. Call from LevelFuncs.OnLoop every frame.
@@ -152,101 +155,153 @@ end
 function TrainScroller.Update(laraItem)
     if not laraItem then return end
 
-    local laraX = laraItem:GetPosition().x
-
-    -- Detect tile-boundary wrap BEFORE advancing (used for teleport suppression below).
-    local prevTileDiv = trainmappos // TILE_SIZE
-
-    -- Advance scroll position (mirrors: trainmappos += gfUVRotate << 5, mod 0x60000)
-    trainmappos = (trainmappos + SCROLL_SPEED) % 0x60000
-
-    -- A tile boundary was crossed this frame; particles must teleport to avoid
-    -- the interpolator animating the ~TILE_SIZE position reset.
-    local wrapOccurred = (trainmappos // TILE_SIZE) ~= prevTileDiv
-
-    -- Snap Lara's X to tile grid
+    local laraX    = laraItem:GetPosition().x
     local laraSnap = laraX - (laraX % TILE_SIZE)
 
-    -- X offset within the current tile (mirrors: trainmappos%6144 - 24576 in C)
+    -- Advance scroll; detect tile-boundary step.
+    local curTileDiv = trainmappos // TILE_SIZE
+    trainmappos = (trainmappos + SCROLL_SPEED) % 0x60000
+    local tileStep = (trainmappos // TILE_SIZE) ~= curTileDiv
+
     local tilePhase = trainmappos % TILE_SIZE - (TILE_SIZE * 4)
 
     -- --------------------------------------------------------
-    -- Front row  (C: obj = &TRAIN_MAP[96 - ((pos/TILE - laraX/TILE) & 0x1F)])
+    -- Initialise ring buffers on first call.
+    -- --------------------------------------------------------
+    if not rowsInitialized then
+        local fBase = 96 - (((trainmappos // TILE_SIZE) - (laraX // TILE_SIZE)) & 0x1F)
+        local bBase = 32 - (((trainmappos // TILE_SIZE) - (laraX // TILE_SIZE) + 8) & 0x1F)
+        for i = 0, VISIBLE_TILES do
+            frontSlots[i + 1] = {
+                worldX   = laraSnap + tilePhase + i * TILE_SIZE,
+                meshVal  = mapAt(TRAIN_MAP, fBase + i),
+                teleport = false,
+            }
+            backSlots[i + 1] = {
+                worldX   = laraSnap + tilePhase + i * TILE_SIZE,
+                meshVal  = mapAt(TRAIN_MAP, bBase + i),
+                teleport = false,
+            }
+        end
+        frontMapIdx   = fBase - 1
+        backMapIdx    = bBase - 1
+        frontRightIdx = VISIBLE_TILES + 1
+        backRightIdx  = VISIBLE_TILES + 1
+        rowsInitialized = true
+    end
+
+    -- --------------------------------------------------------
+    -- Advance every slot continuously; only the recycled slot teleports.
+    -- --------------------------------------------------------
+    local RING_SIZE = VISIBLE_TILES + 1
+
+    for i = 1, RING_SIZE do
+        frontSlots[i].worldX   = frontSlots[i].worldX + SCROLL_SPEED
+        frontSlots[i].teleport = false
+        backSlots[i].worldX    = backSlots[i].worldX  + SCROLL_SPEED
+        backSlots[i].teleport  = false
+    end
+
+    -- On each tile step, the current rightmost slot wraps to the leftmost position.
+    if tileStep then
+        local sf = frontSlots[frontRightIdx]
+        sf.worldX   = sf.worldX - RING_SIZE * TILE_SIZE
+        sf.meshVal  = mapAt(TRAIN_MAP, frontMapIdx)
+        frontMapIdx = frontMapIdx - 1
+        sf.teleport = true
+        frontRightIdx = frontRightIdx - 1
+        if frontRightIdx < 1 then frontRightIdx = RING_SIZE end
+
+        local sb = backSlots[backRightIdx]
+        sb.worldX   = sb.worldX - RING_SIZE * TILE_SIZE
+        sb.meshVal  = mapAt(TRAIN_MAP, backMapIdx)
+        backMapIdx  = backMapIdx - 1
+        sb.teleport = true
+        backRightIdx = backRightIdx - 1
+        if backRightIdx < 1 then backRightIdx = RING_SIZE end
+    end
+
+    -- --------------------------------------------------------
+    -- Front row particles
     -- --------------------------------------------------------
     if groupFront and groupFront.active then
-        local baseIdx = 96 - (((trainmappos // TILE_SIZE) - (laraX // TILE_SIZE)) & 0x1F)
-
         groupFront:ForEachParticle(function(index, particle)
-            local worldX = laraSnap + tilePhase + index * TILE_SIZE
-            local objVal = mapAt(TRAIN_MAP, baseIdx + index)
-
+            local s = frontSlots[index + 1]
             return {
-                spriteIndex = archObjID(objVal),
-                position    = Vec3(worldX, Y_LEVEL, Z_FRONT),
+                spriteIndex = archObjID(s.meshVal),
+                position    = Vec3(s.worldX, Y_LEVEL, Z_FRONT),
                 orientation = Vec3(0, 0, 0),
                 size        = 1,
-                teleport    = wrapOccurred,
+                age         = 1,
+                teleport    = s.teleport,
             }
         end)
     end
 
     -- --------------------------------------------------------
-    -- Back row  (C: obj = &TRAIN_MAP[32 - ((pos/TILE - laraX/TILE + 8) & 0x1F)])
-    --            rotated 180° around Y (phd_RotY(32760) ≈ 180°).
-    --
-    -- The C code passes -x as the LOCAL offset to phd_PutPolygons_train, but
-    -- after the 180° Y rotation the local X axis = world -X, so the world
-    -- displacement is -(-x) = +x — identical to the front row.  Do NOT negate.
+    -- Back row particles
     -- --------------------------------------------------------
     if groupBack and groupBack.active then
-        local baseIdx = 32 - (((trainmappos // TILE_SIZE) - (laraX // TILE_SIZE) + 8) & 0x1F)
-
         groupBack:ForEachParticle(function(index, particle)
-            local worldX = laraSnap + tilePhase + index * TILE_SIZE
-            local objVal = mapAt(TRAIN_MAP, baseIdx + index)
-
+            local s = backSlots[index + 1]
             return {
-                spriteIndex = archObjID(objVal),
-                position    = Vec3(worldX, Y_LEVEL, Z_BACK),
+                spriteIndex = archObjID(s.meshVal),
+                position    = Vec3(s.worldX, Y_LEVEL, Z_BACK),
                 orientation = Vec3(0, 180, 0),
                 size        = 1,
-                teleport    = wrapOccurred,
+                age         = 1,
+                teleport    = s.teleport,
             }
         end)
     end
 
     -- --------------------------------------------------------
-    -- Obstacles  (C: p = &TRAIN_MAP2[32 - ((pos/TILE - laraX/TILE + 8) & 0x1F)])
+    -- Obstacles: random mesh, random interval, two lane positions
     -- --------------------------------------------------------
-    -- if groupObstacle and groupObstacle.active then
-    --     local baseIdx = 32 - (((trainmappos // TILE_SIZE) - (laraX // TILE_SIZE) + 8) & 0x1F)
+    obstacleTimer = obstacleTimer - 1
+    if obstacleTimer <= 0 then
+        for i = 1, MAX_OBSTACLE_SLOTS do
+            if not obstaclePool[i].active then
+                obstaclePool[i].active  = true
+                obstaclePool[i].x       = laraSnap + tilePhase - VISIBLE_TILES * TILE_SIZE
+                obstaclePool[i].z       = OBSTACLE_POSITIONS[math.random(#OBSTACLE_POSITIONS)]
+                obstaclePool[i].meshIdx = math.random(0, obstacleMeshCount - 1)
+                break
+            end
+        end
+        obstacleTimer = OBSTACLE_INTERVAL_MIN
+                      + math.random(OBSTACLE_INTERVAL_MAX - OBSTACLE_INTERVAL_MIN)
+    end
 
-    --     groupObstacle:ForEachParticle(function(slot, particle)
-    --         local entry = mapAt(TRAIN_MAP2, baseIdx + slot)
-    --         local objType = entry[1]
-    --         local zOff    = entry[2]
+    -- Scroll active obstacles; cull those that have passed behind Lara.
+    for i = 1, MAX_OBSTACLE_SLOTS do
+        local slot = obstaclePool[i]
+        if slot.active then
+            slot.x = slot.x + SCROLL_SPEED
+            if slot.x > laraSnap + 2 * TILE_SIZE then
+                slot.active = false
+            end
+        end
+    end
 
-    --         if objType == NO_ITEM then
-    --             -- Park invisible slots far off-screen.
-    --             return {
-    --                 meshID   = TEN.Objects.ObjID.ROCK0,
-    --                 position = Vec3(laraX, -100000, Z_OBSTACLES),
-    --                 size     = 0,
-    --             }
-    --         end
-
-    --         local worldX = laraSnap + tilePhase + slot * TILE_SIZE
-    --         if slot == VISIBLE_TILES then
-    --             worldX = laraSnap + tilePhase + VISIBLE_TILES * TILE_SIZE
-    --         end
-
-    --         return {
-    --             meshID   = objType,
-    --             position = Vec3(worldX, Y_LEVEL, zOff + Z_OBSTACLES),
-    --             size     = 1,
-    --         }
-    --     end)
-    -- end
+    if groupObstacle and groupObstacle.active then
+        groupObstacle:ForEachParticle(function(index, particle)
+            local slot = obstaclePool[index + 1]
+            if slot and slot.active then
+                return {
+                    spriteIndex = slot.meshIdx,
+                    position    = Vec3(slot.x, Y_LEVEL, slot.z),
+                    orientation = Vec3(0, 0, 0),
+                    size        = 1,
+                }
+            else
+                return {
+                    position = Vec3(0, -100000, Z_OBSTACLES),
+                    size     = 0,
+                }
+            end
+        end)
+    end
 end
 
 --- Stop and clean up all train groups.
@@ -257,7 +312,18 @@ function TrainScroller.Stop()
     groupFront    = nil
     groupBack     = nil
     groupObstacle = nil
-    trainmappos   = 0
+    frontSlots      = {}
+    backSlots       = {}
+    frontMapIdx     = 0
+    backMapIdx      = 0
+    frontRightIdx   = 1
+    backRightIdx    = 1
+    rowsInitialized = false
+    trainmappos     = 0
+    prevTileDiv     = 0
+    obstaclePool    = {}
+    obstacleTimer     = 0
+    obstacleMeshCount = 1
 end
 
 return TrainScroller

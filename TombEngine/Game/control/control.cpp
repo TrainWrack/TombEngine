@@ -165,6 +165,9 @@ GameStatus GamePhase(bool insideMenu)
 	// Controls are polled before OnLoop to allow input data to be overwritten by script API methods.
 	HandleControls(isTitle);
 
+	// Snapshot particle group positions before Lua moves them so the renderer can interpolate.
+	StoreParticleGroupsInterpolationData();
+
 	// Pre-loop script and event handling.
 	g_GameScript->OnLoop(DELTA_TIME, false); // TODO: Don't use DELTA_TIME constant with high framerate.
 	HandleAllGlobalEvents(EventType::Loop, (Activator)short(LaraItem->Index));

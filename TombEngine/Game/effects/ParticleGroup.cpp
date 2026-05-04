@@ -221,8 +221,6 @@ namespace TEN::Effects::ParticleGroups
 			if (!p.Active)
 				continue;
 
-			p.StoreInterpolationData();
-
 			// Update lifetime.
 			p.Age += dt;
 			p.AgeNormalized = p.Age / p.Lifetime;
@@ -289,6 +287,15 @@ namespace TEN::Effects::ParticleGroups
 		{
 			if (p.Active)
 				p.StoreInterpolationData();
+		}
+	}
+
+	void StoreParticleGroupsInterpolationData()
+	{
+		for (auto& group : ParticleGroupList)
+		{
+			if (group.Active)
+				group.StoreInterpolationData();
 		}
 	}
 
