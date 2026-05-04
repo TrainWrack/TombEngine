@@ -18,7 +18,7 @@ using namespace TEN::Math;
 using namespace TEN::Scripting::Types;
 
 /// Functions to generate effects.
-// @tentable Effects.ParticleGroups 
+// @tenclass Effects.ParticleGroups 
 // @pragma nostrip
 
 namespace TEN::Scripting::Effects::ParticleGroups
