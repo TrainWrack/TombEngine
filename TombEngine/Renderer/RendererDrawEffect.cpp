@@ -1826,7 +1826,7 @@ namespace TEN::Renderer
 					continue;
 
 				// Validate per-particle sprite sequence.
-				if (!Objects[p.SpriteSequence].loaded || Objects[p.SpriteSequence].nmeshes == 0)
+				if (!Objects[p.SpriteSequence].loaded)
 					continue;
 
 				auto interpPos = Vector3::Lerp(p.PrevPosition, p.Position, GetInterpolationFactor());
@@ -1838,7 +1838,7 @@ namespace TEN::Renderer
 				auto interpSize     = Lerp(p.PrevSize, p.Size, GetInterpolationFactor());
 				auto interpRotation = Lerp(p.PrevRotation, p.Rotation, GetInterpolationFactor());
 
-				int spriteCount        = Objects[p.SpriteSequence].nmeshes;
+				int spriteCount        = std::max(1, Objects[p.SpriteSequence].nmeshes);
 				int clampedSpriteIndex = std::clamp(p.SpriteIndex, 0, spriteCount - 1);
 
 				AddSpriteBillboard(

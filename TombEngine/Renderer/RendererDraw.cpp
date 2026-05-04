@@ -804,9 +804,6 @@ namespace TEN::Renderer
 					if (dist > DEFAULT_RENDER_DISTANCE)
 						continue;
 
-					if (!Objects[p.SpriteSequence].loaded || !_moveableObjects[p.SpriteSequence].has_value())
-						continue;
-
 					int clampedMeshIndex = std::clamp(p.SpriteIndex, 0, Objects[p.SpriteSequence].nmeshes - 1);
 					auto& mesh = *GetMesh(Objects[p.SpriteSequence].meshIndex + clampedMeshIndex);
 
@@ -874,11 +871,17 @@ namespace TEN::Renderer
 					if (dist > DEFAULT_RENDER_DISTANCE)
 						continue;
 
-						if (!Objects[p.SpriteSequence].loaded || !_moveableObjects[p.SpriteSequence].has_value())
-							continue;
+					int clampedMeshIndex = std::clamp(p.SpriteIndex, 0, Objects[p.SpriteSequence].nmeshes - 1);
+					const auto& mesh = *GetMesh(Objects[p.SpriteSequence].meshIndex + clampedMeshIndex);
 
-						int clampedMeshIndex = std::clamp(p.SpriteIndex, 0, Objects[p.SpriteSequence].nmeshes - 1);
-						const auto& mesh = *GetMesh(Objects[p.SpriteSequence].meshIndex + clampedMeshIndex);
+					_stObjects.Objects[0].World = Matrix::Lerp(p.PrevTransform, p.Transform, GetInterpolationFactor());
+					_stObjects.Objects[0].Color = Vector4(p.ParticleColor.R(), p.ParticleColor.G(), p.ParticleColor.B(), p.ParticleColor.A());
+					_stObjects.Objects[0].AmbientLight = _rooms[p.RoomNumber].AmbientLight;
+					_stObjects.Objects[0].LightMode = (int)mesh.LightMode;
+
+					if (rendererPass != RendererPass::GBuffer)
+						BindInstancedStaticLights(_rooms[p.RoomNumber].LightsToDraw, 0);
+
 					UpdateConstantBuffer(&_stObjects, _cbObjects.get());
 
 					for (int animated = 0; animated < 2; animated++)

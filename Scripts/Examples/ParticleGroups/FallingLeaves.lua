@@ -5,6 +5,7 @@
 --   - Slow tumbling rotation
 --   - Random gusts of wind
 --   - Size and color variation for visual richness
+--   - Optional poison effect (e.g., toxic leaves from a poisonous plant)
 --
 -- Usage: require this file from your level script and call
 -- FallingLeaves.Create(position) to spawn the effect.
@@ -23,8 +24,10 @@ local gustTimer = 0
 -- Leaves will emit from a horizontal area above the given position.
 -- @tparam Vec3 origin World position (top of the area where leaves appear).
 -- @tparam[opt=Objects.ObjID.DEFAULT_SPRITES] Objects.ObjID spriteID Sprite sequence to use.
-function FallingLeaves.Create(origin, spriteID)
+-- @tparam[opt=0] int poison Poison units per second added to Lara on contact (0 = disabled).
+function FallingLeaves.Create(origin, spriteID, poison)
     spriteID = spriteID or TEN.Objects.ObjID.DEFAULT_SPRITES
+    poison   = poison or 0
 
     group = TEN.Effects.CreateParticleGroup(spriteID, 100)
     if not group then return end
@@ -47,6 +50,10 @@ function FallingLeaves.Create(origin, spriteID)
     -- Gentle tumbling.
     group:SetInitialRotation(0)
     group:SetInitialRotationVelocity(45) -- Degrees per second
+
+    if poison > 0 then
+        group:SetPoison(poison)
+    end
 
     group:Start()
     time = 0

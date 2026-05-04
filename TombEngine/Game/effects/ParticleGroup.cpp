@@ -248,7 +248,7 @@ namespace TEN::Effects::ParticleGroups
 			}
 
 			// Apply gameplay effects on Lara contact.
-			if (p.Damage > 0.0f || p.Poison > 0 || p.Fire)
+			if ((p.Damage > 0.0f || p.Poison > 0 || p.Fire) && LaraItem.Get() != nullptr)
 			{
 				float dist = Vector3::Distance(p.Position, LaraItem->Pose.Position.ToVector3());
 				if (dist <= p.Size)
