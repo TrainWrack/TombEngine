@@ -527,19 +527,19 @@ namespace TEN::Scripting::Effects::ParticleGroups
 			// @tparam Vec3 orientation Orientation in degrees.
 			ScriptReserved_ParticleGroupSetInitialOrientation, &LuaParticleGroup::SetInitialOrientation,
 
-			/// Set HP damage dealt to Lara per second on particle contact.
+			/// Set HP damage dealt to Player on particle contact.
 			// Set to 0 to disable. New particles inherit this value.
 			// @function ParticleGroup:SetDamage
-			// @tparam float damage HP per second.
+			// @tparam float damage HP damage on contact.
 			ScriptReserved_ParticleGroupSetDamage, &LuaParticleGroup::SetDamage,
 
-			/// Set poison applied to Lara per second on particle contact.
+			/// Set poison applied to Player on particle contact.
 			// Set to 0 to disable. New particles inherit this value.
 			// @function ParticleGroup:SetPoison
-			// @tparam int poison Poison units per second.
+			// @tparam int poison Poison units.
 			ScriptReserved_ParticleGroupSetPoison, &LuaParticleGroup::SetPoison,
 
-			/// Set whether particles set Lara on fire on contact.
+			/// Set whether particles set Player on fire on contact.
 			// New particles inherit this value.
 			// @function ParticleGroup:SetFire
 			// @tparam bool enabled True to enable fire on contact.
