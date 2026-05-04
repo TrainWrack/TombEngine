@@ -1,4 +1,4 @@
-#include "framework.h"
+﻿#include "framework.h"
 #include "Scripting/Internal/TEN/Effects/ParticleGroupFunctions.h"
 
 #include "Game/effects/ParticleGroup.h"
@@ -23,537 +23,564 @@ using namespace TEN::Scripting::Types;
 
 namespace TEN::Scripting::Effects::ParticleGroups
 {
-	/// Create a particle group for managing collections of particles with Lua-driven behavior.
-	// If the specified object ID is a sprite sequence, particles render as sprites.
-	// If it is a mesh object (moveable), particles render as 3D meshes, and the sprite index
-	// selects which mesh within the object to draw.
-	// @function CreateParticleGroup
-	// @tparam Objects.ObjID objectID Object slot ID (sprite sequence or mesh object).
-	// @tparam int maxParticles Maximum number of particles in the group.
-	// @treturn ParticleGroup A new ParticleGroup handle, or nil on failure.
-	static ParticleGroupHandle LuaCreateParticleGroup(GAME_OBJECT_ID objectID, int maxParticles)
+	// -- Private static helpers --
+
+	sol::table LuaParticleGroup::MakeParticleTable(sol::state_view& lua, const GroupParticle& p)
+	{
+		auto tbl = lua.create_table();
+		tbl["id"]            = p.ID;
+		tbl["position"]      = Vec3(p.Position);
+		tbl["velocity"]      = Vec3(p.Velocity);
+		tbl["acceleration"]  = Vec3(p.Acceleration);
+		tbl["size"]          = p.Size;
+		tbl["rotation"]      = p.Rotation / RADIAN;
+		tbl["color"]         = ScriptColor(p.ParticleColor);
+		tbl["age"]           = p.Age;
+		tbl["lifetime"]      = p.Lifetime;
+		tbl["ageNormalized"] = p.AgeNormalized;
+		tbl["spriteIndex"]   = p.SpriteIndex;
+		tbl["spriteSequence"] = p.SpriteSequence;
+		tbl["orientation"]   = Vec3(p.Orientation.x / RADIAN, p.Orientation.y / RADIAN, p.Orientation.z / RADIAN);
+		tbl["damage"]        = p.Damage;
+		tbl["poison"]        = p.Poison;
+		tbl["fire"]          = p.Fire;
+		tbl["contactRadius"] = p.ContactRadius;
+		return tbl;
+	}
+
+	void LuaParticleGroup::ApplyParticleTable(GroupParticle& p, const sol::table& data)
+	{
+		if (auto pos = data.get<sol::optional<Vec3>>("position"))
+			p.Position = pos->ToVector3();
+		if (auto vel = data.get<sol::optional<Vec3>>("velocity"))
+			p.Velocity = vel->ToVector3();
+		if (auto accel = data.get<sol::optional<Vec3>>("acceleration"))
+			p.Acceleration = accel->ToVector3();
+		if (auto size = data.get<sol::optional<float>>("size"))
+			p.Size = *size;
+		if (auto rot = data.get<sol::optional<float>>("rotation"))
+			p.Rotation = *rot * RADIAN;
+		if (auto sprite = data.get<sol::optional<int>>("spriteIndex"))
+			p.SpriteIndex = *sprite;
+		if (auto seq = data.get<sol::optional<GAME_OBJECT_ID>>("spriteSequence"))
+			p.SpriteSequence = *seq;
+		if (auto color = data.get<sol::optional<ScriptColor>>("color"))
+			p.ParticleColor = Color(*color);
+		if (auto orient = data.get<sol::optional<Vec3>>("orientation"))
+			p.Orientation = Vector3(orient->x * RADIAN, orient->y * RADIAN, orient->z * RADIAN);
+		if (auto age = data.get<sol::optional<float>>("age"))
+			p.Age = std::clamp(*age, 0.0f, p.Lifetime);
+		if (auto lt = data.get<sol::optional<float>>("lifetime"))
+			p.Lifetime = std::max(0.01f, *lt);
+		if (auto dmg = data.get<sol::optional<float>>("damage"))
+			p.Damage = std::max(0.0f, *dmg);
+		if (auto psn = data.get<sol::optional<int>>("poison"))
+			p.Poison = std::max(0, *psn);
+		if (auto fire = data.get<sol::optional<bool>>("fire"))
+			p.Fire = *fire;
+		if (auto cr = data.get<sol::optional<float>>("contactRadius"))
+			p.ContactRadius = std::max(1.0f, *cr);
+		if (auto tp = data.get<sol::optional<bool>>("teleport"); tp && *tp)
+			p.StoreInterpolationData();
+	}
+
+	// -- Constructor --
+
+	LuaParticleGroup::LuaParticleGroup(GAME_OBJECT_ID objectID, int maxParticles)
 	{
 		if (!CheckIfSlotExists(objectID, "CreateParticleGroup"))
-			return ParticleGroupHandle{};
+			return;
 
 		int id = CreateParticleGroup(objectID, maxParticles);
 		if (id < 0)
-			return ParticleGroupHandle{};
+			return;
 
-		return ParticleGroupHandle{ id, TEN::Effects::ParticleGroups::ParticleGroupList[id].Generation };
+		_handle = ParticleGroupHandle{ id, ParticleGroupList[id].Generation };
 	}
 
-	void Register(sol::table& parent)
+	// -- Emission control --
+
+	void LuaParticleGroup::Start()
 	{
-		// Register ParticleGroup usertype backed by the stable handle.
-		// All methods validate the handle before accessing the underlying group.
-		// Rotation fields are exposed in degrees for consistency with SetInitialRotation.
-		// Blend mode for mesh groups is defined per material; SetBlendMode applies to sprite groups only.
-		parent.new_usertype<ParticleGroupHandle>(
+		if (auto* group = _handle.Get()) group->Start();
+	}
+
+	void LuaParticleGroup::Stop()
+	{
+		if (auto* group = _handle.Get()) group->Stop();
+	}
+
+	void LuaParticleGroup::Pause()
+	{
+		if (auto* group = _handle.Get()) group->Pause();
+	}
+
+	void LuaParticleGroup::Resume()
+	{
+		if (auto* group = _handle.Get()) group->Resume();
+	}
+
+	void LuaParticleGroup::EmitBurst(int count)
+	{
+		if (auto* group = _handle.Get()) group->EmitBurst(count);
+	}
+
+	// -- Queries --
+
+	int LuaParticleGroup::GetActiveCount() const
+	{
+		const auto* group = _handle.Get();
+		return group ? group->GetActiveCount() : 0;
+	}
+
+	bool LuaParticleGroup::IsMeshGroup() const
+	{
+		const auto* group = _handle.Get();
+		return group ? group->IsMeshGroup() : false;
+	}
+
+	int LuaParticleGroup::GetID() const
+	{
+		const auto* group = _handle.Get();
+		return group ? group->ID : -1;
+	}
+
+	bool LuaParticleGroup::IsActive() const
+	{
+		return _handle.IsValid();
+	}
+
+	// -- Emitter --
+
+	void LuaParticleGroup::SetEmissionRate(float rate)
+	{
+		if (auto* group = _handle.Get()) group->EmissionRate = std::max(0.0f, rate);
+	}
+
+	void LuaParticleGroup::SetPosition(const Vec3& pos)
+	{
+		auto* group = _handle.Get();
+		if (!group)
+			return;
+
+		group->EmitterPosition = pos.ToVector3();
+		group->RoomNumber = FindRoomNumber(Vector3i((int)pos.x, (int)pos.y, (int)pos.z));
+	}
+
+	sol::optional<Vec3> LuaParticleGroup::GetPosition() const
+	{
+		const auto* group = _handle.Get();
+		if (!group)
+			return sol::nullopt;
+
+		return Vec3(group->EmitterPosition);
+	}
+
+	// -- Initial particle properties --
+
+	void LuaParticleGroup::SetInitialVelocity(const Vec3& vel)
+	{
+		if (auto* group = _handle.Get()) group->InitVelocity = vel.ToVector3();
+	}
+
+	void LuaParticleGroup::SetInitialVelocityRandom(const Vec3& range)
+	{
+		if (auto* group = _handle.Get()) group->InitVelocityRandom = range.ToVector3();
+	}
+
+	void LuaParticleGroup::SetInitialAcceleration(const Vec3& accel)
+	{
+		if (auto* group = _handle.Get()) group->InitAcceleration = accel.ToVector3();
+	}
+
+	void LuaParticleGroup::SetLifetime(float seconds)
+	{
+		auto* group = _handle.Get();
+		if (!group)
+			return;
+
+		seconds = std::max(0.01f, seconds);
+		group->LifetimeMin = seconds;
+		group->LifetimeMax = seconds;
+	}
+
+	void LuaParticleGroup::SetLifetimeRange(float minSec, float maxSec)
+	{
+		auto* group = _handle.Get();
+		if (!group)
+			return;
+
+		group->LifetimeMin = std::max(0.01f, minSec);
+		group->LifetimeMax = std::max(group->LifetimeMin, maxSec);
+	}
+
+	void LuaParticleGroup::SetInitialSize(float size)
+	{
+		auto* group = _handle.Get();
+		if (!group)
+			return;
+
+		group->InitSizeMin = size;
+		group->InitSizeMax = size;
+	}
+
+	void LuaParticleGroup::SetInitialSizeRange(float minSize, float maxSize)
+	{
+		auto* group = _handle.Get();
+		if (!group)
+			return;
+
+		group->InitSizeMin = minSize;
+		group->InitSizeMax = std::max(minSize, maxSize);
+	}
+
+	void LuaParticleGroup::SetInitialColor(const ScriptColor& color)
+	{
+		auto* group = _handle.Get();
+		if (!group)
+			return;
+
+		group->InitColorMin = Color(color);
+		group->InitColorMax = Color(color);
+	}
+
+	void LuaParticleGroup::SetInitialColorRange(const ScriptColor& minColor, const ScriptColor& maxColor)
+	{
+		auto* group = _handle.Get();
+		if (!group)
+			return;
+
+		group->InitColorMin = Color(minColor);
+		group->InitColorMax = Color(maxColor);
+	}
+
+	void LuaParticleGroup::SetInitialRotation(float rotation)
+	{
+		if (auto* group = _handle.Get()) group->InitRotation = rotation * RADIAN;
+	}
+
+	void LuaParticleGroup::SetInitialRotationVelocity(float rotVel)
+	{
+		if (auto* group = _handle.Get()) group->InitRotationVel = rotVel * RADIAN;
+	}
+
+	void LuaParticleGroup::SetBlendMode(BlendMode mode)
+	{
+		if (auto* group = _handle.Get()) group->RenderBlendMode = mode;
+	}
+
+	void LuaParticleGroup::SetSpriteSequence(GAME_OBJECT_ID objectID)
+	{
+		auto* group = _handle.Get();
+		if (!group)
+			return;
+
+		if (CheckIfSlotExists(objectID, "ParticleGroup:SetSpriteSequence"))
+			group->ObjectID = objectID;
+	}
+
+	void LuaParticleGroup::SetSpriteIndex(int index)
+	{
+		if (auto* group = _handle.Get()) group->InitSpriteIndex = index;
+	}
+
+	sol::optional<int> LuaParticleGroup::GetSpriteIndex() const
+	{
+		const auto* group = _handle.Get();
+		if (!group)
+			return sol::nullopt;
+
+		return group->InitSpriteIndex;
+	}
+
+	sol::optional<GAME_OBJECT_ID> LuaParticleGroup::GetSpriteSequence() const
+	{
+		const auto* group = _handle.Get();
+		if (!group)
+			return sol::nullopt;
+
+		return group->ObjectID;
+	}
+
+	void LuaParticleGroup::SetInitialOrientation(const Vec3& orient)
+	{
+		if (auto* group = _handle.Get())
+		{
+			group->InitOrientation = Vector3(
+				orient.x * RADIAN, orient.y * RADIAN, orient.z * RADIAN);
+		}
+	}
+
+	// -- Gameplay effects --
+
+	void LuaParticleGroup::SetDamage(float damage)
+	{
+		if (auto* group = _handle.Get()) group->InitDamage = std::max(0.0f, damage);
+	}
+
+	void LuaParticleGroup::SetPoison(int poison)
+	{
+		if (auto* group = _handle.Get()) group->InitPoison = std::max(0, poison);
+	}
+
+	void LuaParticleGroup::SetFire(bool enabled)
+	{
+		if (auto* group = _handle.Get()) group->InitFire = enabled;
+	}
+
+	void LuaParticleGroup::SetContactRadius(float radius)
+	{
+		if (auto* group = _handle.Get()) group->InitContactRadius = std::max(1.0f, radius);
+	}
+
+	// -- Per-particle access --
+
+	sol::object LuaParticleGroup::GetParticle(int index, sol::this_state s) const
+	{
+		const auto* group = _handle.Get();
+		if (!group)
+			return sol::nil;
+
+		if (index < 0 || index >= (int)group->Particles.size() || !group->Particles[index].Active)
+			return sol::nil;
+
+		sol::state_view lua(s);
+		return MakeParticleTable(lua, group->Particles[index]);
+	}
+
+	void LuaParticleGroup::SetParticle(int index, sol::table data)
+	{
+		auto* group = _handle.Get();
+		if (!group)
+			return;
+
+		if (index < 0 || index >= (int)group->Particles.size() || !group->Particles[index].Active)
+			return;
+
+		ApplyParticleTable(group->Particles[index], data);
+	}
+
+	void LuaParticleGroup::ForEachParticle(sol::function callback, sol::this_state s)
+	{
+		auto* group = _handle.Get();
+		if (!group)
+			return;
+
+		sol::state_view lua(s);
+		for (int i = 0; i < (int)group->Particles.size(); i++)
+		{
+			if (!group->Particles[i].Active)
+				continue;
+
+			auto tbl    = MakeParticleTable(lua, group->Particles[i]);
+			auto result = callback(i, tbl);
+
+			// If the callback returns a table, apply changes back to the particle.
+			if (result.valid() && result.get_type() == sol::type::table)
+				ApplyParticleTable(group->Particles[i], result);
+		}
+	}
+
+	// -- Registration --
+
+	void LuaParticleGroup::Register(sol::table& parent)
+	{
+		parent.new_usertype<LuaParticleGroup>(
 			ScriptReserved_ParticleGroup,
+			sol::no_constructor,
 
 			/// Start emitting particles.
 			// @function ParticleGroup:Start
-			ScriptReserved_ParticleGroupStart, [](ParticleGroupHandle& handle)
-			{
-				if (auto* group = handle.Get()) group->Start();
-			},
+			ScriptReserved_ParticleGroupStart, &LuaParticleGroup::Start,
 
 			/// Stop emitting particles. Existing particles continue until they expire.
 			// @function ParticleGroup:Stop
-			ScriptReserved_ParticleGroupStop, [](ParticleGroupHandle& handle)
-			{
-				if (auto* group = handle.Get()) group->Stop();
-			},
+			ScriptReserved_ParticleGroupStop, &LuaParticleGroup::Stop,
 
 			/// Pause the group. Stops emission and freezes all existing particles in place.
 			// @function ParticleGroup:Pause
-			ScriptReserved_ParticleGroupPause, [](ParticleGroupHandle& handle)
-			{
-				if (auto* group = handle.Get()) group->Pause();
-			},
+			ScriptReserved_ParticleGroupPause, &LuaParticleGroup::Pause,
 
 			/// Resume a paused group.
 			// @function ParticleGroup:Resume
-			ScriptReserved_ParticleGroupResume, [](ParticleGroupHandle& handle)
-			{
-				if (auto* group = handle.Get()) group->Resume();
-			},
+			ScriptReserved_ParticleGroupResume, &LuaParticleGroup::Resume,
 
 			/// Emit a burst of particles immediately.
 			// @function ParticleGroup:EmitBurst
 			// @tparam int count Number of particles to emit.
-			ScriptReserved_ParticleGroupEmitBurst, [](ParticleGroupHandle& handle, int count)
-			{
-				if (auto* group = handle.Get()) group->EmitBurst(count);
-			},
+			ScriptReserved_ParticleGroupEmitBurst, &LuaParticleGroup::EmitBurst,
 
 			/// Get number of active particles.
 			// @function ParticleGroup:GetActiveCount
 			// @treturn int Number of active particles.
-			ScriptReserved_ParticleGroupGetActiveCount, [](const ParticleGroupHandle& handle) -> int
-			{
-				const auto* group = handle.Get();
-				return group ? group->GetActiveCount() : 0;
-			},
+			ScriptReserved_ParticleGroupGetActiveCount, &LuaParticleGroup::GetActiveCount,
 
-			/// Set the emission rate.
+			/// Set the emission rate in particles per second.
 			// @function ParticleGroup:SetEmissionRate
 			// @tparam float rate Particles per second.
-			ScriptReserved_ParticleGroupSetEmissionRate, [](ParticleGroupHandle& handle, float rate)
-			{
-				if (auto* group = handle.Get()) group->EmissionRate = std::max(0.0f, rate);
-			},
+			ScriptReserved_ParticleGroupSetEmissionRate, &LuaParticleGroup::SetEmissionRate,
 
 			/// Set the emitter position.
 			// @function ParticleGroup:SetPosition
 			// @tparam Vec3 pos World position.
-			ScriptReserved_ParticleGroupSetPosition, [](ParticleGroupHandle& handle, const Vec3& pos)
-			{
-				auto* group = handle.Get();
-				if (!group)
-					return;
-
-				group->EmitterPosition = pos.ToVector3();
-				group->RoomNumber = FindRoomNumber(Vector3i((int)pos.x, (int)pos.y, (int)pos.z));
-			},
+			ScriptReserved_ParticleGroupSetPosition, &LuaParticleGroup::SetPosition,
 
 			/// Get the emitter position.
 			// @function ParticleGroup:GetPosition
 			// @treturn Vec3 World position.
-			ScriptReserved_ParticleGroupGetPosition, [](const ParticleGroupHandle& handle) -> sol::optional<Vec3>
-			{
-				const auto* group = handle.Get();
-				if (!group)
-					return sol::nullopt;
-
-				return Vec3(group->EmitterPosition);
-			},
+			ScriptReserved_ParticleGroupGetPosition, &LuaParticleGroup::GetPosition,
 
 			/// Set initial velocity for new particles.
 			// @function ParticleGroup:SetInitialVelocity
-			// @tparam Vec3 vel Velocity vector.
-			ScriptReserved_ParticleGroupSetInitialVelocity, [](ParticleGroupHandle& handle, const Vec3& vel)
-			{
-				if (auto* group = handle.Get()) group->InitVelocity = vel.ToVector3();
-			},
+			// @tparam Vec3 vel Velocity vector in world units per second.
+			ScriptReserved_ParticleGroupSetInitialVelocity, &LuaParticleGroup::SetInitialVelocity,
 
 			/// Set random range added to initial velocity.
 			// @function ParticleGroup:SetInitialVelocityRandom
-			// @tparam Vec3 range Random range per axis (value is +/- range).
-			ScriptReserved_ParticleGroupSetVelocityRandom, [](ParticleGroupHandle& handle, const Vec3& range)
-			{
-				if (auto* group = handle.Get()) group->InitVelocityRandom = range.ToVector3();
-			},
+			// @tparam Vec3 range Per-axis random range (+/- range).
+			ScriptReserved_ParticleGroupSetVelocityRandom, &LuaParticleGroup::SetInitialVelocityRandom,
 
 			/// Set initial acceleration for new particles.
 			// @function ParticleGroup:SetInitialAcceleration
-			// @tparam Vec3 accel Acceleration vector.
-			ScriptReserved_ParticleGroupSetInitialAcceleration, [](ParticleGroupHandle& handle, const Vec3& accel)
-			{
-				if (auto* group = handle.Get()) group->InitAcceleration = accel.ToVector3();
-			},
+			// @tparam Vec3 accel Acceleration vector in world units per second squared.
+			ScriptReserved_ParticleGroupSetInitialAcceleration, &LuaParticleGroup::SetInitialAcceleration,
 
 			/// Set a fixed lifetime for new particles.
 			// @function ParticleGroup:SetLifetime
 			// @tparam float seconds Lifetime in seconds.
-			ScriptReserved_ParticleGroupSetLifetime, [](ParticleGroupHandle& handle, float seconds)
-			{
-				auto* group = handle.Get();
-				if (!group)
-					return;
-
-				seconds = std::max(0.01f, seconds);
-				group->LifetimeMin = seconds;
-				group->LifetimeMax = seconds;
-			},
+			ScriptReserved_ParticleGroupSetLifetime, &LuaParticleGroup::SetLifetime,
 
 			/// Set lifetime range for new particles.
 			// @function ParticleGroup:SetLifetimeRange
 			// @tparam float minSeconds Minimum lifetime.
 			// @tparam float maxSeconds Maximum lifetime.
-			ScriptReserved_ParticleGroupSetLifetimeRange, [](ParticleGroupHandle& handle, float minSec, float maxSec)
-			{
-				auto* group = handle.Get();
-				if (!group)
-					return;
+			ScriptReserved_ParticleGroupSetLifetimeRange, &LuaParticleGroup::SetLifetimeRange,
 
-				group->LifetimeMin = std::max(0.01f, minSec);
-				group->LifetimeMax = std::max(group->LifetimeMin, maxSec);
-			},
-
-			/// Set fixed initial size for new particles.
+			/// Set a fixed initial size for new particles.
 			// @function ParticleGroup:SetInitialSize
-			// @tparam float size Particle size.
-			ScriptReserved_ParticleGroupSetInitialSize, [](ParticleGroupHandle& handle, float size)
-			{
-				auto* group = handle.Get();
-				if (!group)
-					return;
-
-				group->InitSizeMin = size;
-				group->InitSizeMax = size;
-			},
+			// @tparam float size Particle size in world units.
+			ScriptReserved_ParticleGroupSetInitialSize, &LuaParticleGroup::SetInitialSize,
 
 			/// Set initial size range for new particles.
 			// @function ParticleGroup:SetInitialSizeRange
 			// @tparam float min Minimum size.
 			// @tparam float max Maximum size.
-			ScriptReserved_ParticleGroupSetInitialSizeRange, [](ParticleGroupHandle& handle, float minSize, float maxSize)
-			{
-				auto* group = handle.Get();
-				if (!group)
-					return;
-
-				group->InitSizeMin = minSize;
-				group->InitSizeMax = std::max(minSize, maxSize);
-			},
+			ScriptReserved_ParticleGroupSetInitialSizeRange, &LuaParticleGroup::SetInitialSizeRange,
 
 			/// Set initial color for new particles.
 			// @function ParticleGroup:SetInitialColor
 			// @tparam Color color Particle color.
-			ScriptReserved_ParticleGroupSetInitialColor, [](ParticleGroupHandle& handle, const ScriptColor& color)
-			{
-				auto* group = handle.Get();
-				if (!group)
-					return;
-
-				group->InitColorMin = Color(color);
-				group->InitColorMax = Color(color);
-			},
+			ScriptReserved_ParticleGroupSetInitialColor, &LuaParticleGroup::SetInitialColor,
 
 			/// Set initial color range for new particles.
 			// @function ParticleGroup:SetInitialColorRange
 			// @tparam Color min Minimum color.
 			// @tparam Color max Maximum color.
-			ScriptReserved_ParticleGroupSetInitialColorRange, [](ParticleGroupHandle& handle, const ScriptColor& minColor, const ScriptColor& maxColor)
-			{
-				auto* group = handle.Get();
-				if (!group)
-					return;
+			ScriptReserved_ParticleGroupSetInitialColorRange, &LuaParticleGroup::SetInitialColorRange,
 
-				group->InitColorMin = Color(minColor);
-				group->InitColorMax = Color(maxColor);
-			},
-
-			/// Set initial rotation for new particles.
+			/// Set initial rotation for new particles in degrees.
 			// @function ParticleGroup:SetInitialRotation
 			// @tparam float rotation Rotation in degrees.
-			ScriptReserved_ParticleGroupSetInitialRotation, [](ParticleGroupHandle& handle, float rotation)
-			{
-				if (auto* group = handle.Get()) group->InitRotation = rotation * RADIAN;
-			},
+			ScriptReserved_ParticleGroupSetInitialRotation, &LuaParticleGroup::SetInitialRotation,
 
 			/// Set initial rotational velocity for new particles.
 			// @function ParticleGroup:SetInitialRotationVelocity
 			// @tparam float rotVel Rotational velocity in degrees per second.
-			ScriptReserved_ParticleGroupSetInitialRotVel, [](ParticleGroupHandle& handle, float rotVel)
-			{
-				if (auto* group = handle.Get()) group->InitRotationVel = rotVel * RADIAN;
-			},
+			ScriptReserved_ParticleGroupSetInitialRotVel, &LuaParticleGroup::SetInitialRotationVelocity,
 
 			/// Set blend mode for rendering. Applies to sprite groups only.
-			// Mesh groups always use their per-material blend modes.
+			// Mesh groups use per-material blend modes.
 			// @function ParticleGroup:SetBlendMode
 			// @tparam Effects.BlendID mode Blend mode.
-			ScriptReserved_ParticleGroupSetBlendMode, [](ParticleGroupHandle& handle, BlendMode mode)
-			{
-				if (auto* group = handle.Get()) group->RenderBlendMode = mode;
-			},
+			ScriptReserved_ParticleGroupSetBlendMode, &LuaParticleGroup::SetBlendMode,
 
-			/// Set object (sprite sequence or mesh object) for the group.
+			/// Set the object slot (sprite sequence or mesh object) for the group.
 			// For sprite sequences, the sprite index selects which sprite to draw.
 			// For mesh objects, the sprite index selects which mesh to draw.
 			// @function ParticleGroup:SetSpriteSequence
 			// @tparam Objects.ObjID objectID Object slot ID.
-			ScriptReserved_ParticleGroupSetSpriteSequence, [](ParticleGroupHandle& handle, GAME_OBJECT_ID objectID)
-			{
-				auto* group = handle.Get();
-				if (!group)
-					return;
+			ScriptReserved_ParticleGroupSetSpriteSequence, &LuaParticleGroup::SetSpriteSequence,
 
-				if (CheckIfSlotExists(objectID, "ParticleGroup:SetSpriteSequence"))
-					group->ObjectID = objectID;
-			},
-
-			/// Set sprite/mesh index for newly emitted particles.
-			// For sprite sequences, this selects the sprite within the sequence.
-			// For mesh objects, this selects which mesh to draw.
+			/// Set sprite or mesh index for newly emitted particles.
 			// @function ParticleGroup:SetSpriteIndex
 			// @tparam int index Sprite or mesh index.
-			ScriptReserved_ParticleGroupSetSpriteIndex, [](ParticleGroupHandle& handle, int index)
-			{
-				if (auto* group = handle.Get()) group->InitSpriteIndex = index;
-			},
+			ScriptReserved_ParticleGroupSetSpriteIndex, &LuaParticleGroup::SetSpriteIndex,
 
-			/// Get the current sprite/mesh index used for new particles.
+			/// Get the current sprite or mesh index used for new particles.
 			// @function ParticleGroup:GetSpriteIndex
-			// @treturn int Current sprite or mesh index.
-			ScriptReserved_ParticleGroupGetSpriteIndex, [](const ParticleGroupHandle& handle) -> sol::optional<int>
-			{
-				const auto* group = handle.Get();
-				if (!group)
-					return sol::nullopt;
+			// @treturn int Current index.
+			ScriptReserved_ParticleGroupGetSpriteIndex, &LuaParticleGroup::GetSpriteIndex,
 
-				return group->InitSpriteIndex;
-			},
-
-			/// Get the current object ID.
+			/// Get the current object slot ID.
 			// @function ParticleGroup:GetSpriteSequence
 			// @treturn Objects.ObjID Current object slot ID.
-			ScriptReserved_ParticleGroupGetSpriteSequence, [](const ParticleGroupHandle& handle) -> sol::optional<GAME_OBJECT_ID>
-			{
-				const auto* group = handle.Get();
-				if (!group)
-					return sol::nullopt;
+			ScriptReserved_ParticleGroupGetSpriteSequence, &LuaParticleGroup::GetSpriteSequence,
 
-				return group->ObjectID;
-			},
-
-			/// Check if this group renders meshes (true) or sprites (false).
+			/// Check if this group renders 3D meshes.
 			// @function ParticleGroup:IsMeshGroup
-			// @treturn bool True if particles render as 3D meshes.
-			ScriptReserved_ParticleGroupIsMeshGroup, [](const ParticleGroupHandle& handle) -> bool
-			{
-				const auto* group = handle.Get();
-				return group ? group->IsMeshGroup() : false;
-			},
+			// @treturn bool True if particles render as 3D meshes, false for sprites.
+			ScriptReserved_ParticleGroupIsMeshGroup, &LuaParticleGroup::IsMeshGroup,
 
-			/// Set initial orientation for mesh particles (degrees: x=pitch, y=yaw, z=roll).
-			// Only affects mesh groups; ignored for sprite groups.
+			/// Set initial orientation for mesh particles in degrees (pitch, yaw, roll).
+			// Ignored for sprite groups.
 			// @function ParticleGroup:SetInitialOrientation
-			// @tparam Vec3 orientation Orientation in degrees (pitch, yaw, roll).
-			ScriptReserved_ParticleGroupSetInitialOrientation, [](ParticleGroupHandle& handle, const Vec3& orient)
-			{
-				if (auto* group = handle.Get())
-				{
-					group->InitOrientation = Vector3(
-						orient.x * RADIAN, orient.y * RADIAN, orient.z * RADIAN);
-				}
-			},
+			// @tparam Vec3 orientation Orientation in degrees.
+			ScriptReserved_ParticleGroupSetInitialOrientation, &LuaParticleGroup::SetInitialOrientation,
 
-			/// Set the HP damage dealt to Lara per second when a particle is in contact.
+			/// Set HP damage dealt to Lara per second on particle contact.
 			// Set to 0 to disable. New particles inherit this value.
 			// @function ParticleGroup:SetDamage
-			// @tparam float damage HP per second. Use 0 to disable.
-			ScriptReserved_ParticleGroupSetDamage, [](ParticleGroupHandle& handle, float damage)
-			{
-				if (auto* group = handle.Get()) group->InitDamage = std::max(0.0f, damage);
-			},
+			// @tparam float damage HP per second.
+			ScriptReserved_ParticleGroupSetDamage, &LuaParticleGroup::SetDamage,
 
-			/// Set the poison level applied to Lara per second when a particle is in contact.
-			// Clamped to [0, LARA_POISON_MAX]. Set to 0 to disable. New particles inherit this value.
+			/// Set poison applied to Lara per second on particle contact.
+			// Set to 0 to disable. New particles inherit this value.
 			// @function ParticleGroup:SetPoison
-			// @tparam int poison Poison units per second. Use 0 to disable.
-			ScriptReserved_ParticleGroupSetPoison, [](ParticleGroupHandle& handle, int poison)
-			{
-				if (auto* group = handle.Get()) group->InitPoison = std::max(0, poison);
-			},
+			// @tparam int poison Poison units per second.
+			ScriptReserved_ParticleGroupSetPoison, &LuaParticleGroup::SetPoison,
 
 			/// Set whether particles set Lara on fire on contact.
 			// New particles inherit this value.
 			// @function ParticleGroup:SetFire
 			// @tparam bool enabled True to enable fire on contact.
-			ScriptReserved_ParticleGroupSetFire, [](ParticleGroupHandle& handle, bool enabled)
-			{
-				if (auto* group = handle.Get()) group->InitFire = enabled;
-			},
+			ScriptReserved_ParticleGroupSetFire, &LuaParticleGroup::SetFire,
 
-			/// Set the contact radius used to detect Lara overlap with a particle.
-			// When Lara's position is within this distance of a particle, damage, poison, and fire
-			// effects are applied. Default is 128 world units. New particles inherit this value.
+			/// Set the contact radius for damage, poison, and fire detection.
+			// Uses an AABB check against Lara's deadly bounds. Default is 128 world units.
+			// New particles inherit this value.
 			// @function ParticleGroup:SetContactRadius
 			// @tparam float radius Distance in world units. Must be greater than 0.
-			ScriptReserved_ParticleGroupSetContactRadius, [](ParticleGroupHandle& handle, float radius)
-			{
-				if (auto* group = handle.Get()) group->InitContactRadius = std::max(1.0f, radius);
-			},
+			ScriptReserved_ParticleGroupSetContactRadius, &LuaParticleGroup::SetContactRadius,
 
 			/// Get a specific particle's data as a table.
+			// Returns nil if the index is out of range, the particle is inactive, or the group is invalid.
 			// @function ParticleGroup:GetParticle
 			// @tparam int index Particle index (0-based).
 			// @treturn table|nil Particle data table.
-			// Returns nil if the index is out of range, the particle is inactive, or the group is invalid.
-			ScriptReserved_ParticleGroupGetParticle, [](ParticleGroupHandle& handle, int index, sol::this_state s) -> sol::object
-			{
-				auto* group = handle.Get();
-				if (!group)
-					return sol::nil;
-
-				if (index < 0 || index >= (int)group->Particles.size() || !group->Particles[index].Active)
-					return sol::nil;
-
-				const auto& particle = group->Particles[index];
-				sol::state_view lua(s);
-				auto tbl = lua.create_table();
-				tbl["id"]             = particle.ID;
-				tbl["position"]       = Vec3(particle.Position);
-				tbl["velocity"]       = Vec3(particle.Velocity);
-				tbl["acceleration"]   = Vec3(particle.Acceleration);
-				tbl["size"]           = particle.Size;
-				tbl["rotation"]       = particle.Rotation / RADIAN;
-				tbl["color"]          = ScriptColor(particle.ParticleColor);
-				tbl["age"]            = particle.Age;
-				tbl["lifetime"]       = particle.Lifetime;
-				tbl["ageNormalized"]  = particle.AgeNormalized;
-				tbl["spriteIndex"]    = particle.SpriteIndex;
-				tbl["spriteSequence"] = particle.SpriteSequence;
-				tbl["orientation"]    = Vec3(particle.Orientation.x / RADIAN, particle.Orientation.y / RADIAN, particle.Orientation.z / RADIAN);
-				tbl["damage"]         = particle.Damage;
-				tbl["poison"]         = particle.Poison;
-				tbl["fire"]           = particle.Fire;
-				tbl["contactRadius"]  = particle.ContactRadius;
-				return tbl;
-			},
+			ScriptReserved_ParticleGroupGetParticle, &LuaParticleGroup::GetParticle,
 
 			/// Set a specific particle's properties from a table.
 			// All rotation and orientation values are in degrees.
-			// Set `teleport = true` to snap interpolation (no lerp artifact on large position jumps).
+			// Set teleport = true to suppress interpolation after a large position jump.
 			// @function ParticleGroup:SetParticle
 			// @tparam int index Particle index (0-based).
-			// @tparam table data Table with properties to set: position, velocity, acceleration,
-			// size, color, rotation (degrees), spriteIndex, spriteSequence, orientation (degrees),
-			// age, lifetime, damage, poison, fire, contactRadius, teleport.
-			ScriptReserved_ParticleGroupSetParticle, [](ParticleGroupHandle& handle, int index, sol::table data)
-			{
-				auto* group = handle.Get();
-				if (!group)
-					return;
-
-				if (index < 0 || index >= (int)group->Particles.size() || !group->Particles[index].Active)
-					return;
-
-				auto& particle = group->Particles[index];
-
-				if (auto pos = data.get<sol::optional<Vec3>>("position"))
-					particle.Position = pos->ToVector3();
-				if (auto vel = data.get<sol::optional<Vec3>>("velocity"))
-					particle.Velocity = vel->ToVector3();
-				if (auto accel = data.get<sol::optional<Vec3>>("acceleration"))
-					particle.Acceleration = accel->ToVector3();
-				if (auto size = data.get<sol::optional<float>>("size"))
-					particle.Size = *size;
-				if (auto rot = data.get<sol::optional<float>>("rotation"))
-					particle.Rotation = *rot * RADIAN;
-				if (auto sprite = data.get<sol::optional<int>>("spriteIndex"))
-					particle.SpriteIndex = *sprite;
-				if (auto seq = data.get<sol::optional<GAME_OBJECT_ID>>("spriteSequence"))
-					particle.SpriteSequence = *seq;
-				if (auto color = data.get<sol::optional<ScriptColor>>("color"))
-					particle.ParticleColor = Color(*color);
-				if (auto orient = data.get<sol::optional<Vec3>>("orientation"))
-					particle.Orientation = Vector3(orient->x * RADIAN, orient->y * RADIAN, orient->z * RADIAN);
-				if (auto age = data.get<sol::optional<float>>("age"))
-					particle.Age = std::clamp(*age, 0.0f, particle.Lifetime);
-				if (auto lt = data.get<sol::optional<float>>("lifetime"))
-					particle.Lifetime = std::max(0.01f, *lt);
-				if (auto dmg = data.get<sol::optional<float>>("damage"))
-					particle.Damage = std::max(0.0f, *dmg);
-				if (auto psn = data.get<sol::optional<int>>("poison"))
-					particle.Poison = std::max(0, *psn);
-				if (auto fire = data.get<sol::optional<bool>>("fire"))
-					particle.Fire = *fire;
-				if (auto cr = data.get<sol::optional<float>>("contactRadius"))
-					particle.ContactRadius = std::max(1.0f, *cr);
-				if (auto tp = data.get<sol::optional<bool>>("teleport"); tp && *tp)
-					particle.StoreInterpolationData();
-			},
+			// @tparam table data Table with properties to set.
+			ScriptReserved_ParticleGroupSetParticle, &LuaParticleGroup::SetParticle,
 
 			/// Iterate over all active particles, calling a function for each.
+			// If the callback returns a table, those fields are applied back to the particle.
+			// All rotation and orientation values are in degrees.
 			// @function ParticleGroup:ForEachParticle
 			// @tparam function callback Function receiving (index, particleTable) for each active particle.
-			// The table contains the same fields as GetParticle. If the callback returns a table,
-			// those fields are applied back to the particle. All rotation/orientation values are in degrees.
-			ScriptReserved_ParticleGroupForEachParticle, [](ParticleGroupHandle& handle, sol::function callback, sol::this_state s)
-			{
-				auto* group = handle.Get();
-				if (!group)
-					return;
-
-				sol::state_view lua(s);
-				for (int i = 0; i < (int)group->Particles.size(); i++)
-				{
-					if (!group->Particles[i].Active)
-						continue;
-
-					const auto& particle = group->Particles[i];
-					auto tbl = lua.create_table();
-					tbl["id"]             = particle.ID;
-					tbl["position"]       = Vec3(particle.Position);
-					tbl["velocity"]       = Vec3(particle.Velocity);
-					tbl["acceleration"]   = Vec3(particle.Acceleration);
-					tbl["size"]           = particle.Size;
-					tbl["rotation"]       = particle.Rotation / RADIAN;
-					tbl["color"]          = ScriptColor(particle.ParticleColor);
-					tbl["age"]            = particle.Age;
-					tbl["lifetime"]       = particle.Lifetime;
-					tbl["ageNormalized"]  = particle.AgeNormalized;
-					tbl["spriteIndex"]    = particle.SpriteIndex;
-					tbl["spriteSequence"] = particle.SpriteSequence;
-					tbl["orientation"]    = Vec3(particle.Orientation.x / RADIAN, particle.Orientation.y / RADIAN, particle.Orientation.z / RADIAN);
-					tbl["damage"]         = particle.Damage;
-					tbl["poison"]         = particle.Poison;
-					tbl["fire"]           = particle.Fire;
-					tbl["contactRadius"]  = particle.ContactRadius;
-
-					auto result = callback(i, tbl);
-
-					// If the callback returns a table, apply changes back to the particle.
-					if (result.valid() && result.get_type() == sol::type::table)
-					{
-						sol::table changes = result;
-						auto& mp = group->Particles[i];
-
-						if (auto pos = changes.get<sol::optional<Vec3>>("position"))
-							mp.Position = pos->ToVector3();
-						if (auto vel = changes.get<sol::optional<Vec3>>("velocity"))
-							mp.Velocity = vel->ToVector3();
-						if (auto accel = changes.get<sol::optional<Vec3>>("acceleration"))
-							mp.Acceleration = accel->ToVector3();
-						if (auto size = changes.get<sol::optional<float>>("size"))
-							mp.Size = *size;
-						if (auto rot = changes.get<sol::optional<float>>("rotation"))
-							mp.Rotation = *rot * RADIAN;
-						if (auto sprite = changes.get<sol::optional<int>>("spriteIndex"))
-							mp.SpriteIndex = *sprite;
-						if (auto seq = changes.get<sol::optional<GAME_OBJECT_ID>>("spriteSequence"))
-							mp.SpriteSequence = *seq;
-						if (auto color = changes.get<sol::optional<ScriptColor>>("color"))
-							mp.ParticleColor = Color(*color);
-						if (auto orient = changes.get<sol::optional<Vec3>>("orientation"))
-							mp.Orientation = Vector3(orient->x * RADIAN, orient->y * RADIAN, orient->z * RADIAN);
-						if (auto dmg = changes.get<sol::optional<float>>("damage"))
-							mp.Damage = std::max(0.0f, *dmg);
-						if (auto psn = changes.get<sol::optional<int>>("poison"))
-							mp.Poison = std::max(0, *psn);
-						if (auto fire = changes.get<sol::optional<bool>>("fire"))
-							mp.Fire = *fire;
-						if (auto age = changes.get<sol::optional<float>>("age"))
-							mp.Age = std::clamp(*age, 0.0f, mp.Lifetime);
-						if (auto lt = changes.get<sol::optional<float>>("lifetime"))
-							mp.Lifetime = std::max(0.01f, *lt);
-						if (auto cr = changes.get<sol::optional<float>>("contactRadius"))
-							mp.ContactRadius = std::max(1.0f, *cr);
-						if (auto tp = changes.get<sol::optional<bool>>("teleport"); tp && *tp)
-							mp.StoreInterpolationData();
-					}
-				}
-			},
+			ScriptReserved_ParticleGroupForEachParticle, &LuaParticleGroup::ForEachParticle,
 
 			/// (int) Unique group ID. Read-only. Returns -1 if the handle is stale.
 			// @mem id
-			ScriptReserved_ParticleGroupId, sol::property([](const ParticleGroupHandle& handle) -> int
-			{
-				const auto* group = handle.Get();
-				return group ? group->ID : -1;
-			}),
+			ScriptReserved_ParticleGroupId, sol::property(&LuaParticleGroup::GetID),
 
 			/// (bool) Whether the handle refers to a valid active group.
 			// @mem active
-			ScriptReserved_ParticleGroupActive, sol::property([](const ParticleGroupHandle& handle)
-			{
-				return handle.IsValid();
-			}));
+			ScriptReserved_ParticleGroupActive, sol::property(&LuaParticleGroup::IsActive));
 
 		/// Structure for a Particle table.
 		// @table Particle
@@ -573,10 +600,20 @@ namespace TEN::Scripting::Effects::ParticleGroups
 		// @tfield float damage HP damage dealt to Lara per second when this particle is in contact. Use 0 to disable.
 		// @tfield int poison Poison units added to Lara per second when this particle is in contact. Use 0 to disable.
 		// @tfield bool fire If true, sets Lara on fire while this particle is in contact.
-		// @tfield float contactRadius Distance in world units at which damage, poison, and fire effects are applied. Default is 128.
+		// @tfield float contactRadius Half-extent in world units used for AABB contact detection. Default is 128.
 		// @tfield bool teleport Write-only control. Set to true to suppress interpolation after a large position, size, or rotation change.
-		
-		// Register CreateParticleGroup as a free function.
-		parent.set_function(ScriptReserved_CreateParticleGroup, &LuaCreateParticleGroup);
+
+		/// Create a particle group for managing collections of particles with Lua-driven behavior.
+		// If the specified object ID is a sprite sequence, particles render as sprites.
+		// If it is a mesh object (moveable), particles render as 3D meshes, and the sprite index
+		// selects which mesh within the object to draw.
+		// @function CreateParticleGroup
+		// @tparam Objects.ObjID objectID Object slot ID (sprite sequence or mesh object).
+		// @tparam int maxParticles Maximum number of particles in the group.
+		// @treturn ParticleGroup A new ParticleGroup handle, or a stale handle on failure.
+		parent.set_function(ScriptReserved_CreateParticleGroup, [](GAME_OBJECT_ID objectID, int maxParticles)
+		{
+			return LuaParticleGroup(objectID, maxParticles);
+		});
 	}
 }

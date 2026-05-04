@@ -761,7 +761,7 @@ namespace TEN::Scripting::Effects
 		tableEffects.set_function(ScriptReserved_GetWind, &GetWind);
 
 		// Particle groups.
-		ParticleGroups::Register(tableEffects);
+		ParticleGroups::LuaParticleGroup::Register(tableEffects);
 
 		auto handler = LuaHandler(state);
 		handler.MakeReadOnlyTable(tableEffects, ScriptReserved_BlendID, BLEND_IDS);

@@ -1,9 +1,11 @@
 #include "framework.h"
 #include "Game/effects/ParticleGroup.h"
 
+#include "Game/effects/effects.h"
 #include "Game/effects/item_fx.h"
 #include "Game/items.h"
 #include "Game/Lara/lara.h"
+#include "Game/Lara/lara_collide.h"
 #include "Game/Setup.h"
 #include "Math/Math.h"
 #include "Specific/clock.h"
@@ -251,16 +253,18 @@ namespace TEN::Effects::ParticleGroups
 			// Apply gameplay effects on Lara contact.
 			if ((p.Damage > 0.0f || p.Poison > 0 || p.Fire) && LaraItem.Get() != nullptr)
 			{
-				float dist = Vector3::Distance(p.Position, LaraItem->Pose.Position.ToVector3());
-				if (dist <= p.ContactRadius)
+				float cr = p.ContactRadius;
+				if (p.Position.x + cr > DeadlyBounds.X1 && p.Position.x - cr < DeadlyBounds.X2 &&
+					p.Position.y + cr > DeadlyBounds.Y1 && p.Position.y - cr < DeadlyBounds.Y2 &&
+					p.Position.z + cr > DeadlyBounds.Z1 && p.Position.z - cr < DeadlyBounds.Z2)
 				{
-					if (p.Fire)
+					if (p.Fire && LaraItem->Effect.Type == EffectType::None)
 						TEN::Effects::Items::ItemBurn(LaraItem);
 
 					p.EffectTimer += dt;
-					if (p.EffectTimer >= 1.0f)
+					if (p.EffectTimer >= 0.3f)
 					{
-						p.EffectTimer -= 1.0f;
+						p.EffectTimer -= 0.3f;
 						if (p.Damage > 0.0f)
 							DoDamage(LaraItem, (int)p.Damage);
 						if (p.Poison > 0)
@@ -293,6 +297,8 @@ namespace TEN::Effects::ParticleGroups
 
 	void UpdateParticleGroups()
 	{
+		GetLaraDeadlyBounds();
+
 		for (auto& group : ParticleGroupList)
 		{
 			if (!group.Active)
