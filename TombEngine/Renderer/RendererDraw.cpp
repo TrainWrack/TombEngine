@@ -804,6 +804,17 @@ namespace TEN::Renderer
 					if (dist > DEFAULT_RENDER_DISTANCE)
 						continue;
 
+					// Validate per-particle sprite sequence (if overridden).
+					if (!Objects[p.SpriteSequence].loaded)
+						continue;
+
+					// Ensure it's a moveable (positive nmeshes) with valid mesh data.
+					if (Objects[p.SpriteSequence].nmeshes <= 0)
+						continue;
+
+					if (!_moveableObjects[p.SpriteSequence].has_value())
+						continue;
+
 					int clampedMeshIndex = std::clamp(p.SpriteIndex, 0, Objects[p.SpriteSequence].nmeshes - 1);
 					auto& mesh = *GetMesh(Objects[p.SpriteSequence].meshIndex + clampedMeshIndex);
 
@@ -869,6 +880,17 @@ namespace TEN::Renderer
 
 					float dist = Vector3::Distance(p.Position, view.Camera.WorldPosition);
 					if (dist > DEFAULT_RENDER_DISTANCE)
+						continue;
+
+					// Validate per-particle sprite sequence (if overridden).
+					if (!Objects[p.SpriteSequence].loaded)
+						continue;
+
+					// Ensure it's a moveable (positive nmeshes) with valid mesh data.
+					if (Objects[p.SpriteSequence].nmeshes <= 0)
+						continue;
+
+					if (!_moveableObjects[p.SpriteSequence].has_value())
 						continue;
 
 					int clampedMeshIndex = std::clamp(p.SpriteIndex, 0, Objects[p.SpriteSequence].nmeshes - 1);

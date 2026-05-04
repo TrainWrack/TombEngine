@@ -29,7 +29,7 @@ function SpiralMotion.Create(origin, objectID, damage)
     damage   = damage or 0
 
     group = TEN.Effects.CreateParticleGroup(objectID, 200)
-    if not group then return end
+    if not group.active then return end
 
     -- Randomize the spawn position slightly for variety.
     local offset = math.random(-512, 512)

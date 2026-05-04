@@ -275,9 +275,9 @@ namespace TEN::Effects::ParticleGroups
 					{
 						p.EffectTimer -= DAMAGE_COOLDOWN;
 						if (p.Damage > 0.0f)
-							DoDamage(LaraItem, (int)p.Damage);
+							DoDamage(LaraItem, (int)(p.Damage * DAMAGE_COOLDOWN));
 						if (p.Poison > 0)
-							Lara.Status.Poison = std::min(Lara.Status.Poison + p.Poison, (int)LARA_POISON_MAX);
+							Lara.Status.Poison = std::min(Lara.Status.Poison + (int)(p.Poison * DAMAGE_COOLDOWN), (int)LARA_POISON_MAX);
 					}
 				}
 				else
@@ -325,7 +325,9 @@ namespace TEN::Effects::ParticleGroups
 	{
 		for (auto& group : ParticleGroupList)
 		{
+			int prevGeneration = group.Generation;
 			group = ParticleGroup();
+			group.Generation = prevGeneration + 1;
 		}
 	}
 }

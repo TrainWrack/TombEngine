@@ -1,4 +1,4 @@
-﻿#include "framework.h"
+#include "framework.h"
 #include "Scripting/Internal/TEN/Effects/ParticleGroupFunctions.h"
 
 #include "Game/effects/ParticleGroup.h"
@@ -68,10 +68,10 @@ namespace TEN::Scripting::Effects::ParticleGroups
 			p.ParticleColor = Color(*color);
 		if (auto orient = data.get<sol::optional<Vec3>>("orientation"))
 			p.Orientation = Vector3(orient->x * RADIAN, orient->y * RADIAN, orient->z * RADIAN);
-		if (auto age = data.get<sol::optional<float>>("age"))
-			p.Age = std::clamp(*age, 0.0f, p.Lifetime);
 		if (auto lt = data.get<sol::optional<float>>("lifetime"))
 			p.Lifetime = std::max(0.01f, *lt);
+		if (auto age = data.get<sol::optional<float>>("age"))
+			p.Age = std::clamp(*age, 0.0f, p.Lifetime);
 		if (auto dmg = data.get<sol::optional<float>>("damage"))
 			p.Damage = std::max(0.0f, *dmg);
 		if (auto psn = data.get<sol::optional<int>>("poison"))

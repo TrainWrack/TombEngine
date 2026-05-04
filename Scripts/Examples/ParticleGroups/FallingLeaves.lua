@@ -30,7 +30,7 @@ function FallingLeaves.Create(origin, spriteID, poison)
     poison   = poison or 0
 
     group = TEN.Effects.CreateParticleGroup(spriteID, 100)
-    if not group then return end
+    if not group.active then return end
 
     group:SetPosition(origin)
     group:SetEmissionRate(8) -- Gentle, sparse emission.

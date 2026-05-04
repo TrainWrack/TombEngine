@@ -18,7 +18,7 @@ function SinusoidalWave.Create(origin, spriteID)
     spriteID = spriteID or TEN.Objects.ObjID.DEFAULT_SPRITES
 
     group = TEN.Effects.CreateParticleGroup(spriteID, 128)
-    if not group then return end
+    if not group.active then return end
 
     -- Configure particles: small, bright, additive blending.
     group:SetPosition(origin)
