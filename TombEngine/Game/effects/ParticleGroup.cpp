@@ -16,6 +16,8 @@ using namespace TEN::Math;
 
 namespace TEN::Effects::ParticleGroups
 {
+	constexpr float DAMAGE_COOLDOWN = 0.3f;
+
 	std::array<ParticleGroup, MAX_PARTICLE_GROUPS> ParticleGroupList = {};
 
 	int CreateParticleGroup(GAME_OBJECT_ID objectID, int maxParticles)
@@ -262,9 +264,9 @@ namespace TEN::Effects::ParticleGroups
 						TEN::Effects::Items::ItemBurn(LaraItem);
 
 					p.EffectTimer += dt;
-					if (p.EffectTimer >= 0.3f)
+					if (p.EffectTimer >= DAMAGE_COOLDOWN)
 					{
-						p.EffectTimer -= 0.3f;
+						p.EffectTimer -= DAMAGE_COOLDOWN;
 						if (p.Damage > 0.0f)
 							DoDamage(LaraItem, (int)p.Damage);
 						if (p.Poison > 0)
