@@ -1820,17 +1820,26 @@ namespace TEN::Renderer
 			if (group.IsMeshGroup())
 				continue;
 
+			int spriteCount = Objects[group.ObjectID].nmeshes;
+
 			for (const auto& p : group.Particles)
 			{
 				if (!p.Active)
 					continue;
 
 				auto interpPos = Vector3::Lerp(p.PrevPosition, p.Position, GetInterpolationFactor());
+
+				float dist = Vector3::Distance(interpPos, view.Camera.WorldPosition);
+				if (dist > DEFAULT_RENDER_DISTANCE)
+					continue;
+
 				auto interpSize = Lerp(p.PrevSize, p.Size, GetInterpolationFactor());
 				auto interpRotation = Lerp(p.PrevRotation, p.Rotation, GetInterpolationFactor());
 
+				int clampedSpriteIndex = std::clamp(p.SpriteIndex, 0, spriteCount - 1);
+
 				AddSpriteBillboard(
-					&_sprites[Objects[group.ObjectID].meshIndex + p.SpriteIndex],
+					&_sprites[Objects[group.ObjectID].meshIndex + clampedSpriteIndex],
 					interpPos,
 					Vector4(p.ParticleColor.R(), p.ParticleColor.G(), p.ParticleColor.B(), p.ParticleColor.A()),
 					interpRotation, 1.0f,

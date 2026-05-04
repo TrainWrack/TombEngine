@@ -68,11 +68,12 @@ namespace TEN::Effects::ParticleGroups
 	{
 	public:
 		// Identity
-		int	 ID     = 0;
-		bool Active = false;
+		int  ID         = 0;
+		int  Generation = 0;
+		bool Active     = false;
 
 		// Object (can be sprite sequence or mesh object).
-		GAME_OBJECT_ID ObjectID = GAME_OBJECT_ID::ID_DEFAULT_SPRITES;
+		GAME_OBJECT_ID ObjectID     = GAME_OBJECT_ID::ID_DEFAULT_SPRITES;
 		int            MaxParticles = MAX_GROUP_PARTICLES;
 
 		// Emission state
@@ -98,12 +99,11 @@ namespace TEN::Effects::ParticleGroups
 		int     InitSpriteIndex    = 0;
 
 		// Mesh-specific initial templates.
-		Vector3 InitOrientation      = Vector3::Zero;
-		float   InitMeshScale        = 1.0f;
+		Vector3 InitOrientation = Vector3::Zero;
+		float   InitMeshScale   = 1.0f;
 
-		// Rendering
-		BlendMode RenderBlendMode  = BlendMode::AlphaBlend;
-		float     RenderDistance    = DEFAULT_RENDER_DISTANCE;
+		// Rendering. Blend mode applies to sprite groups only; mesh groups use per-material blend modes.
+		BlendMode RenderBlendMode = BlendMode::AlphaBlend;
 
 		// Room
 		short RoomNumber = 0;
@@ -134,9 +134,22 @@ namespace TEN::Effects::ParticleGroups
 		void StoreInterpolationData();
 
 	private:
-		int  _nextParticleID = 0;
+		int _nextParticleID = 0;
+		int _activeCount    = 0;
 
 		void EmitParticle();
+	};
+
+	// Stable Lua handle for a particle group. Validates group identity via generation counter
+	// before each access to prevent stale references after slot reuse.
+	struct ParticleGroupHandle
+	{
+		int Index      = -1;
+		int Generation = 0;
+
+		bool IsValid() const;
+		ParticleGroup*       Get();
+		const ParticleGroup* Get() const;
 	};
 
 	// Global particle group storage.

@@ -22,8 +22,10 @@ namespace TEN::Effects::ParticleGroups
 		{
 			if (!ParticleGroupList[i].Active)
 			{
+				int nextGen = ParticleGroupList[i].Generation + 1;
 				auto& group = ParticleGroupList[i];
 				group = ParticleGroup();
+				group.Generation = nextGen;
 				group.ID = i;
 				group.Active = true;
 				group.ObjectID = objectID;
@@ -35,6 +37,31 @@ namespace TEN::Effects::ParticleGroups
 
 		TENLog("ParticleGroup limit reached.", LogLevel::Warning);
 		return -1;
+	}
+
+	bool ParticleGroupHandle::IsValid() const
+	{
+		if (Index < 0 || Index >= MAX_PARTICLE_GROUPS)
+			return false;
+
+		const auto& group = ParticleGroupList[Index];
+		return group.Active && group.Generation == Generation;
+	}
+
+	ParticleGroup* ParticleGroupHandle::Get()
+	{
+		if (!IsValid())
+			return nullptr;
+
+		return &ParticleGroupList[Index];
+	}
+
+	const ParticleGroup* ParticleGroupHandle::Get() const
+	{
+		if (!IsValid())
+			return nullptr;
+
+		return &ParticleGroupList[Index];
 	}
 
 	bool ParticleGroup::IsMeshGroup() const
@@ -74,7 +101,7 @@ namespace TEN::Effects::ParticleGroups
 	void ParticleGroup::EmitParticle()
 	{
 		// Check particle limit.
-		if (GetActiveCount() >= MaxParticles)
+		if (_activeCount >= MaxParticles)
 			return;
 
 		// Find inactive particle or add new one.
@@ -102,6 +129,7 @@ namespace TEN::Effects::ParticleGroups
 		*particle = GroupParticle();
 		particle->ID = _nextParticleID++;
 		particle->Active = true;
+		_activeCount++;
 		particle->Position = EmitterPosition;
 		particle->PrevPosition = EmitterPosition;
 
@@ -159,6 +187,9 @@ namespace TEN::Effects::ParticleGroups
 
 	void ParticleGroup::Update(float dt)
 	{
+		if (State == ParticleGroupState::Paused)
+			return;
+
 		// Emit new particles if running.
 		if (State == ParticleGroupState::Running && EmissionRate > 0.0f)
 		{
@@ -188,6 +219,7 @@ namespace TEN::Effects::ParticleGroups
 			if (p.Age >= p.Lifetime)
 			{
 				p.Active = false;
+				_activeCount--;
 				continue;
 			}
 
@@ -211,14 +243,7 @@ namespace TEN::Effects::ParticleGroups
 
 	int ParticleGroup::GetActiveCount() const
 	{
-		int count = 0;
-		for (const auto& p : Particles)
-		{
-			if (p.Active)
-				count++;
-		}
-
-		return count;
+		return _activeCount;
 	}
 
 	void ParticleGroup::StoreInterpolationData()

@@ -777,6 +777,8 @@ namespace TEN::Renderer
 	{
 		using namespace TEN::Effects::ParticleGroups;
 
+		_stObjects.Skinned = (int)SkinningMode::Static;
+
 		for (const auto& group : ParticleGroupList)
 		{
 			if (!group.Active)
@@ -798,6 +800,10 @@ namespace TEN::Renderer
 					if (!p.Active)
 						continue;
 
+					float dist = Vector3::Distance(p.Position, view.Camera.WorldPosition);
+					if (dist > DEFAULT_RENDER_DISTANCE)
+						continue;
+
 					int clampedMeshIndex = std::clamp(p.SpriteIndex, 0, Objects[group.ObjectID].nmeshes - 1);
 					auto& mesh = *GetMesh(Objects[group.ObjectID].meshIndex + clampedMeshIndex);
 
@@ -810,12 +816,12 @@ namespace TEN::Renderer
 						{
 							auto worldMatrix = Matrix::Lerp(p.PrevTransform, p.Transform, GetInterpolationFactor());
 							auto center = Vector3::Transform(poly.Centre, worldMatrix);
-							float dist = Vector3::Distance(center, view.Camera.WorldPosition);
+							float polyDist = Vector3::Distance(center, view.Camera.WorldPosition);
 
 							auto object = RendererSortableObject{};
 							object.ObjectType = RendererObjectType::MoveableAsStatic;
 							object.Centre = center;
-							object.Distance = dist;
+							object.Distance = polyDist;
 							object.BlendMode = bucket.BlendMode;
 							object.Bucket = &bucket;
 							object.LightMode = mesh.LightMode;
@@ -853,31 +859,30 @@ namespace TEN::Renderer
 					_shaders.Bind(Shader::InstancedStatics);
 				}
 
-				unsigned int stride = sizeof(Vertex);
-				unsigned int offset = 0;
-
-				_context->IASetVertexBuffers(0, 1, _moveablesVertexBuffer.Buffer.GetAddressOf(), &stride, &offset);
-				_context->IASetIndexBuffer(_moveablesIndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-
-				const auto& moveableObj = *_moveableObjects[group.ObjectID];
+				_graphicsDevice->BindVertexBuffer(_moveablesVertexBuffer.get());
+				_graphicsDevice->BindIndexBuffer(_moveablesIndexBuffer.get());
 
 				for (const auto& p : group.Particles)
 				{
 					if (!p.Active)
 						continue;
 
+					float dist = Vector3::Distance(p.Position, view.Camera.WorldPosition);
+					if (dist > DEFAULT_RENDER_DISTANCE)
+						continue;
+
 					int clampedMeshIndex = std::clamp(p.SpriteIndex, 0, Objects[group.ObjectID].nmeshes - 1);
 					const auto& mesh = *GetMesh(Objects[group.ObjectID].meshIndex + clampedMeshIndex);
 
-					_stInstancedStaticMeshBuffer.StaticMeshes[0].World = Matrix::Lerp(p.PrevTransform, p.Transform, GetInterpolationFactor());
-					_stInstancedStaticMeshBuffer.StaticMeshes[0].Color = Vector4(p.ParticleColor.R(), p.ParticleColor.G(), p.ParticleColor.B(), p.ParticleColor.A());
-					_stInstancedStaticMeshBuffer.StaticMeshes[0].Ambient = _rooms[p.RoomNumber].AmbientLight;
-					_stInstancedStaticMeshBuffer.StaticMeshes[0].LightMode = (int)mesh.LightMode;
+					_stObjects.Objects[0].World = Matrix::Lerp(p.PrevTransform, p.Transform, GetInterpolationFactor());
+					_stObjects.Objects[0].Color = Vector4(p.ParticleColor.R(), p.ParticleColor.G(), p.ParticleColor.B(), p.ParticleColor.A());
+					_stObjects.Objects[0].AmbientLight = _rooms[p.RoomNumber].AmbientLight;
+					_stObjects.Objects[0].LightMode = (int)mesh.LightMode;
 
 					if (rendererPass != RendererPass::GBuffer)
 						BindInstancedStaticLights(_rooms[p.RoomNumber].LightsToDraw, 0);
 
-					UpdateConstantBuffer(_stInstancedStaticMeshBuffer, _cbInstancedStaticMeshBuffer);
+					UpdateConstantBuffer(&_stObjects, _cbObjects.get());
 
 					for (int animated = 0; animated < 2; animated++)
 					{
