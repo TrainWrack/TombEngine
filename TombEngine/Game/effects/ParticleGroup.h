@@ -61,6 +61,7 @@ namespace TEN::Effects::ParticleGroups
 		Vector3 PrevPosition = Vector3::Zero;
 		float   PrevSize     = 0.0f;
 		float   PrevRotation = 0.0f;
+		bool    Teleport     = false;
 
 		void StoreInterpolationData()
 		{

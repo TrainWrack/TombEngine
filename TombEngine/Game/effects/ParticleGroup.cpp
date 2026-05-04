@@ -252,6 +252,13 @@ namespace TEN::Effects::ParticleGroups
 				p.Transform = scaleMatrix * rotMatrix * Matrix::CreateTranslation(p.Position);
 			}
 
+			// Snap interpolation data after transform rebuild if teleport was requested.
+			if (p.Teleport)
+			{
+				p.StoreInterpolationData();
+				p.Teleport = false;
+			}
+
 			// Apply gameplay effects on Lara contact.
 			if ((p.Damage > 0.0f || p.Poison > 0 || p.Fire) && LaraItem.Get() != nullptr)
 			{

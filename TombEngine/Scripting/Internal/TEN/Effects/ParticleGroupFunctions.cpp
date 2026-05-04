@@ -81,7 +81,7 @@ namespace TEN::Scripting::Effects::ParticleGroups
 		if (auto cr = data.get<sol::optional<float>>("contactRadius"))
 			p.ContactRadius = std::max(1.0f, *cr);
 		if (auto tp = data.get<sol::optional<bool>>("teleport"); tp && *tp)
-			p.StoreInterpolationData();
+			p.Teleport = true;
 	}
 
 	// -- Constructor --
