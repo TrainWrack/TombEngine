@@ -42,12 +42,9 @@ namespace TEN::Effects::ParticleGroups
 		Matrix  Transform     = Matrix::Identity;
 		Matrix  PrevTransform = Matrix::Identity;
 
-		// Gameplay effects (applied on Lara contact).
-		float Damage        = 0.0f;
-		int   Poison        = 0;
-		bool  Fire          = false;
-		float ContactRadius = 128.0f;
-		float EffectTimer   = 0.0f;
+		// Contact.
+		float ContactRadius        = 128.0f;
+		bool  TouchingPlayer = false;
 
 		// Lifetime
 		float Age           = 0.0f;
@@ -109,10 +106,7 @@ namespace TEN::Effects::ParticleGroups
 		// Mesh-specific initial templates.
 		Vector3 InitOrientation = Vector3::Zero;
 
-		// Initial gameplay effects.
-		float InitDamage        = 0.0f;
-		int   InitPoison        = 0;
-		bool  InitFire          = false;
+		// Initial contact.
 		float InitContactRadius = 128.0f;
 
 		// Rendering. Blend mode applies to sprite groups only; mesh groups use per-material blend modes.

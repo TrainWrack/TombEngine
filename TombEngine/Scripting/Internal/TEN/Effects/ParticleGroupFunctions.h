@@ -63,10 +63,7 @@ namespace TEN::Scripting::Effects::ParticleGroups
 		sol::optional<GAME_OBJECT_ID> GetObjectID() const;
 		void                          SetInitialOrientation(const Vec3& orient);
 
-		// Gameplay effects
-		void SetDamage(float damage);
-		void SetPoison(int poison);
-		void SetFire(bool enabled);
+		// Contact
 		void SetContactRadius(float radius);
 
 		// Per-particle access

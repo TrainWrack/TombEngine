@@ -176,10 +176,7 @@ namespace TEN::Effects::ParticleGroups
 		// Mesh orientation.
 		particle->Orientation = InitOrientation;
 
-		// Gameplay effects.
-		particle->Damage        = InitDamage;
-		particle->Poison        = InitPoison;
-		particle->Fire          = InitFire;
+		// Contact.
 		particle->ContactRadius = InitContactRadius;
 
 		// Room.
@@ -255,20 +252,16 @@ namespace TEN::Effects::ParticleGroups
 				p.Teleport = false;
 			}
 
-			// Apply gameplay effects on Lara contact.
-			if ((p.Damage > 0.0f || p.Poison > 0 || p.Fire) && LaraItem.Get() != nullptr)
+			// Update contact status with Lara's deadly bounds.
+			p.TouchingPlayer = false;
+			if (LaraItem.Get() != nullptr)
 			{
 				float cr = p.ContactRadius;
 				if (p.Position.x + cr > DeadlyBounds.X1 && p.Position.x - cr < DeadlyBounds.X2 &&
 					p.Position.y + cr > DeadlyBounds.Y1 && p.Position.y - cr < DeadlyBounds.Y2 &&
 					p.Position.z + cr > DeadlyBounds.Z1 && p.Position.z - cr < DeadlyBounds.Z2)
 				{
-					if (p.Fire && LaraItem->Effect.Type == EffectType::None)
-						TEN::Effects::Items::ItemBurn(LaraItem);
-					if (p.Damage > 0.0f)
-						DoDamage(LaraItem, (int)(p.Damage));
-					if (p.Poison > 0)
-						Lara.Status.Poison = std::min(Lara.Status.Poison + (int)(p.Poison), (int)LARA_POISON_MAX);
+					p.TouchingPlayer= true;
 				}
 			}
 		}

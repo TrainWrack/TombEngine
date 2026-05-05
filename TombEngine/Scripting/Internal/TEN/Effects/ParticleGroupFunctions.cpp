@@ -41,10 +41,8 @@ namespace TEN::Scripting::Effects::ParticleGroups
 		tbl["subIndex"]      = p.SubIndex;
 		tbl["objectID"]      = p.ObjectID;
 		tbl["orientation"]   = Vec3(p.Orientation.x / RADIAN, p.Orientation.y / RADIAN, p.Orientation.z / RADIAN);
-		tbl["damage"]        = p.Damage;
-		tbl["poison"]        = p.Poison;
-		tbl["fire"]          = p.Fire;
-		tbl["contactRadius"] = p.ContactRadius;
+		tbl["contactRadius"]        = p.ContactRadius;
+		tbl["touchingPlayer"] = p.TouchingPlayer;
 		return tbl;
 	}
 
@@ -72,12 +70,6 @@ namespace TEN::Scripting::Effects::ParticleGroups
 			p.Lifetime = std::max(0.01f, *lt);
 		if (auto age = data.get<sol::optional<float>>("age"))
 			p.Age = std::clamp(*age, 0.0f, p.Lifetime);
-		if (auto dmg = data.get<sol::optional<float>>("damage"))
-			p.Damage = std::max(0.0f, *dmg);
-		if (auto psn = data.get<sol::optional<int>>("poison"))
-			p.Poison = std::max(0, *psn);
-		if (auto fire = data.get<sol::optional<bool>>("fire"))
-			p.Fire = *fire;
 		if (auto cr = data.get<sol::optional<float>>("contactRadius"))
 			p.ContactRadius = std::max(1.0f, *cr);
 		if (auto tp = data.get<sol::optional<bool>>("teleport"); tp && *tp)
@@ -321,22 +313,7 @@ namespace TEN::Scripting::Effects::ParticleGroups
 		}
 	}
 
-	// -- Gameplay effects --
-
-	void LuaParticleGroup::SetDamage(float damage)
-	{
-		if (auto* group = _handle.Get()) group->InitDamage = std::max(0.0f, damage);
-	}
-
-	void LuaParticleGroup::SetPoison(int poison)
-	{
-		if (auto* group = _handle.Get()) group->InitPoison = std::max(0, poison);
-	}
-
-	void LuaParticleGroup::SetFire(bool enabled)
-	{
-		if (auto* group = _handle.Get()) group->InitFire = enabled;
-	}
+	// -- Contact --
 
 	void LuaParticleGroup::SetContactRadius(float radius)
 	{
@@ -538,25 +515,7 @@ namespace TEN::Scripting::Effects::ParticleGroups
 			// @tparam Vec3 orientation Orientation in degrees.
 			ScriptReserved_ParticleGroupSetInitialOrientation, &LuaParticleGroup::SetInitialOrientation,
 
-			/// Set HP damage dealt to Player on particle contact.
-			// Set to 0 to disable. New particles inherit this value.
-			// @function ParticleGroup:SetDamage
-			// @tparam float damage HP damage on contact.
-			ScriptReserved_ParticleGroupSetDamage, &LuaParticleGroup::SetDamage,
-
-			/// Set poison applied to Player on particle contact.
-			// Set to 0 to disable. New particles inherit this value.
-			// @function ParticleGroup:SetPoison
-			// @tparam int poison Poison units.
-			ScriptReserved_ParticleGroupSetPoison, &LuaParticleGroup::SetPoison,
-
-			/// Set whether particles set Player on fire on contact.
-			// New particles inherit this value.
-			// @function ParticleGroup:SetFire
-			// @tparam bool enabled True to enable fire on contact.
-			ScriptReserved_ParticleGroupSetFire, &LuaParticleGroup::SetFire,
-
-			/// Set the contact radius for damage, poison, and fire detection.
+			/// Set the contact radius used for deadly bounds detection.
 			// Uses an AABB check against Lara's deadly bounds. Default is 128 world units.
 			// New particles inherit this value.
 			// @function ParticleGroup:SetContactRadius
@@ -608,10 +567,8 @@ namespace TEN::Scripting::Effects::ParticleGroups
 		// @tfield int subIndex Current sprite or mesh sub-index within the object slot.
 		// @tfield Objects.ObjID objectID Object slot used to render this particle. Overrides the group default per particle.
 		// @tfield Vec3 orientation Current orientation in degrees along the X, Y, and Z axes. Applies to mesh particles only.
-		// @tfield float damage HP damage dealt to Lara per second when this particle is in contact. Use 0 to disable.
-		// @tfield int poison Poison units added to Lara per second when this particle is in contact. Use 0 to disable.
-		// @tfield bool fire If true, sets Lara on fire while this particle is in contact.
 		// @tfield float contactRadius Half-extent in world units used for AABB contact detection. Default is 128.
+		// @tfield bool touchingPlayer Read-only. True if the particle's contact radius overlaps Lara's deadly bounds.
 		// @tfield bool teleport Write-only control. Set to true to suppress interpolation after a large position, size, or rotation change.
 
 		/// Create a particle group for managing collections of particles with Lua-driven behavior.
