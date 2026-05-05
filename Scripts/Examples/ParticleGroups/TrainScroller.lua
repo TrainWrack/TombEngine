@@ -2,7 +2,7 @@
 -- Recreates the classic scrolling train environment using the ParticleGroup system
 -- with mesh particles. Three groups are maintained:
 --   1. Front row  - architecture meshes along Z=47168 (facing forward)
---   2. Back row   - architecture meshes along Z=58304 (facing backward, rotated 180°)
+--   2. Back row   - architecture meshes along Z=58304 (facing backward, rotated 180Â°)
 --   3. Obstacles  - rock/debris objects at scripted Z offsets between the rows
 --
 -- The map arrays and scrolling math are a direct port of the original C code.
@@ -110,7 +110,7 @@ function TrainScroller.Create()
         groupFront:Start()
     end
 
-    -- Back row: same count, different Z, rotated 180° around Y.
+    -- Back row: same count, different Z, rotated 180Â° around Y.
     groupBack = TEN.Effects.CreateParticleGroup(TEN.Objects.ObjID.ANIMATING2, VISIBLE_TILES + 1)
     if groupBack then
         groupBack:SetPosition(Vec3(0, Y_LEVEL, Z_BACK))
@@ -228,7 +228,7 @@ function TrainScroller.Update(laraItem)
         groupFront:ForEachParticle(function(index, particle)
             local s = frontSlots[index + 1]
             return {
-                spriteIndex = archObjID(s.meshVal),
+                subIndex = archObjID(s.meshVal),
                 position    = Vec3(s.worldX, Y_LEVEL, Z_FRONT),
                 orientation = Vec3(0, 0, 0),
                 size        = 1,
@@ -245,7 +245,7 @@ function TrainScroller.Update(laraItem)
         groupBack:ForEachParticle(function(index, particle)
             local s = backSlots[index + 1]
             return {
-                spriteIndex = archObjID(s.meshVal),
+                subIndex = archObjID(s.meshVal),
                 position    = Vec3(s.worldX, Y_LEVEL, Z_BACK),
                 orientation = Vec3(0, 180, 0),
                 size        = 1,
@@ -289,7 +289,7 @@ function TrainScroller.Update(laraItem)
             local slot = obstaclePool[index + 1]
             if slot and slot.active then
                 return {
-                    spriteIndex = slot.meshIdx,
+                    subIndex = slot.meshIdx,
                     position    = Vec3(slot.x, Y_LEVEL, slot.z),
                     orientation = Vec3(0, 0, 0),
                     size        = 1,

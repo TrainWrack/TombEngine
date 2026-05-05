@@ -57,10 +57,10 @@ namespace TEN::Scripting::Effects::ParticleGroups
 		void                          SetInitialRotation(float rotation);
 		void                          SetInitialRotationVelocity(float rotVel);
 		void                          SetBlendMode(BlendMode mode);
-		void                          SetSpriteSequence(GAME_OBJECT_ID objectID);
-		void                          SetSpriteIndex(int index);
-		sol::optional<int>            GetSpriteIndex() const;
-		sol::optional<GAME_OBJECT_ID> GetSpriteSequence() const;
+		void                          SetObjectID(GAME_OBJECT_ID objectID);
+		void                          SetSubIndex(int index);
+		sol::optional<int>            GetSubIndex() const;
+		sol::optional<GAME_OBJECT_ID> GetObjectID() const;
 		void                          SetInitialOrientation(const Vec3& orient);
 
 		// Gameplay effects

@@ -38,8 +38,8 @@ namespace TEN::Scripting::Effects::ParticleGroups
 		tbl["age"]           = p.Age;
 		tbl["lifetime"]      = p.Lifetime;
 		tbl["ageNormalized"] = p.AgeNormalized;
-		tbl["spriteIndex"]   = p.SpriteIndex;
-		tbl["spriteSequence"] = p.SpriteSequence;
+		tbl["subIndex"]      = p.SubIndex;
+		tbl["objectID"]      = p.ObjectID;
 		tbl["orientation"]   = Vec3(p.Orientation.x / RADIAN, p.Orientation.y / RADIAN, p.Orientation.z / RADIAN);
 		tbl["damage"]        = p.Damage;
 		tbl["poison"]        = p.Poison;
@@ -60,10 +60,10 @@ namespace TEN::Scripting::Effects::ParticleGroups
 			p.Size = *size;
 		if (auto rot = data.get<sol::optional<float>>("rotation"))
 			p.Rotation = *rot * RADIAN;
-		if (auto sprite = data.get<sol::optional<int>>("spriteIndex"))
-			p.SpriteIndex = *sprite;
-		if (auto seq = data.get<sol::optional<GAME_OBJECT_ID>>("spriteSequence"))
-			p.SpriteSequence = *seq;
+		if (auto sprite = data.get<sol::optional<int>>("subIndex"))
+			p.SubIndex = *sprite;
+		if (auto seq = data.get<sol::optional<GAME_OBJECT_ID>>("objectID"))
+			p.ObjectID = *seq;
 		if (auto color = data.get<sol::optional<ScriptColor>>("color"))
 			p.ParticleColor = Color(*color);
 		if (auto orient = data.get<sol::optional<Vec3>>("orientation"))
@@ -269,31 +269,41 @@ namespace TEN::Scripting::Effects::ParticleGroups
 		if (auto* group = _handle.Get()) group->RenderBlendMode = mode;
 	}
 
-	void LuaParticleGroup::SetSpriteSequence(GAME_OBJECT_ID objectID)
+	void LuaParticleGroup::SetObjectID(GAME_OBJECT_ID objectID)
 	{
 		auto* group = _handle.Get();
 		if (!group)
 			return;
 
-		if (CheckIfSlotExists(objectID, "ParticleGroup:SetSpriteSequence"))
+		if (CheckIfSlotExists(objectID, "ParticleGroup:SetObjectID"))
 			group->ObjectID = objectID;
 	}
 
-	void LuaParticleGroup::SetSpriteIndex(int index)
+	void LuaParticleGroup::SetSubIndex(int index)
 	{
-		if (auto* group = _handle.Get()) group->InitSpriteIndex = index;
+		auto* group = _handle.Get();
+		if (!group)
+			return;
+
+		group->InitSubIndex = index;
+
+		for (auto& p : group->Particles)
+		{
+			if (p.Active)
+				p.SubIndex = index;
+		}
 	}
 
-	sol::optional<int> LuaParticleGroup::GetSpriteIndex() const
+	sol::optional<int> LuaParticleGroup::GetSubIndex() const
 	{
 		const auto* group = _handle.Get();
 		if (!group)
 			return sol::nullopt;
 
-		return group->InitSpriteIndex;
+		return group->InitSubIndex;
 	}
 
-	sol::optional<GAME_OBJECT_ID> LuaParticleGroup::GetSpriteSequence() const
+	sol::optional<GAME_OBJECT_ID> LuaParticleGroup::GetObjectID() const
 	{
 		const auto* group = _handle.Get();
 		if (!group)
@@ -351,7 +361,7 @@ namespace TEN::Scripting::Effects::ParticleGroups
 	void LuaParticleGroup::SetParticle(int index, sol::table data)
 	{
 		auto* group = _handle.Get();
-		if (!group)
+		if (!group || group->State == ParticleGroupState::Paused)
 			return;
 
 		if (index < 0 || index >= (int)group->Particles.size() || !group->Particles[index].Active)
@@ -363,7 +373,7 @@ namespace TEN::Scripting::Effects::ParticleGroups
 	void LuaParticleGroup::ForEachParticle(sol::function callback, sol::this_state s)
 	{
 		auto* group = _handle.Get();
-		if (!group)
+		if (!group || group->State == ParticleGroupState::Paused)
 			return;
 
 		sol::state_view lua(s);
@@ -495,26 +505,27 @@ namespace TEN::Scripting::Effects::ParticleGroups
 			ScriptReserved_ParticleGroupSetBlendMode, &LuaParticleGroup::SetBlendMode,
 
 			/// Set the object slot (sprite sequence or mesh object) for the group.
-			// For sprite sequences, the sprite index selects which sprite to draw.
-			// For mesh objects, the sprite index selects which mesh to draw.
-			// @function ParticleGroup:SetSpriteSequence
+			// For sprite sequences, the sub-index selects which sprite to draw.
+			// For mesh objects, the sub-index selects which mesh to draw.
+			// @function ParticleGroup:SetObjectID
 			// @tparam Objects.ObjID objectID Object slot ID.
-			ScriptReserved_ParticleGroupSetSpriteSequence, &LuaParticleGroup::SetSpriteSequence,
+			ScriptReserved_ParticleGroupSetObjectID, &LuaParticleGroup::SetObjectID,
 
-			/// Set sprite or mesh index for newly emitted particles.
-			// @function ParticleGroup:SetSpriteIndex
-			// @tparam int index Sprite or mesh index.
-			ScriptReserved_ParticleGroupSetSpriteIndex, &LuaParticleGroup::SetSpriteIndex,
+			/// Set sprite or mesh sub-index for newly emitted particles.
+			// Also updates all currently active particles.
+			// @function ParticleGroup:SetSubIndex
+			// @tparam int index Sprite or mesh sub-index.
+			ScriptReserved_ParticleGroupSetSubIndex, &LuaParticleGroup::SetSubIndex,
 
-			/// Get the current sprite or mesh index used for new particles.
-			// @function ParticleGroup:GetSpriteIndex
-			// @treturn int Current index.
-			ScriptReserved_ParticleGroupGetSpriteIndex, &LuaParticleGroup::GetSpriteIndex,
+			/// Get the current sprite or mesh sub-index used for new particles.
+			// @function ParticleGroup:GetSubIndex
+			// @treturn int Current sub-index.
+			ScriptReserved_ParticleGroupGetSubIndex, &LuaParticleGroup::GetSubIndex,
 
 			/// Get the current object slot ID.
-			// @function ParticleGroup:GetSpriteSequence
+			// @function ParticleGroup:GetObjectID
 			// @treturn Objects.ObjID Current object slot ID.
-			ScriptReserved_ParticleGroupGetSpriteSequence, &LuaParticleGroup::GetSpriteSequence,
+			ScriptReserved_ParticleGroupGetObjectID, &LuaParticleGroup::GetObjectID,
 
 			/// Check if this group renders 3D meshes.
 			// @function ParticleGroup:IsMeshGroup
@@ -594,8 +605,8 @@ namespace TEN::Scripting::Effects::ParticleGroups
 		// @tfield float age Current age of the particle in seconds. Clamped to [0, lifetime] when set.
 		// @tfield float lifetime Total lifespan of the particle in seconds. Must be greater than 0 when set.
 		// @tfield float ageNormalized Current age as a normalized value between 0 and 1. Recalculated each frame; direct writes are ignored.
-		// @tfield int spriteIndex Current sprite or mesh index within the sprite sequence or mesh object.
-		// @tfield Objects.ObjID spriteSequence Object slot used to render this particle. Overrides the group default per particle.
+		// @tfield int subIndex Current sprite or mesh sub-index within the object slot.
+		// @tfield Objects.ObjID objectID Object slot used to render this particle. Overrides the group default per particle.
 		// @tfield Vec3 orientation Current orientation in degrees along the X, Y, and Z axes. Applies to mesh particles only.
 		// @tfield float damage HP damage dealt to Lara per second when this particle is in contact. Use 0 to disable.
 		// @tfield int poison Poison units added to Lara per second when this particle is in contact. Use 0 to disable.

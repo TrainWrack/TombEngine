@@ -170,8 +170,8 @@ namespace TEN::Effects::ParticleGroups
 		particle->PrevRotation = InitRotation;
 
 		// Sprite / Mesh index.
-		particle->SpriteIndex    = InitSpriteIndex;
-		particle->SpriteSequence = ObjectID;
+		particle->SubIndex = InitSubIndex;
+		particle->ObjectID = ObjectID;
 
 		// Mesh orientation.
 		particle->Orientation = InitOrientation;

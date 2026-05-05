@@ -804,19 +804,19 @@ namespace TEN::Renderer
 					if (dist > DEFAULT_RENDER_DISTANCE)
 						continue;
 
-					// Validate per-particle sprite sequence (if overridden).
-					if (!Objects[p.SpriteSequence].loaded)
+					// Validate per-particle object ID (if overridden).
+					if (!Objects[p.ObjectID].loaded)
 						continue;
 
 					// Ensure it's a moveable (positive nmeshes) with valid mesh data.
-					if (Objects[p.SpriteSequence].nmeshes <= 0)
+					if (Objects[p.ObjectID].nmeshes <= 0)
 						continue;
 
-					if (!_moveableObjects[p.SpriteSequence].has_value())
+					if (!_moveableObjects[p.ObjectID].has_value())
 						continue;
 
-					int clampedMeshIndex = std::clamp(p.SpriteIndex, 0, Objects[p.SpriteSequence].nmeshes - 1);
-					auto& mesh = *GetMesh(Objects[p.SpriteSequence].meshIndex + clampedMeshIndex);
+					int clampedMeshIndex = std::clamp(p.SubIndex, 0, Objects[p.ObjectID].nmeshes - 1);
+					auto& mesh = *GetMesh(Objects[p.ObjectID].meshIndex + clampedMeshIndex);
 
 					for (auto& bucket : mesh.Buckets)
 					{
@@ -882,19 +882,19 @@ namespace TEN::Renderer
 					if (dist > DEFAULT_RENDER_DISTANCE)
 						continue;
 
-					// Validate per-particle sprite sequence (if overridden).
-					if (!Objects[p.SpriteSequence].loaded)
+					// Validate per-particle object ID (if overridden).
+					if (!Objects[p.ObjectID].loaded)
 						continue;
 
 					// Ensure it's a moveable (positive nmeshes) with valid mesh data.
-					if (Objects[p.SpriteSequence].nmeshes <= 0)
+					if (Objects[p.ObjectID].nmeshes <= 0)
 						continue;
 
-					if (!_moveableObjects[p.SpriteSequence].has_value())
+					if (!_moveableObjects[p.ObjectID].has_value())
 						continue;
 
-					int clampedMeshIndex = std::clamp(p.SpriteIndex, 0, Objects[p.SpriteSequence].nmeshes - 1);
-					const auto& mesh = *GetMesh(Objects[p.SpriteSequence].meshIndex + clampedMeshIndex);
+					int clampedMeshIndex = std::clamp(p.SubIndex, 0, Objects[p.ObjectID].nmeshes - 1);
+					const auto& mesh = *GetMesh(Objects[p.ObjectID].meshIndex + clampedMeshIndex);
 
 					_stObjects.Objects[0].World = Matrix::Lerp(p.PrevTransform, p.Transform, GetInterpolationFactor());
 					_stObjects.Objects[0].Color = Vector4(p.ParticleColor.R(), p.ParticleColor.G(), p.ParticleColor.B(), p.ParticleColor.A());

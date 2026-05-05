@@ -34,8 +34,8 @@ namespace TEN::Effects::ParticleGroups
 		Color          ParticleColor  = Color(1.0f, 1.0f, 1.0f, 1.0f);
 		float          Size           = 1.0f;
 		float          Rotation       = 0.0f;
-		int            SpriteIndex    = 0;
-		GAME_OBJECT_ID SpriteSequence = GAME_OBJECT_ID::ID_DEFAULT_SPRITES;
+		int            SubIndex  = 0;
+		GAME_OBJECT_ID ObjectID  = GAME_OBJECT_ID::ID_DEFAULT_SPRITES;
 
 		// Mesh orientation (used when group renders meshes).
 		Vector3 Orientation   = Vector3::Zero;
@@ -104,7 +104,7 @@ namespace TEN::Effects::ParticleGroups
 		Color   InitColorMax       = Color(1.0f, 1.0f, 1.0f, 1.0f);
 		float   InitRotation       = 0.0f;
 		float   InitRotationVel    = 0.0f;
-		int     InitSpriteIndex    = 0;
+		int     InitSubIndex    = 0;
 
 		// Mesh-specific initial templates.
 		Vector3 InitOrientation = Vector3::Zero;

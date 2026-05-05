@@ -1825,12 +1825,12 @@ namespace TEN::Renderer
 				if (!p.Active)
 					continue;
 
-				// Validate per-particle sprite sequence.
-				if (!Objects[p.SpriteSequence].loaded)
+				// Validate per-particle object ID.
+				if (!Objects[p.ObjectID].loaded)
 					continue;
 
 				// Validate that it's a sprite sequence (negative nmeshes).
-				if (Objects[p.SpriteSequence].nmeshes >= 0)
+				if (Objects[p.ObjectID].nmeshes >= 0)
 					continue;
 
 				auto interpPos = Vector3::Lerp(p.PrevPosition, p.Position, GetInterpolationFactor());
@@ -1842,11 +1842,11 @@ namespace TEN::Renderer
 				auto interpSize     = Lerp(p.PrevSize, p.Size, GetInterpolationFactor());
 				auto interpRotation = Lerp(p.PrevRotation, p.Rotation, GetInterpolationFactor());
 
-				int spriteCount        = std::max(1, abs(Objects[p.SpriteSequence].nmeshes));
-				int clampedSpriteIndex = std::clamp(p.SpriteIndex, 0, spriteCount - 1);
+				int spriteCount        = std::max(1, abs(Objects[p.ObjectID].nmeshes));
+				int clampedSpriteIndex = std::clamp(p.SubIndex, 0, spriteCount - 1);
 
 				AddSpriteBillboard(
-					&_sprites[Objects[p.SpriteSequence].meshIndex + clampedSpriteIndex],
+					&_sprites[Objects[p.ObjectID].meshIndex + clampedSpriteIndex],
 					interpPos,
 					Vector4(p.ParticleColor.R(), p.ParticleColor.G(), p.ParticleColor.B(), p.ParticleColor.A()),
 					interpRotation, 1.0f,
