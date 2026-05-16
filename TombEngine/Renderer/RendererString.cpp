@@ -8,6 +8,7 @@
 #include "Specific/trutils.h"
 
 using namespace TEN::Effects::DisplaySprite;
+using namespace TEN::Utils;
 
 namespace TEN::Renderer
 {
@@ -24,7 +25,7 @@ namespace TEN::Renderer
 		AddString(string, pos, color, scale, FLAGS);
 	}
 
-	void Renderer::AddString(int x, int y, const std::string& string, D3DCOLOR color, int flags)
+	void Renderer::AddString(int x, int y, const std::string& string, unsigned int color, int flags)
 	{
 		AddString(string, Vector2(x, y), Color(color), 1.0f, flags);
 	}
@@ -88,33 +89,32 @@ namespace TEN::Renderer
 			float uiScale = (screenRes.x > screenRes.y) ? factor.y : factor.x;
 			float fontSpacing = _gameFont->GetLineSpacing();
 			float fontScale = REFERENCE_FONT_SIZE / fontSpacing;
-			auto stringScale = Vector2(uiScale * fontScale) * scale;
-			float baseScale = stringScale.y;
-			float spaceWidth = Vector3(_gameFont->MeasureString(L" ")).x * baseScale;
+			float stringScale = (uiScale * fontScale) * scale;
+			float spaceWidth = Vector3(_gameFont->MeasureString(" ")).x * stringScale;
 
-			std::vector<std::wstring> stringLines;
+			std::vector<std::string> stringLines;
 
 			if (area.x > 0)
 			{
 				// Split the string into native lines first.
-				auto inputLines = SplitString(TEN::Utils::ToWString(string));
+				auto inputLines = SplitString(string);
 
 				for (const auto& inputLine : inputLines)
 				{
 					if (inputLine.empty())
 					{
 						// Preserve empty lines.
-						stringLines.push_back(L"");
+						stringLines.push_back("");
 						continue;
 					}
 
 					auto words = SplitWords(inputLine);
-					std::wstring currentLine;
+					std::string currentLine;
 					float currentLineWidth = 0.0f;
 
 					for (const auto& word : words)
 					{
-						float wordWidth = Vector3(_gameFont->MeasureString(word.c_str())).x * baseScale;
+						float wordWidth = Vector3(_gameFont->MeasureString(word)).x * stringScale;
 
 						if (!currentLine.empty() && (currentLineWidth + wordWidth + spaceWidth > area.x * factor.x))
 						{
@@ -125,7 +125,7 @@ namespace TEN::Renderer
 
 						if (!currentLine.empty())
 						{
-							currentLine += L" ";
+							currentLine += " ";
 							currentLineWidth += spaceWidth;
 						}
 
@@ -139,7 +139,7 @@ namespace TEN::Renderer
 			}
 			else
 			{
-				stringLines = SplitString(TEN::Utils::ToWString(string));
+				stringLines = SplitString(string);
 			}
 
 			// Calculate total height for vertical centering.
@@ -149,7 +149,7 @@ namespace TEN::Renderer
 				if (line.empty())
 					totalHeight += fontSpacing * baseScale;
 				else
-					totalHeight += Vector2(_gameFont->MeasureString(line.c_str())).y * baseScale;
+					totalHeight += Vector2(_gameFont->MeasureString(line)).y * stringScale;
 			}
 
 			// Calculate maximum textbox height.
@@ -190,7 +190,7 @@ namespace TEN::Renderer
 					rString.ScissorRect = GetActiveDisplayScissor();
 
 				// Measure string.
-				auto stringSize = line.empty() ? Vector2(0, fontSpacing * baseScale) : Vector2(_gameFont->MeasureString(line.c_str())) * baseScale;
+				auto stringSize = line.empty() ? Vector2(0, fontSpacing * rString.Scale) : Vector2(_gameFont->MeasureString(line)) * rString.Scale;
 
 				// If height clipping enabled, stop drawing when exceeding maxHeight.
 				if (maxHeight > 0.0f && (yOffset + stringSize.y) > maxHeight)
@@ -210,7 +210,7 @@ namespace TEN::Renderer
 				else
 				{
 					// Calculate indentation to account for string scaling.
-					auto indent = line.empty() ? 0 : _gameFont->FindGlyph(line.at(0))->XAdvance * baseScale;
+					auto indent = line.empty() ? 0 : _gameFont->FindGlyph(line.at(0)).XAdvance * rString.Scale;
 
 					rString.Position.x = pos.x * factor.x + indent;
 					rString.PrevPosition.x = prevPos.x * factor.x + indent;
@@ -290,6 +290,11 @@ namespace TEN::Renderer
 			}
 
 			auto drawPos = Vector2::Lerp(rString.PrevPosition, rString.Position, GetInterpolationFactor());
+		_spriteBatch->Begin(SpriteSortingMode::Deferred, BlendMode::PremultipliedAlphaBlend);
+
+		for (const auto& rString : _stringsToDraw)
+		{
+			auto drawPos = Vector2::Lerp(rString.PrevPosition, rString.Position, GetInterpolationFactor(true));
 
 			// Draw shadow.
 			if (rString.Flags & (int)PrintStringFlags::Outline)
@@ -297,18 +302,18 @@ namespace TEN::Renderer
 				auto shadowPos = Vector2(drawPos.x + shadowOffset * rString.Scale.y, drawPos.y + shadowOffset * rString.Scale.y);
 
 				_gameFont->DrawString(
-					_spriteBatch.get(), rString.String.c_str(),
-					shadowPos,
+					_spriteBatch.get(), rString.String,
+					Vector2(drawPos.x + shadowOffset * rString.Scale, drawPos.y + shadowOffset * rString.Scale),
 					(shadowColor * rString.Color.w * shadowColor.w) * ScreenFadeCurrent,
-					rString.Rotation, Vector2::Zero, rString.Scale);
+					0.0f, Vector2::Zero, rString.Scale);
 			}
 
 			// Draw string.
 			_gameFont->DrawString(
-				_spriteBatch.get(), rString.String.c_str(),
-				drawPos,
+				_spriteBatch.get(), rString.String,
+				Vector2(drawPos.x, drawPos.y),
 				(rString.Color * rString.Color.w) * ScreenFadeCurrent,
-				rString.Rotation, Vector2::Zero, rString.Scale);
+				0.0f, Vector2::Zero, rString.Scale);
 		}
 
 		_spriteBatch->End();

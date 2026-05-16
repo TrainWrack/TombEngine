@@ -1,6 +1,4 @@
 #pragma once
-
-#include "Renderer/Structures/RendererRectangle.h"
 #include "Renderer/Structures/RendererSprite.h"
 #include "Renderer/RendererEnums.h"
 
