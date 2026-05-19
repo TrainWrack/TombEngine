@@ -301,7 +301,7 @@ namespace TEN::Renderer
 					_spriteBatch.get(), rString.String.c_str(),
 					shadowPos,
 					(shadowColor * rString.Color.w * shadowColor.w) * ScreenFadeCurrent,
-					0.0f, Vector2::Zero, rString.Scale.y);
+					rString.Rotation, Vector2::Zero, rString.Scale);
 			}
 
 			// Draw string.
@@ -309,7 +309,7 @@ namespace TEN::Renderer
 				_spriteBatch.get(), rString.String.c_str(),
 				drawPos,
 				(rString.Color * rString.Color.w) * ScreenFadeCurrent,
-				0.0f, Vector2::Zero, rString.Scale.y);
+				rString.Rotation, Vector2::Zero, rString.Scale);
 		}
 
 		_spriteBatch->End();
