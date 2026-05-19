@@ -16,11 +16,11 @@ namespace TEN::Renderer::Structures
 		std::string String;
 		Vector4 Color;
 		Vector2 Scale;
-		float Rotation	  = 0.0f;
-		int Priority	  = 0;
-		BlendMode Blend	  = BlendMode::AlphaBlend;
+		float Rotation = 0.0f;
+		int Priority = 0;
+		BlendMode Blend = BlendMode::AlphaBlend;
 
-		bool HasScissor				 = false;
+		bool HasScissor = false;
 		RendererRectangle ScissorRect = {};
 	};
 }

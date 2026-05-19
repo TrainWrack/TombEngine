@@ -89,8 +89,9 @@ namespace TEN::Renderer
 			float uiScale = (screenRes.x > screenRes.y) ? factor.y : factor.x;
 			float fontSpacing = _gameFont->GetLineSpacing();
 			float fontScale = REFERENCE_FONT_SIZE / fontSpacing;
-			float stringScale = (uiScale * fontScale) * scale;
-			float spaceWidth = Vector3(_gameFont->MeasureString(" ")).x * stringScale;
+			auto stringScale = Vector2(uiScale * fontScale) * scale;
+			float baseScale = stringScale.y;
+			float spaceWidth = Vector3(_gameFont->MeasureString(L" ")).x * baseScale;
 
 			std::vector<std::string> stringLines;
 
@@ -114,7 +115,7 @@ namespace TEN::Renderer
 
 					for (const auto& word : words)
 					{
-						float wordWidth = Vector3(_gameFont->MeasureString(word)).x * stringScale;
+						float wordWidth = Vector3(_gameFont->MeasureString(word.c_str())).x * baseScale;
 
 						if (!currentLine.empty() && (currentLineWidth + wordWidth + spaceWidth > area.x * factor.x))
 						{
@@ -149,7 +150,7 @@ namespace TEN::Renderer
 				if (line.empty())
 					totalHeight += fontSpacing * baseScale;
 				else
-					totalHeight += Vector2(_gameFont->MeasureString(line)).y * stringScale;
+					totalHeight += Vector2(_gameFont->MeasureString(line.c_str())).y * stringScale.y;
 			}
 
 			// Calculate maximum textbox height.
@@ -190,7 +191,7 @@ namespace TEN::Renderer
 					rString.ScissorRect = GetActiveDisplayScissor();
 
 				// Measure string.
-				auto stringSize = line.empty() ? Vector2(0, fontSpacing * rString.Scale) : Vector2(_gameFont->MeasureString(line)) * rString.Scale;
+				auto stringSize = line.empty() ? Vector2(0, fontSpacing * rString.Scale.y) : Vector2(_gameFont->MeasureString(line.c_str())) * rString.Scale.y;
 
 				// If height clipping enabled, stop drawing when exceeding maxHeight.
 				if (maxHeight > 0.0f && (yOffset + stringSize.y) > maxHeight)
@@ -210,7 +211,7 @@ namespace TEN::Renderer
 				else
 				{
 					// Calculate indentation to account for string scaling.
-					auto indent = line.empty() ? 0 : _gameFont->FindGlyph(line.at(0)).XAdvance * rString.Scale;
+					auto indent = line.empty() ? 0 : _gameFont->FindGlyph(line.at(0))->XAdvance * rString.Scale.y;
 
 					rString.Position.x = pos.x * factor.x + indent;
 					rString.PrevPosition.x = prevPos.x * factor.x + indent;
@@ -302,18 +303,18 @@ namespace TEN::Renderer
 				auto shadowPos = Vector2(drawPos.x + shadowOffset * rString.Scale.y, drawPos.y + shadowOffset * rString.Scale.y);
 
 				_gameFont->DrawString(
-					_spriteBatch.get(), rString.String,
-					Vector2(drawPos.x + shadowOffset * rString.Scale, drawPos.y + shadowOffset * rString.Scale),
+					_spriteBatch.get(), rString.String.c_str(),
+					shadowPos,
 					(shadowColor * rString.Color.w * shadowColor.w) * ScreenFadeCurrent,
-					0.0f, Vector2::Zero, rString.Scale);
+					rString.Rotation, Vector2::Zero, rString.Scale);
 			}
 
 			// Draw string.
 			_gameFont->DrawString(
-				_spriteBatch.get(), rString.String,
-				Vector2(drawPos.x, drawPos.y),
+				_spriteBatch.get(), rString.String.c_str(),
+				drawPos,
 				(rString.Color * rString.Color.w) * ScreenFadeCurrent,
-				0.0f, Vector2::Zero, rString.Scale);
+				rString.Rotation, Vector2::Zero, rString.Scale);
 		}
 
 		_spriteBatch->End();
