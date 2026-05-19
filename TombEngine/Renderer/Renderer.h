@@ -429,6 +429,7 @@ namespace TEN::Renderer
 		void InitializeGameBars();
 		void InitializeMenuBars(int y);
 		void InitializeSky();
+		void AddStringInternal(const std::string& string, const Vector2& pos, const Vector2& prevPos, const Vector2& area, const Color& color, const Vector2& scale, float rotation, int flags, int priority, BlendMode blendMode);
 		void DrawAllStrings();
 		void PrepareDynamicLight(RendererLight& light);
 		void PrepareLaserBarriers(RenderView& view);
@@ -741,6 +742,8 @@ namespace TEN::Renderer
 		void AddString(const std::string& string, const Vector2& pos, const Color& color, float scale, int flags);
 		void AddString(const std::string& string, const Vector2& pos, const Vector2& area, const Color& color, float scale, int flags);
 		void AddString(const std::string& string, const Vector2& currentPos, const Vector2& prevPos, const Vector2& area, const Color& color, float scale, int flags);
+		void AddString(const std::string& string, const Vector2& pos, const Vector2& prevPos, const Vector2& area, const Color& color, const Vector2& scale, float rotation, int flags, int priority, BlendMode blendMode);
+		Vector2 GetDisplayStringSize(const std::string& text, const Vector2& scale = Vector2::One) const;
 		void AddDebugString(const std::string& string, const Vector2& pos, const Color& color, float scale, RendererDebugPage page = RendererDebugPage::None);
 		void FreeRendererData();
 		void AddDynamicPointLight(const Vector3& pos, float radius, const Color& color, bool castShadows, int hash = 0);
