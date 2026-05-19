@@ -25,7 +25,7 @@ namespace TEN::Renderer
 		AddString(string, pos, color, scale, FLAGS);
 	}
 
-	void Renderer::AddString(int x, int y, const std::string& string, D3DCOLOR color, int flags)
+	void Renderer::AddString(int x, int y, const std::string& string, unsigned int color, int flags)
 	{
 		AddString(string, Vector2(x, y), Color(color), 1.0f, flags);
 	}
@@ -93,24 +93,24 @@ namespace TEN::Renderer
 			float baseScale = stringScale.y;
 			float spaceWidth = Vector3(_gameFont->MeasureString(L" ")).x * baseScale;
 
-			std::vector<std::wstring> stringLines;
+			std::vector<std::string> stringLines;
 
 			if (area.x > 0)
 			{
 				// Split the string into native lines first.
-				auto inputLines = SplitString(TEN::Utils::ToWString(string));
+				auto inputLines = SplitString(string);
 
 				for (const auto& inputLine : inputLines)
 				{
 					if (inputLine.empty())
 					{
 						// Preserve empty lines.
-						stringLines.push_back(L"");
+						stringLines.push_back("");
 						continue;
 					}
 
 					auto words = SplitWords(inputLine);
-					std::wstring currentLine;
+					std::string currentLine;
 					float currentLineWidth = 0.0f;
 
 					for (const auto& word : words)
@@ -126,7 +126,7 @@ namespace TEN::Renderer
 
 						if (!currentLine.empty())
 						{
-							currentLine += L" ";
+							currentLine += " ";
 							currentLineWidth += spaceWidth;
 						}
 
@@ -140,7 +140,7 @@ namespace TEN::Renderer
 			}
 			else
 			{
-				stringLines = SplitString(TEN::Utils::ToWString(string));
+				stringLines = SplitString(string);
 			}
 
 			// Calculate total height for vertical centering.
@@ -291,6 +291,11 @@ namespace TEN::Renderer
 			}
 
 			auto drawPos = Vector2::Lerp(rString.PrevPosition, rString.Position, GetInterpolationFactor());
+		_spriteBatch->Begin(SpriteSortingMode::Deferred, BlendMode::PremultipliedAlphaBlend);
+
+		for (const auto& rString : _stringsToDraw)
+		{
+			auto drawPos = Vector2::Lerp(rString.PrevPosition, rString.Position, GetInterpolationFactor(true));
 
 			// Draw shadow.
 			if (rString.Flags & (int)PrintStringFlags::Outline)
