@@ -43,8 +43,7 @@ namespace TEN::Renderer
 		auto stringScale = Vector2(uiScale * fontScale) * scale;
 		float baseScale = stringScale.y;
 
-		auto wtext = TEN::Utils::ToWString(text);
-		auto measured = Vector2(_gameFont->MeasureString(wtext.c_str())) * baseScale;
+		auto measured = Vector2(_gameFont->MeasureString(text)) * baseScale;
 
 		// Convert pixel size back to display space (800x600 units).
 		return Vector2(measured.x / factor.x, measured.y / factor.y);
@@ -91,7 +90,7 @@ namespace TEN::Renderer
 			float fontScale = REFERENCE_FONT_SIZE / fontSpacing;
 			auto stringScale = Vector2(uiScale * fontScale) * scale;
 			float baseScale = stringScale.y;
-			float spaceWidth = Vector3(_gameFont->MeasureString(L" ")).x * baseScale;
+			float spaceWidth = Vector3(_gameFont->MeasureString(" ")).x * baseScale;
 
 			std::vector<std::string> stringLines;
 
@@ -115,7 +114,7 @@ namespace TEN::Renderer
 
 					for (const auto& word : words)
 					{
-						float wordWidth = Vector3(_gameFont->MeasureString(word.c_str())).x * baseScale;
+						float wordWidth = Vector3(_gameFont->MeasureString(word)).x * baseScale;
 
 						if (!currentLine.empty() && (currentLineWidth + wordWidth + spaceWidth > area.x * factor.x))
 						{
@@ -191,7 +190,7 @@ namespace TEN::Renderer
 					rString.ScissorRect = GetActiveDisplayScissor();
 
 				// Measure string.
-				auto stringSize = line.empty() ? Vector2(0, fontSpacing * rString.Scale.y) : Vector2(_gameFont->MeasureString(line.c_str())) * rString.Scale.y;
+				auto stringSize = line.empty() ? Vector2(0, fontSpacing * rString.Scale.y) : Vector2(_gameFont->MeasureString(line)) * rString.Scale.y;
 
 				// If height clipping enabled, stop drawing when exceeding maxHeight.
 				if (maxHeight > 0.0f && (yOffset + stringSize.y) > maxHeight)
@@ -211,7 +210,7 @@ namespace TEN::Renderer
 				else
 				{
 					// Calculate indentation to account for string scaling.
-					auto indent = line.empty() ? 0 : _gameFont->FindGlyph(line.at(0))->XAdvance * rString.Scale.y;
+					auto indent = line.empty() ? 0 : _gameFont->FindGlyph(line.at(0)).XAdvance * rString.Scale.y;
 
 					rString.Position.x = pos.x * factor.x + indent;
 					rString.PrevPosition.x = prevPos.x * factor.x + indent;
@@ -249,13 +248,12 @@ namespace TEN::Renderer
 		auto shadowColor = (Vector4)g_GameFlow->GetSettings()->UI.ShadowTextColor;
 
 		ResetScissor();
-		_spriteBatch->Begin(SpriteSortMode_Deferred, nullptr, nullptr, nullptr, _cullNoneRasterizerState.Get());
 
 		auto currentBlend = BlendMode::AlphaBlend;
-		SetBlendMode(currentBlend);
-
 		bool currentHasScissor = false;
 		auto currentScissor = RendererRectangle{};
+
+		_spriteBatch->Begin(SpriteSortingMode::Deferred, currentBlend);
 
 		for (const auto& rString : _stringsToDraw)
 		{
@@ -264,8 +262,7 @@ namespace TEN::Renderer
 			{
 				_spriteBatch->End();
 				currentBlend = rString.Blend;
-				SetBlendMode(currentBlend);
-				_spriteBatch->Begin(SpriteSortMode_Deferred, nullptr, nullptr, nullptr, _cullNoneRasterizerState.Get());
+				_spriteBatch->Begin(SpriteSortingMode::Deferred, currentBlend);
 			}
 
 			// Handle scissor rect changes.
@@ -287,15 +284,10 @@ namespace TEN::Renderer
 
 				currentHasScissor = rString.HasScissor;
 				currentScissor = rString.ScissorRect;
-				_spriteBatch->Begin(SpriteSortMode_Deferred, nullptr, nullptr, nullptr, _cullNoneRasterizerState.Get());
+				_spriteBatch->Begin(SpriteSortingMode::Deferred, currentBlend);
 			}
 
 			auto drawPos = Vector2::Lerp(rString.PrevPosition, rString.Position, GetInterpolationFactor());
-		_spriteBatch->Begin(SpriteSortingMode::Deferred, BlendMode::PremultipliedAlphaBlend);
-
-		for (const auto& rString : _stringsToDraw)
-		{
-			auto drawPos = Vector2::Lerp(rString.PrevPosition, rString.Position, GetInterpolationFactor(true));
 
 			// Draw shadow.
 			if (rString.Flags & (int)PrintStringFlags::Outline)
@@ -303,23 +295,22 @@ namespace TEN::Renderer
 				auto shadowPos = Vector2(drawPos.x + shadowOffset * rString.Scale.y, drawPos.y + shadowOffset * rString.Scale.y);
 
 				_gameFont->DrawString(
-					_spriteBatch.get(), rString.String.c_str(),
+					_spriteBatch.get(), rString.String,
 					shadowPos,
 					(shadowColor * rString.Color.w * shadowColor.w) * ScreenFadeCurrent,
-					rString.Rotation, Vector2::Zero, rString.Scale);
+					rString.Rotation, Vector2::Zero, rString.Scale.x);
 			}
 
 			// Draw string.
 			_gameFont->DrawString(
-				_spriteBatch.get(), rString.String.c_str(),
+				_spriteBatch.get(), rString.String,
 				drawPos,
 				(rString.Color * rString.Color.w) * ScreenFadeCurrent,
-				rString.Rotation, Vector2::Zero, rString.Scale);
+				rString.Rotation, Vector2::Zero, rString.Scale.x);
 		}
 
 		_spriteBatch->End();
 
-		// Reset scissor if it was active.
 		if (currentHasScissor)
 			ResetScissor();
 	}

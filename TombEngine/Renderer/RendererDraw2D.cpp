@@ -339,13 +339,10 @@ namespace TEN::Renderer
 			return;
 
 		ResetScissor();
-		_spriteBatch->Begin(SpriteSortMode_Deferred, _renderStates->NonPremultiplied(), nullptr, nullptr, _cullNoneRasterizerState.Get());
+		_spriteBatch->Begin(SpriteSortingMode::Deferred, BlendMode::AlphaBlend);
 
 		for (const auto& [rect, color] : _debugDisplayRects)
-		{
-			auto destRect = RECT{ rect.Left, rect.Top, rect.Right, rect.Bottom };
-			_spriteBatch->Draw(_whiteTexture.ShaderResourceView.Get(), destRect, DirectX::XMLoadFloat4(&color));
-		}
+			_spriteBatch->Draw(_whiteTexture.get(), rect, color);
 
 		_spriteBatch->End();
 	}
@@ -357,11 +354,10 @@ namespace TEN::Renderer
 		if (renderView.DisplaySpritesToDraw.empty())
 			return;
 
-		Texture2D* texture2DPtr = nullptr;
+		ITexture2D* texture2DPtr = nullptr;
 		bool currentHasScissor = false;
 		auto currentScissor = RendererRectangle{};
 
-		ITexture2D* texture2DPtr = nullptr;
 		for (const auto& spriteToDraw : renderView.DisplaySpritesToDraw)
 		{
 			if ((spriteToDraw.Priority >= 0) == negativePriority)
@@ -659,7 +655,7 @@ namespace TEN::Renderer
 
 			// Draw sprites at this priority level.
 			{
-				Texture2D* texture2DPtr = nullptr;
+				ITexture2D* texture2DPtr = nullptr;
 				bool currentHasScissor = false;
 				auto currentScissor = RendererRectangle{};
 
@@ -678,8 +674,8 @@ namespace TEN::Renderer
 					if (texture2DPtr == nullptr)
 					{
 						_shaders.Bind(Shader::FullScreenQuad);
-						_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-						_context->IASetInputLayout(_inputLayout.Get());
+						_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
+						_graphicsDevice->SetInputLayout(_vertexInputLayout.get());
 
 						if (spriteToDraw.HasScissor)
 							SetScissor(spriteToDraw.ScissorRect);
@@ -734,7 +730,7 @@ namespace TEN::Renderer
 					{
 						rVertices[i].Position = Vector3(vertices[i]);
 						rVertices[i].UV = spriteToDraw.SpritePtr->UV[i];
-						rVertices[i].Color = VectorColorToRGBA_TempToVector4(Vector4(
+						rVertices[i].Color = VectorColorToRGBA(Vector4(
 							spriteToDraw.Color.x, spriteToDraw.Color.y,
 							spriteToDraw.Color.z, spriteToDraw.Color.w));
 					}
@@ -760,8 +756,7 @@ namespace TEN::Renderer
 				auto currentScissor = RendererRectangle{};
 
 				ResetScissor();
-				SetBlendMode(currentBlend);
-				_spriteBatch->Begin(SpriteSortMode_Deferred, nullptr, nullptr, nullptr, _cullNoneRasterizerState.Get());
+				_spriteBatch->Begin(SpriteSortingMode::Deferred, currentBlend);
 
 				while (stringIdx < (int)_stringsToDraw.size() && _stringsToDraw[stringIdx].Priority == priority)
 				{
@@ -771,8 +766,7 @@ namespace TEN::Renderer
 					{
 						_spriteBatch->End();
 						currentBlend = rString.Blend;
-						SetBlendMode(currentBlend);
-						_spriteBatch->Begin(SpriteSortMode_Deferred, nullptr, nullptr, nullptr, _cullNoneRasterizerState.Get());
+						_spriteBatch->Begin(SpriteSortingMode::Deferred, currentBlend);
 					}
 
 					bool scissorChanged =
@@ -794,7 +788,7 @@ namespace TEN::Renderer
 
 						currentHasScissor = rString.HasScissor;
 						currentScissor = rString.ScissorRect;
-						_spriteBatch->Begin(SpriteSortMode_Deferred, nullptr, nullptr, nullptr, _cullNoneRasterizerState.Get());
+						_spriteBatch->Begin(SpriteSortingMode::Deferred, currentBlend);
 					}
 
 					auto drawPos = Vector2::Lerp(rString.PrevPosition, rString.Position, GetInterpolationFactor());
@@ -803,17 +797,17 @@ namespace TEN::Renderer
 					{
 						auto shadowPos = Vector2(drawPos.x + shadowOffset * rString.Scale.y, drawPos.y + shadowOffset * rString.Scale.y);
 						_gameFont->DrawString(
-							_spriteBatch.get(), rString.String.c_str(),
+							_spriteBatch.get(), rString.String,
 							shadowPos,
 							(shadowColor * rString.Color.w * shadowColor.w) * ScreenFadeCurrent,
-							rString.Rotation, Vector2::Zero, rString.Scale);
+							rString.Rotation, Vector2::Zero, rString.Scale.x);
 					}
 
 					_gameFont->DrawString(
-						_spriteBatch.get(), rString.String.c_str(),
+						_spriteBatch.get(), rString.String,
 						drawPos,
 						(rString.Color * rString.Color.w) * ScreenFadeCurrent,
-						rString.Rotation, Vector2::Zero, rString.Scale);
+						rString.Rotation, Vector2::Zero, rString.Scale.x);
 				}
 
 				_spriteBatch->End();
