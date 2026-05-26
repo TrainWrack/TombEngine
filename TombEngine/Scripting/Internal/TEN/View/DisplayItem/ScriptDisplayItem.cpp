@@ -11,6 +11,7 @@
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
 #include "Scripting/Internal/TEN/Types/Vec2/Vec2.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
+#include "Scripting/Internal/TEN/View/DisplayAnchors/ScriptDisplayAnchors.h"
 #include "Specific/configuration.h"
 
 using namespace TEN::Effects::DisplaySprite;
@@ -64,6 +65,7 @@ namespace TEN::Scripting::DisplayItem
 
 			ScriptReserved_GetEndFrame, &ScriptDisplayItem::GetEndFrame,
 			ScriptReserved_GetBounds, &ScriptDisplayItem::GetBounds,
+			ScriptReserved_DisplayStringGetAnchors, &ScriptDisplayItem::GetAnchors,
 
 			ScriptReserved_DisplayItemSetAmbientLight, &ScriptDisplayItem::SetAmbientLight,
 			ScriptReserved_DisplayItemSetCamera, &ScriptDisplayItem::SetCameraPosition,
@@ -540,6 +542,58 @@ namespace TEN::Scripting::DisplayItem
 		return sol::nullopt;
 	}
 
+	/// Get the anchor points of the display item's projected bounding box.
+	// Projects the display item into 2D screen space and returns 9 anchor points
+	// (corners, edge midpoints, and center) as percent coordinates.
+	// @function DisplayItem:GetAnchors
+	// @treturn[1] View.DisplayAnchors An object containing the anchor points.
+	// @treturn[2] DisplayAnchors with default (zero) values if the display item does not exist or has no bounds.
+	// @usage
+	// local anchors = item:GetAnchors()
+	// print("Center: " .. tostring(anchors.CENTER))
+	ScriptDisplayAnchors ScriptDisplayItem::GetAnchors() const
+	{
+		ScriptDisplayAnchors anchors;
+
+		if (auto* item = TryGetItem())
+		{
+			auto bounds = item->GetBounds();
+			if (!bounds.has_value())
+				return anchors;
+
+			float screenWidth = (float)g_Configuration.ScreenWidth;
+			float screenHeight = (float)g_Configuration.ScreenHeight;
+
+			const auto& center = bounds->first;
+			const auto& size = bounds->second;
+
+			// Calculate half extents.
+			float halfW = size.x * 0.5f;
+			float halfH = size.y * 0.5f;
+
+			// Helper lambda for percent conversion with rounding.
+			auto toPercent = [&](float x, float y) -> Vec2
+			{
+				return Vec2(
+					std::round((x / screenWidth) * 10000.0f) / 100.0f,
+					std::round((y / screenHeight) * 10000.0f) / 100.0f);
+			};
+
+			// Populate anchors from axis-aligned bounding box.
+			anchors.TOP_LEFT = toPercent(center.x - halfW, center.y - halfH);
+			anchors.TOP_CENTER = toPercent(center.x, center.y - halfH);
+			anchors.TOP_RIGHT = toPercent(center.x + halfW, center.y - halfH);
+			anchors.CENTER_LEFT = toPercent(center.x - halfW, center.y);
+			anchors.CENTER = toPercent(center.x, center.y);
+			anchors.CENTER_RIGHT = toPercent(center.x + halfW, center.y);
+			anchors.BOTTOM_LEFT = toPercent(center.x - halfW, center.y + halfH);
+			anchors.BOTTOM_CENTER = toPercent(center.x, center.y + halfH);
+			anchors.BOTTOM_RIGHT = toPercent(center.x + halfW, center.y + halfH);
+		}
+
+		return anchors;
+	}
+
 	/// Draw the display item in display space for the current frame.
 	// @function DisplayItem:Draw
 	// @usage
@@ -547,6 +601,14 @@ namespace TEN::Scripting::DisplayItem
 	void ScriptDisplayItem::Draw()
 	{
 		if (auto* item = TryGetItem())
+		{
 			item->SetVisible(true);
+
+			// Capture active scissor state (set by DisplayArea).
+			if (HasActiveDisplayScissor())
+				item->SetScissor(GetActiveDisplayScissor());
+			else
+				item->ClearScissor();
+		}
 	}
 }

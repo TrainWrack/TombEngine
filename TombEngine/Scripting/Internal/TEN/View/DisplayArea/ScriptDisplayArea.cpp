@@ -115,10 +115,10 @@ namespace TEN::Scripting::DisplayArea
 	}
 
 	/// Add a display item to the area.
-	// Items can be View.DisplayString or View.DisplaySprite objects.
+	// Items can be View.DisplayString, View.DisplaySprite, or View.DisplayItem objects.
 	// Arguments are forwarded to the item's Draw() method.
 	// @function DisplayArea:AddItem
-	// @tparam object item A DisplayString or DisplaySprite to clip within this area.
+	// @tparam object item A DisplayString, DisplaySprite, or DisplayItem to clip within this area.
 	// @tparam[opt] table args Draw arguments forwarded to the item, e.g. { priority, alignMode, scaleMode, blendMode }.
 	void ScriptDisplayArea::AddItem(sol::object item, sol::optional<sol::table> args)
 	{

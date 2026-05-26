@@ -1004,6 +1004,11 @@ namespace TEN::Renderer
 		if (color.A() <= EPSILON)
 			return;
 
+		// Apply scissor rect if set.
+		bool hasScissor = item.HasScissor();
+		if (hasScissor)
+			SetScissor(item.GetScissorRect());
+
 		auto objectNumber = item.GetObjectID();
 		auto pos = item.GetInterpolatedPosition(alpha);
 		auto orient = item.GetInterpolatedOrientation(alpha);
@@ -1165,6 +1170,10 @@ namespace TEN::Renderer
 				}
 			}
 		}
+
+		// Reset scissor rect if it was set.
+		if (hasScissor)
+			ResetScissor();
 	}
 
 	void Renderer::RenderTitleImage()

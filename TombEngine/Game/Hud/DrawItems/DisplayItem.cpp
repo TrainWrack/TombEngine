@@ -265,6 +265,28 @@ namespace TEN::Hud
 		return true;
 	}
 
+	bool DisplayItem::HasScissor() const
+	{
+		return _hasScissor;
+	}
+
+	void DisplayItem::SetScissor(const TEN::Renderer::Structures::RendererRectangle& rect)
+	{
+		_hasScissor = true;
+		_scissorRect = rect;
+	}
+
+	void DisplayItem::ClearScissor()
+	{
+		_hasScissor = false;
+		_scissorRect = {};
+	}
+
+	const TEN::Renderer::Structures::RendererRectangle& DisplayItem::GetScissorRect() const
+	{
+		return _scissorRect;
+	}
+
 	void DisplayItem::StoreInterpolationData()
 	{
 		_prevPosition = _position;
