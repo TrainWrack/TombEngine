@@ -328,6 +328,25 @@ namespace TEN::Renderer
 		DrawFullScreenQuad(texture, Vector3(fade), true);
 	}
 
+	void Renderer::AddDebugDisplayRect(const RendererRectangle& rect, const Vector4& color)
+	{
+		_debugDisplayRects.push_back({ rect, color });
+	}
+
+	void Renderer::DrawDebugDisplayRects()
+	{
+		if (_debugDisplayRects.empty())
+			return;
+
+		ResetScissor();
+		_spriteBatch->Begin(SpriteSortingMode::Deferred, BlendMode::AlphaBlend);
+
+		for (const auto& [rect, color] : _debugDisplayRects)
+			_spriteBatch->Draw(_whiteTexture.get(), rect, color);
+
+		_spriteBatch->End();
+	}
+
 	void Renderer::DrawDisplaySprites(RenderView& renderView, bool negativePriority)
 	{
 		constexpr auto VERTEX_COUNT = 4;
@@ -336,10 +355,21 @@ namespace TEN::Renderer
 			return;
 
 		ITexture2D* texture2DPtr = nullptr;
+		bool currentHasScissor = false;
+		auto currentScissor = RendererRectangle{};
+
 		for (const auto& spriteToDraw : renderView.DisplaySpritesToDraw)
 		{
 			if ((spriteToDraw.Priority >= 0) == negativePriority)
 				continue;
+
+			// Handle scissor rect changes.
+			bool scissorChanged = (spriteToDraw.HasScissor != currentHasScissor) ||
+								  (spriteToDraw.HasScissor &&
+								   (spriteToDraw.ScissorRect.Left != currentScissor.Left ||
+									spriteToDraw.ScissorRect.Top != currentScissor.Top ||
+									spriteToDraw.ScissorRect.Right != currentScissor.Right ||
+									spriteToDraw.ScissorRect.Bottom != currentScissor.Bottom));
 
 			if (texture2DPtr == nullptr)
 			{
@@ -348,14 +378,32 @@ namespace TEN::Renderer
 				_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
 				_graphicsDevice->SetInputLayout(_vertexInputLayout.get());
 
+				if (spriteToDraw.HasScissor)
+					SetScissor(spriteToDraw.ScissorRect);
+
+				currentHasScissor = spriteToDraw.HasScissor;
+				currentScissor = spriteToDraw.ScissorRect;
+
 				_primitiveBatch->Begin();
 
 				BindTexture(TextureRegister::ColorMap, spriteToDraw.SpritePtr->Texture, SamplerStateRegister::AnisotropicClamp);
 				SetBlendMode(spriteToDraw.BlendMode);
 			}
-			else if (texture2DPtr != spriteToDraw.SpritePtr->Texture || _lastBlendMode != spriteToDraw.BlendMode)
+			else if (texture2DPtr != spriteToDraw.SpritePtr->Texture || _lastBlendMode != spriteToDraw.BlendMode || scissorChanged)
 			{
 				_primitiveBatch->End();
+
+				if (scissorChanged)
+				{
+					if (spriteToDraw.HasScissor)
+						SetScissor(spriteToDraw.ScissorRect);
+					else
+						ResetScissor();
+
+					currentHasScissor = spriteToDraw.HasScissor;
+					currentScissor = spriteToDraw.ScissorRect;
+				}
+
 				_primitiveBatch->Begin();
 
 				BindTexture(TextureRegister::ColorMap, spriteToDraw.SpritePtr->Texture, SamplerStateRegister::AnisotropicClamp);
@@ -403,6 +451,10 @@ namespace TEN::Renderer
 		
 		if (texture2DPtr != nullptr)
 			_primitiveBatch->End();
+
+		// Reset scissor if it was active.
+		if (currentHasScissor)
+			ResetScissor();
 	}
 
 	void Renderer::DrawFullScreenQuad(ITextureBase* texture, Vector3 color, bool fit, float customAspect)
@@ -554,8 +606,219 @@ namespace TEN::Renderer
 		spriteToDraw.Priority = priority;
 		spriteToDraw.BlendMode = blendMode;
 		spriteToDraw.AspectCorrection = aspectCorrection;
+		spriteToDraw.HasScissor = false;
 
 		renderView.DisplaySpritesToDraw.push_back(spriteToDraw);
+	}
+
+	// Draw all display sprites and strings interleaved by priority.
+	// Sprites at the same priority draw before strings. 3D display items are inserted
+	// at the transition from negative to non-negative priority.
+	void Renderer::DrawAllDisplayLayers(RenderView& view)
+	{
+		constexpr auto VERTEX_COUNT = 4;
+
+		auto& sprites = view.DisplaySpritesToDraw;
+
+		std::stable_sort(_stringsToDraw.begin(), _stringsToDraw.end(),
+			[](const auto& a, const auto& b) { return a.Priority < b.Priority; });
+
+		if (sprites.empty() && _stringsToDraw.empty())
+		{
+			DrawDisplayItems();
+			return;
+		}
+
+		// Gather sorted unique priorities from both lists.
+		auto priorities = std::vector<int>{};
+		priorities.reserve(sprites.size() + _stringsToDraw.size());
+		for (const auto& sprite : sprites) priorities.push_back(sprite.Priority);
+		for (const auto& str : _stringsToDraw) priorities.push_back(str.Priority);
+		std::sort(priorities.begin(), priorities.end());
+		priorities.erase(std::unique(priorities.begin(), priorities.end()), priorities.end());
+
+		float shadowOffset = 1.5f / (REFERENCE_FONT_SIZE / _gameFont->GetLineSpacing());
+		auto shadowColor = (Vector4)g_GameFlow->GetSettings()->UI.ShadowTextColor;
+
+		bool itemsDrawn = false;
+		int spriteIdx = 0;
+		int stringIdx = 0;
+
+		for (int priority : priorities)
+		{
+			// Insert 3D display items at the transition from negative to non-negative priority.
+			if (!itemsDrawn && priority >= 0)
+			{
+				DrawDisplayItems();
+				itemsDrawn = true;
+			}
+
+			// Draw sprites at this priority level.
+			{
+				ITexture2D* texture2DPtr = nullptr;
+				bool currentHasScissor = false;
+				auto currentScissor = RendererRectangle{};
+
+				while (spriteIdx < (int)sprites.size() && sprites[spriteIdx].Priority == priority)
+				{
+					const auto& spriteToDraw = sprites[spriteIdx++];
+
+					bool scissorChanged =
+						(spriteToDraw.HasScissor != currentHasScissor) ||
+						(spriteToDraw.HasScissor &&
+						 (spriteToDraw.ScissorRect.Left != currentScissor.Left ||
+						  spriteToDraw.ScissorRect.Top != currentScissor.Top ||
+						  spriteToDraw.ScissorRect.Right != currentScissor.Right ||
+						  spriteToDraw.ScissorRect.Bottom != currentScissor.Bottom));
+
+					if (texture2DPtr == nullptr)
+					{
+						_shaders.Bind(Shader::FullScreenQuad);
+						_graphicsDevice->SetPrimitiveType(PrimitiveType::TriangleList);
+						_graphicsDevice->SetInputLayout(_vertexInputLayout.get());
+
+						if (spriteToDraw.HasScissor)
+							SetScissor(spriteToDraw.ScissorRect);
+
+						currentHasScissor = spriteToDraw.HasScissor;
+						currentScissor = spriteToDraw.ScissorRect;
+
+						_primitiveBatch->Begin();
+						BindTexture(TextureRegister::ColorMap, spriteToDraw.SpritePtr->Texture, SamplerStateRegister::AnisotropicClamp);
+						SetBlendMode(spriteToDraw.BlendMode);
+					}
+					else if (texture2DPtr != spriteToDraw.SpritePtr->Texture || _lastBlendMode != spriteToDraw.BlendMode || scissorChanged)
+					{
+						_primitiveBatch->End();
+
+						if (scissorChanged)
+						{
+							if (spriteToDraw.HasScissor)
+								SetScissor(spriteToDraw.ScissorRect);
+							else
+								ResetScissor();
+
+							currentHasScissor = spriteToDraw.HasScissor;
+							currentScissor = spriteToDraw.ScissorRect;
+						}
+
+						_primitiveBatch->Begin();
+						BindTexture(TextureRegister::ColorMap, spriteToDraw.SpritePtr->Texture, SamplerStateRegister::AnisotropicClamp);
+						SetBlendMode(spriteToDraw.BlendMode);
+					}
+
+					auto vertices = std::array<Vector2, VERTEX_COUNT>
+					{
+						spriteToDraw.Size / 2,
+						Vector2(-spriteToDraw.Size.x, spriteToDraw.Size.y) / 2,
+						-spriteToDraw.Size / 2,
+						Vector2(spriteToDraw.Size.x, -spriteToDraw.Size.y) / 2
+					};
+
+					// NOTE: Must rotate 180 degrees to account for +Y being down.
+					auto rotMatrix = Matrix::CreateRotationZ(TO_RAD(spriteToDraw.Orientation + ANGLE(180.0f)));
+					for (auto& vertex : vertices)
+					{
+						vertex = Vector2::Transform(vertex, rotMatrix);
+						vertex *= spriteToDraw.AspectCorrection;
+						vertex += spriteToDraw.Position;
+						vertex = TEN::Utils::Convert2DPositionToNDC(vertex);
+					}
+
+					auto rVertices = std::array<Vertex, VERTEX_COUNT>{};
+					for (int i = 0; i < (int)rVertices.size(); i++)
+					{
+						rVertices[i].Position = Vector3(vertices[i]);
+						rVertices[i].UV = spriteToDraw.SpritePtr->UV[i];
+						rVertices[i].Color = VectorColorToRGBA(Vector4(
+							spriteToDraw.Color.x, spriteToDraw.Color.y,
+							spriteToDraw.Color.z, spriteToDraw.Color.w));
+					}
+
+					_primitiveBatch->DrawQuad(rVertices[0], rVertices[1], rVertices[2], rVertices[3]);
+					texture2DPtr = spriteToDraw.SpritePtr->Texture;
+				}
+
+				if (texture2DPtr != nullptr)
+				{
+					_primitiveBatch->End();
+
+					if (currentHasScissor)
+						ResetScissor();
+				}
+			}
+
+			// Draw strings at this priority level.
+			if (stringIdx < (int)_stringsToDraw.size() && _stringsToDraw[stringIdx].Priority == priority)
+			{
+				auto currentBlend = BlendMode::AlphaBlend;
+				bool currentHasScissor = false;
+				auto currentScissor = RendererRectangle{};
+
+				ResetScissor();
+				_spriteBatch->Begin(SpriteSortingMode::Deferred, currentBlend);
+
+				while (stringIdx < (int)_stringsToDraw.size() && _stringsToDraw[stringIdx].Priority == priority)
+				{
+					const auto& rString = _stringsToDraw[stringIdx++];
+
+					if (rString.Blend != currentBlend)
+					{
+						_spriteBatch->End();
+						currentBlend = rString.Blend;
+						_spriteBatch->Begin(SpriteSortingMode::Deferred, currentBlend);
+					}
+
+					bool scissorChanged =
+						(rString.HasScissor != currentHasScissor) ||
+						(rString.HasScissor &&
+						 (rString.ScissorRect.Left != currentScissor.Left ||
+						  rString.ScissorRect.Top != currentScissor.Top ||
+						  rString.ScissorRect.Right != currentScissor.Right ||
+						  rString.ScissorRect.Bottom != currentScissor.Bottom));
+
+					if (scissorChanged)
+					{
+						_spriteBatch->End();
+
+						if (rString.HasScissor)
+							SetScissor(rString.ScissorRect);
+						else
+							ResetScissor();
+
+						currentHasScissor = rString.HasScissor;
+						currentScissor = rString.ScissorRect;
+						_spriteBatch->Begin(SpriteSortingMode::Deferred, currentBlend);
+					}
+
+					auto drawPos = Vector2::Lerp(rString.PrevPosition, rString.Position, GetInterpolationFactor());
+
+					if (rString.Flags & (int)PrintStringFlags::Outline)
+					{
+						auto shadowPos = Vector2(drawPos.x + shadowOffset * rString.Scale.y, drawPos.y + shadowOffset * rString.Scale.y);
+						_gameFont->DrawString(
+							_spriteBatch.get(), rString.String,
+							shadowPos,
+							(shadowColor * rString.Color.w * shadowColor.w) * ScreenFadeCurrent,
+							rString.Rotation, Vector2::Zero, rString.Scale.x);
+					}
+
+					_gameFont->DrawString(
+						_spriteBatch.get(), rString.String,
+						drawPos,
+						(rString.Color * rString.Color.w) * ScreenFadeCurrent,
+						rString.Rotation, Vector2::Zero, rString.Scale.x);
+				}
+
+				_spriteBatch->End();
+
+				if (currentHasScissor)
+					ResetScissor();
+			}
+		}
+
+		if (!itemsDrawn)
+			DrawDisplayItems();
 	}
 
 	void Renderer::CollectDisplaySprites(RenderView& renderView)
@@ -596,6 +859,14 @@ namespace TEN::Renderer
 				displaySprite.BlendMode,
 				layout.AspectCorrection,
 				renderView);
+
+			// Transfer scissor rect from source sprite.
+			if (displaySprite.HasScissor)
+			{
+				auto& last = renderView.DisplaySpritesToDraw.back();
+				last.HasScissor = true;
+				last.ScissorRect = displaySprite.ScissorRect;
+			}
 		}
 
 		std::sort(

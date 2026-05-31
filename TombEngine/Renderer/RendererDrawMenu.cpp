@@ -1418,12 +1418,10 @@ namespace TEN::Renderer
 			RenderScene(_backBuffer.get(), _gameCamera, SceneRenderMode::NoHud);
 		}
 
-		// Draw display sprites sorted by priority.
+		// Draw display sprites and strings sorted by priority.
 		CollectDisplaySprites(_gameCamera);
-		DrawDisplaySprites(_gameCamera, false);
-		DrawDisplayItems();
-		DrawDisplaySprites(_gameCamera, true);
-		DrawAllStrings();
+		DrawAllDisplayLayers(_gameCamera);
+		DrawDebugDisplayRects();
 
 		if (staticBackground)
 		{

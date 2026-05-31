@@ -209,6 +209,7 @@ namespace TEN::Renderer
 		std::vector<RendererLine2D>		_lines2DToDraw = {};
 		std::vector<RendererLine3D>		_lines3DToDraw = {};
 		std::vector<RendererTriangle3D> _triangles3DToDraw = {};
+		std::vector<std::pair<RendererRectangle, Vector4>> _debugDisplayRects = {};
 
 		// Textures, objects and sprites
 
@@ -382,7 +383,9 @@ namespace TEN::Renderer
 		void InitializeGameBars();
 		void InitializeMenuBars(int y);
 		void InitializeSky();
+		void AddStringInternal(const std::string& string, const Vector2& pos, const Vector2& prevPos, const Vector2& area, const Color& color, const Vector2& scale, float rotation, int flags, int priority, BlendMode blendMode);
 		void DrawAllStrings();
+		void DrawDebugDisplayRects();
 		void PrepareDynamicLight(RendererLight& light);
 		void PrepareLaserBarriers(RenderView& view);
 		void PrepareSingleLaserBeam(RenderView& view);
@@ -413,6 +416,7 @@ namespace TEN::Renderer
 		void DrawSprites(RenderView& view, RendererPass rendererPass);
 		void DrawDisplaySprites(RenderView& view, bool negativePriority);
 		void DrawDisplayItems();
+		void DrawAllDisplayLayers(RenderView& view);
 		void DrawSortedFaces(RenderView& view);
 		void DrawSingleSprite(RendererSortableObject* object, RendererObjectType lastObjectType, RenderView& view);
 		void DrawRoomSorted(RendererSortableObject* objectInfo, RendererObjectType lastObjectType, RenderView& view);
@@ -698,6 +702,8 @@ namespace TEN::Renderer
 		void AddString(const std::string& string, const Vector2& pos, const Color& color, float scale, int flags);
 		void AddString(const std::string& string, const Vector2& pos, const Vector2& area, const Color& color, float scale, int flags);
 		void AddString(const std::string& string, const Vector2& currentPos, const Vector2& prevPos, const Vector2& area, const Color& color, float scale, int flags);
+		void AddString(const std::string& string, const Vector2& pos, const Vector2& prevPos, const Vector2& area, const Color& color, const Vector2& scale, float rotation, int flags, int priority, BlendMode blendMode);
+		Vector2 GetDisplayStringSize(const std::string& text, const Vector2& scale = Vector2::One) const;
 		void AddDebugString(const std::string& string, const Vector2& pos, const Color& color, float scale, RendererDebugPage page = RendererDebugPage::None);
 		void FreeRendererData();
 		void AddDynamicPointLight(const Vector3& pos, float radius, const Color& color, bool castShadows, int hash = 0);
@@ -728,6 +734,7 @@ namespace TEN::Renderer
 		void AddDebugCylinder(const Vector3& center, const Quaternion& orient, float radius, float length, const Color& color, RendererDebugPage page = RendererDebugPage::None, bool isWireframe = true);
 		void AddDebugSphere(const Vector3& center, float radius, const Color& color, RendererDebugPage page = RendererDebugPage::None, bool isWireframe = true);
 		void AddDebugSphere(const BoundingSphere& sphere, const Color& color, RendererDebugPage page = RendererDebugPage::None, bool isWireframe = true);
+		void AddDebugDisplayRect(const RendererRectangle& rect, const Vector4& color);
 
 		void PrintDebugMessage(const char* msg, va_list args);
 		void PrintDebugMessage(const char* msg, ...);
@@ -763,6 +770,8 @@ namespace TEN::Renderer
 
 		void AddDisplaySprite(const RendererSprite& sprite, const Vector2& pos2D, short orient, const Vector2& size, const Vector4& color,
 			int priority, BlendMode blendMode, const Vector2& aspectCorrection, RenderView& renderView);
+		void SetDisplayScissor(RendererRectangle rect);
+		void ResetDisplayScissor();
 		void CollectDisplaySprites(RenderView& renderView);
 
 		PostProcessMode	GetPostProcessMode();

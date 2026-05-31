@@ -1,6 +1,7 @@
 #pragma once
 #include "Renderer/Structures/RendererSprite.h"
 #include "Renderer/RendererEnums.h"
+#include "Renderer/Structures/RendererRectangle.h"
 
 namespace TEN::Renderer::Structures
 {
@@ -17,5 +18,8 @@ namespace TEN::Renderer::Structures
 		BlendMode BlendMode = BlendMode::AlphaBlend;
 
 		Vector2 AspectCorrection = Vector2::One;
+
+		bool HasScissor = false;
+		RendererRectangle ScissorRect = {};
 	};
 }

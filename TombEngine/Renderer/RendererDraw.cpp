@@ -1768,6 +1768,7 @@ namespace TEN::Renderer
 		_lines3DToDraw.clear();
 		_triangles3DToDraw.clear();
 		_stringsToDraw.clear();
+		_debugDisplayRects.clear();
 
 		_currentCausticsFrame++;
 		_currentCausticsFrame %= 32;
@@ -2045,11 +2046,10 @@ namespace TEN::Renderer
 		if (renderMode == SceneRenderMode::Full && g_GameFlow->LastGameStatus == GameStatus::Normal)
 		{
 			CollectDisplaySprites(view);
-			DrawDisplaySprites(view, false);
+			DrawAllDisplayLayers(view);
 
 			DrawDebugRenderTargets(view);
-			DrawAllStrings();
-			DrawDisplaySprites(view, true);
+			DrawDebugDisplayRects();
 		}
 
 		time2 = std::chrono::high_resolution_clock::now();

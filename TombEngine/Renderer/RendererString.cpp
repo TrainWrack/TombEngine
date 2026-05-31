@@ -1,9 +1,13 @@
 #include "framework.h"
 #include "Renderer/Renderer.h"
 
+#include <algorithm>
+
+#include "Game/effects/DisplaySprite.h"
 #include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
 #include "Specific/trutils.h"
 
+using namespace TEN::Effects::DisplaySprite;
 using namespace TEN::Utils;
 
 namespace TEN::Renderer
@@ -26,6 +30,25 @@ namespace TEN::Renderer
 		AddString(string, Vector2(x, y), Color(color), 1.0f, flags);
 	}
 
+	Vector2 Renderer::GetDisplayStringSize(const std::string& text, const Vector2& scale) const
+	{
+		if (text.empty() || _gameFont == nullptr)
+			return Vector2::Zero;
+
+		auto screenRes = GetScreenResolution();
+		auto factor = Vector2((float)screenRes.x / DISPLAY_SPACE_RES.x, (float)screenRes.y / DISPLAY_SPACE_RES.y);
+		float uiScale = (screenRes.x > screenRes.y) ? factor.y : factor.x;
+		float fontSpacing = _gameFont->GetLineSpacing();
+		float fontScale = REFERENCE_FONT_SIZE / fontSpacing;
+		auto stringScale = Vector2(uiScale * fontScale) * scale;
+		float baseScale = stringScale.y;
+
+		auto measured = Vector2(_gameFont->MeasureString(text)) * baseScale;
+
+		// Convert pixel size back to display space (800x600 units).
+		return Vector2(measured.x / factor.x, measured.y / factor.y);
+	}
+
 	void Renderer::AddString(const std::string& string, const Vector2& pos, const Color& color, float scale, int flags)
 	{
 		AddString(string, pos, Vector2::Zero, Color(color), scale, flags);
@@ -36,7 +59,21 @@ namespace TEN::Renderer
 		AddString(string, pos, pos, area, color, scale, flags);
 	}
 
+	void Renderer::AddString(const std::string& string, const Vector2& pos, const Vector2& prevPos, const Vector2& area,
+							const Color& color, const Vector2& scale, float rotation, int flags,
+							int priority, BlendMode blendMode)
+	{
+		AddStringInternal(string, pos, prevPos, area, color, scale, rotation, flags, priority, blendMode);
+	}
+
 	void Renderer::AddString(const std::string& string, const Vector2& pos, const Vector2& prevPos, const Vector2& area, const Color& color, float scale, int flags)
+	{
+		AddStringInternal(string, pos, prevPos, area, color, Vector2(scale), 0.0f, flags, 0, BlendMode::AlphaBlend);
+	}
+
+	void Renderer::AddStringInternal(const std::string& string, const Vector2& pos, const Vector2& prevPos, const Vector2& area,
+									 const Color& color, const Vector2& scale, float rotation, int flags,
+									 int priority, BlendMode blendMode)
 	{
 		if (_isLocked)
 			return;
@@ -51,8 +88,9 @@ namespace TEN::Renderer
 			float uiScale = (screenRes.x > screenRes.y) ? factor.y : factor.x;
 			float fontSpacing = _gameFont->GetLineSpacing();
 			float fontScale = REFERENCE_FONT_SIZE / fontSpacing;
-			float stringScale = (uiScale * fontScale) * scale;
-			float spaceWidth = Vector3(_gameFont->MeasureString(" ")).x * stringScale;
+			auto stringScale = Vector2(uiScale * fontScale) * scale;
+			float baseScale = stringScale.y;
+			float spaceWidth = Vector3(_gameFont->MeasureString(" ")).x * baseScale;
 
 			std::vector<std::string> stringLines;
 
@@ -76,7 +114,7 @@ namespace TEN::Renderer
 
 					for (const auto& word : words)
 					{
-						float wordWidth = Vector3(_gameFont->MeasureString(word)).x * stringScale;
+						float wordWidth = Vector3(_gameFont->MeasureString(word)).x * baseScale;
 
 						if (!currentLine.empty() && (currentLineWidth + wordWidth + spaceWidth > area.x * factor.x))
 						{
@@ -109,9 +147,9 @@ namespace TEN::Renderer
 			for (const auto& line : stringLines)
 			{
 				if (line.empty())
-					totalHeight += fontSpacing * stringScale;
+					totalHeight += fontSpacing * baseScale;
 				else
-					totalHeight += Vector2(_gameFont->MeasureString(line)).y * stringScale;
+					totalHeight += Vector2(_gameFont->MeasureString(line.c_str())).y * stringScale.y;
 			}
 
 			// Calculate maximum textbox height.
@@ -144,9 +182,15 @@ namespace TEN::Renderer
 				rString.Position = Vector2::Zero;
 				rString.Color = color;
 				rString.Scale = stringScale;
+				rString.Rotation = rotation;
+				rString.Priority = priority;
+				rString.Blend = blendMode;
+				rString.HasScissor = HasActiveDisplayScissor();
+				if (rString.HasScissor)
+					rString.ScissorRect = GetActiveDisplayScissor();
 
 				// Measure string.
-				auto stringSize = line.empty() ? Vector2(0, fontSpacing * rString.Scale) : Vector2(_gameFont->MeasureString(line)) * rString.Scale;
+				auto stringSize = line.empty() ? Vector2(0, fontSpacing * rString.Scale.y) : Vector2(_gameFont->MeasureString(line)) * rString.Scale.y;
 
 				// If height clipping enabled, stop drawing when exceeding maxHeight.
 				if (maxHeight > 0.0f && (yOffset + stringSize.y) > maxHeight)
@@ -166,7 +210,7 @@ namespace TEN::Renderer
 				else
 				{
 					// Calculate indentation to account for string scaling.
-					auto indent = line.empty() ? 0 : _gameFont->FindGlyph(line.at(0)).XAdvance * rString.Scale;
+					auto indent = line.empty() ? 0 : _gameFont->FindGlyph(line.at(0)).XAdvance * rString.Scale.y;
 
 					rString.Position.x = pos.x * factor.x + indent;
 					rString.PrevPosition.x = prevPos.x * factor.x + indent;
@@ -196,35 +240,78 @@ namespace TEN::Renderer
 		if (_stringsToDraw.empty())
 			return;
 
-		SetBlendMode(BlendMode::AlphaBlend);
+		// Sort by priority (lower priority draws first, i.e. behind higher).
+		std::stable_sort(_stringsToDraw.begin(), _stringsToDraw.end(),
+			[](const auto& a, const auto& b) { return a.Priority < b.Priority; });
 
 		float shadowOffset = 1.5f / (REFERENCE_FONT_SIZE / _gameFont->GetLineSpacing());
 		auto shadowColor = (Vector4)g_GameFlow->GetSettings()->UI.ShadowTextColor;
 
-		_spriteBatch->Begin(SpriteSortingMode::Deferred, BlendMode::PremultipliedAlphaBlend);
+		ResetScissor();
+
+		auto currentBlend = BlendMode::AlphaBlend;
+		bool currentHasScissor = false;
+		auto currentScissor = RendererRectangle{};
+
+		_spriteBatch->Begin(SpriteSortingMode::Deferred, currentBlend);
 
 		for (const auto& rString : _stringsToDraw)
 		{
-			auto drawPos = Vector2::Lerp(rString.PrevPosition, rString.Position, GetInterpolationFactor(true));
+			// Switch blend mode per string if needed.
+			if (rString.Blend != currentBlend)
+			{
+				_spriteBatch->End();
+				currentBlend = rString.Blend;
+				_spriteBatch->Begin(SpriteSortingMode::Deferred, currentBlend);
+			}
+
+			// Handle scissor rect changes.
+			bool scissorChanged = (rString.HasScissor != currentHasScissor) ||
+								  (rString.HasScissor &&
+								   (rString.ScissorRect.Left != currentScissor.Left ||
+									rString.ScissorRect.Top != currentScissor.Top ||
+									rString.ScissorRect.Right != currentScissor.Right ||
+									rString.ScissorRect.Bottom != currentScissor.Bottom));
+
+			if (scissorChanged)
+			{
+				_spriteBatch->End();
+
+				if (rString.HasScissor)
+					SetScissor(rString.ScissorRect);
+				else
+					ResetScissor();
+
+				currentHasScissor = rString.HasScissor;
+				currentScissor = rString.ScissorRect;
+				_spriteBatch->Begin(SpriteSortingMode::Deferred, currentBlend);
+			}
+
+			auto drawPos = Vector2::Lerp(rString.PrevPosition, rString.Position, GetInterpolationFactor());
 
 			// Draw shadow.
 			if (rString.Flags & (int)PrintStringFlags::Outline)
 			{
+				auto shadowPos = Vector2(drawPos.x + shadowOffset * rString.Scale.y, drawPos.y + shadowOffset * rString.Scale.y);
+
 				_gameFont->DrawString(
 					_spriteBatch.get(), rString.String,
-					Vector2(drawPos.x + shadowOffset * rString.Scale, drawPos.y + shadowOffset * rString.Scale),
+					shadowPos,
 					(shadowColor * rString.Color.w * shadowColor.w) * ScreenFadeCurrent,
-					0.0f, Vector2::Zero, rString.Scale);
+					rString.Rotation, Vector2::Zero, rString.Scale.x);
 			}
 
 			// Draw string.
 			_gameFont->DrawString(
 				_spriteBatch.get(), rString.String,
-				Vector2(drawPos.x, drawPos.y),
+				drawPos,
 				(rString.Color * rString.Color.w) * ScreenFadeCurrent,
-				0.0f, Vector2::Zero, rString.Scale);
+				rString.Rotation, Vector2::Zero, rString.Scale.x);
 		}
 
 		_spriteBatch->End();
+
+		if (currentHasScissor)
+			ResetScissor();
 	}
 }
