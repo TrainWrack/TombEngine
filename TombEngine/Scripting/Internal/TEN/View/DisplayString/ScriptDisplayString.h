@@ -28,6 +28,10 @@ namespace TEN::Scripting::DisplayString
 		Vec2		_area	  = Vec2(0.0f, 0.0f);
 		FlagArray	_flags	  = {};
 
+		bool _hasScissor  = false;
+		Vec2 _scissorPos  = Vec2(0.0f, 0.0f);
+		Vec2 _scissorSize = Vec2(100.0f, 100.0f);
+
 	public:
 		// Constructors
 		ScriptDisplayString(const std::string& text, const Vec2& pos, float rot, const Vec2& scale, const ScriptColor& color, bool isTranslated);
@@ -54,6 +58,8 @@ namespace TEN::Scripting::DisplayString
 		void SetColor(const ScriptColor& color);
 		void SetArea(const Vec2& area);
 		void SetFlags(const sol::table& flags);
+		void SetScissor(const Vec2& pos, const Vec2& size);
+		void ClearScissor();
 
 		// Utilities
 		ScriptDisplayAnchors GetAnchors(sol::optional<DisplaySpriteAlignMode> alignModeOpt, sol::optional<DisplaySpriteScaleMode> scaleModeOpt) const;

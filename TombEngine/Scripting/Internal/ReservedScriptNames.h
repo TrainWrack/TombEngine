@@ -78,6 +78,8 @@ static constexpr char ScriptReserved_AddItem[]						= "AddItem";
 static constexpr char ScriptReserved_RemoveItem[]					= "RemoveItem";
 static constexpr char ScriptReserved_Clear[]						= "Clear";
 static constexpr char ScriptReserved_Debug[]						= "Debug";
+static constexpr char ScriptReserved_SetScissor[]					= "SetScissor";
+static constexpr char ScriptReserved_ClearScissor[]					= "ClearScissor";
 
 static constexpr char ScriptReserved_EndReasonDeath[]			= "DEATH";
 static constexpr char ScriptReserved_EndReasonExitToTitle[]		= "EXIT_TO_TITLE";

@@ -770,6 +770,8 @@ namespace TEN::Renderer
 
 		void AddDisplaySprite(const RendererSprite& sprite, const Vector2& pos2D, short orient, const Vector2& size, const Vector4& color,
 			int priority, BlendMode blendMode, const Vector2& aspectCorrection, RenderView& renderView);
+		void SetDisplayScissor(RendererRectangle rect);
+		void ResetDisplayScissor();
 		void CollectDisplaySprites(RenderView& renderView);
 
 		PostProcessMode	GetPostProcessMode();

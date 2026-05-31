@@ -63,6 +63,9 @@ namespace TEN::Hud
 		bool GetVisible() const;
 		bool GetDisposing() const;
 		bool GetMeshVisible(int meshIndex) const;
+		bool GetHasScissor() const;
+		Vector2 GetScissorPos() const;
+		Vector2 GetScissorSize() const;
 		int  GetAnimNumber() const;
 		int  GetFrameNumber() const;
 		int  GetEndFrameNumber() const;
@@ -88,6 +91,8 @@ namespace TEN::Hud
 		void SetMeshOrientation(int meshIndex, const EulerAngles& orient, bool disableInterpolation);
 		void SetAnimation(int animNumber);
 		void SetFrame(int frameNumber);
+		void SetScissor(const Vector2& pos, const Vector2& size);
+		void ClearScissor();
 
 		// Inquirers
 

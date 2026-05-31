@@ -13,6 +13,7 @@
 #include "Scripting/Internal/TEN/View/DisplayAnchors/ScriptDisplayAnchors.h"
 
 using namespace TEN::Effects::DisplaySprite;
+using namespace TEN::Renderer::Structures;
 using namespace TEN::Scripting::Types;
 using TEN::Renderer::g_Renderer;
 
@@ -82,6 +83,8 @@ namespace TEN::Scripting::DisplayString
 		ScriptReserved_SetArea, &ScriptDisplayString::SetArea,
 		ScriptReserved_GetFlags, &ScriptDisplayString::GetFlags,
 		ScriptReserved_SetFlags, &ScriptDisplayString::SetFlags,
+		ScriptReserved_SetScissor, &ScriptDisplayString::SetScissor,
+		ScriptReserved_ClearScissor, &ScriptDisplayString::ClearScissor,
 		ScriptReserved_DisplayStringGetAnchors, &ScriptDisplayString::GetAnchors,
 		ScriptReserved_DisplaySpriteDraw, &ScriptDisplayString::Draw);
 	}
@@ -262,6 +265,25 @@ namespace TEN::Scripting::DisplayString
 		}
 	}
 
+	/// Set a scissor clipping rectangle for the display string.
+	// Clips the string to the specified rectangle when drawn.
+	// @function DisplayString:SetScissor
+	// @tparam Vec2 pos Top-left position of the scissor rectangle in percent.
+	// @tparam Vec2 size Width and height of the scissor rectangle in percent.
+	void ScriptDisplayString::SetScissor(const Vec2& pos, const Vec2& size)
+	{
+		_hasScissor  = true;
+		_scissorPos  = pos;
+		_scissorSize = size;
+	}
+
+	/// Clear the scissor clipping rectangle from the display string.
+	// @function DisplayString:ClearScissor
+	void ScriptDisplayString::ClearScissor()
+	{
+		_hasScissor = false;
+	}
+
 	/// Get the anchors of the display string.
 	// Returns the nine anchor points of the display string bounding box in percent.
 	// @function DisplayString:GetAnchors
@@ -402,10 +424,24 @@ namespace TEN::Scripting::DisplayString
 			}
 		}
 
+		if (_hasScissor)
+		{
+			auto screenRes = g_Renderer.GetScreenResolution();
+			auto rect = RendererRectangle(
+				(int)(_scissorPos.x * screenRes.x / 100.0f),
+				(int)(_scissorPos.y * screenRes.y / 100.0f),
+				(int)((_scissorPos.x + _scissorSize.x) * screenRes.x / 100.0f),
+				(int)((_scissorPos.y + _scissorSize.y) * screenRes.y / 100.0f));
+			SetActiveDisplayScissor(rect);
+		}
+
 		g_Renderer.AddString(
 			resolvedText, convertedPos, convertedPos, convertedArea,
 			Color(convertedColor), convertedScale, convertedRotation, flags,
 			priority.value_or(0),
 			(BlendMode)blendMode.value_or((int)BlendMode::AlphaBlend));
+
+		if (_hasScissor)
+			ClearActiveDisplayScissor();
 	}
 }
