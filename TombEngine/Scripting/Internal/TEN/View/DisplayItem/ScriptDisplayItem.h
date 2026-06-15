@@ -6,6 +6,7 @@
 #include "Scripting/Internal/TEN/Types/Vec2/Vec2.h"
 #include "Scripting/Internal/TEN/Types/Vec3/Vec3.h"
 #include "Scripting/Internal/TEN/Types/Rotation/Rotation.h"
+#include "Scripting/Internal/TEN/View/DisplayAnchors/ScriptDisplayAnchors.h"
 
 using namespace TEN::Scripting::Types;
 
@@ -66,6 +67,7 @@ namespace TEN::Scripting::DisplayItem
 		sol::optional <int> GetFrameNumber() const;
 		sol::optional <int> GetEndFrame() const;
 		sol::optional<std::pair<Vec2, Vec2>> GetBounds() const;
+		ScriptDisplayAnchors GetAnchors() const;
 
 		// Methods
 

@@ -2,6 +2,7 @@
 
 #include "Math/Constants.h"
 #include "Objects/game_object_ids.h"
+#include "Renderer/Structures/RendererRectangle.h"
 #include "Specific/Structures/BitField.h"
 
 using namespace TEN::Math;
@@ -33,6 +34,9 @@ namespace TEN::Hud
 		int _animNumber      = 0;
 		int _frameNumber     = 0;
 		int _prevFrameNumber = 0;
+
+		bool _hasScissor = false;
+		TEN::Renderer::Structures::RendererRectangle _scissorRect = {};
 
 		Vector3                              _prevPosition         = Vector3::Zero;
 		EulerAngles                          _prevOrientation      = EulerAngles::Identity;
@@ -97,9 +101,13 @@ namespace TEN::Hud
 		// Inquirers
 
 		bool MeshExists(int meshIndex) const;
+		bool HasScissor() const;
 
 		// Utilities
 
+		void SetScissor(const TEN::Renderer::Structures::RendererRectangle& rect);
+		void ClearScissor();
+		const TEN::Renderer::Structures::RendererRectangle& GetScissorRect() const;
 		void StoreInterpolationData();
 	};
 }
