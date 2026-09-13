@@ -16,6 +16,7 @@
 #include "Game/effects/footprint.h"
 #include "Game/effects/Ripple.h"
 #include "Game/effects/simple_particle.h"
+#include "Game/effects/ParticleGroup.h"
 #include "Game/effects/smoke.h"
 #include "Game/effects/spark.h"
 #include "Game/effects/Splash.h"
@@ -514,6 +515,12 @@ namespace TEN::Renderer
 
 				if (particle.flags & SP_FX)
 				{
+					if (particle.fxObj < 0 || particle.fxObj >= g_Level.Items.size())
+					{
+						TENLog("Particle FX object index is out of bounds.", LogLevel::Warning);
+						continue;
+					}
+
 					const auto& fx = g_Level.Items[particle.fxObj];
 					auto& newEffect = _items[particle.fxObj];
 
@@ -524,7 +531,18 @@ namespace TEN::Renderer
 					newEffect.ObjectID = fx.ObjectNumber;
 					newEffect.RoomNumber = fx.RoomNumber;
 					newEffect.Position = fx.Pose.Position.ToVector3();
-					
+
+					// On the frame the effect spawns, the slot's previous transform still belongs
+					// to its last occupant, so collapse interpolation onto the current pose.
+					if (fx.DisableInterpolation)
+					{
+						newEffect.PrevPosition = newEffect.Position;
+						newEffect.PrevTranslation = newEffect.Translation;
+						newEffect.PrevRotation = newEffect.Rotation;
+						newEffect.PrevWorld = newEffect.World;
+						newEffect.PrevScale = newEffect.Scale;
+					}
+
 					newEffect.InterpolatedPosition = Vector3::Lerp(newEffect.PrevPosition, newEffect.Position, GetInterpolationFactor());
 					newEffect.InterpolatedTranslation = Matrix::Lerp(newEffect.PrevTranslation, newEffect.Translation, GetInterpolationFactor());
 					newEffect.InterpolatedRotation = Matrix::Lerp(newEffect.InterpolatedRotation, newEffect.Rotation, GetInterpolationFactor());
@@ -574,13 +592,23 @@ namespace TEN::Renderer
 							nodePos.z = NodeOffsets[particle.nodeNumber].z;
 
 							int meshIndex = NodeOffsets[particle.nodeNumber].meshNum;
-							if (meshIndex >= 0)
+							if (meshIndex < 0)
 							{
-								nodePos = GetJointPosition(item, meshIndex, nodePos);
+								item = LaraItem;
+								meshIndex = -meshIndex;
+							}
+
+							// Transform offset by interpolated bone matrices so attached particles
+							// stay aligned with the drawn mesh during movement and rotation.
+							const auto& rendererItem = _items[item->Index];
+							if (rendererItem.DoneAnimations)
+							{
+								auto world = rendererItem.InterpolatedAnimationTransforms[meshIndex] * rendererItem.InterpolatedWorld;
+								nodePos = Vector3i(Vector3::Transform(nodePos.ToVector3(), world));
 							}
 							else
 							{
-								nodePos = GetJointPosition(LaraItem, -meshIndex, nodePos);
+								nodePos = GetJointPosition(item, meshIndex, nodePos);
 							}
 
 							NodeOffsets[particle.nodeNumber].itemNumber = particle.fxObj;
@@ -1292,6 +1320,12 @@ namespace TEN::Renderer
 		// Per-arm draw helper: only transform and draw.
 		auto drawArmFlash = [&](const WeaponSettings& settings, GAME_OBJECT_ID gunflash, bool left)
 		{
+			if (!Objects[gunflash].loaded)
+			{
+				TENLog(fmt::format("Gunflash object {} not loaded, skipping draw.", GetObjectName(gunflash)), LogLevel::Warning);
+				return;
+			}
+
 			const auto& flashMoveable = *_moveableObjects[gunflash];
 			const auto& flashMesh = *flashMoveable.ObjectMeshes[0];
 
@@ -1364,6 +1398,12 @@ namespace TEN::Renderer
 
 			auto flashObjectID = flash.SwitchToMuzzle2 ? (_moveableObjects[ID_GUN_FLASH2].has_value() ? ID_GUN_FLASH2 : ID_GUN_FLASH) : ID_GUN_FLASH;
 			auto zRot = flash.SwitchToMuzzle2 ? 0.0f : TO_RAD((short)std::hash<int>()(GlobalCounter));
+
+			if (!Objects[flashObjectID].loaded)
+			{
+				TENLog(fmt::format("Gunflash object {} not loaded for creature {}, skipping draw.", GetObjectName(flashObjectID), GetObjectName((GAME_OBJECT_ID)rItem.ObjectID)), LogLevel::Warning);
+				return;
+			}
 
 			const auto& flashMoveable = *_moveableObjects[flashObjectID];
 			const auto& flashMesh = *flashMoveable.ObjectMeshes[0];
@@ -1722,6 +1762,72 @@ namespace TEN::Renderer
 					Lerp(part.PrevSize, part.size, GetInterpolationFactor()),
 					Lerp(part.PrevSize, part.size, GetInterpolationFactor()) / 2),
 				BlendMode::AlphaBlend, true, view);
+		}
+	}
+
+	void Renderer::PrepareParticleGroups(RenderView& view)
+	{
+		using namespace TEN::Effects::ParticleGroups;
+
+		for (const auto& group : ParticleGroupList)
+		{
+			if (!group.Active)
+				continue;
+
+			// Silent check: object validity is already reported by CreateParticleGroup and
+			// SetObjectID; logging here would spam the log every frame.
+			if (!Objects[group.ObjectID].loaded)
+				continue;
+
+			// Mesh groups are rendered via DrawParticleGroupMeshes().
+			if (group.IsMeshGroup())
+				continue;
+
+			for (const auto& p : group.Particles)
+			{
+				if (!p.Active)
+					continue;
+
+				// Validate per-particle object ID.
+				if (!Objects[p.ObjectID].loaded)
+					continue;
+
+				// Validate that it's a sprite sequence (negative nmeshes).
+				if (Objects[p.ObjectID].nmeshes >= 0)
+					continue;
+
+				auto interpPos = Vector3::Lerp(p.PrevPosition, p.Position, GetInterpolationFactor());
+
+				float dist = Vector3::Distance(interpPos, view.Camera.WorldPosition);
+				if (dist > DEFAULT_RENDER_DISTANCE)
+					continue;
+
+				auto interpSize     = Lerp(p.PrevSize, p.Size, GetInterpolationFactor());
+				auto interpRotation = Lerp(p.PrevRotation, p.Rotation, GetInterpolationFactor());
+
+				int spriteCount        = std::max(1, abs(Objects[p.ObjectID].nmeshes));
+				int clampedSpriteIndex = std::clamp(p.SubIndex, 0, spriteCount - 1);
+
+				if (p.Orientation != Vector3::Zero)
+				{
+					AddQuad(
+						&_sprites[Objects[p.ObjectID].meshIndex + clampedSpriteIndex],
+						interpPos,
+						Vector4(p.ParticleColor.R(), p.ParticleColor.G(), p.ParticleColor.B(), p.ParticleColor.A()),
+						interpRotation, 1.0f,
+						interpSize, group.RenderBlendMode, p.Orientation, true, view);
+				}
+				else
+				{
+					AddSpriteBillboard(
+						&_sprites[Objects[p.ObjectID].meshIndex + clampedSpriteIndex],
+						interpPos,
+						Vector4(p.ParticleColor.R(), p.ParticleColor.G(), p.ParticleColor.B(), p.ParticleColor.A()),
+						interpRotation, 1.0f,
+						Vector2(interpSize, interpSize),
+						group.RenderBlendMode, true, view);
+				}
+			}
 		}
 	}
 
