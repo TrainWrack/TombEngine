@@ -688,8 +688,6 @@ void InitializeItem(short itemNumber)
 	item.BoxNumber = floor->PathfindingBoxID;
 
 	item.ResetModelToDefault();
-
-	const auto& object = Objects[item.ObjectNumber];
 	
 	if (object.Initialize != nullptr)
 		Objects[item.ObjectNumber].Initialize(itemNumber);

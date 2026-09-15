@@ -504,7 +504,7 @@ const std::vector<unsigned char> SaveGame::Build()
 				const auto& attrac = room.Attractors[j];
 				if (&attrac == Lara.Context.Attractor.Attractor)
 				{
-					roomNumber = room.RoomNumber;
+					roomNumber = attrac.GetRoomNumber(); //changed to save attractor room number and not room number as it does not exist 2026.09.15 TrainWreck
 					roomAttracID = j;
 					hasRoomAttrac = true;
 					break;
