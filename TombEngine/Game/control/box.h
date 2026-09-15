@@ -113,7 +113,7 @@ extern int PathfindingDisplayIndex;
 
 void GetCreatureMood(ItemInfo* item, AI_INFO* AI, bool isViolent);
 void CreatureMood(ItemInfo* item, AI_INFO* AI, bool isViolent);
-void FindAITargetObject(CreatureInfo* creature, int objectNumber);
+void FindAITargetObject(CreatureInfo* creature, int objectNumber); 
 void FindAITargetObject(CreatureInfo* creature, int objectNumber, int ocb, bool checkSameZone = true);
 void GetAITarget(CreatureInfo* creature);
 int CreatureVault(short itemNumber, short angle, int vault, int shift);
@@ -147,7 +147,7 @@ bool CreatureActive(short itemNumber);
 void InitializeCreature(short itemNumber);
 bool StalkBox(ItemInfo* item, ItemInfo* enemy, int boxNumber);
 void CreatureAIInfo(ItemInfo* item, AI_INFO* AI);
-Vector3i PredictTargetPosition(ItemInfo& sourceItem, ItemInfo& targetItem);
+Vector3i PredictTargetPosition(ItemInfo& sourceItem, ItemInfo& targetItem, Vector3i targetOffset = Vector3i(0, 0, 0));
 TARGET_TYPE CalculateTarget(Vector3i* target, ItemInfo* item, LOTInfo* LOT);
 bool CreatureAnimation(short itemNumber, short headingAngle, short tiltAngle);
 void CreatureHealth(ItemInfo* item);

@@ -12,7 +12,7 @@ using namespace TEN::Physics;
 using namespace TEN::Structures;
 
 enum GAME_OBJECT_ID : short;
-enum class ReverbType;
+enum class ReverbType : int;
 class FloorInfo;
 class GameBoundingBox;
 struct BUCKET;
@@ -65,7 +65,7 @@ struct RoomLightData
 	float length;         // Range of light
 	float cutoff;         // Range of light
 	float dx, dy, dz;    // Direction - used only by sun and spot lights
-	byte type;
+	unsigned char type;
 	bool castShadows;
 };
 
@@ -169,8 +169,7 @@ struct RoomData
 	int flippedRoom;
 	int flipNumber;
 
-	short itemNumber;
-	short fxNumber;
+	std::vector<int> itemNumbers;
 
 
 	// Object fields

@@ -7,7 +7,7 @@
 #include "Game/collision/collide_room.h"
 #include "Game/collision/floordata.h"
 #include "Game/collision/Point.h"
-#include "Game/collision/Sphere.h"
+#include "Game/collision/sphere.h"
 #include "Game/effects/debris.h"
 #include "Game/effects/effects.h"
 #include "Game/effects/simple_particle.h"
@@ -97,11 +97,11 @@ CollidedObjectData GetCollidedObjects(ItemInfo& collidingItem, bool onlyVisible,
 
 	auto collObjects = CollidedObjectData{};
 
-	int itemCount	= 0;
+	int itemCount   = 0;
 	int staticCount = 0;
 
 	// Establish parameters of colliding item.
-	const auto& collidingBounds = GetClosestKeyframe(collidingItem).BoundingBox;
+	const auto& collidingBounds = GetFrame(collidingItem).BoundingBox;
 
 	// Quickly discard collision if colliding item bounds are below tolerance threshold.
 	if (!customRadius && collidingBounds.GetExtents().Length() <= COLLIDABLE_BOUNDS_THRESHOLD)
@@ -132,57 +132,50 @@ CollidedObjectData GetCollidedObjects(ItemInfo& collidingItem, bool onlyVisible,
 		if (mode == ObjectCollectionMode::All ||
 			mode == ObjectCollectionMode::Items)
 		{
-			int itemNumber = neighborRoom.itemNumber;
-			if (itemNumber != NO_VALUE)
+			for (int itemNumber : neighborRoom.itemNumbers)
 			{
-				do
-				{
-					auto& item = g_Level.Items[itemNumber];
-					const auto& object = Objects[item.ObjectNumber];
+				auto& item = g_Level.Items[itemNumber];
+				const auto& object = Objects[item.ObjectNumber];
 
-					itemNumber = item.NextItem;
+				// Ignore player (if applicable).
+				if (ignorePlayer && item.IsLara())
+					continue;
 
-					// Ignore player (if applicable).
-					if (ignorePlayer && item.IsLara())
-						continue;
+				// Ignore invisible item (if applicable).
+				if (onlyVisible && item.Status == ITEM_INVISIBLE)
+					continue;
 
-					// Ignore invisible item (if applicable).
-					if (onlyVisible && item.Status == ITEM_INVISIBLE)
-						continue;
+				// Ignore items not feasible for collision.
+				if (item.Index == collidingItem.Index || item.Flags & IFLAG_KILLED || item.MeshBits == NO_JOINT_BITS)
+					continue;
 
-					// Ignore items not feasible for collision.
-					if (item.Index == collidingItem.Index || item.Flags & IFLAG_KILLED || item.MeshBits == NO_JOINT_BITS)
-						continue;
+				// Ignore non-collidable non-player.
+				if (!item.IsLara() && (!item.Collidable || object.Hidden || object.collision == nullptr))
+					continue;
 
-					// Ignore non-collidable non-player.
-					if (!item.IsLara() && (!item.Collidable || object.Hidden || object.collision == nullptr))
-						continue;
+				// HACK: Ignore UPV and big gun.
+				if ((item.ObjectNumber == ID_UPV || item.ObjectNumber == ID_BIGGUN) && item.HitPoints == 1)
+					continue;
 
-					// HACK: Ignore UPV and big gun.
-					if ((item.ObjectNumber == ID_UPV || item.ObjectNumber == ID_BIGGUN) && item.HitPoints == 1)
-						continue;
+				// Test rough distance to discard objects more than 6 blocks away.
+				float dist = Vector3i::Distance(item.Pose.Position, collidingItem.Pose.Position);
+				if (dist > COLLISION_CHECK_DISTANCE)
+					continue;
 
-					// Test rough distance to discard objects more than 6 blocks away.
-					float dist = Vector3i::Distance(item.Pose.Position, collidingItem.Pose.Position);
-					if (dist > COLLISION_CHECK_DISTANCE)
-						continue;
+				// If item bounding box extents is below tolerance threshold, discard object.
+				const auto& bounds = GetFrame(item).BoundingBox;
+				if (bounds.GetExtents().Length() <= COLLIDABLE_BOUNDS_THRESHOLD)
+					continue;
 
-					// If item bounding box extents is below tolerance threshold, discard object.
-					const auto& bounds = GetClosestKeyframe(item).BoundingBox;
-					if (bounds.GetExtents().Length() <= COLLIDABLE_BOUNDS_THRESHOLD)
-						continue;
+				// Test conservative AABB intersection.
+				auto aabb = bounds.ToConservativeBoundingBox(item.Pose);
+				if (!aabb.Intersects(collidingAabb))
+					continue;
 
-					// Test conservative AABB intersection.
-					auto aabb = bounds.ToConservativeBoundingBox(item.Pose);
-					if (!aabb.Intersects(collidingAabb))
-						continue;
-
-					// Test accurate OBB intersection.
-					auto obb = bounds.ToBoundingOrientedBox(item.Pose);
-					if (obb.Intersects(convertedBounds))
-						collObjects.Items.push_back(&item);
-				}
-				while (itemNumber != NO_VALUE);
+				// Test accurate OBB intersection.
+				auto obb = bounds.ToBoundingOrientedBox(item.Pose);
+				if (obb.Intersects(convertedBounds))
+					collObjects.Items.push_back(&item);
 			}
 		}
 
@@ -224,7 +217,7 @@ CollidedObjectData GetCollidedObjects(ItemInfo& collidingItem, bool onlyVisible,
 
 bool TestWithGlobalCollisionBounds(ItemInfo* item, ItemInfo* laraItem, CollisionInfo* coll)
 {
-	const auto& bounds = GetClosestKeyframe(*laraItem).BoundingBox;
+	const auto& bounds = GetFrame(*laraItem).BoundingBox;
 
 	if ((item->Pose.Position.y + GlobalCollisionBounds.Y2) <= (laraItem->Pose.Position.y + bounds.Y1))
 		return false;
@@ -415,8 +408,10 @@ bool MoveLaraPosition(const Vector3i& offset, ItemInfo* item, ItemInfo* laraItem
 	auto pos = Vector3::Transform(offset.ToVector3(), rotMatrix);
 	auto target = Pose(item->Pose.Position + Vector3i(pos), item->Pose.Orientation);
 
-	if (!Objects[item->ObjectNumber].isPickup)
+	if (!Objects[item->ObjectNumber].isPickup || lara->Control.WaterStatus == WaterStatus::Underwater)
+	{
 		return Move3DPosTo3DPos(laraItem, laraItem->Pose, target, LARA_ALIGN_VELOCITY, ANGLE(2.0f));
+	}
 	else
 	{
 		// Prevent picking up items which can result in so called "flare pickup bug"
@@ -560,8 +555,8 @@ bool Move3DPosTo3DPos(ItemInfo* item, Pose& fromPose, const Pose& toPose, int ve
 
 bool TestBoundsCollide(ItemInfo* item, ItemInfo* laraItem, int radius)
 {
-	const auto& bounds = GetClosestKeyframe(*item).BoundingBox;
-	const auto& playerBounds = GetClosestKeyframe(*laraItem).BoundingBox;
+	const auto& bounds = GetFrame(*item).BoundingBox;
+	const auto& playerBounds = GetFrame(*laraItem).BoundingBox;
 
 	if (bounds.GetExtents() == Vector3::Zero || playerBounds.GetExtents() == Vector3::Zero)
 		return false;
@@ -595,14 +590,18 @@ bool TestBoundsCollideStatic(ItemInfo* item, const StaticMesh& mesh, int radius)
 {
 	const auto& bounds = GetBoundsAccurate(mesh, false);
 
-	if (!(bounds.Z2 != 0 || bounds.Z1 != 0 || bounds.X1 != 0 || bounds.X2 != 0 || bounds.Y1 != 0 || bounds.Y2 != 0))
+	if (!(bounds.Z2 != 0 || bounds.Z1 != 0 ||
+		  bounds.X1 != 0 || bounds.X2 != 0 ||
+		  bounds.Y1 != 0 || bounds.Y2 != 0))
+	{
+		return false;
+	}
+
+	const auto& itemBounds = GetFrame(*item).BoundingBox;
+	if ((mesh.Pose.Position.y + bounds.Y2) <= (item->Pose.Position.y + itemBounds.Y1))
 		return false;
 
-	const auto& itemBounds = GetClosestKeyframe(*item).BoundingBox;
-	if (mesh.Pose.Position.y + bounds.Y2 <= item->Pose.Position.y + itemBounds.Y1)
-		return false;
-
-	if (mesh.Pose.Position.y + bounds.Y1 >= item->Pose.Position.y + itemBounds.Y2)
+	if ((mesh.Pose.Position.y + bounds.Y1) >= (item->Pose.Position.y + itemBounds.Y2))
 		return false;
 
 	float sinY = phd_sin(mesh.Pose.Orientation.y);
@@ -761,9 +760,7 @@ bool ItemPushItem(ItemInfo* item, ItemInfo* item2)
 	int rx = (direction.x * cosY) - (direction.z * sinY);
 	int rz = (direction.z * cosY) + (direction.x * sinY);
 
-	const auto& anim = GetAnimData(*item);
-	const auto& keyframe = anim.GetClosestKeyframe(item->Animation.FrameNumber);
-	const auto& bounds = keyframe.BoundingBox;
+	const auto& bounds = GetFrame(*item).BoundingBox;
 
 	int minX = bounds.X1;
 	int maxX = bounds.X2;
@@ -1319,7 +1316,7 @@ void DoProjectileDynamics(short itemNumber, int x, int y, int z, int xv, int yv,
 
 		if (pointColl.IsSteepFloor() && prevPointColl.GetFloorHeight() < pointColl.GetFloorHeight())
 		{
-			int yAngle = (long)((unsigned short)item->Pose.Orientation.y);
+			int yAngle = (int)((unsigned short)item->Pose.Orientation.y);
 
 			if (floorTilt.x < 0)
 			{
@@ -1352,7 +1349,7 @@ void DoProjectileDynamics(short itemNumber, int x, int y, int z, int xv, int yv,
 		{
 			// Need to know which direction the wall is.
 
-			long xs;
+			int xs;
 
 			if ((x & (~WALL_MASK)) != (item->Pose.Position.x & (~WALL_MASK)) &&	// X crossed boundary?
 				(z & (~WALL_MASK)) != (item->Pose.Position.z & (~WALL_MASK)))	// Z crossed boundary as well?
@@ -1842,17 +1839,10 @@ void DoObjectCollision(ItemInfo* item, CollisionInfo* coll)
 		if (!neighborRoom.Active())
 			continue;
 
-		int nextItemNumber = neighborRoom.itemNumber;
-		while (nextItemNumber != NO_VALUE)
+		// Check items.
+		for (int itemNumber : neighborRoom.itemNumbers)
 		{
-			auto& linkItem = g_Level.Items[nextItemNumber];
-			int itemNumber = nextItemNumber;
-
-			// HACK: For some reason, sometimes an infinite loop may happen here.
-			if (nextItemNumber == linkItem.NextItem)
-				break;
-
-			nextItemNumber = linkItem.NextItem;
+			auto& linkItem = g_Level.Items[itemNumber];
 
 			if (&linkItem == item)
 				continue;
@@ -1938,6 +1928,7 @@ void DoObjectCollision(ItemInfo* item, CollisionInfo* coll)
 			}
 		}
 
+		// Check statics.
 		for (auto& staticObject : neighborRoom.mesh)
 		{
 			// Check if static is visible.
@@ -1962,7 +1953,7 @@ void DoObjectCollision(ItemInfo* item, CollisionInfo* coll)
 			coll->HitStatic = true;
 
 			// HACK: Shatter statics only by harmful vehicles.
-			if (!isPlayer && 
+			if (!isPlayer &&
 				!isHarmless && abs(item->Animation.Velocity.z) > VEHICLE_COLLISION_TERMINAL_VELOCITY &&
 				Statics[staticObject.Slot].shatterType != ShatterType::None)
 			{
