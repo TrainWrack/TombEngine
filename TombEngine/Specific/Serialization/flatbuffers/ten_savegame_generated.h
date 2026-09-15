@@ -4940,10 +4940,10 @@ struct PlayerAttractorDataT : public flatbuffers::NativeTable {
   typedef PlayerAttractorData TableType;
   int32_t bridge_item_number = 0;
   float chain_distance = 0.0f;
-  std::unique_ptr<TEN::Save::EulerAngles> rel_delta_orient{};
-  std::unique_ptr<TEN::Save::Vector3> rel_delta_pos{};
-  std::unique_ptr<TEN::Save::EulerAngles> rel_orient_offset{};
-  std::unique_ptr<TEN::Save::Vector3> rel_pos_offset{};
+  std::unique_ptr<TEN::Serialization::Common::EulerAngles> rel_delta_orient{};
+  std::unique_ptr<TEN::Serialization::Common::Vector3> rel_delta_pos{};
+  std::unique_ptr<TEN::Serialization::Common::EulerAngles> rel_orient_offset{};
+  std::unique_ptr<TEN::Serialization::Common::Vector3> rel_pos_offset{};
   int32_t room_number = 0;
   int32_t room_attrac_id = 0;
 };
@@ -4968,17 +4968,17 @@ struct PlayerAttractorData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table 
   float chain_distance() const {
     return GetField<float>(VT_CHAIN_DISTANCE, 0.0f);
   }
-  const TEN::Save::EulerAngles *rel_delta_orient() const {
-    return GetStruct<const TEN::Save::EulerAngles *>(VT_REL_DELTA_ORIENT);
+  const TEN::Serialization::Common::EulerAngles *rel_delta_orient() const {
+    return GetStruct<const TEN::Serialization::Common::EulerAngles *>(VT_REL_DELTA_ORIENT);
   }
-  const TEN::Save::Vector3 *rel_delta_pos() const {
-    return GetStruct<const TEN::Save::Vector3 *>(VT_REL_DELTA_POS);
+  const TEN::Serialization::Common::Vector3 *rel_delta_pos() const {
+    return GetStruct<const TEN::Serialization::Common::Vector3 *>(VT_REL_DELTA_POS);
   }
-  const TEN::Save::EulerAngles *rel_orient_offset() const {
-    return GetStruct<const TEN::Save::EulerAngles *>(VT_REL_ORIENT_OFFSET);
+  const TEN::Serialization::Common::EulerAngles *rel_orient_offset() const {
+    return GetStruct<const TEN::Serialization::Common::EulerAngles *>(VT_REL_ORIENT_OFFSET);
   }
-  const TEN::Save::Vector3 *rel_pos_offset() const {
-    return GetStruct<const TEN::Save::Vector3 *>(VT_REL_POS_OFFSET);
+  const TEN::Serialization::Common::Vector3 *rel_pos_offset() const {
+    return GetStruct<const TEN::Serialization::Common::Vector3 *>(VT_REL_POS_OFFSET);
   }
   int32_t room_number() const {
     return GetField<int32_t>(VT_ROOM_NUMBER, 0);
@@ -4990,10 +4990,10 @@ struct PlayerAttractorData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table 
     return VerifyTableStart(verifier) &&
            VerifyField<int32_t>(verifier, VT_BRIDGE_ITEM_NUMBER) &&
            VerifyField<float>(verifier, VT_CHAIN_DISTANCE) &&
-           VerifyField<TEN::Save::EulerAngles>(verifier, VT_REL_DELTA_ORIENT) &&
-           VerifyField<TEN::Save::Vector3>(verifier, VT_REL_DELTA_POS) &&
-           VerifyField<TEN::Save::EulerAngles>(verifier, VT_REL_ORIENT_OFFSET) &&
-           VerifyField<TEN::Save::Vector3>(verifier, VT_REL_POS_OFFSET) &&
+           VerifyField<TEN::Serialization::Common::EulerAngles>(verifier, VT_REL_DELTA_ORIENT) &&
+           VerifyField<TEN::Serialization::Common::Vector3>(verifier, VT_REL_DELTA_POS) &&
+           VerifyField<TEN::Serialization::Common::EulerAngles>(verifier, VT_REL_ORIENT_OFFSET) &&
+           VerifyField<TEN::Serialization::Common::Vector3>(verifier, VT_REL_POS_OFFSET) &&
            VerifyField<int32_t>(verifier, VT_ROOM_NUMBER) &&
            VerifyField<int32_t>(verifier, VT_ROOM_ATTRAC_ID) &&
            verifier.EndTable();
@@ -5013,16 +5013,16 @@ struct PlayerAttractorDataBuilder {
   void add_chain_distance(float chain_distance) {
     fbb_.AddElement<float>(PlayerAttractorData::VT_CHAIN_DISTANCE, chain_distance, 0.0f);
   }
-  void add_rel_delta_orient(const TEN::Save::EulerAngles *rel_delta_orient) {
+  void add_rel_delta_orient(const TEN::Serialization::Common::EulerAngles *rel_delta_orient) {
     fbb_.AddStruct(PlayerAttractorData::VT_REL_DELTA_ORIENT, rel_delta_orient);
   }
-  void add_rel_delta_pos(const TEN::Save::Vector3 *rel_delta_pos) {
+  void add_rel_delta_pos(const TEN::Serialization::Common::Vector3 *rel_delta_pos) {
     fbb_.AddStruct(PlayerAttractorData::VT_REL_DELTA_POS, rel_delta_pos);
   }
-  void add_rel_orient_offset(const TEN::Save::EulerAngles *rel_orient_offset) {
+  void add_rel_orient_offset(const TEN::Serialization::Common::EulerAngles *rel_orient_offset) {
     fbb_.AddStruct(PlayerAttractorData::VT_REL_ORIENT_OFFSET, rel_orient_offset);
   }
-  void add_rel_pos_offset(const TEN::Save::Vector3 *rel_pos_offset) {
+  void add_rel_pos_offset(const TEN::Serialization::Common::Vector3 *rel_pos_offset) {
     fbb_.AddStruct(PlayerAttractorData::VT_REL_POS_OFFSET, rel_pos_offset);
   }
   void add_room_number(int32_t room_number) {
@@ -5046,10 +5046,10 @@ inline flatbuffers::Offset<PlayerAttractorData> CreatePlayerAttractorData(
     flatbuffers::FlatBufferBuilder &_fbb,
     int32_t bridge_item_number = 0,
     float chain_distance = 0.0f,
-    const TEN::Save::EulerAngles *rel_delta_orient = 0,
-    const TEN::Save::Vector3 *rel_delta_pos = 0,
-    const TEN::Save::EulerAngles *rel_orient_offset = 0,
-    const TEN::Save::Vector3 *rel_pos_offset = 0,
+    const TEN::Serialization::Common::EulerAngles *rel_delta_orient = 0,
+    const TEN::Serialization::Common::Vector3 *rel_delta_pos = 0,
+    const TEN::Serialization::Common::EulerAngles *rel_orient_offset = 0,
+    const TEN::Serialization::Common::Vector3 *rel_pos_offset = 0,
     int32_t room_number = 0,
     int32_t room_attrac_id = 0) {
   PlayerAttractorDataBuilder builder_(_fbb);
@@ -5073,7 +5073,7 @@ flatbuffers::Offset<PlayerAttractorData> CreatePlayerAttractorData(flatbuffers::
 
 struct PlayerContextDataT : public flatbuffers::NativeTable {
   typedef PlayerContextData TableType;
-  std::unique_ptr<TEN::Save::PlayerAttractorDataT> attractor{};
+  std::unique_ptr<TEN::Serialization::Save::PlayerAttractorDataT> attractor{};
   int32_t calc_jump_velocity = 0;
   int32_t interacted_item_number = 0;
   std::unique_ptr<TEN::Serialization::Common::Pose> next_corner_pose{};
@@ -5101,8 +5101,8 @@ struct PlayerContextData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_WATER_CURRENT_PULL = 20,
     VT_WATER_SURFACE_DIST = 22
   };
-  const TEN::Save::PlayerAttractorData *attractor() const {
-    return GetPointer<const TEN::Save::PlayerAttractorData *>(VT_ATTRACTOR);
+  const TEN::Serialization::Save::PlayerAttractorData *attractor() const {
+    return GetPointer<const TEN::Serialization::Save::PlayerAttractorData *>(VT_ATTRACTOR);
   }
   int32_t calc_jump_velocity() const {
     return GetField<int32_t>(VT_CALC_JUMP_VELOCITY, 0);
@@ -5155,7 +5155,7 @@ struct PlayerContextDataBuilder {
   typedef PlayerContextData Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_attractor(flatbuffers::Offset<TEN::Save::PlayerAttractorData> attractor) {
+  void add_attractor(flatbuffers::Offset<TEN::Serialization::Save::PlayerAttractorData> attractor) {
     fbb_.AddOffset(PlayerContextData::VT_ATTRACTOR, attractor);
   }
   void add_calc_jump_velocity(int32_t calc_jump_velocity) {
@@ -5198,7 +5198,7 @@ struct PlayerContextDataBuilder {
 
 inline flatbuffers::Offset<PlayerContextData> CreatePlayerContextData(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<TEN::Save::PlayerAttractorData> attractor = 0,
+    flatbuffers::Offset<TEN::Serialization::Save::PlayerAttractorData> attractor = 0,
     int32_t calc_jump_velocity = 0,
     int32_t interacted_item_number = 0,
     const TEN::Serialization::Common::Pose *next_corner_pose = 0,
@@ -12399,10 +12399,10 @@ inline void PlayerAttractorData::UnPackTo(PlayerAttractorDataT *_o, const flatbu
   (void)_resolver;
   { auto _e = bridge_item_number(); _o->bridge_item_number = _e; }
   { auto _e = chain_distance(); _o->chain_distance = _e; }
-  { auto _e = rel_delta_orient(); if (_e) _o->rel_delta_orient = std::unique_ptr<TEN::Save::EulerAngles>(new TEN::Save::EulerAngles(*_e)); }
-  { auto _e = rel_delta_pos(); if (_e) _o->rel_delta_pos = std::unique_ptr<TEN::Save::Vector3>(new TEN::Save::Vector3(*_e)); }
-  { auto _e = rel_orient_offset(); if (_e) _o->rel_orient_offset = std::unique_ptr<TEN::Save::EulerAngles>(new TEN::Save::EulerAngles(*_e)); }
-  { auto _e = rel_pos_offset(); if (_e) _o->rel_pos_offset = std::unique_ptr<TEN::Save::Vector3>(new TEN::Save::Vector3(*_e)); }
+  { auto _e = rel_delta_orient(); if (_e) _o->rel_delta_orient = std::unique_ptr<TEN::Serialization::Common::EulerAngles>(new TEN::Serialization::Common::EulerAngles(*_e)); }
+  { auto _e = rel_delta_pos(); if (_e) _o->rel_delta_pos = std::unique_ptr<TEN::Serialization::Common::Vector3>(new TEN::Serialization::Common::Vector3(*_e)); }
+  { auto _e = rel_orient_offset(); if (_e) _o->rel_orient_offset = std::unique_ptr<TEN::Serialization::Common::EulerAngles>(new TEN::Serialization::Common::EulerAngles(*_e)); }
+  { auto _e = rel_pos_offset(); if (_e) _o->rel_pos_offset = std::unique_ptr<TEN::Serialization::Common::Vector3>(new TEN::Serialization::Common::Vector3(*_e)); }
   { auto _e = room_number(); _o->room_number = _e; }
   { auto _e = room_attrac_id(); _o->room_attrac_id = _e; }
 }
@@ -12423,7 +12423,7 @@ inline flatbuffers::Offset<PlayerAttractorData> CreatePlayerAttractorData(flatbu
   auto _rel_pos_offset = _o->rel_pos_offset ? _o->rel_pos_offset.get() : 0;
   auto _room_number = _o->room_number;
   auto _room_attrac_id = _o->room_attrac_id;
-  return TEN::Save::CreatePlayerAttractorData(
+  return TEN::Serialization::Save::CreatePlayerAttractorData(
       _fbb,
       _bridge_item_number,
       _chain_distance,
@@ -12444,7 +12444,7 @@ inline PlayerContextDataT *PlayerContextData::UnPack(const flatbuffers::resolver
 inline void PlayerContextData::UnPackTo(PlayerContextDataT *_o, const flatbuffers::resolver_function_t *_resolver) const {
   (void)_o;
   (void)_resolver;
-  { auto _e = attractor(); if (_e) _o->attractor = std::unique_ptr<TEN::Save::PlayerAttractorDataT>(_e->UnPack(_resolver)); }
+  { auto _e = attractor(); if (_e) _o->attractor = std::unique_ptr<TEN::Serialization::Save::PlayerAttractorDataT>(_e->UnPack(_resolver)); }
   { auto _e = calc_jump_velocity(); _o->calc_jump_velocity = _e; }
   { auto _e = interacted_item_number(); _o->interacted_item_number = _e; }
   { auto _e = next_corner_pose(); if (_e) _o->next_corner_pose = std::unique_ptr<TEN::Serialization::Common::Pose>(new TEN::Serialization::Common::Pose(*_e)); }

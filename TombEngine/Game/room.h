@@ -115,35 +115,35 @@ public:
 	void DrawDebug() const;
 };
 
-class RoomObjectTreeHandler
-{
-private:
-	// Constants
-
-	static constexpr auto AABB_BOUNDARY = BLOCK(0.1f);
-
-	// Fields
-
-	Bvh _tree = Bvh();
-
-public:
-	// Constructors
-
-	RoomObjectTreeHandler() = default;
-	RoomObjectTreeHandler(const std::vector<int>& ids, const std::vector<BoundingBox>& aabbs);
-
-	// Getters
-
-	std::vector<int> GetIds() const;
-	std::vector<int> GetBoundedIds(const Ray& ray, float dist) const;
-	std::vector<int> GetBoundedIds(const BoundingSphere& sphere) const;
-
-	// Utilities
-
-	void Insert(int id, const BoundingBox& aabb);
-	void Move(int id, const BoundingBox& aabb);
-	void Remove(int id);
-};
+//class RoomObjectTreeHandler
+//{
+//private:
+//	// Constants
+//
+//	static constexpr auto AABB_BOUNDARY = BLOCK(0.1f);
+//
+//	// Fields
+//
+//	Bvh _tree = Bvh();
+//
+//public:
+//	// Constructors
+//
+//	RoomObjectTreeHandler() = default;
+//	RoomObjectTreeHandler(const std::vector<int>& ids, const std::vector<BoundingBox>& aabbs);
+//
+//	// Getters
+//
+//	std::vector<int> GetIds() const;
+//	std::vector<int> GetBoundedIds(const Ray& ray, float dist) const;
+//	std::vector<int> GetBoundedIds(const BoundingSphere& sphere) const;
+//
+//	// Utilities
+//
+//	void Insert(int id, const BoundingBox& aabb);
+//	void Move(int id, const BoundingBox& aabb);
+//	void Remove(int id);
+//};
 
 // TODO: Make class?
 struct RoomData

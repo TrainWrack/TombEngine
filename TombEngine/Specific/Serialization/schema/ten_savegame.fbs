@@ -331,10 +331,10 @@ table PlayerStatusData {
 table PlayerAttractorData {
 	bridge_item_number: int32;
 	chain_distance: float;
-	rel_delta_orient: EulerAngles;
-	rel_delta_pos: Vector3;
-	rel_orient_offset: EulerAngles;
-	rel_pos_offset: Vector3;
+	rel_delta_orient: TEN.Serialization.Common.EulerAngles;
+	rel_delta_pos: TEN.Serialization.Common.Vector3;
+	rel_orient_offset: TEN.Serialization.Common.EulerAngles;
+	rel_pos_offset: TEN.Serialization.Common.Vector3;
 	room_number: int32;
 	room_attrac_id: int32;
 }

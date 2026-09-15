@@ -787,7 +787,6 @@ namespace TEN::Renderer
 		void UpdateDumpScreenRenderTarget();
 
 		RendererDebugPage GetDebugPage() const;
-		void			  SetGraphicsSettingsChanged();
 	};
 
 	extern Renderer g_Renderer;

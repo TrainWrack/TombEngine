@@ -35,45 +35,45 @@ int  FlipMap[MAX_FLIPMAP];
 
 std::vector<short> OutsideRoomTable[OUTSIDE_SIZE][OUTSIDE_SIZE];
 
-RoomObjectTreeHandler::RoomObjectTreeHandler(const std::vector<int>& ids, const std::vector<BoundingBox>& aabbs)
-{
-	_tree = Bvh(ids, aabbs);
-}
-
-std::vector<int> RoomObjectTreeHandler::GetIds() const
-{
-	return _tree.GetBoundedObjectIds();
-}
-
-std::vector<int> RoomObjectTreeHandler::GetBoundedIds(const Ray& ray, float dist) const
-{
-	return _tree.GetBoundedObjectIds(ray, dist);
-}
-
-std::vector<int> RoomObjectTreeHandler::GetBoundedIds(const BoundingSphere& sphere) const
-{
-	return _tree.GetBoundedObjectIds(sphere);
-}
-
-void RoomObjectTreeHandler::Insert(int id, const BoundingBox& aabb)
-{
-	_tree.Insert(id, aabb, AABB_BOUNDARY);
-}
-
-void RoomObjectTreeHandler::Move(int id, const BoundingBox& aabb)
-{
-	_tree.Move(id, aabb, AABB_BOUNDARY);
-}
-
-void RoomObjectTreeHandler::Remove(int id)
-{
-	_tree.Remove(id);
-}
-
-bool RoomData::Active() const
-{
-	return _tree.GetBoundedObjectIds();
-}
+//RoomObjectTreeHandler::RoomObjectTreeHandler(const std::vector<int>& ids, const std::vector<BoundingBox>& aabbs)
+//{
+//	_tree = Bvh(ids, aabbs);
+//}
+//
+//std::vector<int> RoomObjectTreeHandler::GetIds() const
+//{
+//	return _tree.GetBoundedObjectIds();
+//}
+//
+//std::vector<int> RoomObjectTreeHandler::GetBoundedIds(const Ray& ray, float dist) const
+//{
+//	return _tree.GetBoundedObjectIds(ray, dist);
+//}
+//
+//std::vector<int> RoomObjectTreeHandler::GetBoundedIds(const BoundingSphere& sphere) const
+//{
+//	return _tree.GetBoundedObjectIds(sphere);
+//}
+//
+//void RoomObjectTreeHandler::Insert(int id, const BoundingBox& aabb)
+//{
+//	_tree.Insert(id, aabb, AABB_BOUNDARY);
+//}
+//
+//void RoomObjectTreeHandler::Move(int id, const BoundingBox& aabb)
+//{
+//	_tree.Move(id, aabb, AABB_BOUNDARY);
+//}
+//
+//void RoomObjectTreeHandler::Remove(int id)
+//{
+//	_tree.Remove(id);
+//}
+//
+//bool RoomData::Active() const
+//{
+//	return _tree.GetBoundedObjectIds();
+//}
 
 std::vector<int> RoomObjectHandler::GetBoundedIds(const Ray& ray, float dist) const
 {
@@ -716,36 +716,12 @@ void DoFlipMap(int group)
 		if (room.flippedRoom != NO_VALUE && room.flipNumber == group)
 		{
 			auto& flippedRoom = g_Level.Rooms[room.flippedRoom];
-
-			RemoveRoomFlipItems(room);
-
-			// Detach players from attractors.
-			for (auto& attrac : room.Attractors)
-				attrac.DetachAllItems();
-
-			// Swap rooms.
-			std::swap(room, flippedRoom);
-			room.flippedRoom = flippedRoom.flippedRoom;
-			flippedRoom.flippedRoom = NO_VALUE;
-			room.itemNumber = flippedRoom.itemNumber;
-			room.fxNumber = flippedRoom.fxNumber;
-
-			AddRoomFlipItems(room);
-
 			FlipRooms(roomNumber, room, flippedRoom);
-
-			// Update active room sectors.
-			for (auto& sector : room.Sectors)
-				sector.RoomNumber = roomNumber;
-
-			// Update flipped room sectors.
-			for (auto& sector : flippedRoom.Sectors)
-				sector.RoomNumber = room.flippedRoom;
 		}
 	}
 
 	FlipStatus =
-	FlipStats[group] = !FlipStats[group];
+		FlipStats[group] = !FlipStats[group];
 
 	for (auto creatureIndex : ActiveCreatures)
 		GetCreatureInfo(&g_Level.Items[creatureIndex])->LOT.TargetBox = NO_VALUE;

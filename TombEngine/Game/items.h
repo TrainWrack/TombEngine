@@ -17,7 +17,7 @@ using namespace TEN::Scripting::Properties;
 using namespace TEN::Math;
 using namespace TEN::Scripting;
 using namespace TEN::Utils;
-using MoveableCallbackData = std::array<std::string, (int)EntityCallbackPoint::Count>;
+using EntityCallbackData = std::array<std::string, (int)EntityCallbackPoint::Count>;
 
 constexpr float VERTICAL_VELOCITY_GRAVITY_THRESHOLD = CLICK(0.5f);
 
@@ -130,7 +130,7 @@ struct EntityAnimationData
 	MoveableAnimBlendData Blend = {};
 };
 
-struct MoveableModelData
+struct EntityModelData
 {
 	int BaseMesh      = 0;
 	int SkinObjectID  = NO_VALUE;
@@ -144,7 +144,7 @@ struct MoveableModelData
 	int GetSkinGlobalIndex() const;
 };
 
-struct MoveableEffectData
+struct EntityEffectData
 {
 	EffectType Type					= EffectType::None;
 	Vector3	   LightColor			= Vector3::Zero;
@@ -161,12 +161,6 @@ struct ItemInfo
 
 	ItemStatus Status = ITEM_NOT_ACTIVE;
 	bool	   Active = false;
-
-	ItemData             Data      = {};
-	MoveableAnimData     Animation = {};
-	MoveableModelData    Model     = {};
-	MoveableEffectData   Effect    = {};
-	MoveableCallbackData Callbacks = {};
 
 	ItemData			Data	  = {};
 	EntityAnimationData Animation = {};

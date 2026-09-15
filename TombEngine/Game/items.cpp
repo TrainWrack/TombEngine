@@ -147,6 +147,8 @@ void ItemInfo::HandleOffsetBlend()
 
 		OffsetBlend.Clear();
 	}
+}
+
 float MoveableAnimBlendData::GetAlpha() const
 {
 	float curveX = (FrameCount != 0) ? ((float)FrameNumber / (float)FrameCount) : 0.0f;
@@ -158,7 +160,7 @@ bool MoveableAnimBlendData::IsEnabled() const
 	return (FrameCount != 0);
 }
 
-int MoveableModelData::GetSkinGlobalIndex() const
+int EntityModelData::GetSkinGlobalIndex() const
 {
 	if (SkinObjectID == NO_VALUE)
 		return NO_VALUE;
@@ -687,16 +689,16 @@ void InitializeItem(short itemNumber)
 
 	item.ResetModelToDefault();
 
-	const auto& object = Objects[item->ObjectNumber];
+	const auto& object = Objects[item.ObjectNumber];
 	
 	if (object.Initialize != nullptr)
-		Objects[item->ObjectNumber].Initialize(itemNumber);
+		Objects[item.ObjectNumber].Initialize(itemNumber);
 
 	// Initialize bridge attractor.
-	if (item->IsBridge())
+	if (item.IsBridge())
 	{
-		auto& bridge = GetBridgeObject(*item);
-		bridge.Initialize(*item);
+		auto& bridge = GetBridgeObject(item);
+		bridge.Initialize(item);
 	}
 }
 
