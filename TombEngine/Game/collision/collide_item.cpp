@@ -271,8 +271,7 @@ bool TestForObjectOnLedge(const AttractorCollisionData& attracColl, float radius
 			continue;
 
 		// 1) Test item collision.
-		int collidedItemNumber = neighborRoom.itemNumber;
-		while (collidedItemNumber != NO_VALUE)
+		for (int collidedItemNumber : g_Level.Rooms[roomNumber].itemNumbers)
 		{
 			const auto& collidedItem = g_Level.Items[collidedItemNumber];
 			const auto& collidedObject = Objects[collidedItem.ObjectNumber];
@@ -280,13 +279,11 @@ bool TestForObjectOnLedge(const AttractorCollisionData& attracColl, float radius
 			if (collidedObject.intelligent || collidedObject.isPickup || collidedObject.collision == nullptr ||
 				!collidedItem.Collidable || collidedItem.Status == ITEM_INVISIBLE)
 			{
-				collidedItemNumber = collidedItem.NextItem;
 				continue;
 			}
 
 			if (Vector3i::Distance(attracColl.Intersection, collidedItem.Pose.Position) > COLLISION_CHECK_DISTANCE)
 			{
-				collidedItemNumber = collidedItem.NextItem;
 				continue;
 			}
 			
@@ -297,20 +294,18 @@ bool TestForObjectOnLedge(const AttractorCollisionData& attracColl, float radius
 				if (box.Intersects(origin, dir, dist) && dist < (radius * 2))
 					return true;
 			}
-
-			collidedItemNumber = collidedItem.NextItem;
 		}
 
 		// 2) Test static collision.
 		for (auto& staticObject : neighborRoom.mesh)
 		{
-			if (!(staticObject.flags & StaticMeshFlags::SM_VISIBLE))
+			if (!(staticObject.Flags & StaticMeshFlags::SM_VISIBLE))
 				continue;
 
-			if (Vector3i::Distance(attracColl.Intersection, staticObject.pos.Position) > COLLISION_CHECK_DISTANCE)
+			if (Vector3i::Distance(attracColl.Intersection, staticObject.Pose.Position) > COLLISION_CHECK_DISTANCE)
 				continue;
 
-			const auto& box = GetBoundsAccurate(staticObject, false).ToBoundingOrientedBox(staticObject.pos);
+			const auto& box = GetBoundsAccurate(staticObject, false).ToBoundingOrientedBox(staticObject.Pose);
 			for (const auto& origin : origins)
 			{
 				float dist = 0.0f;
