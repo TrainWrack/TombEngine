@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Game/Lara/Context/HangDescent.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/collision/Attractor.h"
 #include "Game/collision/collide_item.h"
 #include "Game/collision/collide_room.h"
@@ -208,7 +208,7 @@ namespace TEN::Player
 			context.PathDistance = attracColl->PathDistance;
 			context.RelPosOffset = Vector3(0.0f, 0.0f, coll.Setup.Radius);
 			context.RelOrientOffset = EulerAngles::Identity;
-			context.TargetStateID = LS_CRAWL_EDGE_HANG_DESCENT_BACK;
+			context.TargetStateID = LS_CRAWL_TO_HANG;
 			context.AlignType = ClimbContextAlignType::AttractorParent;
 			context.IsJump = false;
 

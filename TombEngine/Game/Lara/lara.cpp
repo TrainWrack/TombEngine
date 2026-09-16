@@ -39,7 +39,6 @@ using namespace TEN::Control::Volumes;
 using namespace TEN::Effects::Hair;
 using namespace TEN::Effects::Items;
 using namespace TEN::Entities::Doors;
-using namespace TEN::Entities::Player;
 using namespace TEN::Input;
 using namespace TEN::Math;
 using namespace TEN::Gui;
@@ -50,11 +49,6 @@ using TEN::Renderer::g_Renderer;
 LaraInfo	  Lara			= {};
 ItemHandler	  LaraItem		= {};
 CollisionInfo LaraCollision = {};
-
-//---------debug
-#include <OISKeyboard.h>
-#include "Specific/Input/Input.h"
-//----------
 
 static void HandlePlayerDebug(const ItemInfo& item)
 {
@@ -138,54 +132,6 @@ static void HandlePlayerDebug(const ItemInfo& item)
 void LaraControl(ItemInfo* item, CollisionInfo* coll)
 {
 	auto& player = GetLaraInfo(*item);
-
-	//---------debug
-
-	HandleAttractorDebug(*item);
-
-	static int bridgeItemNumber = NO_VALUE;
-	if (coll->LastBridgeItemNumber != NO_VALUE)
-		bridgeItemNumber = coll->LastBridgeItemNumber;
-
-	if (false)
-	//if (bridgeItemNumber != NO_VALUE)
-	{
-		constexpr auto TRANSLATE_STEP = BLOCK(0.1f);
-
-		auto& bridgeItem = g_Level.Items[bridgeItemNumber];
-		auto& bridge = GetBridgeObject(bridgeItem);
-
-		// Force detachment.
-		if (KeyMap[OIS::KeyCode::KC_V])
-			bridge.GetAttractor().DetachAllItems();
-
-		// Move bridge.
-		if (KeyMap[OIS::KeyCode::KC_K])
-		{
-			auto rotMatrix = EulerAngles(0, Camera.actualAngle, 0).ToRotationMatrix();
-			auto offset = Vector3(AxisMap[(int)InputAxis::Mouse].x, 0.0f, -AxisMap[(int)InputAxis::Mouse].y) * 1000;
-			bridgeItem.Pose.Position += Vector3::Transform(offset, rotMatrix);
-
-			UpdateItemRoom(bridgeItem.Index);
-			UpdateBridgeItem(bridgeItem);
-		}
-		else if (KeyMap[OIS::KeyCode::KC_L])
-		{
-			auto offset = Vector3(0.0f, AxisMap[(int)InputAxis::Mouse].y, 0.0f) * 1000;
-			bridgeItem.Pose.Position += offset;
-
-			UpdateItemRoom(bridgeItem.Index);
-			UpdateBridgeItem(bridgeItem);
-		}
-
-		// Rotate bridge.
-		if (KeyMap[OIS::KeyCode::KC_B])
-			bridgeItem.Pose.Orientation.y += ANGLE(2.0f);
-
-		bridge.Update(bridgeItem);
-	}
-
-	//----------
 
 	// Alert nearby creatures.
 	if (player.Control.Weapon.HasFired)
@@ -459,17 +405,6 @@ void LaraControl(ItemInfo* item, CollisionInfo* coll)
 	SaveGame::Statistics.Game.Distance  += deltaDist;
 	SaveGame::Statistics.Level.Distance += deltaDist;
 
-	// Draw debug.
-	if (DebugMode)
-	{
-		DrawNearbyPathfinding(GetPointCollision(*item).GetBottomSector().PathfindingBoxID);
-		DrawNearbySectorFlags(*item);
-		DrawNearbyAttractors(item->Pose.Position.ToVector3(), item->RoomNumber, item->Pose.Orientation.y);
-
-		g_Renderer.AddDebugCylinder(
-			item->Pose.Position.ToVector3() - Vector3::UnitY, EulerAngles(ANGLE(90.0f), 0, 0).ToQuaternion(), coll->Setup.Radius, coll->Setup.Height,
-			Color(1.0f, 1.0f, 0.0f, 0.15f), RendererDebugPage::CollisionStats, false);
-	}
 	HandlePlayerDebug(*item);
 }
 

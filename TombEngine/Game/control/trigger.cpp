@@ -891,15 +891,15 @@ void ProcessSectorFlags(ItemInfo* item)
 		auto& player = GetLaraInfo(*item);
 		auto& climbSector = pointColl.GetBottomSector(true);
 
-		// Set wall climb status.
-		if (TestLaraNearClimbableWall(item, &climbSector))
-		{
-			player.Control.CanClimbLadder = true;
-		}
-		else
-		{
-			player.Control.CanClimbLadder = false;
-		}
+		//// Set wall climb status.
+		//if (TestLaraNearClimbableWall(item, &climbSector))
+		//{
+		//	player.Control.CanClimbLadder = true;
+		//}
+		//else
+		//{
+		//	player.Control.CanClimbLadder = false;
+		//}
 
 		// Set monkey swing status.
 		player.Control.CanMonkeySwing = climbSector.Flags.Monkeyswing;

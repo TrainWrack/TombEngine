@@ -1,8 +1,6 @@
 #include "framework.h"
 #include "Game/collision/AttractorDebug.h"
 
-#include <ois/OISKeyboard.h>
-
 #include "Game/collision/Attractor.h"
 #include "Game/items.h"
 #include "Game/Lara/lara.h"
@@ -87,52 +85,52 @@ namespace TEN::Collision::Attractor
 		static auto attracBPoint1 = Vector3::Zero;
 
 		// Set debug attractor 0.
-		if (KeyMap[OIS::KeyCode::KC_Q])
-		{
-			attracAPoint0 = attracPoint;
-			player.Context.DebugAttracs.Attrac0 = AttractorObject(AttractorType::Edge, Vector3::Zero, item.RoomNumber, Quaternion::Identity, { attracAPoint0, attracAPoint1 });
-		}
-		if (KeyMap[OIS::KeyCode::KC_W])
-		{
-			attracAPoint1 = attracPoint;
-			player.Context.DebugAttracs.Attrac0 = AttractorObject(AttractorType::Edge, Vector3::Zero, item.RoomNumber, Quaternion::Identity, { attracAPoint0, attracAPoint1 });
-		}
+		//if (KeyMap[OIS::KeyCode::KC_Q])
+		//{
+		//	attracAPoint0 = attracPoint;
+		//	player.Context.DebugAttracs.Attrac0 = AttractorObject(AttractorType::Edge, Vector3::Zero, item.RoomNumber, Quaternion::Identity, { attracAPoint0, attracAPoint1 });
+		//}
+		//if (KeyMap[OIS::KeyCode::KC_W])
+		//{
+		//	attracAPoint1 = attracPoint;
+		//	player.Context.DebugAttracs.Attrac0 = AttractorObject(AttractorType::Edge, Vector3::Zero, item.RoomNumber, Quaternion::Identity, { attracAPoint0, attracAPoint1 });
+		//}
 
-		// Set debug attractor 1.
-		if (KeyMap[OIS::KeyCode::KC_E])
-		{
-			attracBPoint0 = attracPoint;
-			player.Context.DebugAttracs.Attrac0 = AttractorObject(AttractorType::Edge, Vector3::Zero, item.RoomNumber, Quaternion::Identity, { attracBPoint0, attracBPoint1 });
-		}
-		if (KeyMap[OIS::KeyCode::KC_R])
-		{
-			attracBPoint1 = attracPoint;
-			player.Context.DebugAttracs.Attrac0 = AttractorObject(AttractorType::Edge, Vector3::Zero, item.RoomNumber, Quaternion::Identity, { attracBPoint0, attracBPoint1 });
-		}
+		//// Set debug attractor 1.
+		//if (KeyMap[OIS::KeyCode::KC_E])
+		//{
+		//	attracBPoint0 = attracPoint;
+		//	player.Context.DebugAttracs.Attrac0 = AttractorObject(AttractorType::Edge, Vector3::Zero, item.RoomNumber, Quaternion::Identity, { attracBPoint0, attracBPoint1 });
+		//}
+		//if (KeyMap[OIS::KeyCode::KC_R])
+		//{
+		//	attracBPoint1 = attracPoint;
+		//	player.Context.DebugAttracs.Attrac0 = AttractorObject(AttractorType::Edge, Vector3::Zero, item.RoomNumber, Quaternion::Identity, { attracBPoint0, attracBPoint1 });
+		//}
 
-		// Spawn attractor circle.
-		if (KeyMap[OIS::KeyCode::KC_T])
-			SpawnAttractorCircle(item, true);
-		if (KeyMap[OIS::KeyCode::KC_Y])
-			SpawnAttractorCircle(item, false);
+		//// Spawn attractor circle.
+		//if (KeyMap[OIS::KeyCode::KC_T])
+		//	SpawnAttractorCircle(item, true);
+		//if (KeyMap[OIS::KeyCode::KC_Y])
+		//	SpawnAttractorCircle(item, false);
 
-		// Spawn climbable wall attractor stack.
-		if (KeyMap[OIS::KeyCode::KC_G])
-		{
-			auto vPos = Vector3(item.Pose.Position.x, (floor(item.Pose.Position.y / CLICK(1)) * CLICK(1)) - CLICK(1), item.Pose.Position.z);
-			int inc = 0;
-			for (auto& attrac : player.Context.DebugAttracs.Attracs)
-			{
-				auto points = std::vector<Vector3>
-				{
-					Geometry::TranslatePoint(vPos, item.Pose.Orientation.y, 100, inc, -BLOCK(0.5f)),
-					Geometry::TranslatePoint(vPos, item.Pose.Orientation.y, 100, inc, BLOCK(0.5f)),
-				};
-				inc -= CLICK(1);
+		//// Spawn climbable wall attractor stack.
+		//if (KeyMap[OIS::KeyCode::KC_G])
+		//{
+		//	auto vPos = Vector3(item.Pose.Position.x, (floor(item.Pose.Position.y / CLICK(1)) * CLICK(1)) - CLICK(1), item.Pose.Position.z);
+		//	int inc = 0;
+		//	for (auto& attrac : player.Context.DebugAttracs.Attracs)
+		//	{
+		//		auto points = std::vector<Vector3>
+		//		{
+		//			Geometry::TranslatePoint(vPos, item.Pose.Orientation.y, 100, inc, -BLOCK(0.5f)),
+		//			Geometry::TranslatePoint(vPos, item.Pose.Orientation.y, 100, inc, BLOCK(0.5f)),
+		//		};
+		//		inc -= CLICK(1);
 
-				attrac = AttractorObject(AttractorType::WallEdge, Vector3::Zero, item.RoomNumber, Quaternion::Identity, points);
-			}
-		}
+		//		attrac = AttractorObject(AttractorType::WallEdge, Vector3::Zero, item.RoomNumber, Quaternion::Identity, points);
+		//	}
+		//}
 	}
 
 	void HandleAttractorDebug(ItemInfo& item)

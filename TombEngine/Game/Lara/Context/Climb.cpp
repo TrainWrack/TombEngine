@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Game/Lara/Context/Climb.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/collision/Attractor.h"
 #include "Game/collision/collide_item.h"
 #include "Game/collision/collide_room.h"
@@ -539,7 +539,7 @@ namespace TEN::Player
 		context = GetEdgeHangFlatShimmyLeftClimbContext(item, coll);
 		if (context.has_value())
 		{
-			//if (HasStateDispatch(&item, context->TargetStateID))
+			//if (TestStateDispatch(item, context->TargetStateID))
 			return context;
 		}
 
@@ -547,7 +547,7 @@ namespace TEN::Player
 		context = GetEdgeHangCornerShimmyLeftClimbContext(item, coll);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -602,7 +602,7 @@ namespace TEN::Player
 		context = GetEdgeHangFlatShimmyRightClimbContext(item, coll);
 		if (context.has_value())
 		{
-			//if (HasStateDispatch(&item, context->TargetStateID))
+			//if (TestStateDispatch(item, context->TargetStateID))
 			return context;
 		}
 
@@ -610,7 +610,7 @@ namespace TEN::Player
 		context = GetEdgeHangCornerShimmyRightClimbContext(item, coll);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -644,7 +644,7 @@ namespace TEN::Player
 
 		const auto& player = GetLaraInfo(item);
 
-		if (!HasStateDispatch(&item, LS_WALL_CLIMB_UP))
+		if (!TestStateDispatch(item, LS_WALL_CLIMB_UP))
 			return std::nullopt;
 
 		auto attracColl = GetEdgeVerticalMovementClimbAttractorCollision(item, coll, SETUP);
@@ -679,7 +679,7 @@ namespace TEN::Player
 
 		const auto& player = GetLaraInfo(item);
 
-		if (!HasStateDispatch(&item, LS_WALL_CLIMB_DOWN))
+		if (!TestStateDispatch(item, LS_WALL_CLIMB_DOWN))
 			return std::nullopt;
 
 		auto attracColl = GetEdgeVerticalMovementClimbAttractorCollision(item, coll, SETUP);

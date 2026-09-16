@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Game/Lara/Context/Vault.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/collision/Attractor.h"
 #include "Game/collision/collide_item.h"
 #include "Game/collision/collide_room.h"
@@ -573,7 +573,7 @@ namespace TEN::Player
 		context = GetStandVault1StepUpToCrouchClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -581,7 +581,7 @@ namespace TEN::Player
 		context = GetStandVault2StepsUpClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -589,7 +589,7 @@ namespace TEN::Player
 		context = GetStandVault2StepsUpToCrouchClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -597,7 +597,7 @@ namespace TEN::Player
 		context = GetStandVault3StepsUpToCrouchClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -605,7 +605,7 @@ namespace TEN::Player
 		context = GetStandVault3StepsUpClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -613,7 +613,7 @@ namespace TEN::Player
 		context = GetClimbableWallMountClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -621,7 +621,7 @@ namespace TEN::Player
 		context = GetAutoJumpClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -819,7 +819,7 @@ namespace TEN::Player
 		context = GetCrawlVault1StepDownToStandClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -827,7 +827,7 @@ namespace TEN::Player
 		context = GetCrawlVault1StepDownClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -835,7 +835,7 @@ namespace TEN::Player
 		context = GetCrawlVault1StepUpClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -845,7 +845,7 @@ namespace TEN::Player
 			context = GetCrawlVaultJumpClimbContext(item, coll, attracColls);
 			if (context.has_value())
 			{
-				if (HasStateDispatch(&item, context->TargetStateID))
+				if (TestStateDispatch(item, context->TargetStateID))
 					return context;
 			}
 		}
@@ -1132,7 +1132,7 @@ namespace TEN::Player
 		context = GetTreadWaterVault1StepDownToStandClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -1140,7 +1140,7 @@ namespace TEN::Player
 		context = GetTreadWaterVault1StepDownToCrouchClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -1148,7 +1148,7 @@ namespace TEN::Player
 		context = GetTreadWaterVault0StepsToStandClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -1156,7 +1156,7 @@ namespace TEN::Player
 		context = GetTreadWaterVault0StepsToCrouchClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -1164,7 +1164,7 @@ namespace TEN::Player
 		context = GetTreadWaterVault1StepUpToStandClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -1172,7 +1172,7 @@ namespace TEN::Player
 		context = GetTreadWaterVault1StepUpToCrouchClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
@@ -1180,7 +1180,7 @@ namespace TEN::Player
 		context = GetTreadWaterClimbableWallMountClimbContext(item, coll, attracColls);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 

@@ -367,7 +367,7 @@ void lara_col_slopeclimb(ItemInfo* item, CollisionInfo* coll)
 		}
 
 		// Test for slope to overhead ladder transition (convex).
-		if (GetClimbFlags(&probeUp.GetBottomSector(true)) & slopeData.ClimbOrient &&
+		if (/*GetClimbFlags(&probeUp.GetBottomSector(true)) & slopeData.ClimbOrient &&*/
 			InStrip(item->Pose.Position.x, item->Pose.Position.z, item->Pose.Orientation.y, CLICK(3), CLICK(4)))
 		{
 			//if (GetPointCollision(probeUp.Block, up.x, up.y, up.z).GetCeilingHeight() - item->Pose.Position.y <= (BLOCK(1.5f) - 80))  // Check if a wall is actually there.
@@ -1126,7 +1126,7 @@ void SlopeMonkeyExtra(ItemInfo* item, CollisionInfo* coll)
 			int y = item->Pose.Position.y - coll->Setup.Height;
 			auto probe = GetPointCollision(Vector3i(down.x, item->Pose.Position.y - coll->Setup.Height, down.z), item->RoomNumber);
 
-			if (probe.GetBottomSector(true).Flags.IsWallClimbable(GetClimbDirectionFlags(item->Pose.Orientation.y + ANGLE(180.0f))) &&
+			if (/*probe.GetBottomSector(true).Flags.IsWallClimbable(GetClimbDirectionFlags(item->Pose.Orientation.y + ANGLE(180.0f))) &&*/
 				probe.GetFloorHeight() >= (item->Pose.Position.y - CLICK(1)) &&
 				probe.GetCeilingHeight() <= (y - CLICK(1)))
 			{

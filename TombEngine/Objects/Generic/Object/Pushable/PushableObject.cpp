@@ -271,7 +271,7 @@ namespace TEN::Entities::Generic
 		{
 			// Not holding Action; do normal collision routine.
 			if (playerItem->Animation.ActiveState != LS_PUSHABLE_GRAB ||
-				!TestLastFrame(playerItem, LA_PUSHABLE_GRAB)/* ||
+				!TestLastFrame(*playerItem, LA_PUSHABLE_GRAB)/* ||
 				player.Context.NextCornerPos.Position.x != itemNumber*/)
 			{
 				// Use soft moveable object collision.

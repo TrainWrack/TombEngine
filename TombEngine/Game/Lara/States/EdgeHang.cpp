@@ -286,7 +286,7 @@ namespace TEN::Player
 				item->Animation.TargetState = climbContext->TargetStateID;
 				SetPlayerEdgeHangClimb(*item, *coll, *climbContext);
 
-				if ((IsHeld(In::Left) || IsHeld(In::StepLeft)) && !HasStateDispatch(item, item->Animation.TargetState))
+				if ((IsHeld(In::Left) || IsHeld(In::StepLeft)) && !TestStateDispatch(*item, item->Animation.TargetState))
 					return;
 			}
 
@@ -330,7 +330,7 @@ namespace TEN::Player
 				item->Animation.TargetState = climbContext->TargetStateID;
 				SetPlayerEdgeHangClimb(*item, *coll, *climbContext);
 
-				if ((IsHeld(In::Right) || IsHeld(In::StepRight)) && !HasStateDispatch(item, item->Animation.TargetState))
+				if ((IsHeld(In::Right) || IsHeld(In::StepRight)) && !TestStateDispatch(*item, item->Animation.TargetState))
 					return;
 			}
 

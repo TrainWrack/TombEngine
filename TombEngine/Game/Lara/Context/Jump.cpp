@@ -1,7 +1,7 @@
 #include "framework.h"
 #include "Game/Lara/Context/Jump.h"
 
-#include "Game/animation.h"
+#include "Game/Animation/Animation.h"
 #include "Game/collision/Attractor.h"
 #include "Game/collision/collide_item.h"
 #include "Game/collision/collide_room.h"
@@ -218,7 +218,7 @@ namespace TEN::Player
 			return false;
 
 		// 2) Check for jump state dispatch.
-		if (!HasStateDispatch(&item, LS_JUMP_FORWARD))
+		if (!TestStateDispatch(item, LS_JUMP_FORWARD))
 			return false;
 
 		// 3) Check running jump timer.
@@ -477,14 +477,14 @@ namespace TEN::Player
 		context = GetEdgeJumpCatchClimbContext(item, coll);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
 		context = GetMonkeySwingJumpCatchClimbContext(item, coll);
 		if (context.has_value())
 		{
-			if (HasStateDispatch(&item, context->TargetStateID))
+			if (TestStateDispatch(item, context->TargetStateID))
 				return context;
 		}
 
