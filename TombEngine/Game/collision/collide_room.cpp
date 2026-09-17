@@ -716,6 +716,12 @@ void AlignEntityToSurface(ItemInfo* item, const Vector2& ellipse, float alpha, s
 	}
 }
 
+bool TestNeighborRooms(int roomNumber0, int roomNumber1)
+{
+	const auto& room0 = g_Level.Rooms[roomNumber0];
+	return Contains(room0.NeighborRoomNumbers, roomNumber1);
+}
+
 int GetQuadrant(short angle)
 {
 	return (unsigned short(angle + ANGLE(45.0f)) / ANGLE(90.0f));

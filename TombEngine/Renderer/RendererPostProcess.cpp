@@ -259,11 +259,6 @@ namespace TEN::Renderer
 		_postProcessTint = tint;
 	}
 
-	RendererDebugPage Renderer::GetDebugPage() const
-	{
-		return _debugPage;
-	}
-
 	DOFState Renderer::GetDOF() const 
 	{
 		return _lastDOF;

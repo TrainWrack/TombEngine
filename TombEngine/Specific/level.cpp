@@ -1206,7 +1206,7 @@ void LoadStaticRoomData()
 			room.lights.push_back(light);
 		}
 
-		room.RoomNumber = roomNumber;
+		room.originalRoom = roomNumber;
 	}
 
 	// Generate room collision meshes.

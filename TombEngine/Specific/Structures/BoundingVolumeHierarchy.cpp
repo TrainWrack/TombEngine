@@ -190,7 +190,7 @@ namespace TEN::Structures
 
 		// Initialize stack.
 		auto stack = std::stack<int>{};
-		stack.push(_rootID);
+		stack.push(_rootId);
 
 		// Traverse tree.
 		auto nodeIds = std::stack<int>{};

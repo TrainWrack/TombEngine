@@ -75,6 +75,11 @@ std::vector<short> OutsideRoomTable[OUTSIDE_SIZE][OUTSIDE_SIZE];
 //	return _tree.GetBoundedObjectIds();
 //}
 
+std::vector<int> RoomObjectHandler::GetIds() const
+{
+	return _tree.GetBoundedObjectIds();
+}
+
 std::vector<int> RoomObjectHandler::GetBoundedIds(const Ray& ray, float dist) const
 {
 	return _tree.GetBoundedObjectIds(ray, dist);

@@ -2,7 +2,7 @@
 #include "Scripting/Internal/TEN/Collision/Probe.h"
 
 #include "Game/collision/Point.h"
-#include "Game/Lara/lara_climb.h"
+//#include "Game/Lara/lara_climb.h"
 #include "Scripting/Internal/LuaHandler.h"
 #include "Scripting/Internal/ReservedScriptNames.h"
 #include "Scripting/Internal/ScriptUtil.h"
@@ -306,9 +306,10 @@ namespace TEN::Scripting::Collision
 	// @treturn bool Climbable wall status. _true: wall is climbable , false: wall isn't climbable._
 	bool Probe::IsClimbableWall(float headingAngle)
 	{
-		const auto& sector = _pointCollision.GetBottomSector();
-		auto dirFlag = GetClimbDirectionFlags(ANGLE(headingAngle));
-		return sector.Flags.IsWallClimbable(dirFlag);
+		//const auto& sector = _pointCollision.GetBottomSector();
+		//auto dirFlag = GetClimbDirectionFlags(ANGLE(headingAngle));
+		//return sector.Flags.IsWallClimbable(dirFlag);
+		return false;
 	}
 
 	/// Check if there is a monkey swing sector at this probe.
