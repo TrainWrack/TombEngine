@@ -238,44 +238,30 @@ namespace TEN::Renderer::Native::DirectX11
 		_context->RSSetScissorRects(1, &rects);
 	}
 
-	void DX11GraphicsDevice::BindTexture(TextureRegister registerType, ITextureBase* texture, SamplerStateRegister samplerType)
+	void DX11GraphicsDevice::BindTexture(TextureRegister registerType, ITextureBase* texture)
 	{
 		auto* d3dShaderResourceView = GetD3D11ShaderResourceView(texture);
 
 		_context->PSSetShaderResources((unsigned int)registerType, 1, &d3dShaderResourceView);
+	}
 
-		ID3D11SamplerState* d3dSamplerState = nullptr;
-		switch (samplerType)
+	void DX11GraphicsDevice::BindSamplers(bool pointFilter)
+	{
+		auto* pointWrap = _pointWrapSamplerState.Get();
+
+		// One state per slot s1..s6, in the same order as Samplers.hlsli. The shadow map
+		// comparison sampler is never overridden.
+		ID3D11SamplerState* states[] =
 		{
-		case SamplerStateRegister::AnisotropicClamp:
-			d3dSamplerState = _renderStates->AnisotropicClamp();
-			break;
+			pointWrap,
+			pointFilter ? pointWrap : _renderStates->LinearWrap(),
+			pointFilter ? pointWrap : _renderStates->LinearClamp(),
+			pointFilter ? pointWrap : _renderStates->AnisotropicWrap(),
+			pointFilter ? pointWrap : _renderStates->AnisotropicClamp(),
+			_shadowSampler.Get()
+		};
 
-		case SamplerStateRegister::AnisotropicWrap:
-			d3dSamplerState = _renderStates->AnisotropicWrap();
-			break;
-
-		case SamplerStateRegister::LinearClamp:
-			d3dSamplerState = _renderStates->LinearClamp();
-			break;
-
-		case SamplerStateRegister::LinearWrap:
-			d3dSamplerState = _renderStates->LinearWrap();
-			break;
-
-		case SamplerStateRegister::PointWrap:
-			d3dSamplerState = _pointWrapSamplerState.Get();
-			break;
-
-		case SamplerStateRegister::ShadowMap:
-			d3dSamplerState = _shadowSampler.Get();
-			break;
-
-		default:
-			return;
-		}
-
-		_context->PSSetSamplers((unsigned int)samplerType, 1, &d3dSamplerState);
+		_context->PSSetSamplers((unsigned int)SamplerStateRegister::PointWrap, 6, states);
 	}
 
 	void DX11GraphicsDevice::UnbindTexture(ShaderStage stage, TextureRegister registerType)
@@ -902,15 +888,17 @@ namespace TEN::Renderer::Native::DirectX11
 		DXGI_MODE_DESC modes[1024];
 		throwIfFailed(output->GetDisplayModeList(scd.BufferDesc.Format, 0, &numModes, modes));
 
-		DXGI_MODE_DESC* mode = &modes[0];
+		// Only call ResizeTarget when the requested size matches one of the display modes
+		// (i.e. fullscreen-style mode switch). For arbitrary windowed sizes coming from a
+		// user resize, skip it — the subsequent swap chain recreation handles the size.
 		for (unsigned int i = 0; i < numModes; i++)
 		{
-			mode = &modes[i];
-			if (mode->Width == width && mode->Height == height)
+			if (modes[i].Width == width && modes[i].Height == height)
+			{
+				throwIfFailed(_swapChain->ResizeTarget(&modes[i]));
 				break;
+			}
 		}
-
-		throwIfFailed(_swapChain->ResizeTarget(mode));
 
 		_screenWidth = width;
 		_screenHeight = height;
@@ -1118,12 +1106,13 @@ namespace TEN::Renderer::Native::DirectX11
 		return std::make_unique<DX11PrimitiveBatch>(_context.Get());
 	}
 
-	void DX11GraphicsDevice::SaveScreenshot(IRenderTarget2D* renderTarget, std::string path)
+	bool DX11GraphicsDevice::SaveScreenshot(IRenderTarget2D* renderTarget, std::string path)
 	{
 		auto nativeRenderTarget = static_cast<DX11RenderTarget2D*>(renderTarget);
 		auto wPath = TEN::Utils::ToWString(path);
-		SaveWICTextureToFile(_context.Get(), nativeRenderTarget->GetD3D11Texture(), GUID_ContainerFormatPng, wPath.c_str(),
-			&GUID_WICPixelFormat24bppBGR, nullptr, true);
+
+		return SUCCEEDED(SaveWICTextureToFile(_context.Get(), nativeRenderTarget->GetD3D11Texture(), GUID_ContainerFormatPng, wPath.c_str(),
+			&GUID_WICPixelFormat24bppBGR, nullptr, true));
 	}
 
 	Vector3 DX11GraphicsDevice::Unproject(Vector3 position, Matrix projection, Matrix view, Matrix world)

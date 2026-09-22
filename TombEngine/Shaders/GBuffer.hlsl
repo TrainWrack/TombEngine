@@ -57,13 +57,12 @@ PixelShaderInput VSRooms(VertexShaderInput input)
 
 	// Refraction
 	float4 screenPos = mul(float4(pos, 1.0f), ViewProjection);
-	float2 clipPos = screenPos.xy / screenPos.w;
 
 	if (CameraUnderwater != Water)
 	{
-		float factor = (Frame + clipPos.x * 320);
-		float xOffset = (sin(factor * PI / 20.0f)) * (screenPos.z / 1024) * 4;
-		float yOffset = (cos(factor * PI / 20.0f)) * (screenPos.z / 1024) * 4;
+		float factor = InterpolatedFrame + (pos.x + pos.z) * 0.2f;
+		float xOffset = (sin(factor * PI / 20.0f)) * (screenPos.z / 1024.0f) * 3.0f;
+		float yOffset = (cos(factor * PI / 20.0f)) * (screenPos.z / 1024.0f) * 3.0f;
 		screenPos.x += xOffset * weight;
 		screenPos.y += yOffset * weight;
 	}
@@ -132,7 +131,7 @@ PixelShaderOutput PS(PixelShaderInput input)
 
 	DoAlphaTest(color);
 	
-	float4 emissive = EmissiveTexture.Sample(AnisotropicClampSampler, input.UV);
+	float4 emissive = EmissiveTexture.Sample(AnisotropicClampSampler, input.UV) * GetEmissiveIntensity();
 	float specular = ORSHTexture.Sample(AnisotropicClampSampler, input.UV).z;
 	
 	float3x3 TBN = float3x3(input.Tangent, input.Binormal, input.Normal);
