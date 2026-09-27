@@ -198,4 +198,5 @@ public:
 	void OnVehicleLeave(short itemNumber, bool postLoop) override;
 	void OnFreeze() override;
 	void OnAudioChannelPlaying(const std::string& channelName) override;
+	void OnAudioChannelStopped(const std::string& channelName) override;
 };

@@ -129,12 +129,14 @@ void SoundTrackManager::ConfigureFromPreset(TrackChannel& channel, TrackPreset p
 
 void SoundTrackManager::RestoreBGMVolume()
 {
-    auto* bgm = FindChannel(SOUND_TRACK_CHANNEL_BGM);
-    if (!bgm || !BASS_ChannelIsActive(bgm->Stream))
-        return;
+    for (auto& [hash, ch] : _channels)
+    {
+        if (ch.Preset != TrackPreset::BGM || !BASS_ChannelIsActive(ch.Stream))
+            continue;
 
-    float masterVol = ((float)_globalVolume / 100.0f) * bgm->Volume;
-    BASS_ChannelSlideAttribute(bgm->Stream, BASS_ATTRIB_VOL, masterVol, SOUND_XFADETIME_BGM_START);
+        float masterVol = ((float)_globalVolume / 100.0f) * ch.Volume;
+        BASS_ChannelSlideAttribute(ch.Stream, BASS_ATTRIB_VOL, masterVol, SOUND_XFADETIME_BGM_START);
+    }
 }
 
 // NOTE: DWORD here is BASS's own cross-platform type (uint32_t on Linux/macOS, unsigned long on Windows).
@@ -190,7 +192,7 @@ bool SoundTrackManager::EnsureChannelExists(const std::string& name)
 
 bool SoundTrackManager::Play(const std::string& channelName, std::optional<std::string> track,
                               std::optional<TrackPreset> preset, std::optional<QWORD> startPos,
-                              int forceFadeIn)
+                              int forceFadeIn, bool fireCallbacks)
 {
     if (!g_Configuration.EnableSound)
         return false;
@@ -260,14 +262,16 @@ bool SoundTrackManager::Play(const std::string& channelName, std::optional<std::
         fadeInDuration = channelActive ? channel->CrossfadeTime : SOUND_XFADETIME_BGM_START;
     }
 
-    // DampBGM: lower BGM volume while this channel is playing.
+    // DampBGM: lower all BGM-type channel volumes while this channel is playing.
     if (HasTrackFlag(channel->Flags, TrackFlags::DampBGM))
     {
-        auto* bgm = FindChannel(SOUND_TRACK_CHANNEL_BGM);
-        if (bgm && BASS_ChannelIsActive(bgm->Stream))
+        for (auto& [hash, ch] : _channels)
         {
-            float dampedVol = ((float)_globalVolume / 100.0f) * bgm->Volume * SOUND_BGM_DAMP_COEFFICIENT;
-            BASS_ChannelSlideAttribute(bgm->Stream, BASS_ATTRIB_VOL, dampedVol, SOUND_XFADETIME_BGM_START);
+            if (ch.Preset != TrackPreset::BGM || !BASS_ChannelIsActive(ch.Stream))
+                continue;
+
+            float dampedVol = ((float)_globalVolume / 100.0f) * ch.Volume * SOUND_BGM_DAMP_COEFFICIENT;
+            BASS_ChannelSlideAttribute(ch.Stream, BASS_ATTRIB_VOL, dampedVol, SOUND_XFADETIME_BGM_START);
         }
     }
 
@@ -311,8 +315,8 @@ bool SoundTrackManager::Play(const std::string& channelName, std::optional<std::
     if (ToLower(channel->Name) == ToLower(std::string(SOUND_TRACK_CHANNEL_VOICE)))
         LoadSubtitles(trackName);
 
-    // Fire audio channel callbacks for transient channels (not BGM, which never ends on its own).
-    if (channel->Preset != TrackPreset::BGM && g_GameScript)
+    // Notify scripts that the channel started playing.
+    if (fireCallbacks && g_GameScript)
         g_GameScript->OnAudioChannelPlaying(channel->Name);
 
     return true;
@@ -349,12 +353,20 @@ void SoundTrackManager::Stop(const std::string& channelName, std::optional<int> 
     channel->Track  = {};
     channel->Stream = 0;
     channel->Active = false;
+
+    if (g_GameScript)
+        g_GameScript->OnAudioChannelStopped(channelName);
 }
 
 void SoundTrackManager::StopAll(std::optional<int> fadeOutTime)
 {
-    for (auto& [hash, channel] : _channels)
-        Stop(channel.Name, fadeOutTime);
+    // Collect names first: firing stop callbacks may run Lua that mutates the channel map.
+    auto names = std::vector<std::string>{};
+    for (const auto& [hash, channel] : _channels)
+        names.push_back(channel.Name);
+
+    for (const auto& name : names)
+        Stop(name, fadeOutTime);
 }
 
 void SoundTrackManager::Pause(const std::string& channelName)
@@ -569,6 +581,15 @@ bool SoundTrackManager::IsPlaying(const std::string& channelName) const
     return BASS_ChannelIsActive(channel->Stream) == BASS_ACTIVE_PLAYING;
 }
 
+bool SoundTrackManager::IsActive(const std::string& channelName) const
+{
+    auto* channel = FindChannel(channelName);
+    if (!channel)
+        return false;
+
+    return BASS_ChannelIsActive(channel->Stream) != BASS_ACTIVE_STOPPED;
+}
+
 bool SoundTrackManager::IsPlayingTrack(const std::string& trackName) const
 {
     auto lowerTrack = ToLower(trackName);
@@ -629,12 +650,16 @@ void SoundTrackManager::Clear(const std::string& channelName)
     if (!channel)
         return;
 
-    if (channel->Stream != 0)
+    bool wasActive = (channel->Stream != 0);
+    if (wasActive)
         BASS_ChannelStop(channel->Stream);
 
     auto hash = HashName(channelName);
     _nameIndex.erase(ToLower(channelName));
     _channels.erase(hash);
+
+    if (wasActive && g_GameScript)
+        g_GameScript->OnAudioChannelStopped(channelName);
 }
 
 void SoundTrackManager::ClearAll()
@@ -664,6 +689,9 @@ void SoundTrackManager::ClearAll()
 
 void SoundTrackManager::Update()
 {
+    // Collect stopped channels first: firing stop callbacks may run Lua that mutates the channel map.
+    auto stopped = std::vector<std::string>{};
+
     for (auto& [hash, channel] : _channels)
     {
         if (!channel.Active || channel.Stream == 0)
@@ -674,7 +702,14 @@ void SoundTrackManager::Update()
         {
             channel.Active = false;
             channel.Stream = 0;
+            stopped.push_back(channel.Name);
         }
+    }
+
+    if (g_GameScript)
+    {
+        for (const auto& name : stopped)
+            g_GameScript->OnAudioChannelStopped(name);
     }
 }
 
@@ -695,13 +730,15 @@ std::vector<TrackChannel> SoundTrackManager::GetAllChannelStates() const
     auto states = std::vector<TrackChannel>{};
     for (const auto& [hash, channel] : _channels)
     {
-        if (channel.Track.empty())
+        if (channel.Track.empty() || channel.Stream == 0)
+            continue;
+
+        // Skip channels that have stopped; only serialize channels still playing (including paused).
+        if (BASS_ChannelIsActive(channel.Stream) == BASS_ACTIVE_STOPPED)
             continue;
 
         auto state = channel;
-        if (state.Stream != 0 && BASS_ChannelIsActive(state.Stream))
-            state.SavedPosition = BASS_ChannelGetPosition(state.Stream, BASS_POS_BYTE);
-
+        state.SavedPosition = BASS_ChannelGetPosition(channel.Stream, BASS_POS_BYTE);
         state.Stream = 0;
         states.push_back(state);
     }
@@ -733,7 +770,7 @@ void SoundTrackManager::RestoreFromSave(const std::vector<TrackChannel>& states)
             auto startPos = (state.SavedPosition > 0)
                 ? std::optional<QWORD>(state.SavedPosition)
                 : std::nullopt;
-            Play(state.Name, state.Track, std::nullopt, startPos, SOUND_XFADETIME_LEVELJUMP);
+            Play(state.Name, state.Track, std::nullopt, startPos, SOUND_XFADETIME_LEVELJUMP, false);
         }
     }
 }

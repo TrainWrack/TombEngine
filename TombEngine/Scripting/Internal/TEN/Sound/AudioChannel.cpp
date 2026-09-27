@@ -54,7 +54,8 @@ namespace TEN::Scripting::Sound
         if (!g_SoundTrackManager)
             return nullptr;
 
-        g_SoundTrackManager->EnsureChannelExists(name);
+        if (!g_SoundTrackManager->EnsureChannelExists(name))
+            return nullptr;
 
         if (type.has_value())
         {

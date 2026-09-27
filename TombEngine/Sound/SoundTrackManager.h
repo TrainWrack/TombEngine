@@ -77,7 +77,8 @@ public:
         std::optional<std::string> track    = std::nullopt,
         std::optional<TrackPreset> preset   = std::nullopt,
         std::optional<QWORD> startPos       = std::nullopt,
-        int forceFadeIn                     = 0);
+        int forceFadeIn                     = 0,
+        bool fireCallbacks                  = true);
 
     void SetTrack(const std::string& channelName, const std::string& track, int crossfadeTimeMs);
 
@@ -107,6 +108,7 @@ public:
     float  GetNormalizedPosition(const std::string& channelName) const;
 
     bool        IsPlaying(const std::string& channelName) const;
+    bool        IsActive(const std::string& channelName) const;
     bool        IsPlayingTrack(const std::string& trackName) const;
     bool        IsPlayingTrack(const std::string& trackName, const std::string& channelName) const;
     std::string GetTrackName(const std::string& channelName) const;

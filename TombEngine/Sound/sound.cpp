@@ -597,7 +597,7 @@ std::pair<std::string, QWORD> GetSoundTrackNameAndPosition(SoundTrackType type)
 
 	const auto& channelName = CHANNEL_NAMES[(int)type];
 	auto trackName = g_SoundTrackManager->GetTrackName(channelName);
-	if (trackName.empty() || !g_SoundTrackManager->IsPlaying(channelName))
+	if (trackName.empty() || !g_SoundTrackManager->IsActive(channelName))
 		return {};
 
 	return { trackName, g_SoundTrackManager->GetPositionBytes(channelName) };

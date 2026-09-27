@@ -160,11 +160,11 @@ namespace TEN::Scripting
 		// @mem POST_FREEZE
 		{ ScriptReserved_PostFreeze, CallbackPoint::PostFreeze },
 
-		/// Will be called before LevelFuncs.OnAudioChannelPlaying fires (OneShot and Voice channels only).
+		/// Will be called when an audio channel starts playing, before LevelFuncs.OnAudioChannelPlaying fires.
 		// @mem PRE_AUDIO_CHANNEL
 		{ ScriptReserved_PreAudioChannel, CallbackPoint::PreAudioChannel },
 
-		/// Will be called after LevelFuncs.OnAudioChannelPlaying fires (OneShot and Voice channels only).
+		/// Will be called when an audio channel stops playing, whether it ended naturally or was stopped manually.
 		// @mem POST_AUDIO_CHANNEL
 		{ ScriptReserved_PostAudioChannel, CallbackPoint::PostAudioChannel },
 
