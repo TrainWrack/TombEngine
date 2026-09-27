@@ -315,9 +315,9 @@ bool SoundTrackManager::Play(const std::string& channelName, std::optional<std::
     if (ToLower(channel->Name) == ToLower(std::string(SOUND_TRACK_CHANNEL_VOICE)))
         LoadSubtitles(trackName);
 
-    // Notify scripts that the channel started playing.
+    // Notify scripts that the channel started playing (fires PRE_AUDIO_CHANNEL once).
     if (fireCallbacks && g_GameScript)
-        g_GameScript->OnAudioChannelPlaying(channel->Name);
+        g_GameScript->OnAudioChannelStarted(channel->Name);
 
     return true;
 }
@@ -689,7 +689,8 @@ void SoundTrackManager::ClearAll()
 
 void SoundTrackManager::Update()
 {
-    // Collect stopped channels first: firing stop callbacks may run Lua that mutates the channel map.
+    // Collect names first: firing callbacks may run Lua that mutates the channel map.
+    auto playing = std::vector<std::string>{};
     auto stopped = std::vector<std::string>{};
 
     for (auto& [hash, channel] : _channels)
@@ -704,10 +705,19 @@ void SoundTrackManager::Update()
             channel.Stream = 0;
             stopped.push_back(channel.Name);
         }
+        else if (status == BASS_ACTIVE_PLAYING)
+        {
+            playing.push_back(channel.Name);
+        }
     }
 
     if (g_GameScript)
     {
+        // Fire per-frame while a channel is actively playing.
+        for (const auto& name : playing)
+            g_GameScript->OnAudioChannelPlaying(name);
+
+        // Fire once when a channel stops.
         for (const auto& name : stopped)
             g_GameScript->OnAudioChannelStopped(name);
     }

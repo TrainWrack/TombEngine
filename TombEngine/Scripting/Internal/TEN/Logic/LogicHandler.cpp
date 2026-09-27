@@ -1132,9 +1132,13 @@ void LogicHandler::OnFreeze()
 	HandleAllGlobalEvents(EventType::Freeze, (Activator)short(LaraItem->Index));
 }
 
-void LogicHandler::OnAudioChannelPlaying(const std::string& channelName)
+void LogicHandler::OnAudioChannelStarted(const std::string& channelName)
 {
 	PerformCallbacks(CallbackPoint::PreAudioChannel, channelName);
+}
+
+void LogicHandler::OnAudioChannelPlaying(const std::string& channelName)
+{
 	PerformLevelFuncCallback(LevelFuncCallbackPoint::AudioChannelPlay, channelName);
 }
 
