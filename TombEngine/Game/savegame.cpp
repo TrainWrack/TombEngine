@@ -3170,7 +3170,6 @@ bool SaveGame::LoadHeader(int slot, SaveGameHeader* header)
 		header->Hours = s->header()->hours();
 		header->Minutes = s->header()->minutes();
 		header->Seconds = s->header()->seconds();
-		header->Level = s->header()->level();
 		header->Timer = s->header()->timer();
 		header->Count = s->header()->count();
 
