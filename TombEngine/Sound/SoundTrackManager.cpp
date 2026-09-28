@@ -240,18 +240,7 @@ bool SoundTrackManager::Play(const std::string& channelName, std::optional<std::
         return false;
     }
 
-    // Fade out the current stream if one is active.
-    if (channelActive)
-        BASS_ChannelSlideAttribute(channel->Stream, BASS_ATTRIB_VOL, -1.0f, channel->FadeOutTime);
-
-    // Create new BASS stream.
-    auto stream = BASS_StreamCreateFile(false, std::filesystem::path(fullPath).c_str(), 0, 0, bassFlags);
-    if (Sound_CheckBASSError("Opening soundtrack '%s'", false, trackName.c_str()))
-        return false;
-
-    float masterVol = ((float)_globalVolume / 100.0f) * channel->Volume;
-
-    // Determine fade-in duration.
+    // Determine fade-in duration. An explicit request (forceFadeIn) takes priority.
     int fadeInDuration = 0;
     if (forceFadeIn > 0)
     {
@@ -261,6 +250,21 @@ bool SoundTrackManager::Play(const std::string& channelName, std::optional<std::
     {
         fadeInDuration = channelActive ? channel->CrossfadeTime : SOUND_XFADETIME_BGM_START;
     }
+
+    // Fade out the current stream if one is active, using the same duration as the fade-in
+    // so both tracks crossfade over one another instead of the outgoing track cutting out early.
+    if (channelActive)
+    {
+        int fadeOutDuration = (fadeInDuration > 0) ? fadeInDuration : channel->FadeOutTime;
+        BASS_ChannelSlideAttribute(channel->Stream, BASS_ATTRIB_VOL, -1.0f, fadeOutDuration);
+    }
+
+    // Create new BASS stream.
+    auto stream = BASS_StreamCreateFile(false, std::filesystem::path(fullPath).c_str(), 0, 0, bassFlags);
+    if (Sound_CheckBASSError("Opening soundtrack '%s'", false, trackName.c_str()))
+        return false;
+
+    float masterVol = ((float)_globalVolume / 100.0f) * channel->Volume;
 
     // DampBGM: lower all BGM-type channel volumes while this channel is playing.
     if (HasTrackFlag(channel->Flags, TrackFlags::DampBGM))
