@@ -11,10 +11,30 @@
 using namespace TEN::Scripting;
 
 /***
-Audio channel for named soundtrack control.
+A named audio channel that can play a track once, looped, or as a voice line.
+
+Channels are created and referenced by name: creating a channel with a name that
+already exists returns a handle to the existing channel. User channels are
+independent of the engine's built-in music and ambience, so they can be played,
+crossfaded, paused, and stopped individually. A channel's playback behaviour is
+governed by its @{Sound.SoundTrackType}.
+
+Channels also raise the PRE_AUDIO_CHANNEL and POST_AUDIO_CHANNEL callbacks
+(see @{Logic.CallbackPoint}) when they start and stop, and call
+`LevelFuncs.OnAudioChannelPlaying` every frame while they are playing.
 
 @tenclass Sound.AudioChannel
 @pragma nostrip
+@usage
+	local quiet = TEN.Sound.AudioChannel("quiet", "track1", TEN.Sound.SoundTrackType.LOOPED)
+	quiet:SetVolume(0.6)
+	quiet:Play()
+
+	-- Crossfade to another track over 5 seconds.
+	quiet:SetTrack("track2", Time({ 0, 0, 5 }))
+
+	-- Stop with a 5 second fade-out.
+	quiet:Stop(Time({ 0, 0, 5 }))
 */
 
 static TrackPreset ToTrackPreset(SoundTrackType type)
@@ -43,6 +63,24 @@ namespace TEN::Scripting::Sound
     {
     }
 
+    /*** Create a new audio channel.
+    If a channel with the given name already exists, a handle to that channel is returned instead.
+
+    @function AudioChannel
+    @tparam string name Unique name of the channel. This name is passed to the audio channel callbacks and is used to reference the channel.
+    @tparam[opt] string track Filename of the track to assign, without extension.
+    @tparam[opt] Sound.SoundTrackType type Playback type. Defaults to `ONESHOT` if omitted.
+    @treturn Sound.AudioChannel A new audio channel.
+    @usage
+        -- A looping background track.
+        local quiet = TEN.Sound.AudioChannel("quiet", "track1", TEN.Sound.SoundTrackType.LOOPED)
+        quiet:SetVolume(0.6)
+        quiet:Play()
+
+        -- A one-shot voice line, played on demand via Play.
+        local voice = TEN.Sound.AudioChannel("voice", "my_voice_line", TEN.Sound.SoundTrackType.VOICE)
+        voice:Play()
+    */
     std::unique_ptr<AudioChannel> AudioChannel::Create(
         const std::string& name,
         sol::optional<std::string> track,
@@ -262,15 +300,21 @@ namespace TEN::Scripting::Sound
             ScriptReserved_AudioChannel,
             sol::call_constructor, &AudioChannel::Create,
 
-            /// Play this channel (optionally switching to a new track or type).
+            /// Play this channel (optionally switching to a new track or type). If a track was assigned with SetTrack, it is used here.
             // @function AudioChannel:Play
             // @tparam[opt] string track Filename of the track to play (without extension).
             // @tparam[opt] Sound.SoundTrackType type Playback type to apply.
+            // @usage
+            // quiet:Play()
+            // quiet:Play("track3", TEN.Sound.SoundTrackType.LOOPED)
             ScriptReserved_AudioChannelPlay, &AudioChannel::Play,
 
-            /// Stop this channel.
+            /// Stop this channel. A fade-out is applied using the channel's default fade time unless one is given.
             // @function AudioChannel:Stop
             // @tparam[opt] Time fadeOutTime Fade-out duration.
+            // @usage
+            // quiet:Stop()
+            // quiet:Stop(Time({ 0, 0, 5 }))
             ScriptReserved_AudioChannelStop, &AudioChannel::Stop,
 
             /// Pause this channel.
@@ -285,10 +329,13 @@ namespace TEN::Scripting::Sound
             // @function AudioChannel:Clear
             ScriptReserved_AudioChannelClear, &AudioChannel::Clear,
 
-            /// Set the track without playing it.
+            /// Set the track for this channel. If the channel is already playing, it will crossfade to the new track immediately; otherwise the track is stored and played on the next Play call.
             // @function AudioChannel:SetTrack
             // @tparam string track Filename (without extension).
             // @tparam[opt] Time crossfadeTime Crossfade duration.
+            // @usage
+            // -- Crossfade to a new track over 5 seconds while the channel is already playing.
+            // quiet:SetTrack("track2", Time({ 0, 0, 5 }))
             ScriptReserved_AudioChannelSetTrack, &AudioChannel::SetTrack,
 
             /// Check if the channel is currently playing.
