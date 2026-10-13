@@ -11,6 +11,7 @@
 #include "Game/Lara/lara_struct.h"
 #include "Math/Math.h"
 #include "Objects/Generic/Object/BridgeObject.h"
+#include "Objects/Generic/Object/Ladder.h"
 #include "Objects/Generic/Object/Pushable/PushableInfo.h"
 #include "Objects/TR2/Vehicles/skidoo_info.h"
 #include "Objects/TR2/Vehicles/speedboat_info.h"
@@ -59,6 +60,7 @@ class ItemData
 		PushableInfo,
 		ItemInfo*,
 		LaraInfo*,
+		LadderObject,
 		CollisionInfo,
 		CreatureInfo,
 		WraithInfo,

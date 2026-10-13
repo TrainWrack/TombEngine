@@ -9,7 +9,7 @@ struct ItemInfo;
 //{
 using OrientConstraintPair = std::pair<EulerAngles, EulerAngles>;
 
-constexpr auto ANIMATED_ALIGNMENT_FRAME_COUNT_THRESHOLD = 6;
+constexpr auto ANIMATED_ALIGNMENT_FRAME_COUNT_THRESHOLDX = 6;
 
 class InteractionBasis
 {

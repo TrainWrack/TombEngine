@@ -1,6 +1,7 @@
 #include "framework.h"
 #include "Game/collision/Interaction.h"
 
+#include "Game/collision/collide_item.h"
 #include "Game/collision/collide_room.h"
 #include "Game/control/control.h"
 #include "Game/items.h"
@@ -124,7 +125,7 @@ void SetPlayerAlignAnimation(ItemInfo& playerEntity, const ItemInfo& interactedE
 	float dist = Vector3i::Distance(playerEntity.Pose.Position, interactedEntity.Pose.Position);
 
 	// Skip animating if player is very close.
-	bool doAlignAnim = ((dist - LARA_ALIGN_VELOCITY) > (LARA_ALIGN_VELOCITY * ANIMATED_ALIGNMENT_FRAME_COUNT_THRESHOLD));
+	bool doAlignAnim = ((dist - LARA_ALIGN_VELOCITY) > (LARA_ALIGN_VELOCITY * ANIMATED_ALIGNMENT_FRAME_COUNT_THRESHOLDX));
 	if (!doAlignAnim)
 		return;
 

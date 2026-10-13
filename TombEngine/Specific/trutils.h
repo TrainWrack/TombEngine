@@ -61,14 +61,6 @@ namespace TEN::Utils
 		vector.erase(vector.begin() + elementId);
 	}
 
-	// Miscellanea utilities
-	#define SAFE_DELETE(x) if (x != nullptr) x.reset();
-	#define ARGB_TO_UINT(a,r,g,b) \
-		((D3DCOLOR)((((unsigned int)(a) & 0xFF) << 24) | \
-					(((unsigned int)(r) & 0xFF) << 16) | \
-					(((unsigned int)(g) & 0xFF) <<  8) | \
-					(((unsigned int)(b) & 0xFF))))
-
 	template <typename TElement>
 	void PushUnique(std::vector<TElement>& vector, const TElement& element)
 	{
@@ -82,4 +74,12 @@ namespace TEN::Utils
 		auto it = std::remove(vector.begin(), vector.end(), element);
 		vector.erase(it, vector.end());
 	}
+
+	// Miscellanea utilities
+	#define SAFE_DELETE(x) if (x != nullptr) x.reset();
+	#define ARGB_TO_UINT(a,r,g,b) \
+		((D3DCOLOR)((((unsigned int)(a) & 0xFF) << 24) | \
+					(((unsigned int)(r) & 0xFF) << 16) | \
+					(((unsigned int)(g) & 0xFF) <<  8) | \
+					(((unsigned int)(b) & 0xFF))))
 }

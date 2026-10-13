@@ -57,7 +57,7 @@ bool AlignPlayerToEntity(ItemInfo* item, ItemInfo* laraItem, const Vector3i& pos
 	if (Objects[item->ObjectNumber].isPickup)
 	{
 		// Prevent picking up items inside walls and off ledges.
-		int floorHeight = GetCollision(toPose.Position.x, toPose.Position.y, toPose.Position.z, laraItem->RoomNumber).Position.Floor;
+		int floorHeight = GetPointCollision(toPose.Position, laraItem->RoomNumber).GetFloorHeight();
 		if (abs(floorHeight - laraItem->Pose.Position.y) > maxFloorHeight)
 			canAlign = false;
 	}

@@ -313,7 +313,7 @@ namespace TEN::Entities::Generic
 		{
 			auto boundsOffset = Vector3i(0, 0, bounds.Z1);
 			SetEntityInteraction(playerItem, ladderItem, LadderMountFrontBasis, boundsOffset);
-			SetAnimation(&playerItem, LA_LADDER_MOUNT_FRONT);
+			SetAnimation(&playerItem, LA_LADDERX_MOUNT_FRONT);
 			break;
 		}
 
@@ -321,7 +321,7 @@ namespace TEN::Entities::Generic
 		{
 			auto boundsOffset = Vector3i(0, 0, bounds.Z2);
 			SetEntityInteraction(playerItem, ladderItem, LadderMountBackBasis, boundsOffset);
-			SetAnimation(&playerItem, LA_LADDER_MOUNT_FRONT);
+			SetAnimation(&playerItem, LA_LADDERX_MOUNT_FRONT);
 			break;
 		}
 
@@ -337,7 +337,7 @@ namespace TEN::Entities::Generic
 				0)*/;
 
 			SetEntityInteraction(playerItem, ladderItem, LadderMountRightBasis, boundsOffset);
-			SetAnimation(&playerItem, LA_LADDER_MOUNT_RIGHT);
+			SetAnimation(&playerItem, LA_LADDERX_MOUNT_RIGHT);
 			break;
 		}
 
