@@ -2,6 +2,7 @@
 #include "Game/Parenting/ParentingInfo.h"
 
 #include "Game/items.h"
+#include "Game/Lara/lara.h"
 #include "Specific/level.h"
 
 void ParentingInfo::Attach(ItemInfo& parent)
@@ -28,7 +29,7 @@ void ParentingInfo::Update(ItemInfo& item)
 
     auto& parent = g_Level.Items[ParentObject];
 
-    if (!parent.Active || parent.Index == item.Index)
+    if ((!parent.Active && !parent.IsLara()) || parent.Index == item.Index)
     {
         Detach();
         return;
@@ -49,7 +50,10 @@ void ParentingInfo::Update(ItemInfo& item)
     auto rotMatrix = deltaOrient.ToRotationMatrix();
     item.Pose.Position = Vector3i(parent.Pose.Position.ToVector3() + Vector3::Transform(deltaItemPos, rotMatrix));
 
-    UpdateItemRoom(item.Index);
+    if (item.IsLara())
+        UpdateLaraRoom(&item, item.Pose.Position.y);
+    else
+        UpdateItemRoom(item.Index);
 
     PrevPose = parent.Pose;
 }
