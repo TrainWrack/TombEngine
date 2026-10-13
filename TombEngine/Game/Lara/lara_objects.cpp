@@ -337,7 +337,6 @@ void lara_as_tightrope_dismount(ItemInfo* item, CollisionInfo* coll)
 	if (item->Animation.AnimNumber == LA_TIGHTROPE_END &&
 		TestLastFrame(*item))
 	{
-		item->Parenting.Detach();
 		item->Pose.Orientation.z = 0;
 		lara->ExtraTorsoRot.z = 0;
 	}
