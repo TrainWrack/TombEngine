@@ -1,4 +1,5 @@
 #pragma once
+#include "Game/collision/Interaction.h"
 #include "Game/collision/Point.h"
 #include "Math/Math.h"
 
@@ -35,6 +36,10 @@ struct CollidedObjectData
 
 	bool IsEmpty() const { return (Items.empty() && Statics.empty()); };
 };
+
+bool TestPlayerEntityInteract(ItemInfo* item, ItemInfo* laraItem, const InteractionBasis& interactBasis);
+bool AlignPlayerToEntity(ItemInfo* item, ItemInfo* laraItem, const Vector3i& posOffset = Vector3i::Zero, const EulerAngles& orientOffset = EulerAngles::Identity, bool doSnapAlign = false);
+bool AlignPlayerToPose(ItemInfo* item, const Pose& toPose, float velocity, short turnRate);
 
 void GenericSphereBoxCollision(short itemNumber, ItemInfo* playerItem, CollisionInfo* coll);
 CollidedObjectData GetCollidedObjects(ItemInfo& collidingItem, bool onlyVisible, bool ignorePlayer, float customRadius = 0.0f, ObjectCollectionMode mode = ObjectCollectionMode::All);

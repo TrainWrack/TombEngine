@@ -924,3 +924,217 @@ void lara_as_zip_line(ItemInfo* item, CollisionInfo* coll)
 		lara->Control.MoveAngle = item->Pose.Orientation.y;
 	}
 }
+
+// ------
+// LADDER
+// ------
+
+// State:	  LS_LADDER_IDLE (174)
+// Collision: lara_col_ladder_idle()
+void lara_as_ladder_idle(ItemInfo* item, CollisionInfo* coll)
+{
+	auto& player = GetLaraInfo(*item);
+
+	player.Control.Look.Mode = LookMode::Free;
+	coll->Setup.EnableSpasm = false;
+	coll->Setup.EnableObjectPush = false;
+
+	if (item->HitPoints <= 0)
+	{
+		item->Animation.TargetState = LS_FREEFALL;
+		return;
+	}
+
+	if (IsHeld(In::Action))
+	{
+		if (IsHeld(In::Jump))
+		{
+			item->Animation.TargetState = LS_JUMP_BACK;
+			return;
+		}
+
+		if (IsHeld(In::Forward))
+		{
+			if (CanDismountLadderTop(item, coll))
+			{
+				item->Animation.TargetState = LS_LADDER_DISMOUNT_TOP;
+				return;
+			}
+			else if (CanClimbLadderUp(item, coll))
+			{
+				item->Animation.TargetState = LS_LADDER_UP;
+				return;
+			}
+		}
+		else if (IsHeld(In::Back))
+		{
+			if (CanDismountLadderBack(item, coll))
+			{
+				item->Animation.TargetState = LS_LADDER_DISMOUNT_BACK;
+				return;
+			}
+			else if (CanClimbLadderDown(item, coll))
+			{
+				item->Animation.TargetState = LS_LADDER_DOWN;
+				return;
+			}
+		}
+
+		if (IsHeld(In::Left) && CanDismountLadderLeft(item, coll))
+		{
+			item->Animation.TargetState = LS_LADDER_DISMOUNT_LEFT;
+			return;
+		}
+		else if (IsHeld(In::Right) && CanDismountLadderRight(item, coll))
+		{
+			item->Animation.TargetState = LS_LADDER_DISMOUNT_RIGHT;
+			return;
+		}
+
+		item->Animation.TargetState = LS_LADDER_IDLE;
+		return;
+	}
+
+	if (CanDismountLadderBack(item, coll))
+	{
+		item->Animation.TargetState = LS_LADDER_DISMOUNT_BACK;
+		return;
+	}
+
+	item->Animation.TargetState = LS_JUMP_UP;
+	if (TestStateDispatch(*item, LS_JUMP_UP)) // TODO: Update jump state handling to not require this. -- Sezz 2022.10.26
+		item->Animation.IsAirborne = true;
+}
+
+// State:	LS_LADDER_IDLE (174)
+// Control: lara_as_ladder_idle()
+void lara_col_ladder_idle(ItemInfo* item, CollisionInfo* coll)
+{
+	auto& player = GetLaraInfo(*item);
+
+	player.Control.MoveAngle = item->Pose.Orientation.y;
+	coll->Setup.LowerFloorBound = NO_LOWER_BOUND;
+	coll->Setup.UpperFloorBound = -STEPUP_HEIGHT;
+	coll->Setup.LowerCeilingBound = BAD_JUMP_CEILING;
+	coll->Setup.ForwardAngle = player.Control.MoveAngle;
+	coll->Setup.Radius = LARA_RADIUS;
+	GetCollisionInfo(coll, item);
+}
+
+// State:	  LS_LADDER_UP (175)
+// Collision: lara_col_ladder_up()
+void lara_as_ladder_up(ItemInfo* item, CollisionInfo* coll)
+{
+	auto& player = *GetLaraInfo(item);
+
+	player.Control.Look.Mode = LookMode::Horizontal;
+	coll->Setup.EnableSpasm = false;
+	coll->Setup.EnableObjectPush = false;
+
+	if (item->HitPoints <= 0)
+	{
+		item->Animation.TargetState = LS_LADDER_IDLE;
+		return;
+	}
+
+	if (CanDismountLadderTop(item, coll))
+	{
+		item->Animation.TargetState = LS_LADDER_DISMOUNT_TOP;
+		return;
+	}
+
+	if (IsHeld(In::Action))
+	{
+		if (IsHeld(In::Jump))
+		{
+			item->Animation.TargetState = LS_LADDER_IDLE;
+			return;
+		}
+
+		if (IsHeld(In::Forward) && CanClimbLadderUp(item, coll))
+		{
+			item->Animation.TargetState = LS_LADDER_UP;
+			return;
+		}
+
+		item->Animation.TargetState = LS_LADDER_IDLE;
+		return;
+	}
+
+	item->Animation.TargetState = LS_LADDER_IDLE;
+}
+
+// State:	LS_LADDER_UP (175)
+// Control: lara_as_ladder_up()
+void lara_col_ladder_up(ItemInfo* item, CollisionInfo* coll)
+{
+	auto& player = GetLaraInfo(*item);
+
+	player.Control.MoveAngle = item->Pose.Orientation.y;
+	coll->Setup.LowerFloorBound = NO_LOWER_BOUND;
+	coll->Setup.UpperFloorBound = -STEPUP_HEIGHT;
+	coll->Setup.LowerCeilingBound = BAD_JUMP_CEILING;
+	coll->Setup.ForwardAngle = player.Control.MoveAngle;
+	coll->Setup.Radius = LARA_RADIUS;
+	GetCollisionInfo(coll, item);
+}
+
+// State:	  LS_LADDER_DOWN (176)
+// Collisiom: lara_col_ladder_down()
+void lara_as_ladder_down(ItemInfo* item, CollisionInfo* coll)
+{
+	auto& player = GetLaraInfo(*item);
+
+	player.Control.Look.Mode = LookMode::Horizontal;
+	coll->Setup.EnableSpasm = false;
+	coll->Setup.EnableObjectPush = false;
+
+	if (item->HitPoints <= 0)
+	{
+		item->Animation.TargetState = LS_LADDER_IDLE;
+		return;
+	}
+
+	if (IsHeld(In::Action))
+	{
+		if (IsHeld(In::Jump))
+		{
+			item->Animation.TargetState = LS_LADDER_IDLE;
+			return;
+		}
+
+		if (IsHeld(In::Back))
+		{
+			if (CanDismountLadderBack(item, coll))
+			{
+				item->Animation.TargetState = LS_LADDER_DISMOUNT_BACK;
+				return;
+			}
+			else if (CanClimbLadderDown(item, coll))
+			{
+				item->Animation.TargetState = LS_LADDER_DOWN;
+				return;
+			}
+		}
+
+		item->Animation.TargetState = LS_LADDER_IDLE;
+		return;
+	}
+
+	item->Animation.TargetState = LS_LADDER_IDLE;
+}
+
+// State:	LS_LADDER_DOWN (176)
+// Control: lara_as_ladder_down()
+void lara_col_ladder_down(ItemInfo* item, CollisionInfo* coll)
+{
+	auto& player = GetLaraInfo(*item);
+
+	player.Control.MoveAngle = item->Pose.Orientation.y;
+	coll->Setup.LowerFloorBound = NO_LOWER_BOUND;
+	coll->Setup.UpperFloorBound = -STEPUP_HEIGHT;
+	coll->Setup.LowerCeilingBound = BAD_JUMP_CEILING;
+	coll->Setup.ForwardAngle = player.Control.MoveAngle;
+	coll->Setup.Radius = LARA_RADIUS;
+	GetCollisionInfo(coll, item);
+}

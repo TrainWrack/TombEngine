@@ -211,9 +211,9 @@ namespace TEN::Entities::Player
 		PlayerBehaviorStateRoutines[LS_TURN_180] = std::pair(lara_as_turn_180, lara_col_turn_180);
 
 		// Reserved for ladder object.
-		PlayerBehaviorStateRoutines[174] = std::pair(lara_as_null, lara_void_func);
-		PlayerBehaviorStateRoutines[175] = std::pair(lara_as_null, lara_void_func);
-		PlayerBehaviorStateRoutines[176] = std::pair(lara_as_null, lara_void_func);
+		PlayerBehaviorStateRoutines[LS_LADDER_IDLE] = std::pair(lara_as_ladder_idle, lara_col_ladder_idle);
+		PlayerBehaviorStateRoutines[LS_LADDER_UP] = std::pair(lara_as_ladder_up, lara_col_ladder_up);
+		PlayerBehaviorStateRoutines[LS_LADDER_DOWN] = std::pair(lara_as_ladder_down, lara_col_ladder_down);
 		PlayerBehaviorStateRoutines[177] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[178] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[179] = std::pair(lara_as_null, lara_void_func);
