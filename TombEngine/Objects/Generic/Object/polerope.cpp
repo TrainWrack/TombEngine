@@ -88,6 +88,7 @@ namespace TEN::Entities::Generic
 					SetAnimation(laraItem, LA_STAND_TO_POLE);
 					player.Control.IsMoving = false;
 					player.Control.HandStatus = HandStatus::Busy;
+					laraItem->Parenting.Attach(poleItem);
 				}
 				else
 				{
@@ -135,6 +136,7 @@ namespace TEN::Entities::Generic
 					{
 						VPolePosR.y = laraItem->Pose.Position.y - poleItem.Pose.Position.y + 10;
 						AlignLaraPosition(VPolePosR, &poleItem, laraItem);
+						laraItem->Parenting.Attach(poleItem);
 						SetAnimation(laraItem, LA_REACH_TO_POLE);
 					}
 					// Jumping up.
@@ -142,6 +144,7 @@ namespace TEN::Entities::Generic
 					{
 						VPolePosR.y = laraItem->Pose.Position.y - poleItem.Pose.Position.y + 66;
 						AlignLaraPosition(VPolePosR, &poleItem, laraItem);
+						laraItem->Parenting.Attach(poleItem);
 						SetAnimation(laraItem, LA_JUMP_UP_TO_POLE);
 					}
 

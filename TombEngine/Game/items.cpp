@@ -784,7 +784,7 @@ void UpdateAllItems()
 	{
 		auto& item = g_Level.Items[itemNumber];
 
-		if (item.Active && item.Parenting.IsAttached())
+		if (item.Parenting.IsAttached())
 			item.Parenting.Update(item);
 	}
 

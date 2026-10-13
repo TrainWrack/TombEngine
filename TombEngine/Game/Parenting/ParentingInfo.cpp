@@ -29,7 +29,7 @@ void ParentingInfo::Update(ItemInfo& item)
 
     auto& parent = g_Level.Items[ParentObject];
 
-    if ((!parent.Active && !parent.IsLara()) || parent.Index == item.Index)
+    if (parent.Index == item.Index)
     {
         Detach();
         return;
