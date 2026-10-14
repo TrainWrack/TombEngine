@@ -151,22 +151,6 @@ struct MoveableEffectData
 	int		   Count				= NO_VALUE;
 };
 
-struct OffsetBlendData
-{
-	bool  IsActive = false;
-	float TimeActive = 0.0f;
-	float DelayTime = 0.0f;
-
-	Vector3		PosOffset = Vector3::Zero;
-	EulerAngles OrientOffset = EulerAngles::Identity;
-	float		Alpha = 0.0f;
-
-	void Set(const Vector3& posOffset, const EulerAngles& orientOffset, float alpha, float delayInSec = 0.0f);
-	void Clear();
-
-	void DrawDebug() const;
-};
-
 struct ItemInfo
 {
 	std::string	   Name         = {};

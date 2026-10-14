@@ -5,7 +5,6 @@
 #include "Game/control/los.h"
 #include "Game/collision/collide_room.h"
 #include "Game/collision/floordata.h"
-#include "Game/collision/Interaction.h"
 #include "Game/collision/Point.h"
 #include "Game/collision/sphere.h"
 #include "Game/effects/debris.h"
@@ -36,98 +35,6 @@ constexpr auto COLLIDABLE_BOUNDS_THRESHOLD = 4;
 // Globals
 
 GameBoundingBox GlobalCollisionBounds;
-
-bool TestPlayerEntityInteract(ItemInfo* item, ItemInfo* laraItem, const InteractionBasis& interactBasis)
-{
-	return interactBasis.TestInteraction(*laraItem, *item);
-}
-
-bool AlignPlayerToEntity(ItemInfo* item, ItemInfo* laraItem, const Vector3i& posOffset, const EulerAngles& orientOffset, bool doSnapAlign)
-{
-	static constexpr auto maxFloorHeight = STEPUP_HEIGHT;
-	static const auto	  turnRate = ANGLE(2.0f);
-
-	auto* lara = GetLaraInfo(laraItem);
-
-	auto targetPos = Geometry::TranslatePoint(item->Pose.Position, item->Pose.Orientation, posOffset);
-	auto targetOrient = item->Pose.Orientation + orientOffset;
-	auto toPose = Pose(targetPos, targetOrient);
-
-	bool canAlign = true;
-	if (Objects[item->ObjectNumber].isPickup)
-	{
-		// Prevent picking up items inside walls and off ledges.
-		int floorHeight = GetPointCollision(toPose.Position, laraItem->RoomNumber).GetFloorHeight();
-		if (abs(floorHeight - laraItem->Pose.Position.y) > maxFloorHeight)
-			canAlign = false;
-	}
-
-	if (canAlign)
-	{
-		if (doSnapAlign)
-		{
-			laraItem->Pose = toPose;
-			return true;
-		}
-		else
-		{
-			return AlignPlayerToPose(laraItem, toPose, LARA_ALIGN_VELOCITY, turnRate);
-		}
-	}
-
-	if (lara->Control.IsMoving)
-	{
-		lara->Control.IsMoving = false;
-		lara->Control.HandStatus = HandStatus::Free;
-	}
-
-	return false;
-}
-
-bool AlignPlayerToPose(ItemInfo* item, const Pose& toPose, float velocity, short turnRate)
-{
-	auto* lara = GetLaraInfo(item);
-
-	if (!lara->Control.IsMoving)
-	{
-		float distance = Vector3i::Distance(item->Pose.Position, toPose.Position);
-		bool doAlignAnim = ((distance - velocity) > (velocity * ANIMATED_ALIGNMENT_FRAME_COUNT_THRESHOLD));
-
-		if (doAlignAnim && lara->Control.WaterStatus != WaterStatus::Underwater)
-		{
-			short headingAngle = Geometry::GetOrientToPoint(item->Pose.Position.ToVector3(), toPose.Position.ToVector3()).y;
-			int direction = GetQuadrant(headingAngle - item->Pose.Orientation.y);
-
-			switch (direction)
-			{
-			default:
-			case NORTH:
-				SetAnimation(item, LA_WALK);
-				break;
-
-			case SOUTH:
-				SetAnimation(item, LA_WALK_BACK);
-				break;
-
-			case EAST:
-				SetAnimation(item, LA_SIDESTEP_RIGHT);
-				break;
-
-			case WEST:
-				SetAnimation(item, LA_SIDESTEP_LEFT);
-				break;
-			}
-
-			lara->Control.HandStatus = HandStatus::Busy;
-		}
-
-		lara->Control.IsMoving = true;
-		lara->Control.Count.PositionAdjust = 0;
-	}
-
-	item->Pose.InterpolateConstant(toPose, velocity, turnRate);
-	return (item->Pose == toPose);
-}
 
 void GenericSphereBoxCollision(short itemNumber, ItemInfo* playerItem, CollisionInfo* coll)
 {

@@ -119,78 +119,13 @@ namespace TEN::Entities::Generic
 			EulerAngles(-PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(-90.0f) - LARA_GRAB_THRESHOLD, -PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD),
 			EulerAngles(PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(-90.0f) + LARA_GRAB_THRESHOLD, PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD)));
 
-	LadderObject::LadderObject(bool isDoubleSided)
-	{
-		_isDoubleSided = isDoubleSided;
-	}
-
-	bool LadderObject::IsDoubleSided() const
-	{
-		return _isDoubleSided;
-	}
-
-	void LadderObject::AttachItem(ItemInfo& item)
-	{
-		PushUnique(_attachedItems, &item);
-	}
-
-	void LadderObject::DetachItem(ItemInfo& item)
-	{
-		Remove(_attachedItems, &item);
-	}
-
-	LadderObject& GetLadderObject(ItemInfo& ladderItem)
-	{
-		return (LadderObject&)ladderItem.Data;
-	}
-
 	void InitializeLadder(short itemNumber)
 	{
 		auto& ladderItem = g_Level.Items[itemNumber];
 
 		bool isDoubleSided = ((ladderItem.TriggerFlags & (1 << 0)) == 1);
 
-		ladderItem.Data = LadderObject(isDoubleSided);
-		auto& ladder = GetLadderObject(ladderItem);
-
-		ladder.PrevPose = ladderItem.Pose;
-
 		AddActiveItem(itemNumber);
-	}
-
-	void ControlLadder(short itemNumber)
-	{
-		using Vector3 = SimpleMath::Vector3;
-
-		auto& ladderItem = g_Level.Items[itemNumber];
-		auto& ladder = GetLadderObject(ladderItem);
-
-		UpdateItemRoom(itemNumber);
-
-		// Ladder has moved; 
-		if (ladder.PrevPose != ladderItem.Pose &&
-			!ladder._attachedItems.empty())
-		{
-			auto deltaPos = ladderItem.Pose.Position - ladder.PrevPose.Position;
-			auto deltaOrient = ladderItem.Pose.Orientation - ladder.PrevPose.Orientation;
-
-			// Update attached item poses.
-			for (auto* itemPtr : ladder._attachedItems)
-			{
-				// Adapt position and orientation.
-				itemPtr->Pose.Position += deltaPos;
-				itemPtr->Pose.Orientation += deltaOrient;
-
-				// Rotate with ladder.
-				auto deltaItemPos = (itemPtr->Pose.Position - ladderItem.Pose.Position).ToVector3();
-				auto rotMatrix = deltaOrient.ToRotationMatrix();
-				itemPtr->Pose.Position = ladderItem.Pose.Position + Vector3::Transform(deltaItemPos, rotMatrix);
-
-				UpdateItemRoom(itemPtr->Index);
-			}
-		}
-
-		ladder.PrevPose = ladderItem.Pose;
 	}
 
 	static void DrawLadderDebug(ItemInfo& ladderItem)
@@ -286,7 +221,6 @@ namespace TEN::Entities::Generic
 
 	static void HandleLadderMount(ItemInfo& ladderItem, ItemInfo& playerItem, LadderMountType mountType)
 	{
-		auto& ladder = GetLadderObject(ladderItem);
 		auto& player = *GetLaraInfo(&playerItem);
 
 		// Avoid interference if already interacting.
@@ -312,7 +246,7 @@ namespace TEN::Entities::Generic
 		case LadderMountType::Front:
 		{
 			auto boundsOffset = Vector3i(0, 0, bounds.Z1);
-			SetEntityInteraction(playerItem, ladderItem, LadderMountFrontBasis, boundsOffset);
+			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, boundsOffset);
 			SetAnimation(&playerItem, LA_LADDERX_MOUNT_FRONT);
 			break;
 		}
@@ -320,7 +254,7 @@ namespace TEN::Entities::Generic
 		case LadderMountType::Back:
 		{
 			auto boundsOffset = Vector3i(0, 0, bounds.Z2);
-			SetEntityInteraction(playerItem, ladderItem, LadderMountBackBasis, boundsOffset);
+			SetInteraction(playerItem, ladderItem, LadderMountBackBasis, boundsOffset);
 			SetAnimation(&playerItem, LA_LADDERX_MOUNT_FRONT);
 			break;
 		}
@@ -336,7 +270,7 @@ namespace TEN::Entities::Generic
 				round(laraItem.Pose.Position.y / ladderItem.Pose.Position.y) * LADDER_STEP_HEIGHT, // Target closest step on ladder.
 				0)*/;
 
-			SetEntityInteraction(playerItem, ladderItem, LadderMountRightBasis, boundsOffset);
+			SetInteraction(playerItem, ladderItem, LadderMountRightBasis, boundsOffset);
 			SetAnimation(&playerItem, LA_LADDERX_MOUNT_RIGHT);
 			break;
 		}
@@ -348,7 +282,7 @@ namespace TEN::Entities::Generic
 			break;
 		}
 
-		ladder.AttachItem(playerItem);
+		playerItem.Parenting.Attach(ladderItem);
 		player.Control.IsMoving = false;
 		player.Control.HandStatus = HandStatus::Busy;
 	}
