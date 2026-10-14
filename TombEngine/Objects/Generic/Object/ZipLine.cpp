@@ -16,6 +16,7 @@
 #include "Specific/Input/Input.h"
 
 using namespace TEN::Animation;
+using namespace TEN::Collision::Interaction;
 using namespace TEN::Collision::Point;
 using namespace TEN::Hud;
 using namespace TEN::Input;
@@ -25,6 +26,7 @@ namespace TEN::Entities::Traps
 {
 	const auto ZIP_LINE_INTERACT_BASIS = InteractionBasis(
 		Vector3i(0, 0, BLOCK(3 / 8.0f)),
+		EulerAngles::Identity,
 		GameBoundingBox(
 			-BLOCK(0.25f), BLOCK(0.25f),
 			-CLICK(1), CLICK(1),
@@ -129,27 +131,28 @@ namespace TEN::Entities::Traps
 		if (zipLineItem.Status != ITEM_NOT_ACTIVE)
 			return false;
 
-		// Test for Action input action.
-		if (!IsHeld(In::Action))
-			return false;
-
-		// Check player status.
-		if ((playerItem.Animation.ActiveState == LS_IDLE &&
-			!playerItem.Animation.IsAirborne &&
-			player.Control.HandStatus == HandStatus::Free) ||
-			(player.Control.IsMoving && player.Context.InteractedItem == zipLineItem.Index))
-		{
+		// Test for ongoing interaction.
+		if (player.Control.IsMoving && player.Context.InteractedItem == zipLineItem.Index)
 			return true;
-		}
 
-		return false;
+		// Test for new interaction.
+		return (IsHeld(In::Action) &&
+			playerItem.Animation.ActiveState == LS_IDLE &&
+			!playerItem.Animation.IsAirborne &&
+			player.Control.HandStatus == HandStatus::Free);
 	}
 
 	static void SetPlayerZipLineInteraction(ItemInfo& playerItem, ItemInfo& zipLineItem)
 	{
+		auto& player = GetLaraInfo(playerItem);
+
 		SetAnimation(playerItem, LA_ZIPLINE_MOUNT);
 		ResetPlayerFlex(&playerItem);
 
+		player.Control.IsMoving = false;
+		player.Control.HandStatus = HandStatus::Busy;
+
+		// Activate zip line if mount state was reached.
 		if (playerItem.Animation.ActiveState == LS_GRABBING)
 		{
 			if (!zipLineItem.Active)
@@ -164,13 +167,17 @@ namespace TEN::Entities::Traps
 	{
 		auto& zipLineItem = g_Level.Items[itemNumber];
 
+		if (zipLineItem.Status != ITEM_NOT_ACTIVE)
+			return;
+
+		// Spawn interaction highlight.
+		g_Hud.InteractionHighlighter.Test(*collided, zipLineItem, InteractionMode::Custom);
+
 		// Interact.
 		if (collided->IsLara())
 		{
 			if (TestInteraction(*collided, zipLineItem, ZIP_LINE_INTERACT_BASIS))
 			{
-				// TODO: Spawn interaction hint.
-
 				if (TestPlayerZipLineInteraction(*collided, zipLineItem))
 					SetInteraction(*collided, zipLineItem, ZIP_LINE_INTERACT_BASIS, SetPlayerZipLineInteraction, InteractionBasisType::Walk);
 			}

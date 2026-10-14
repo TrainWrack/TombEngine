@@ -51,16 +51,7 @@ namespace TEN::Collision::Interaction
 		if (interactor.OffsetBlend.IsActive)
 			return false;
 
-		// TODO: Currently unreliable because IteractedItemNumber is frequently not reset after completed interactions.
-		// 2) Avoid overriding active player interactions.
-		/*if (interactor.IsLara())
-		{
-			const auto& player = GetLaraInfo(interactor);
-			if (player.Context.InteractedItem != NO_VALUE)
-				return false;
-		}*/
-
-		// 3) Test if interactor's orientation is within interaction constraint.
+		// 2) Test if interactor's orientation is within interaction constraint.
 		auto deltaOrient = interactor.Pose.Orientation - interactable.Pose.Orientation;
 		if (deltaOrient.x < basis.OrientConstraint.first.x || deltaOrient.x > basis.OrientConstraint.second.x ||
 			deltaOrient.y < basis.OrientConstraint.first.y || deltaOrient.y > basis.OrientConstraint.second.y ||
@@ -79,20 +70,13 @@ namespace TEN::Collision::Interaction
 		auto max = box.Center + box.Extents;
 		auto min = box.Center - box.Extents;
 
-		// 4) Test if interactor is inside interaction box.
+		// 3) Test if interactor is inside interaction box.
 		if (relPos.x < min.x || relPos.x > max.x ||
 			relPos.y < min.y || relPos.y > max.y ||
 			relPos.z < min.z || relPos.z > max.z)
 		{
 			return false;
 		}
-
-		// TODO: Not working.
-		/*box = expansionBox.has_value() ? Geometry::GetExpandedBoundingOrientedBox(basis.Box, *expansionBox) : basis.Box;
-		box.Center = Vector3::Transform(box.Center, box.Orientation) + interactible.Pose.Position.ToVector3();
-		// 4) Test if interactor's position intersects interaction box.
-		if (!Geometry::IsPointInBox(deltaPos, box))
-			return false;*/
 
 		return true;
 	}
@@ -146,6 +130,7 @@ namespace TEN::Collision::Interaction
 			player.Control.TurnRate = 0;
 			player.Control.HandStatus = HandStatus::Busy;
 			player.Context.InteractedItem = interactable.Index;
+			player.Context.WalkInteraction.IsComplete = false;
 			player.Context.WalkInteraction.Basis = basis;
 			player.Context.WalkInteraction.Routine = routine;
 			return;
@@ -168,6 +153,7 @@ namespace TEN::Collision::Interaction
 			break;
 
 		case InteractionBasisType::Walk:
+		{
 			float dist = Vector3i::Distance(interactor.Pose.Position, interactable.Pose.Position);
 			if (dist > WALK_DIST_MIN)
 			{
@@ -180,12 +166,16 @@ namespace TEN::Collision::Interaction
 
 			break;
 		}
+		}
 	}
 
 	void DrawDebug(const ItemInfo& interactable, const InteractionBasis& basis)
 	{
 		constexpr auto COLL_BOX_COLOR = Color(1.0f, 0.0f, 0.0f, 1.0f);
 		constexpr auto INTERACT_BOX_COLOR = Color(0.0f, 1.0f, 1.0f, 1.0f);
+
+		if (!DebugMode)
+			return;
 
 		// Draw collision box.
 		auto collBox = GameBoundingBox(&interactable).ToBoundingOrientedBox(interactable.Pose);

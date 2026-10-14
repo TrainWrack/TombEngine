@@ -60,7 +60,7 @@ LaraInfo	  Lara			= {};
 ItemHandler	  LaraItem		= {};
 CollisionInfo LaraCollision = {};
 
-void HandlePlayerWalkInteractionMovement(ItemInfo& playerItem)
+static bool HandlePlayerWalkInteractionMovement(ItemInfo& playerItem)
 {
 	constexpr auto VEL = BLOCK(0.02f);
 	constexpr auto TURN_RATE = ANGLE(2.0f);
@@ -79,12 +79,12 @@ void HandlePlayerWalkInteractionMovement(ItemInfo& playerItem)
 
 	// 1) Test relative floor height.
 	if (relFloorHeight > STEPUP_HEIGHT)
-		return;
+		return false;
 
 	// 2) Set new interaction.
 	if (!player.Control.IsMoving)
 	{
-		short headingAngle = Geometry::GetOrientToPoint(playerItem.Pose.Position.ToVector3(), interactable.Pose.Position.ToVector3()).y;
+		short headingAngle = Geometry::GetOrientToPoint(playerItem.Pose.Position.ToVector3(), interactPos.ToVector3()).y;
 		int cardinalDir = GetQuadrant(headingAngle - playerItem.Pose.Orientation.y);
 
 		// Determine walk anim number.
@@ -94,15 +94,19 @@ void HandlePlayerWalkInteractionMovement(ItemInfo& playerItem)
 		default:
 		case NORTH:
 			animNumber = LA_WALK;
+			break;
 
 		case SOUTH:
 			animNumber = LA_WALK_BACK;
+			break;
 
 		case EAST:
 			animNumber = LA_SIDESTEP_RIGHT;
+			break;
 
 		case WEST:
 			animNumber = LA_SIDESTEP_LEFT;
+			break;
 		}
 
 		// Set parameters.
@@ -116,12 +120,12 @@ void HandlePlayerWalkInteractionMovement(ItemInfo& playerItem)
 	float dist = Vector3i::Distance(playerItem.Pose.Position, interactPos);
 	if (VEL < dist)
 	{
-		auto deltaPos = interactable.Pose.Position - playerItem.Pose.Position;
+		auto deltaPos = interactPos - playerItem.Pose.Position;
 		playerItem.Pose.Position += deltaPos * (VEL / dist);
 	}
 	else
 	{
-		playerItem.Pose.Position = interactable.Pose.Position;
+		playerItem.Pose.Position = interactPos;
 	}
 
 	// Calculate interaction orientation.
@@ -134,19 +138,24 @@ void HandlePlayerWalkInteractionMovement(ItemInfo& playerItem)
 
 	// 5) Set complete status.
 	player.Context.WalkInteraction.IsComplete = (playerItem.Pose == Pose(interactPos, interactOrient));
+
+	return true;
 }
 
 static void HandlePlayerWalkInteraction(ItemInfo& playerItem)
 {
 	auto& player = GetLaraInfo(playerItem);
 
-	g_Renderer.PrintDebugMessage("%d", (int)player.Control.IsMoving);
-
-	if (player.Context.InteractedItem == NO_VALUE ||
-		!player.Context.WalkInteraction.Basis.has_value() ||
+	// No walk interaction is active; don't touch state shared with legacy interactions.
+	if (!player.Context.WalkInteraction.Basis.has_value() ||
 		player.Context.WalkInteraction.Routine == nullptr)
 	{
-		player.Context.InteractedItem = NO_VALUE;
+		return;
+	}
+
+	// Interacted item was cleared elsewhere; cancel walk interaction.
+	if (player.Context.InteractedItem == NO_VALUE)
+	{
 		player.Context.WalkInteraction.IsComplete = false;
 		player.Context.WalkInteraction.Basis = std::nullopt;
 		player.Context.WalkInteraction.Routine = nullptr;
@@ -155,33 +164,35 @@ static void HandlePlayerWalkInteraction(ItemInfo& playerItem)
 
 	auto& interactable = g_Level.Items[player.Context.InteractedItem];
 
-	//if (TestInteraction(playerItem, interactable, *player.Context.WalkInteraction.Basis))
-	{
-		HandlePlayerWalkInteractionMovement(playerItem);
-
-		if (player.Context.WalkInteraction.IsComplete)
-		{
-			player.Context.WalkInteraction.Routine(playerItem, interactable);
-			player.Control.IsMoving = false;
-			player.Control.HandStatus = HandStatus::Busy;
-
-			player.Context.InteractedItem = NO_VALUE;
-			player.Context.WalkInteraction.IsComplete = false;
-			player.Context.WalkInteraction.Basis = std::nullopt;
-			player.Context.WalkInteraction.Routine = nullptr;
-		}
-		else
-		{
-			player.Context.InteractedItem = interactable.Index;
-		}
-	}
-	/*else if (player.Control.IsMoving && player.Context.InteractedItem == interactable.Index)
+	// Abort interaction if the target position cannot be reached.
+	if (!HandlePlayerWalkInteractionMovement(playerItem))
 	{
 		player.Control.IsMoving = false;
 		player.Control.HandStatus = HandStatus::Free;
+
+		player.Context.InteractedItem = NO_VALUE;
+		player.Context.WalkInteraction.IsComplete = false;
 		player.Context.WalkInteraction.Basis = std::nullopt;
 		player.Context.WalkInteraction.Routine = nullptr;
-	}*/
+		return;
+	}
+
+	// Interaction complete; call routine and reset context.
+	if (player.Context.WalkInteraction.IsComplete)
+	{
+		player.Context.WalkInteraction.Routine(playerItem, interactable);
+		player.Control.IsMoving = false;
+		player.Control.HandStatus = HandStatus::Busy;
+
+		player.Context.InteractedItem = NO_VALUE;
+		player.Context.WalkInteraction.IsComplete = false;
+		player.Context.WalkInteraction.Basis = std::nullopt;
+		player.Context.WalkInteraction.Routine = nullptr;
+	}
+	else
+	{
+		player.Context.InteractedItem = interactable.Index;
+	}
 }
 
 static void HandlePlayerDebug(const ItemInfo& item)
