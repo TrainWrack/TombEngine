@@ -352,7 +352,6 @@ namespace TEN::Animation
 			}
 
 			item.HandleOffsetBlend();
-
 			g_Renderer.UpdateLaraAnimations(true);
 		}
 		else

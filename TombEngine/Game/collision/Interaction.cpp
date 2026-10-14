@@ -9,152 +9,184 @@
 #include "Game/Lara/lara_helpers.h"
 #include "Game/Setup.h"
 #include "Math/Math.h"
+#include "Renderer/Renderer.h"
 
 using namespace TEN::Math;
 
-//namespace TEN::Collision
-//{
-InteractionBasis::InteractionBasis(const Vector3i& posOffset, const EulerAngles& orientOffset,
-	const GameBoundingBox& bounds, const OrientConstraintPair& orientConstraint)
+namespace TEN::Collision::Interaction
 {
-	PosOffset = posOffset;
-	OrientOffset = orientOffset;
-	Bounds = bounds;
-	OrientConstraint = orientConstraint;
-}
-
-InteractionBasis::InteractionBasis(const Vector3i& posOffset, const GameBoundingBox& bounds, const OrientConstraintPair& orientConstraint)
-{
-	PosOffset = posOffset;
-	Bounds = bounds;
-	OrientConstraint = orientConstraint;
-}
-
-InteractionBasis::InteractionBasis(const EulerAngles& orientOffset, const GameBoundingBox& bounds, const OrientConstraintPair& orientConstraint)
-{
-	OrientOffset = orientOffset;
-	Bounds = bounds;
-	OrientConstraint = orientConstraint;
-}
-
-InteractionBasis::InteractionBasis(const GameBoundingBox& bounds, const OrientConstraintPair& orientConstraint)
-{
-	Bounds = bounds;
-	OrientConstraint = orientConstraint;
-};
-
-bool InteractionBasis::TestInteraction(const ItemInfo& entityFrom, const ItemInfo& entityTo, const GameBoundingBox& boundsExtension) const
-{
-	// NOTE: For now, can only check offset blending status.
-	// 1) Avoid overriding active interactions.
-	if (entityFrom.OffsetBlend.IsActive)
-		return false;
-
-	auto orientConstraintAverage = (OrientConstraint.first + OrientConstraint.second) / 2;
-	auto poseFrom = Pose(entityFrom.Pose.Position, entityFrom.Pose.Orientation - orientConstraintAverage); // TODO: Check sign.
-
-	// 2) Test if entityFrom is aligned toward entityTo.
-	const auto& object = Objects[entityTo.ObjectNumber]; // HACK: Exclude pickups.
-	if (!object.isPickup)
+	InteractionBasis::InteractionBasis(const Vector3i& posOffset, const std::optional<EulerAngles>& orientOffset, const BoundingOrientedBox& box, const OrientConstraintPair& orientConstraint)
 	{
-		if (!Geometry::IsPointInFront(poseFrom, entityTo.Pose.Position.ToVector3()))
+		PosOffset = posOffset;
+		OrientOffset = orientOffset;
+		Box = box;
+		OrientConstraint = orientConstraint;
+	}
+
+	InteractionBasis::InteractionBasis(const Vector3i& posOffset, const BoundingOrientedBox& box, const OrientConstraintPair& orientConstraint)
+	{
+		PosOffset = posOffset;
+		Box = box;
+		OrientConstraint = orientConstraint;
+	}
+
+	InteractionBasis::InteractionBasis(const std::optional<EulerAngles>& orientOffset, const BoundingOrientedBox& box, const OrientConstraintPair& orientConstraint)
+	{
+		OrientOffset = orientOffset;
+		Box = box;
+		OrientConstraint = orientConstraint;
+	}
+
+	InteractionBasis::InteractionBasis(const BoundingOrientedBox& box, const OrientConstraintPair& orientConstraint)
+	{
+		Box = box;
+		OrientConstraint = orientConstraint;
+	};
+
+	bool TestInteraction(const ItemInfo& interactor, const ItemInfo& interactable, const InteractionBasis& basis, std::optional<BoundingOrientedBox> expansionBox)
+	{
+		DrawDebug(interactable, basis);
+
+		// 1) Avoid overriding active offset blend.
+		if (interactor.OffsetBlend.IsActive)
 			return false;
+
+		// 2) Test if interactor's orientation is within interaction constraint.
+		auto deltaOrient = interactor.Pose.Orientation - interactable.Pose.Orientation;
+		if (deltaOrient.x < basis.OrientConstraint.first.x || deltaOrient.x > basis.OrientConstraint.second.x ||
+			deltaOrient.y < basis.OrientConstraint.first.y || deltaOrient.y > basis.OrientConstraint.second.y ||
+			deltaOrient.z < basis.OrientConstraint.first.z || deltaOrient.z > basis.OrientConstraint.second.z)
+		{
+			return false;
+		}
+
+		// Calculate box-relative position.
+		auto deltaPos = (interactor.Pose.Position - interactable.Pose.Position).ToVector3();
+		auto invRotMatrix = interactable.Pose.Orientation.ToRotationMatrix().Invert();
+		auto relPos = Vector3::Transform(deltaPos, invRotMatrix);
+
+		// Calculate box min and max.
+		auto box = expansionBox.has_value() ? Geometry::GetExpandedBoundingOrientedBox(basis.Box, *expansionBox) : basis.Box;
+		auto max = box.Center + box.Extents;
+		auto min = box.Center - box.Extents;
+
+		// 3) Test if interactor is inside interaction box.
+		if (relPos.x < min.x || relPos.x > max.x ||
+			relPos.y < min.y || relPos.y > max.y ||
+			relPos.z < min.z || relPos.z > max.z)
+		{
+			return false;
+		}
+
+		return true;
 	}
 
-	// 3) Test if entityFrom's orientation is within interaction constraint.
-	auto deltaOrient = entityFrom.Pose.Orientation - entityTo.Pose.Orientation;
-	if (deltaOrient.x < OrientConstraint.first.x || deltaOrient.x > OrientConstraint.second.x ||
-		deltaOrient.y < OrientConstraint.first.y || deltaOrient.y > OrientConstraint.second.y ||
-		deltaOrient.z < OrientConstraint.first.z || deltaOrient.z > OrientConstraint.second.z)
+	static void SetLatchInteraction(ItemInfo& interactor, ItemInfo& interactable, const InteractionBasis& basis, const InteractionRoutine& routine)
 	{
-		return false;
+		constexpr auto OFFSET_BLEND_ALPHA = 0.2f;
+
+		// Calculate targets.
+		auto targetPos = Geometry::TranslatePoint(interactable.Pose.Position, interactable.Pose.Orientation, basis.PosOffset);
+		auto targetOrient = basis.OrientOffset.has_value() ? (interactable.Pose.Orientation + *basis.OrientOffset) : interactor.Pose.Orientation;
+
+		// Calculate absolute offsets.
+		auto absPosOffset = (targetPos - interactor.Pose.Position).ToVector3();
+		auto absOrientOffset = targetOrient - interactor.Pose.Orientation;
+
+		// Set interactor parameters.
+		interactor.Animation.Velocity = Vector3::Zero;
+		interactor.OffsetBlend.SetSmooth(absPosOffset, absOrientOffset, OFFSET_BLEND_ALPHA);
+
+		// Set player parameters.
+		if (interactor.IsLara())
+		{
+			auto& player = GetLaraInfo(interactor);
+
+			player.Control.TurnRate = 0;
+			player.Control.HandStatus = HandStatus::Busy;
+			player.Context.InteractedItem = interactable.Index;
+		}
+
+		// Call interaction routine.
+		routine(interactor, interactable);
 	}
 
-	auto deltaPos = (entityFrom.Pose.Position - entityTo.Pose.Position).ToVector3();
-	auto rotMatrix = entityTo.Pose.Orientation.ToRotationMatrix().Transpose(); // NOTE: Transpose() used as faster equivalent to Invert().
-	auto relPos = Vector3::Transform(deltaPos, rotMatrix);
-
-	// 4) Test if entityFrom is inside interaction bounds.
-	auto bounds = Bounds + boundsExtension;
-	if (relPos.x < bounds.X1 || relPos.x > bounds.X2 ||
-		relPos.y < bounds.Y1 || relPos.y > bounds.Y2 ||
-		relPos.z < bounds.Z1 || relPos.z > bounds.Z2)
+	static void SetWalkInteraction(ItemInfo& interactor, ItemInfo& interactable, const InteractionBasis& basis, const InteractionRoutine& routine)
 	{
-		return false;
+		// Set player parameters.
+		if (interactor.IsLara())
+		{
+			auto& player = GetLaraInfo(interactor);
+
+			// FAILSAFE.
+			if (player.Control.WaterStatus != WaterStatus::Dry &&
+				player.Control.WaterStatus != WaterStatus::Wade)
+			{
+				SetLatchInteraction(interactor, interactable, basis, routine);
+				TENLog("SetWalkInteraction(): Player not grounded. Setting latch interaction instead.", LogLevel::Warning);
+				return;
+			}
+
+			player.Control.TurnRate = 0;
+			player.Control.HandStatus = HandStatus::Busy;
+			player.Context.InteractedItem = interactable.Index;
+			player.Context.WalkInteraction.IsComplete = false;
+			player.Context.WalkInteraction.Basis = basis;
+			player.Context.WalkInteraction.Routine = routine;
+			return;
+		}
+
+		// FAILSAFE.
+		SetLatchInteraction(interactor, interactable, basis, routine);
+		TENLog("SetWalkInteraction(): Non-player passed as interactor. Setting latch interaction instead.", LogLevel::Warning);
 	}
 
-	return true;
+	void SetInteraction(ItemInfo& interactor, ItemInfo& interactable, const InteractionBasis& basis, const InteractionRoutine& routine, InteractionBasisType type)
+	{
+		constexpr auto WALK_DIST_MIN = BLOCK(0.05f);
+
+		switch (type)
+		{
+		default:
+		case InteractionBasisType::Latch:
+			SetLatchInteraction(interactor, interactable, basis, routine);
+			break;
+
+		case InteractionBasisType::Walk:
+		{
+			float dist = Vector3i::Distance(interactor.Pose.Position, interactable.Pose.Position);
+			if (dist > WALK_DIST_MIN)
+			{
+				SetWalkInteraction(interactor, interactable, basis, routine);
+			}
+			else
+			{
+				SetLatchInteraction(interactor, interactable, basis, routine);
+			}
+
+			break;
+		}
+		}
+	}
+
+	void DrawDebug(const ItemInfo& interactable, const InteractionBasis& basis)
+	{
+		constexpr auto COLL_BOX_COLOR = Color(1.0f, 0.0f, 0.0f, 1.0f);
+		constexpr auto INTERACT_BOX_COLOR = Color(0.0f, 1.0f, 1.0f, 1.0f);
+
+		if (!DebugMode)
+			return;
+
+		// Draw collision box.
+		auto collBox = GameBoundingBox(&interactable).ToBoundingOrientedBox(interactable.Pose);
+		DrawDebugBox(collBox, COLL_BOX_COLOR);
+
+		auto rotMatrix = interactable.Pose.Orientation.ToRotationMatrix();
+		auto relCenter = Vector3::Transform(basis.Box.Center, rotMatrix);
+		auto orient = interactable.Pose.Orientation.ToQuaternion();
+
+		// Draw interaction box.
+		auto interactBox = BoundingOrientedBox(interactable.Pose.Position.ToVector3() + relCenter, basis.Box.Extents, orient);
+		DrawDebugBox(interactBox, INTERACT_BOX_COLOR);
+	}
 }
-
-void SetEntityInteraction(ItemInfo& entityFrom, const ItemInfo& entityTo, const InteractionBasis& basis,
-	const Vector3i& extraPosOffset, const EulerAngles& extraOrientOffset)
-{
-	constexpr auto OFFSET_BLEND_ALPHA = 0.5f;
-
-	// Calculate relative offsets.
-	auto relPosOffset = basis.PosOffset + extraPosOffset;
-	auto relOrientOffset = basis.OrientOffset + extraOrientOffset;
-
-	// Calculate targets.
-	auto targetPos = Geometry::TranslatePoint(entityTo.Pose.Position, entityTo.Pose.Orientation, relPosOffset);
-	auto targetOrient = entityTo.Pose.Orientation + relOrientOffset;
-
-	// Calculate absolute offsets.
-	auto absPosOffset = (targetPos - entityFrom.Pose.Position).ToVector3();
-	auto absOrientOffset = targetOrient - entityFrom.Pose.Orientation;
-
-	// Set offset blend.
-	entityFrom.OffsetBlend.Set(absPosOffset, absOrientOffset, OFFSET_BLEND_ALPHA);
-}
-
-void SetPlayerAlignAnimation(ItemInfo& playerEntity, const ItemInfo& interactedEntity)
-{
-	auto& player = GetLaraInfo(playerEntity);
-
-	// Check if already aligning.
-	if (player.Control.IsMoving)
-		return;
-
-	// Check water status.
-	if (player.Control.WaterStatus == WaterStatus::Underwater ||
-		player.Control.WaterStatus == WaterStatus::TreadWater)
-	{
-		return;
-	}
-
-	float dist = Vector3i::Distance(playerEntity.Pose.Position, interactedEntity.Pose.Position);
-
-	// Skip animating if player is very close.
-	bool doAlignAnim = ((dist - LARA_ALIGN_VELOCITY) > (LARA_ALIGN_VELOCITY * ANIMATED_ALIGNMENT_FRAME_COUNT_THRESHOLDX));
-	if (!doAlignAnim)
-		return;
-
-	short headingAngle = Geometry::GetOrientToPoint(playerEntity.Pose.Position.ToVector3(), interactedEntity.Pose.Position.ToVector3()).y;
-	int cardinalDir = GetQuadrant(headingAngle - playerEntity.Pose.Orientation.y);
-
-	// Set appropriate animation.
-	switch (cardinalDir)
-	{
-	default:
-	case NORTH:
-		SetAnimation(&playerEntity, LA_WALK);
-		break;
-
-	case SOUTH:
-		SetAnimation(&playerEntity, LA_WALK_BACK);
-		break;
-
-	case EAST:
-		SetAnimation(&playerEntity, LA_SIDESTEP_RIGHT);
-		break;
-
-	case WEST:
-		SetAnimation(&playerEntity, LA_SIDESTEP_LEFT);
-		break;
-	}
-
-	player.Control.HandStatus = HandStatus::Busy;
-	player.Control.IsMoving = true;
-	player.Control.Count.PositionAdjust = 0;
-}
-//}

@@ -70,6 +70,30 @@ enum AIObjectType
 	ALL_AIOBJ = GUARD | AMBUSH | PATROL1 | MODIFY | FOLLOW | PATROL2
 };
 
+enum class OffsetBlendMode
+{
+	Linear,
+	Smooth
+};
+
+struct OffsetBlendData
+{
+	OffsetBlendMode Mode = OffsetBlendMode::Linear;
+	bool			IsActive = false;
+	int				TimeActive = 0; // Time in game frames.
+	int				TimeDelay = 0; // Time in game frames.
+
+	Vector3		PosOffset = Vector3::Zero;
+	EulerAngles OrientOffset = EulerAngles::Identity;
+	float		Alpha = 0.0f;
+
+	void SetLinear(const Vector3& posOffset, const EulerAngles& orientOffset, float vel, short turnRate, float delayInSec = 0.0f);
+	void SetSmooth(const Vector3& posOffset, const EulerAngles& orientOffset, float alpha, float delayInSec = 0.0f);
+	void Clear();
+
+	void DrawDebug() const;
+};
+
 struct MoveableAnimBlendData
 {
 	int          FrameNumber = 0;
@@ -189,7 +213,7 @@ struct ItemInfo
 	short         CarriedItem = 0;
 
 	ParentingInfo Parenting   = {};
-
+	void HandleOffsetBlend();
 	PropertyMap Properties = {};
 
 	// Getters

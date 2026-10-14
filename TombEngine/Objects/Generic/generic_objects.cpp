@@ -18,6 +18,7 @@
 #include "Objects/Generic/Object/Pushable/PushableObject.h"
 #include "Objects/Generic/Object/rope.h"
 #include "Objects/Generic/Object/ZipLine.h"
+#include "Objects/Generic/Object/ZipLineOld.h"
 
 // Switches
 #include "Objects/Generic/Switches/cog_switch.h"
@@ -136,6 +137,15 @@ static void StartObject(ObjectInfo* object)
 		object->Initialize = InitializeZipLine;
 		object->collision = CollideZipLine;
 		object->control = ControlZipLine;
+		object->SetHitEffect(true);
+	}
+
+	object = &Objects[ID_ZIPLINE_OLD];
+	if (object->loaded)
+	{
+		object->Initialize = InitializeZipLineOld;
+		object->collision = CollideZipLineOld;
+		object->control = ControlZipLineOld;
 		object->SetHitEffect(true);
 	}
 }

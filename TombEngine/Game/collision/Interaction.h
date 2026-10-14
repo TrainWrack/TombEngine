@@ -5,36 +5,34 @@ using namespace TEN::Math;
 
 struct ItemInfo;
 
-//namespace TEN::Collision
-//{
-using OrientConstraintPair = std::pair<EulerAngles, EulerAngles>;
-
-constexpr auto ANIMATED_ALIGNMENT_FRAME_COUNT_THRESHOLDX = 6;
-
-class InteractionBasis
+namespace TEN::Collision::Interaction
 {
-public:
-	// Members
-	Vector3i			 PosOffset = Vector3i::Zero;
-	EulerAngles			 OrientOffset = EulerAngles::Identity;
-	GameBoundingBox		 Bounds = GameBoundingBox::Zero;
-	OrientConstraintPair OrientConstraint = OrientConstraintPair(EulerAngles::Identity, EulerAngles::Identity);
+	using InteractionRoutine = std::function<void(ItemInfo& interactor, ItemInfo& interactable)>;
+	using OrientConstraintPair = std::pair<EulerAngles, EulerAngles>;
 
-	// Constructors
-	InteractionBasis(const Vector3i& posOffset, const EulerAngles& orientOffset, const GameBoundingBox& bounds,
-		const OrientConstraintPair& orientConstraint);
-	InteractionBasis(const Vector3i& posOffset, const GameBoundingBox& bounds, const OrientConstraintPair& orientConstraint);
-	InteractionBasis(const EulerAngles& orientOffset, const GameBoundingBox& bounds, const OrientConstraintPair& orientConstraint);
-	InteractionBasis(const GameBoundingBox& bounds, const OrientConstraintPair& orientConstraint);
+	enum class InteractionBasisType
+	{
+		Latch,
+		Walk
+	};
 
-	// Inquirers
-	bool TestInteraction(const ItemInfo& entityFrom, const ItemInfo& entityTo, const GameBoundingBox& boundsExtension = GameBoundingBox::Zero) const;
-};
+	struct InteractionBasis
+	{
+	public:
+		Vector3i				   PosOffset = Vector3i::Zero;
+		std::optional<EulerAngles> OrientOffset = std::nullopt;
+		BoundingOrientedBox		   Box = BoundingOrientedBox();
+		OrientConstraintPair	   OrientConstraint = OrientConstraintPair(EulerAngles::Identity, EulerAngles::Identity);
 
-void SetEntityInteraction(ItemInfo& entityFrom, const ItemInfo& entityTo, const InteractionBasis& basis,
-	const Vector3i& extraPosOffset = Vector3i::Zero, const EulerAngles& extraOrientOffset = EulerAngles::Identity);
-void SetPlayerAlignAnimation(ItemInfo& playerEntity, const ItemInfo& interactedEntity);
+		InteractionBasis() {};
+		InteractionBasis(const Vector3i& posOffset, const std::optional<EulerAngles>& orientOffset, const BoundingOrientedBox& box, const OrientConstraintPair& orientConstraint);
+		InteractionBasis(const Vector3i& posOffset, const BoundingOrientedBox& box, const OrientConstraintPair& orientConstraint);
+		InteractionBasis(const std::optional<EulerAngles>& orientOffset, const BoundingOrientedBox& box, const OrientConstraintPair& orientConstraint);
+		InteractionBasis(const BoundingOrientedBox& box, const OrientConstraintPair& orientConstraint);
+	};
 
-//bool AlignPlayerToEntity(ItemInfo& playerEntity, const ItemInfo& entity, const Vector3i& posOffset = Vector3i::Zero, const EulerAngles& orientOffset = EulerAngles::Identity, bool doSnapAlign = false);
-//bool AlignPlayerToPose(ItemInfo* item, const Pose& toPose, float velocity, short turnRate);
-//}
+	bool TestInteraction(const ItemInfo& interactor, const ItemInfo& interactable, const InteractionBasis& basis, std::optional<BoundingOrientedBox> expansionBox = std::nullopt);
+	void SetInteraction(ItemInfo& interactor, ItemInfo& interactable, const InteractionBasis& basis, const InteractionRoutine& routine, InteractionBasisType type);
+
+	void DrawDebug(const ItemInfo& interactable, const InteractionBasis& basis);
+}
