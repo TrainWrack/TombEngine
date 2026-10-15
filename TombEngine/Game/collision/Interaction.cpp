@@ -87,7 +87,7 @@ namespace TEN::Collision::Interaction
 
 		// Calculate targets.
 		auto targetPos = Geometry::TranslatePoint(interactable.Pose.Position, interactable.Pose.Orientation, basis.PosOffset);
-		auto targetOrient = basis.OrientOffset.has_value() ? (interactable.Pose.Orientation + *basis.OrientOffset) : interactor.Pose.Orientation;
+		auto targetOrient = basis.OrientOffset.has_value() ? (interactable.Pose.Orientation + *basis.OrientOffset) : interactable.Pose.Orientation;
 
 		// Calculate absolute offsets.
 		auto absPosOffset = (targetPos - interactor.Pose.Position).ToVector3();
