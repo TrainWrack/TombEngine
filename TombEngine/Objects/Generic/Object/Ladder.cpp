@@ -72,6 +72,7 @@ namespace TEN::Entities::Generic
 	};
 
 	const auto LadderMountedOffset2D = Vector3i(0, 0, -LARA_RADIUS * 1.5f);
+	const auto LadderMountedOffsetTop2D = Vector3i(0, 0, 150);
 	const auto LadderInteractBounds2D = GameBoundingBox(
 		-BLOCK(0.25f), BLOCK(0.25f),
 		0, 0,
@@ -94,7 +95,7 @@ namespace TEN::Entities::Generic
 	const auto LadderInteractLeftBox2D = LadderInteractLeftBounds2D.ToBoundingOrientedBox(Pose::Zero);
 
 	const auto LadderMountTopFrontBasis = InteractionBasis(
-		LadderMountedOffset2D, // TODO
+		LadderMountedOffsetTop2D,
 		EulerAngles(0, ANGLE(180.0f), 0),
 		LadderInteractBox2D,
 		std::pair(
@@ -102,7 +103,7 @@ namespace TEN::Entities::Generic
 			EulerAngles(PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(180.0f) + LARA_GRAB_THRESHOLD, PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD)));
 
 	const auto LadderMountTopBackBasis = InteractionBasis(
-		LadderMountedOffset2D, // TODO
+		LadderMountedOffsetTop2D,
 		LadderInteractBox2D,
 		std::pair(
 			EulerAngles(-PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, -LARA_GRAB_THRESHOLD, -PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD),
@@ -208,23 +209,26 @@ namespace TEN::Entities::Generic
 	{
 		const auto& player = GetLaraInfo(playerItem);
 
-		// 1) Check for input action.
-		if (!IsHeld(In::Action))
-			return false;
-
-		// 2) Check ladder usability.
+		// 1) Check ladder usability.
 		if (ladderItem.Flags & IFLAG_INVISIBLE)
 			return false;
 
-		// 3) Check hand status.
+		// 2) Check hand status.
 		if (player.Control.HandStatus != HandStatus::Free)
 			return false;
 
-		// 4) Test active player state. Accept either a grounded or airborne mount state.
+		// 3) Test active player state. Accept either a grounded or airborne mount state.
 		bool isGroundedMount = TestState(playerItem.Animation.ActiveState, LadderGroundedMountPlayerStates);
 		bool isAirborneMount = playerItem.Animation.IsAirborne &&
 			TestState(playerItem.Animation.ActiveState, LadderAirborneMountPlayerStates);
 		if (!isGroundedMount && !isAirborneMount)
+			return false;
+
+		// 4) Test for input action. A grounded mount needs a FRESH Action press, so simply holding
+		// Action (e.g. straight after a top dismount) doesn't immediately re-mount. An airborne grab
+		// may hold Action from the jump, and an in-progress walk-to-ladder interaction keeps its mount.
+		bool isInteracting = (player.Control.IsMoving && player.Context.InteractedItem == ladderItem.Index);
+		if (!isInteracting && !(isAirborneMount ? IsHeld(In::Action) : IsClicked(In::Action)))
 			return false;
 
 		// TODO: Assess whether ladder is in front.
