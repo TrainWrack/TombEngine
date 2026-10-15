@@ -169,69 +169,6 @@ int MoveableModelData::GetSkinGlobalIndex() const
 	return obj.skinIndex;
 }
 
-void OffsetBlendData::Set(const Vector3& posOffset, const EulerAngles& orientOffset, float alpha, float delayInSec)
-{
-	IsActive = true;
-	DelayTime = std::round(delayInSec / DELTA_TIME);
-	PosOffset = posOffset;
-	OrientOffset = orientOffset;
-	Alpha = alpha;
-}
-
-void OffsetBlendData::Clear()
-{
-	*this = {};
-}
-
-void OffsetBlendData::DrawDebug() const
-{
-	g_Renderer.PrintDebugMessage("IsActive: %d", IsActive);
-	g_Renderer.PrintDebugMessage("TimeAcive: %.3f", TimeActive);
-	g_Renderer.PrintDebugMessage("DelayTime: %.3f", DelayTime);
-	g_Renderer.PrintDebugMessage("PosOffset: %.3f, %.3f, %.3f", PosOffset.x, PosOffset.y, PosOffset.z);
-	g_Renderer.PrintDebugMessage("OrientOffset: %.3f, %.3f, %.3f", TO_DEGREES(OrientOffset.x), TO_DEGREES(OrientOffset.y), TO_DEGREES(OrientOffset.z));
-}
-
-void ItemInfo::HandleOffsetBlend()
-{
-	constexpr auto TIME_ACTIVE_MAX = 3.0f;
-
-	OffsetBlend.DrawDebug();
-
-	// Offset blend inactive; return early.
-	if (!OffsetBlend.IsActive)
-		return;
-
-	// Update delay.
-	if (OffsetBlend.DelayTime > 0.0f)
-	{
-		OffsetBlend.DelayTime -= 1.0f;// DELTA_TIME;
-		if (OffsetBlend.DelayTime < 0.0f)
-			OffsetBlend.DelayTime = 0.0f;
-
-		return;
-	}
-
-	// Calculate offset steps.
-	auto posOffsetStep = Vector3::Lerp(OffsetBlend.PosOffset, Vector3::Zero, OffsetBlend.Alpha);
-	auto orientOffsetStep = EulerAngles::Lerp(OffsetBlend.OrientOffset, EulerAngles::Identity, OffsetBlend.Alpha);
-
-	// Apply offsets.
-	Pose.Position += Vector3i(posOffsetStep);
-	Pose.Orientation += orientOffsetStep;
-
-	// Update offsets.
-	OffsetBlend.PosOffset -= posOffsetStep;
-	OffsetBlend.OrientOffset -= orientOffsetStep;
-
-	// Offset blend complete; clear data.
-	if ((OffsetBlend.PosOffset.Length() <= EPSILON && EulerAngles::Compare(OffsetBlend.OrientOffset, EulerAngles::Identity)) ||
-		OffsetBlend.TimeActive >= (int)round(TIME_ACTIVE_MAX * FPS))
-	{
-		OffsetBlend.Clear();
-	}
-}
-
 BoundingBox ItemInfo::GetAabb() const
 {
 	return Geometry::GetAabb(GetObb());

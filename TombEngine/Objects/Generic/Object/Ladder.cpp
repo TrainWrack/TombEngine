@@ -2,6 +2,7 @@
 #include "Objects/Generic/Object/Ladder.h"
 
 #include "Game/collision/collide_item.h"
+#include "Game/collision/Interaction.h"
 #include "Game/collision/sphere.h"
 #include "Game/control/box.h"
 #include "Game/control/control.h"
@@ -17,6 +18,7 @@
 #include "Specific/level.h"
 #include "Specific/trutils.h"
 
+using namespace TEN::Collision::Interaction;
 using namespace TEN::Collision::Sphere;
 using namespace TEN::Input;
 using namespace TEN::Math;
@@ -47,9 +49,9 @@ namespace TEN::Entities::Generic
 
 	const auto LadderMountedPlayerStates = std::vector<int>
 	{
-		LS_LADDER_IDLE,
-		LS_LADDER_UP,
-		LS_LADDER_DOWN
+		LS_LADDERX_IDLE,
+		LS_LADDERX_UP,
+		LS_LADDERX_DOWN
 	};
 	const auto LadderGroundedMountPlayerStates = std::vector<int>
 	{
@@ -72,25 +74,26 @@ namespace TEN::Entities::Generic
 		-BLOCK(0.25f), BLOCK(0.25f),
 		0, 0,
 		-BLOCK(3 / 8.0f), BLOCK(3 / 8.0f));
+	const auto LadderInteractBox2D = LadderInteractBounds2D.ToBoundingOrientedBox(Pose::Zero);
 
 	const auto LadderMountTopFrontBasis = InteractionBasis(
 		LadderMountedOffset2D, // TODO
 		EulerAngles(0, ANGLE(180.0f), 0),
-		LadderInteractBounds2D,
+		LadderInteractBox2D,
 		std::pair(
 			EulerAngles(-PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(180.0f) - LARA_GRAB_THRESHOLD, -PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD),
 			EulerAngles(PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(180.0f) + LARA_GRAB_THRESHOLD, PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD)));
 
 	const auto LadderMountTopBackBasis = InteractionBasis(
 		LadderMountedOffset2D, // TODO
-		LadderInteractBounds2D,
+		LadderInteractBox2D,
 		std::pair(
 			EulerAngles(-PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, -LARA_GRAB_THRESHOLD, -PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD),
 			EulerAngles(PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, LARA_GRAB_THRESHOLD, PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD)));
 
 	const auto LadderMountFrontBasis = InteractionBasis(
 		LadderMountedOffset2D,
-		LadderInteractBounds2D,
+		LadderInteractBox2D,
 		std::pair(
 			EulerAngles(-PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, -LARA_GRAB_THRESHOLD, -PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD),
 			EulerAngles(PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, LARA_GRAB_THRESHOLD, PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD)));
@@ -98,7 +101,7 @@ namespace TEN::Entities::Generic
 	const auto LadderMountBackBasis = InteractionBasis(
 		LadderMountedOffset2D,
 		EulerAngles(0, ANGLE(180.0f), 0),
-		LadderInteractBounds2D,
+		LadderInteractBox2D,
 		std::pair(
 			EulerAngles(-PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(180.0f) - LARA_GRAB_THRESHOLD, -PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD),
 			EulerAngles(PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(180.0f) + LARA_GRAB_THRESHOLD, PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD)));
@@ -106,7 +109,7 @@ namespace TEN::Entities::Generic
 	const auto LadderMountLeftBasis = InteractionBasis(
 		LadderMountedOffset2D + Vector3i(-BLOCK(0.25f), 0, 0),
 		EulerAngles(0, ANGLE(90.0f), 0),
-		LadderInteractBounds2D,
+		LadderInteractBox2D,
 		std::pair(
 			EulerAngles(-PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(90.0f) - LARA_GRAB_THRESHOLD, -PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD),
 			EulerAngles(PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(90.0f) + LARA_GRAB_THRESHOLD, PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD)));
@@ -114,7 +117,7 @@ namespace TEN::Entities::Generic
 	const auto LadderMountRightBasis = InteractionBasis(
 		LadderMountedOffset2D + Vector3i(BLOCK(0.25f), 0, 0),
 		EulerAngles(0, ANGLE(-90.0f), 0),
-		LadderInteractBounds2D,
+		LadderInteractBox2D,
 		std::pair(
 			EulerAngles(-PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(-90.0f) - LARA_GRAB_THRESHOLD, -PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD),
 			EulerAngles(PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(-90.0f) + LARA_GRAB_THRESHOLD, PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD)));
@@ -157,8 +160,11 @@ namespace TEN::Entities::Generic
 		if (player.Control.HandStatus != HandStatus::Free)
 			return false;
 
-		// 4) Test active player state.
-		if (!TestState(playerItem.Animation.ActiveState, LadderGroundedMountPlayerStates))
+		// 4) Test active player state. Accept either a grounded or airborne mount state.
+		bool isGroundedMount = TestState(playerItem.Animation.ActiveState, LadderGroundedMountPlayerStates);
+		bool isAirborneMount = playerItem.Animation.IsAirborne &&
+			TestState(playerItem.Animation.ActiveState, LadderAirborneMountPlayerStates);
+		if (!isGroundedMount && !isAirborneMount)
 			return false;
 
 		// TODO: Assess whether ladder is in front.
@@ -177,16 +183,16 @@ namespace TEN::Entities::Generic
 		// Define extension for height of interaction bounds.
 		// TODO: Get height of full ladder stack. Must probe above and below for ladder objects. Steal from vertical pole?
 		auto bounds = GameBoundingBox(&ladderItem);
-		auto boundsExtension = GameBoundingBox(0, 0, bounds.Y1, bounds.Y2 + LADDER_STEP_HEIGHT, 0, 0);
+		auto boundsExtension = GameBoundingBox(0, 0, bounds.Y1, bounds.Y2 + LADDER_STEP_HEIGHT, 0, 0).ToBoundingOrientedBox(Pose::Zero);
 
-		/*if (LadderMountTopFrontBasis.TestInteraction(laraItem, ladderItem, boundsExtension))
-		return LadderMountType::TopFront;
+		//if (TestInteraction(playerItem, ladderItem, LadderMountTopFrontBasis, boundsExtension))
+		//	return LadderMountType::TopFront;
 
-		if (LadderMountTopBackBasis.TestInteraction(laraItem, ladderItem, boundsExtension))
-		return LadderMountType::TopBack;*/
+		//if (TestInteraction(playerItem, ladderItem, LadderMountTopBackBasis, boundsExtension))
+		//	return LadderMountType::TopBack;
 
 		// Front mount.
-		if (LadderMountFrontBasis.TestInteraction(playerItem, ladderItem, boundsExtension))
+		if (TestInteraction(playerItem, ladderItem, LadderMountFrontBasis, boundsExtension))
 		{
 			// Jump case.
 			if (playerItem.Animation.IsAirborne && playerItem.Animation.Velocity.y > 0.0f)
@@ -207,16 +213,43 @@ namespace TEN::Entities::Generic
 			}
 		}
 
-		if (LadderMountBackBasis.TestInteraction(playerItem, ladderItem, boundsExtension))
+		if (TestInteraction(playerItem, ladderItem, LadderMountBackBasis, boundsExtension))
 			return LadderMountType::Back;
 
-		/*if (LadderMountLeftBasis.TestInteraction(laraItem, ladderItem, boundsExtension))
+		/*if (TestInteraction(laraItem, ladderItem, LadderMountLeftBasis, boundsExtension))
 		return LadderMountType::Left;*/
 
-		if (LadderMountRightBasis.TestInteraction(playerItem, ladderItem, boundsExtension))
+		if (TestInteraction(playerItem, ladderItem, LadderMountRightBasis, boundsExtension))
 			return LadderMountType::Right;
 
 		return LadderMountType::None;
+	}
+
+	static void SetPlayerLadderMountInteraction(ItemInfo& interactor, ItemInfo&)
+	{
+		SetAnimation(&interactor, LA_LADDERX_MOUNT_FRONT);
+	}
+
+	static void SetPlayerLadderMountRightInteraction(ItemInfo& interactor, ItemInfo&)
+	{
+		SetAnimation(&interactor, LA_LADDERX_MOUNT_RIGHT);
+	}
+
+	static void SetPlayerLadderMountTopFrontInteraction(ItemInfo& interactor, ItemInfo&)
+	{
+		SetAnimation(&interactor, LA_LADDERX_MOUNT_TOP_FRONT);
+	}
+
+	static void SetPlayerLadderMountTopBackInteraction(ItemInfo& interactor, ItemInfo&)
+	{
+		SetAnimation(&interactor, LA_LADDERX_MOUNT_TOP_BACK);
+	}
+
+	static void SetPlayerLadderAirMountInteraction(ItemInfo& interactor, ItemInfo&)
+	{
+		SetAnimation(&interactor, LA_LADDERX_IDLE);
+
+		interactor.Animation.IsAirborne = false;
 	}
 
 	static void HandleLadderMount(ItemInfo& ladderItem, ItemInfo& playerItem, LadderMountType mountType)
@@ -227,8 +260,6 @@ namespace TEN::Entities::Generic
 		if (playerItem.OffsetBlend.IsActive)
 			player.Context.InteractedItem = ladderItem.Index;
 
-		//ModulateLaraTurnRateY(&playerItem, 0, 0, 0);
-
 		auto bounds = GameBoundingBox(&ladderItem);
 
 		switch (mountType)
@@ -237,25 +268,31 @@ namespace TEN::Entities::Generic
 		case LadderMountType::None:
 			return;
 
-		case LadderMountType::TopFront:
-			break;
+		//case LadderMountType::TopFront:
+		//{
+		//	auto extraPosOffset = Vector3i(0, 0, bounds.Z1);
+		//	SetInteraction(playerItem, ladderItem, LadderMountTopFrontBasis, SetPlayerLadderMountTopFrontInteraction, InteractionBasisType::Latch, extraPosOffset);
+		//	break;
+		//}
 
-		case LadderMountType::TopBack:
-			break;
+		//case LadderMountType::TopBack:
+		//{
+		//	auto extraPosOffset = Vector3i(0, 0, bounds.Z2);
+		//	SetInteraction(playerItem, ladderItem, LadderMountTopBackBasis, SetPlayerLadderMountTopBackInteraction, InteractionBasisType::Latch, extraPosOffset);
+		//	break;
+		//}
 
 		case LadderMountType::Front:
 		{
-			auto boundsOffset = Vector3i(0, 0, bounds.Z1);
-			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, boundsOffset);
-			SetAnimation(&playerItem, LA_LADDERX_MOUNT_FRONT);
+			auto extraPosOffset = Vector3i(0, 0, bounds.Z1);
+			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, SetPlayerLadderMountInteraction, InteractionBasisType::Walk, extraPosOffset);
 			break;
 		}
 
 		case LadderMountType::Back:
 		{
-			auto boundsOffset = Vector3i(0, 0, bounds.Z2);
-			SetInteraction(playerItem, ladderItem, LadderMountBackBasis, boundsOffset);
-			SetAnimation(&playerItem, LA_LADDERX_MOUNT_FRONT);
+			auto extraPosOffset = Vector3i(0, 0, bounds.Z2);
+			SetInteraction(playerItem, ladderItem, LadderMountBackBasis, SetPlayerLadderMountInteraction, InteractionBasisType::Walk, extraPosOffset);
 			break;
 		}
 
@@ -264,22 +301,23 @@ namespace TEN::Entities::Generic
 
 		case LadderMountType::Right:
 		{
-			auto boundsOffset = Vector3i(0, 0, bounds.Z1)/* +
-				Vector3i(
-				0,
-				round(laraItem.Pose.Position.y / ladderItem.Pose.Position.y) * LADDER_STEP_HEIGHT, // Target closest step on ladder.
-				0)*/;
-
-			SetInteraction(playerItem, ladderItem, LadderMountRightBasis, boundsOffset);
-			SetAnimation(&playerItem, LA_LADDERX_MOUNT_RIGHT);
+			auto extraPosOffset = Vector3i(0, 0, bounds.Z1);
+			SetInteraction(playerItem, ladderItem, LadderMountRightBasis, SetPlayerLadderMountRightInteraction, InteractionBasisType::Walk, extraPosOffset);
 			break;
 		}
 
 		case LadderMountType::JumpUp:
-			break;
-
 		case LadderMountType::JumpReach:
+		{
+			// Target the closest step on the ladder.
+			int ladderVPos = ladderItem.Pose.Position.y + bounds.Y1;
+			int playerVPos = playerItem.Pose.Position.y - LARA_HEIGHT;
+			int vOffset = -abs(playerVPos - ladderVPos) / (int)LADDER_STEP_HEIGHT;
+			auto extraPosOffset = Vector3i(0, vOffset, bounds.Z1);
+
+			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, SetPlayerLadderAirMountInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
+		}
 		}
 
 		playerItem.Parenting.Attach(ladderItem);
@@ -290,82 +328,18 @@ namespace TEN::Entities::Generic
 	void CollideLadder(short itemNumber, ItemInfo* playerItem, CollisionInfo* coll)
 	{
 		auto& ladderItem = g_Level.Items[itemNumber];
-		auto& player = *GetLaraInfo(playerItem);
 
 		DrawLadderDebug(ladderItem);
 
-		// TODO!! This will be MUCH cleaner.
+		// Try to mount the ladder.
 		auto mountType = GetLadderMountType(ladderItem, *playerItem);
-		if (mountType == LadderMountType::None)
+		if (mountType != LadderMountType::None)
 		{
-			if (!TestState(playerItem->Animation.ActiveState, LadderMountedPlayerStates) &&
-				playerItem->Animation.ActiveState != LS_JUMP_BACK) // TODO: Player can jump through ladders.
-			{
-				ObjectCollision(itemNumber, playerItem, coll);
-			}
-		}
-
-		HandleLadderMount(ladderItem, *playerItem, mountType);
-		return;
-
-		// Grounded mount.
-		if ((IsHeld(In::Action) &&
-			TestState(playerItem->Animation.ActiveState, LadderGroundedMountPlayerStates) &&
-			player.Control.HandStatus == HandStatus::Free) ||
-			(player.Control.IsMoving && player.Context.InteractedItem == itemNumber))
-		{
-			if (player.Control.IsMoving && player.Context.InteractedItem == itemNumber)
-			{
-				player.Control.HandStatus = HandStatus::Free;
-				player.Control.IsMoving = false;
-			}
-
+			HandleLadderMount(ladderItem, *playerItem, mountType);
 			return;
 		}
 
-		// Airborne mount.
-		if (IsHeld(In::Action) &&
-			TestState(playerItem->Animation.ActiveState, LadderAirborneMountPlayerStates) &&
-			playerItem->Animation.IsAirborne &&
-			playerItem->Animation.Velocity.y > 0.0f &&
-			player.Control.HandStatus == HandStatus::Free)
-		{
-			// Test bounds collision.
-			if (TestBoundsCollide(&ladderItem, playerItem, coll->Setup.Radius))//LARA_RADIUS + (int)round(abs(laraItem->Animation.Velocity.z))))
-			{
-				if (HandleItemSphereCollision(ladderItem, *playerItem))
-				{
-					auto bounds = GameBoundingBox(&ladderItem);
-					int ladderVPos = ladderItem.Pose.Position.y + bounds.Y1;
-					int playerVPos = playerItem->Pose.Position.y - LARA_HEIGHT;
-
-					int vOffset = -abs(playerVPos - ladderVPos) / LADDER_STEP_HEIGHT;
-					auto mountOffset = Vector3i(0, vOffset, bounds.Z1) + LadderMountedOffset2D;
-
-					if (AlignPlayerToEntity(&ladderItem, playerItem, mountOffset, LadderMountFrontBasis.OrientOffset, true))
-					{
-						// Reaching.
-						if (playerItem->Animation.ActiveState == LS_REACH)
-						{
-							SetAnimation(playerItem, LA_LADDER_IDLE);// LA_LADDER_MOUNT_JUMP_REACH);
-						}
-						// Jumping up.
-						else
-						{
-							SetAnimation(playerItem, LA_LADDER_IDLE);// LA_LADDER_MOUNT_JUMP_UP);
-						}
-
-						playerItem->Animation.IsAirborne = false;
-						playerItem->Animation.Velocity.y = 0.0f;
-						player.Control.HandStatus = HandStatus::Busy;
-					}
-				}
-			}
-
-			return;
-		}
-
-		// Player is not interacting with ladder; do regular object collision.
+		// Player is not mounting the ladder; do regular object collision.
 		if (!TestState(playerItem->Animation.ActiveState, LadderMountedPlayerStates) &&
 			playerItem->Animation.ActiveState != LS_JUMP_BACK) // TODO: Player can jump through ladders.
 		{

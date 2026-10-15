@@ -206,8 +206,6 @@ struct ItemInfo
 	BoundingOrientedBox         GetObb() const;
 	std::vector<BoundingSphere> GetSpheres() const;
 
-	void HandleOffsetBlend();
-
 	// OCB utilities
 
 	bool TestOcb(short ocbFlags) const;

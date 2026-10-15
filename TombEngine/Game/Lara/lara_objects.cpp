@@ -1114,16 +1114,16 @@ void lara_as_ladder_down(ItemInfo* item, CollisionInfo* coll)
 			}
 			else if (CanClimbLadderDown(item, coll))
 			{
-				item->Animation.TargetState = LS_LADDER_DOWN;
+				item->Animation.TargetState = LS_LADDERX_DOWN;
 				return;
 			}
 		}
 
-		item->Animation.TargetState = LS_LADDER_IDLE;
+		item->Animation.TargetState = LS_LADDERX_IDLE;
 		return;
 	}
 
-	item->Animation.TargetState = LS_LADDER_IDLE;
+	item->Animation.TargetState = LS_LADDERX_IDLE;
 }
 
 // State:	LS_LADDER_DOWN (176)
