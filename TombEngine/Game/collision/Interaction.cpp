@@ -87,7 +87,7 @@ namespace TEN::Collision::Interaction
 
 		// Calculate targets.
 		auto targetPos = Geometry::TranslatePoint(interactable.Pose.Position, interactable.Pose.Orientation, basis.PosOffset);
-		auto targetOrient = basis.OrientOffset.has_value() ? (interactable.Pose.Orientation + *basis.OrientOffset) : interactor.Pose.Orientation;
+		auto targetOrient = basis.OrientOffset.has_value() ? (interactable.Pose.Orientation + *basis.OrientOffset) : interactable.Pose.Orientation;
 
 		// Calculate absolute offsets.
 		auto absPosOffset = (targetPos - interactor.Pose.Position).ToVector3();
@@ -141,15 +141,27 @@ namespace TEN::Collision::Interaction
 		TENLog("SetWalkInteraction(): Non-player passed as interactor. Setting latch interaction instead.", LogLevel::Warning);
 	}
 
-	void SetInteraction(ItemInfo& interactor, ItemInfo& interactable, const InteractionBasis& basis, const InteractionRoutine& routine, InteractionBasisType type)
+	void SetInteraction(ItemInfo& interactor, ItemInfo& interactable, const InteractionBasis& basis, const InteractionRoutine& routine, InteractionBasisType type, const Vector3i& extraPosOffset, const EulerAngles& extraOrientOffset)
 	{
 		constexpr auto WALK_DIST_MIN = BLOCK(0.05f);
+
+		// Calculate relative offsets.
+		auto relPosOffset = basis.PosOffset + extraPosOffset;
+
+		std::optional<EulerAngles> relOrientOffset = basis.OrientOffset;
+		if (extraOrientOffset != EulerAngles::Identity)
+			relOrientOffset = relOrientOffset.value_or(EulerAngles::Identity) + extraOrientOffset;
+
+		// Resolve interaction basis with relative offsets applied.
+		auto resolvedBasis = basis;
+		resolvedBasis.PosOffset = relPosOffset;
+		resolvedBasis.OrientOffset = relOrientOffset;
 
 		switch (type)
 		{
 		default:
 		case InteractionBasisType::Latch:
-			SetLatchInteraction(interactor, interactable, basis, routine);
+			SetLatchInteraction(interactor, interactable, resolvedBasis, routine);
 			break;
 
 		case InteractionBasisType::Walk:
@@ -157,11 +169,11 @@ namespace TEN::Collision::Interaction
 			float dist = Vector3i::Distance(interactor.Pose.Position, interactable.Pose.Position);
 			if (dist > WALK_DIST_MIN)
 			{
-				SetWalkInteraction(interactor, interactable, basis, routine);
+				SetWalkInteraction(interactor, interactable, resolvedBasis, routine);
 			}
 			else
 			{
-				SetLatchInteraction(interactor, interactable, basis, routine);
+				SetLatchInteraction(interactor, interactable, resolvedBasis, routine);
 			}
 
 			break;

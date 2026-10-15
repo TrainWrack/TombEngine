@@ -131,7 +131,7 @@ static bool HandlePlayerWalkInteractionMovement(ItemInfo& playerItem)
 	// Calculate interaction orientation.
 	auto interactOrient = player.Context.WalkInteraction.Basis->OrientOffset.has_value() ?
 		(interactable.Pose.Orientation + *player.Context.WalkInteraction.Basis->OrientOffset) :
-		playerItem.Pose.Orientation;
+		interactable.Pose.Orientation;
 
 	// 4) Rotate.
 	playerItem.Pose.Orientation.InterpolateConstant(interactOrient, TURN_RATE);
