@@ -17,6 +17,7 @@
 #include "Game/Lara/lara_helpers.h"
 #include "Game/Lara/lara_monkey.h"
 #include "Math/Math.h"
+#include "Objects/Generic/Object/Ladder.h"
 #include "Specific/configuration.h"
 #include "Specific/Input/Input.h"
 #include "Specific/level.h"
@@ -1902,6 +1903,10 @@ bool CanClimbLadderUp(ItemInfo* item, CollisionInfo* coll)
 	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
 	constexpr auto UPPER_CEIL_BOUND = -BLOCK(1 / 8.0f);
 
+	// Must still be ladder material above the player.
+	if (!TEN::Entities::Generic::TestLadderClimb(*item, true))
+		return false;
+
 	// Get point collision.
 	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, -PROBE_DIST);
 	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y1;
@@ -1915,20 +1920,18 @@ bool CanClimbLadderUp(ItemInfo* item, CollisionInfo* coll)
 
 bool CanClimbLadderDown(ItemInfo* item, CollisionInfo* coll)
 {
-	return true;
-
 	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
 	constexpr auto LOWER_FLOOR_BOUND = BLOCK(1 / 8.0f);
 
-	// Get point collision.
+	// Must still be ladder material below the player.
+	if (!TEN::Entities::Generic::TestLadderClimb(*item, false))
+		return false;
+
+	// Respect the ground: stop climbing down once the floor is reached.
 	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, -PROBE_DIST);
 	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y2;
 
-	// Assess point collision.
-	if ((pointColl.GetFloorHeight() - vPos) > LOWER_FLOOR_BOUND) // Floor height is within lower floor bound.
-		return true;
-
-	return false;
+	return ((pointColl.GetFloorHeight() - vPos) > LOWER_FLOOR_BOUND);
 }
 
 bool CanDismountLadderTop(ItemInfo* item, CollisionInfo* coll)

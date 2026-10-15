@@ -43,6 +43,17 @@ namespace TEN::Collision::Interaction
 		OrientConstraint = orientConstraint;
 	};
 
+	// Test whether an angle falls within a constraint range, accounting for wrapping around +/-180 degrees
+	// (e.g. a yaw delta of -180 must satisfy a constraint centred on +180).
+	static bool TestOrientConstraint(short angle, short angleMin, short angleMax)
+	{
+		constexpr int FULL_TURN = 32768;
+
+		return ((angle >= angleMin && angle <= angleMax) ||								// Direct range.
+				(angle + FULL_TURN >= angleMin && angle + FULL_TURN <= angleMax) ||	// Shifted up by a full turn.
+				(angle - FULL_TURN >= angleMin && angle - FULL_TURN <= angleMax));	// Shifted down by a full turn.
+	}
+
 	bool TestInteraction(const ItemInfo& interactor, const ItemInfo& interactable, const InteractionBasis& basis, std::optional<BoundingOrientedBox> expansionBox)
 	{
 		DrawDebug(interactable, basis);
@@ -53,9 +64,9 @@ namespace TEN::Collision::Interaction
 
 		// 2) Test if interactor's orientation is within interaction constraint.
 		auto deltaOrient = interactor.Pose.Orientation - interactable.Pose.Orientation;
-		if (deltaOrient.x < basis.OrientConstraint.first.x || deltaOrient.x > basis.OrientConstraint.second.x ||
-			deltaOrient.y < basis.OrientConstraint.first.y || deltaOrient.y > basis.OrientConstraint.second.y ||
-			deltaOrient.z < basis.OrientConstraint.first.z || deltaOrient.z > basis.OrientConstraint.second.z)
+		if (!TestOrientConstraint(deltaOrient.x, basis.OrientConstraint.first.x, basis.OrientConstraint.second.x) ||
+			!TestOrientConstraint(deltaOrient.y, basis.OrientConstraint.first.y, basis.OrientConstraint.second.y) ||
+			!TestOrientConstraint(deltaOrient.z, basis.OrientConstraint.first.z, basis.OrientConstraint.second.z))
 		{
 			return false;
 		}
