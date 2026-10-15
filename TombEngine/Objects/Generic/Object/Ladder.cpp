@@ -76,6 +76,14 @@ namespace TEN::Entities::Generic
 		-BLOCK(3 / 8.0f), BLOCK(3 / 8.0f));
 	const auto LadderInteractBox2D = LadderInteractBounds2D.ToBoundingOrientedBox(Pose::Zero);
 
+	// Side mount interaction box. Sits beside the ladder (local +X) so a player standing
+	// against the ladder's edge is picked up instead of one standing in front of it.
+	const auto LadderInteractRightBounds2D = GameBoundingBox(
+		BLOCK(0.25f), BLOCK(0.75f),
+		0, 0,
+		-BLOCK(3 / 8.0f), BLOCK(3 / 8.0f));
+	const auto LadderInteractRightBox2D = LadderInteractRightBounds2D.ToBoundingOrientedBox(Pose::Zero);
+
 	const auto LadderMountTopFrontBasis = InteractionBasis(
 		LadderMountedOffset2D, // TODO
 		EulerAngles(0, ANGLE(180.0f), 0),
@@ -117,7 +125,7 @@ namespace TEN::Entities::Generic
 	const auto LadderMountRightBasis = InteractionBasis(
 		LadderMountedOffset2D + Vector3i(BLOCK(0.25f), 0, 0),
 		EulerAngles(0, ANGLE(-90.0f), 0),
-		LadderInteractBox2D,
+		LadderInteractRightBox2D,
 		std::pair(
 			EulerAngles(-PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(-90.0f) - LARA_GRAB_THRESHOLD, -PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD),
 			EulerAngles(PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(-90.0f) + LARA_GRAB_THRESHOLD, PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD)));
@@ -309,11 +317,11 @@ namespace TEN::Entities::Generic
 		case LadderMountType::JumpUp:
 		case LadderMountType::JumpReach:
 		{
-			// Target the closest step on the ladder.
-			int ladderVPos = ladderItem.Pose.Position.y + bounds.Y1;
-			int playerVPos = playerItem.Pose.Position.y - LARA_HEIGHT;
-			int vOffset = -abs(playerVPos - ladderVPos) / (int)LADDER_STEP_HEIGHT;
-			auto extraPosOffset = Vector3i(0, vOffset, bounds.Z1);
+			// Snap Lara's feet to the closest ladder step at her current height instead of the ladder base.
+			int step = (int)LADDER_STEP_HEIGHT;
+			int relY = playerItem.Pose.Position.y - ladderItem.Pose.Position.y;
+			int snappedY = (int)round((float)relY / step) * step;
+			auto extraPosOffset = Vector3i(0, snappedY, bounds.Z1);
 
 			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, SetPlayerLadderAirMountInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
