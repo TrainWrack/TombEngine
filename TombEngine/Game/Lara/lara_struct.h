@@ -874,7 +874,7 @@ enum LaraAnim
 	LA_LADDERX_DISMOUNT_RELEASE = 601,
 	LA_LADDERX_DISMOUNT_FALL = 602,
 	LA_LADDERX_MOUNT_FRONT_TO_UP = 603, // TODO: A better root displacement method would avoid the need for this. -- Sezz 2022.10.29
-
+	LA_LADDERX_MOUNT_TOP_FINISH = 604,
 	//ADD NEW ANIMATIONS HERE
 
 	NUM_LARA_ANIMS

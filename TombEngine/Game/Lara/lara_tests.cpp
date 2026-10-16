@@ -1931,7 +1931,7 @@ bool CanClimbLadderDown(ItemInfo* item, CollisionInfo* coll)
 	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, -PROBE_DIST);
 	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y2;
 
-	return ((pointColl.GetFloorHeight() - vPos) > LOWER_FLOOR_BOUND);
+	return ((pointColl.GetFloorHeight() - vPos) >= LOWER_FLOOR_BOUND);
 }
 
 bool CanDismountLadderTop(ItemInfo* item, CollisionInfo* coll)

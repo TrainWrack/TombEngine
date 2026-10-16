@@ -95,7 +95,7 @@ namespace TEN::Entities::Generic
 	const auto LadderInteractLeftBox2D = LadderInteractLeftBounds2D.ToBoundingOrientedBox(Pose::Zero);
 
 	const auto LadderMountTopFrontBasis = InteractionBasis(
-		LadderMountedOffsetTop2D,
+		LadderMountedOffset2D,
 		EulerAngles(0, ANGLE(180.0f), 0),
 		LadderInteractBox2D,
 		std::pair(
@@ -319,9 +319,16 @@ namespace TEN::Entities::Generic
 		interactor.Animation.IsAirborne = false;
 	}
 
-	static void SetPlayerLadderAirMountInteraction(ItemInfo& interactor, ItemInfo&)
+	static void SetPlayerLadderAirGrabInteraction(ItemInfo& interactor, ItemInfo&)
 	{
-		SetAnimation(&interactor, LA_LADDERX_IDLE);
+		SetAnimation(&interactor, LA_LADDERX_MOUNT_JUMP_UP);
+
+		interactor.Animation.IsAirborne = false;
+	}
+
+	static void SetPlayerLadderAirReachInteraction(ItemInfo& interactor, ItemInfo&)
+	{
+		SetAnimation(&interactor, LA_LADDERX_MOUNT_JUMP_REACH);
 
 		interactor.Animation.IsAirborne = false;
 	}
@@ -388,6 +395,21 @@ namespace TEN::Entities::Generic
 		}
 
 		case LadderMountType::JumpUp:
+		{
+			// Snap Lara's feet to the closest ladder step at her current height instead of the ladder base.
+			int step = (int)LADDER_STEP_HEIGHT;
+			int relY = playerItem.Pose.Position.y - ladderItem.Pose.Position.y;
+			int snappedY = (int)round((float)relY / step) * step;
+			//Trainwreck the snapped height needs to be a few rungs below the top.
+			// Never grab above the height where the top dismount can fire; otherwise she'd climb past it and get stuck.
+			int topGrabY = stackExtents.TopY + (int)LARA_HEIGHT;
+			snappedY = std::max(snappedY, topGrabY);
+
+			auto extraPosOffset = Vector3i(0, snappedY, bounds.Z1);
+
+			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, SetPlayerLadderAirGrabInteraction, InteractionBasisType::Latch, extraPosOffset);
+			break;
+		}
 		case LadderMountType::JumpReach:
 		{
 			// Snap Lara's feet to the closest ladder step at her current height instead of the ladder base.
@@ -401,7 +423,7 @@ namespace TEN::Entities::Generic
 
 			auto extraPosOffset = Vector3i(0, snappedY, bounds.Z1);
 
-			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, SetPlayerLadderAirMountInteraction, InteractionBasisType::Latch, extraPosOffset);
+			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, SetPlayerLadderAirReachInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
 		}
 		}
