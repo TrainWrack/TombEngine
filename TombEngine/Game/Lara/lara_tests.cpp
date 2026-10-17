@@ -17,6 +17,7 @@
 #include "Game/Lara/lara_helpers.h"
 #include "Game/Lara/lara_monkey.h"
 #include "Math/Math.h"
+#include "Objects/Generic/Object/Ladder.h"
 #include "Specific/configuration.h"
 #include "Specific/Input/Input.h"
 #include "Specific/level.h"
@@ -1896,4 +1897,169 @@ bool TestLaraPoleDown(ItemInfo* item, CollisionInfo* coll)
 		return false;
 
 	return (coll->Middle.Floor > 0);
+}
+
+bool TestPlayerLadderCollision(ItemInfo* item, CollisionInfo* coll, bool goingUp, float offset)
+{
+	static constexpr auto poleProbeCollRadius = 16.0f;
+
+	bool atLeastOneLadderCollided = false;
+
+	auto collObjects = GetCollidedObjects(*item, true, false, BLOCK(2), ObjectCollectionMode::Items);
+	if (!collObjects.IsEmpty())
+	{
+		auto laraBox = GameBoundingBox(item).ToBoundingOrientedBox(item->Pose);
+
+		// HACK: Because Core implemented upward pole movement as a SetPosition command, we can't precisely
+		// check her position. So we add a fixed height offset.
+
+		// Offset a sphere when jumping toward pole.
+		auto sphereOffset2D = Vector3::Zero;
+		sphereOffset2D = Geometry::TranslatePoint(sphereOffset2D, item->Pose.Orientation.y, coll->Setup.Radius + item->Animation.Velocity.z);
+
+		auto spherePos = laraBox.Center + Vector3(0.0f, (laraBox.Extents.y + poleProbeCollRadius + offset) * (goingUp ? -1 : 1), 0.0f);
+
+		auto sphere = BoundingSphere(spherePos, poleProbeCollRadius);
+		auto offsetSphere = BoundingSphere(spherePos + sphereOffset2D, poleProbeCollRadius);
+
+		//DrawDebugSphere(sphere.Center, 16.0f, Vector4(1, 0, 0, 1), RendererDebugPage::CollisionStats);
+
+		for (const auto* itemPtr : collObjects.Items)
+		{
+			if (itemPtr->ObjectNumber != ID_LADDER_ONE_SIDED)
+				continue;
+
+			auto poleBox = GameBoundingBox(itemPtr).ToBoundingOrientedBox(itemPtr->Pose);
+			poleBox.Extents = poleBox.Extents + Vector3(coll->Setup.Radius, 0.0f, coll->Setup.Radius);
+
+			//DrawDebugBox(poleBox, Vector4(0, 0, 1, 1), RendererDebugPage::CollisionStats);
+
+			if (poleBox.Intersects(sphere) || poleBox.Intersects(offsetSphere))
+			{
+				atLeastOneLadderCollided = true;
+				break;
+			}
+		}
+	}
+
+	return atLeastOneLadderCollided;
+}
+
+bool CanClimbLadderUp(ItemInfo* item, CollisionInfo* coll)
+{
+	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
+	constexpr auto UPPER_CEIL_BOUND = -BLOCK(1 / 8.0f);
+
+	// Must still be ladder material above the player.
+	if (!TestPlayerLadderCollision(item, coll, true, CLICK(0.5f)))
+		return false;
+
+	// Get point collision.
+	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, -PROBE_DIST);
+	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y1;
+
+	// Assess point collision.
+	if ((pointColl.GetCeilingHeight() - vPos) > UPPER_CEIL_BOUND) // Within lowest ceiling bound.
+		return false;
+
+	return true;
+}
+
+bool CanClimbLadderDown(ItemInfo* item, CollisionInfo* coll)
+{
+	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
+	constexpr auto LOWER_FLOOR_BOUND = BLOCK(1 / 8.0f);
+
+	// Must still be ladder material below the player.
+	if (!TestPlayerLadderCollision(item, coll, false, CLICK(0.5f)))
+		return false;
+
+	// Respect the ground: stop climbing down once the floor is reached.
+	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, -PROBE_DIST);
+	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y2;
+
+	return ((pointColl.GetFloorHeight() - vPos) > LOWER_FLOOR_BOUND);
+}
+
+bool CanDismountLadderTop(ItemInfo* item, CollisionInfo* coll)
+{
+	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
+	constexpr auto LOWER_FLOOR_BOUND = BLOCK(1 / 16.0f);
+	constexpr auto UPPER_FLOOR_BOUND = 0;
+	constexpr auto UPPER_CEIL_BOUND = -BLOCK(1 / 2.0f);
+
+	// Get point collision.
+	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, PROBE_DIST);
+	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y1;
+
+	// 1) Test for wall.
+	if (pointColl.GetFloorHeight() == NO_HEIGHT)
+		return false;
+
+	// 2) Assess point collision.
+	if ((pointColl.GetFloorHeight() - vPos) <= LOWER_FLOOR_BOUND &&				  // Floor height is within lower floor bound.
+		(pointColl.GetFloorHeight() - vPos) >= UPPER_FLOOR_BOUND &&				  // Floor height is within upper floor bound.
+		(pointColl.GetCeilingHeight() - vPos) < UPPER_CEIL_BOUND &&				  // Ceiling height is within upper ceiling bound.
+		abs(pointColl.GetCeilingHeight() - pointColl.GetFloorHeight()) > LARA_HEIGHT) // Space isn't too narrow.
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool CanDismountLadderBack(ItemInfo* item, CollisionInfo* coll)
+{
+	constexpr auto PROBE_DIST = BLOCK(3 / 16.0f);
+	constexpr auto LOWER_FLOOR_BOUND = BLOCK(2 / 9.0f);
+
+	// Get point collision.
+	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, -PROBE_DIST);
+	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y2;
+
+	// 1) Test for wall.
+	if (pointColl.GetFloorHeight() == NO_HEIGHT)
+		return false;
+
+	// 2) Assess point collision.
+	if ((pointColl.GetFloorHeight() - vPos) <= LOWER_FLOOR_BOUND &&				  // Floor height is within lower floor bound.
+		abs(pointColl.GetCeilingHeight() - pointColl.GetFloorHeight()) > LARA_HEIGHT) // Space isn't too narrow.
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool TestLaraLadderSideDismount(ItemInfo* item, CollisionInfo* coll, bool isGoingLeft)
+{
+	constexpr int PROBE_DIST = BLOCK(1 / 4.0f);
+	constexpr int FLOOR_BOUND = BLOCK(1 / 16.0f);
+
+	// Get point collision.
+	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y + (isGoingLeft ? -ANGLE(90.0f) : ANGLE(90.0f)), PROBE_DIST);
+	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y2;
+
+	// 1) Check for wall.
+	if (pointColl.IsWall())
+		return false;
+
+	// 2) Assess point collision.
+	if (abs(pointColl.GetFloorHeight() - vPos) <= FLOOR_BOUND &&					  // Floor height is within upper/lower floor bound.
+		abs(pointColl.GetCeilingHeight() - pointColl.GetFloorHeight()) > LARA_HEIGHT) // Space isn't too narrow.
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool CanDismountLadderLeft(ItemInfo* item, CollisionInfo* coll)
+{
+	return TestLaraLadderSideDismount(item, coll, true);
+}
+
+bool CanDismountLadderRight(ItemInfo* item, CollisionInfo* coll)
+{
+	return TestLaraLadderSideDismount(item, coll, false);
 }
