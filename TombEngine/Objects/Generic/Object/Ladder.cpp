@@ -162,7 +162,7 @@ namespace TEN::Entities::Generic
 		g_Renderer.AddDebugBox(interactBox, Vector4(0, 1, 1, 1), RendererDebugPage::None);
 	}
 
-	static bool TestLadderMount(const ItemInfo& ladderItem, const ItemInfo& playerItem)
+	static bool TestLadderMount(const ItemInfo& ladderItem, const ItemInfo& playerItem, bool groundMount)
 	{
 		const auto& player = GetLaraInfo(playerItem);
 
@@ -174,18 +174,26 @@ namespace TEN::Entities::Generic
 		if (player.Control.HandStatus != HandStatus::Free)
 			return false;
 
-		// 3) Test active player state. Accept either a grounded or airborne mount state.
-		bool isGroundedMount = TestState(playerItem.Animation.ActiveState, LadderGroundedMountPlayerStates);
-		bool isAirborneMount = playerItem.Animation.IsAirborne &&
-			TestState(playerItem.Animation.ActiveState, LadderAirborneMountPlayerStates);
-		if (!isGroundedMount && !isAirborneMount)
-			return false;
+		// 3) Test active player state for the requested mount type.
+		if (groundMount)
+		{
+			if (!TestState(playerItem.Animation.ActiveState, LadderGroundedMountPlayerStates))
+				return false;
+		}
+		else
+		{
+			if (!playerItem.Animation.IsAirborne ||
+				!TestState(playerItem.Animation.ActiveState, LadderAirborneMountPlayerStates))
+			{
+				return false;
+			}
+		}
 
 		// 4) Test for input action. A grounded mount needs a FRESH Action press, so simply holding
 		// Action (e.g. straight after a top dismount) doesn't immediately re-mount. An airborne grab
 		// may hold Action from the jump, and an in-progress walk-to-ladder interaction keeps its mount.
-		bool isInteracting = (player.Control.IsMoving && player.Context.InteractedItem == ladderItem.Index);
-		if (!isInteracting && !(isAirborneMount ? IsHeld(In::Action) : IsClicked(In::Action)))
+		bool isInteracting = (groundMount && player.Control.IsMoving && player.Context.InteractedItem == ladderItem.Index);
+		if (!isInteracting && !(groundMount ? IsClicked(In::Action) : IsHeld(In::Action)))
 			return false;
 
 		// TODO: Assess whether ladder is in front.
@@ -195,49 +203,53 @@ namespace TEN::Entities::Generic
 
 	static LadderMountType GetLadderMountType(ItemInfo& ladderItem, const ItemInfo& playerItem)
 	{
-		// Test ladder mountability.
-		if (!TestLadderMount(ladderItem, playerItem))
-			return LadderMountType::None;
 		auto bounds = GameBoundingBox(&ladderItem);
 		// Get the vertical extents of the whole ladder stack, then extend the interaction box to cover it
 		// (plus one step below) so detection works across stacked ladder objects.
 		//auto stackExtents = GetLadderStackExtents(ladderItem);
 		auto boundsExtension = GameBoundingBox(0, 0, bounds.Y1, bounds.Y2 + LADDER_STEP_HEIGHT, 0, 0).ToBoundingOrientedBox(Pose::Zero);
 
+		// Air mounts. Front face only.
+		if (TestLadderMount(ladderItem, playerItem, false))
+		{
+			// Front mount.
+			if (TestInteraction(playerItem, ladderItem, LadderMountFrontBasis, boundsExtension))
+			{
+				// Jump case.
+				if (playerItem.Animation.Velocity.y > 0.0f)
+				{
+					if (playerItem.Animation.ActiveState == LS_JUMP_UP)
+					{
+						return LadderMountType::JumpUp;
+					}
+					else if (playerItem.Animation.ActiveState == LS_REACH)
+					{
+						return LadderMountType::JumpReach;
+					}
+				}
+			}
+
+			return LadderMountType::None;
+		}
+
+		// Ground mounts.
+		if (!TestLadderMount(ladderItem, playerItem, true))
+			return LadderMountType::None;
+
 		// Top mounts broken at the moment: only when Lara is standing at the top of the stack.
 		int stackTopWorldY = ladderItem.Pose.Position.y + bounds.Y1;
 		if (abs(playerItem.Pose.Position.y - stackTopWorldY) <= LADDER_STEP_HEIGHT)
 		{
-		if (TestInteraction(playerItem, ladderItem, LadderMountTopFrontBasis, boundsExtension))
-			return LadderMountType::TopFront;
+			if (TestInteraction(playerItem, ladderItem, LadderMountTopFrontBasis, boundsExtension))
+				return LadderMountType::TopFront;
 
-		if (TestInteraction(playerItem, ladderItem, LadderMountTopBackBasis, boundsExtension))
-			return LadderMountType::TopBack;
+			if (TestInteraction(playerItem, ladderItem, LadderMountTopBackBasis, boundsExtension))
+				return LadderMountType::TopBack;
 		}
-		
+
 		// Front mount.
 		if (TestInteraction(playerItem, ladderItem, LadderMountFrontBasis, boundsExtension))
-		{
-			// Jump case.
-			if (playerItem.Animation.IsAirborne && playerItem.Animation.Velocity.y > 0.0f)
-			{
-				if (playerItem.Animation.ActiveState == LS_JUMP_UP)
-				{
-					return LadderMountType::JumpUp;
-				}
-				else if (playerItem.Animation.ActiveState == LS_REACH)
-				{
-					return LadderMountType::JumpReach;
-				}
-			}
-			// Regular case.
-			else
-			{
-				return LadderMountType::Front;
-			}
-		}
-
-
+			return LadderMountType::Front;
 
 		if (TestInteraction(playerItem, ladderItem, LadderMountBackBasis, boundsExtension))
 			return LadderMountType::Back;
@@ -254,16 +266,19 @@ namespace TEN::Entities::Generic
 	static void SetPlayerLadderMountInteraction(ItemInfo& interactor, ItemInfo&)
 	{
 		SetAnimation(&interactor, LA_LADDERX_MOUNT_FRONT);
+		interactor.Animation.IsAirborne = false;
 	}
 
 	static void SetPlayerLadderMountRightInteraction(ItemInfo& interactor, ItemInfo&)
 	{
 		SetAnimation(&interactor, LA_LADDERX_MOUNT_RIGHT);
+		interactor.Animation.IsAirborne = false;
 	}
 
 	static void SetPlayerLadderMountLeftInteraction(ItemInfo& interactor, ItemInfo&)
 	{
 		SetAnimation(&interactor, LA_LADDERX_MOUNT_LEFT);
+		interactor.Animation.IsAirborne = false;
 	}
 
 	static void SetPlayerLadderMountTopFrontInteraction(ItemInfo& interactor, ItemInfo&)
@@ -281,14 +296,12 @@ namespace TEN::Entities::Generic
 	static void SetPlayerLadderAirGrabInteraction(ItemInfo& interactor, ItemInfo&)
 	{
 		SetAnimation(&interactor, LA_LADDERX_MOUNT_JUMP_UP);
-
 		interactor.Animation.IsAirborne = false;
 	}
 
 	static void SetPlayerLadderAirReachInteraction(ItemInfo& interactor, ItemInfo&)
 	{
 		SetAnimation(&interactor, LA_LADDERX_MOUNT_JUMP_REACH);
-
 		interactor.Animation.IsAirborne = false;
 	}
 
