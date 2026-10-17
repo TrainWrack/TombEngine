@@ -95,7 +95,7 @@ namespace TEN::Entities::Generic
 	const auto LadderInteractLeftBox2D = LadderInteractLeftBounds2D.ToBoundingOrientedBox(Pose::Zero);
 
 	const auto LadderMountTopFrontBasis = InteractionBasis(
-		LadderMountedOffset2D,
+		LadderMountedOffsetTop2D,
 		EulerAngles(0, ANGLE(180.0f), 0),
 		LadderInteractBox2D,
 		std::pair(

@@ -43,15 +43,14 @@ namespace TEN::Collision::Interaction
 		OrientConstraint = orientConstraint;
 	};
 
-	// Test whether an angle falls within a constraint range, accounting for wrapping around +/-180 degrees
-	// (e.g. a yaw delta of -180 must satisfy a constraint centred on +180).
-	static bool TestOrientConstraint(short angle, short angleMin, short angleMax)
+	// Test whether an angle falls within a constraint range
+	static bool TestOrientConstraint(short delta, short min, short max)
 	{
-		constexpr int FULL_TURN = 32768;
-
-		return ((angle >= angleMin && angle <= angleMax) ||								// Direct range.
-				(angle + FULL_TURN >= angleMin && angle + FULL_TURN <= angleMax) ||	// Shifted up by a full turn.
-				(angle - FULL_TURN >= angleMin && angle - FULL_TURN <= angleMax));	// Shifted down by a full turn.
+		// Treat the range as going from min to max in the positive direction (wrap-safe).
+		// Unsigned 16-bit arithmetic handles wraparound naturally.
+		auto span = (unsigned short)(max - min);
+		auto offset = (unsigned short)(delta - min);
+		return offset <= span;
 	}
 
 	bool TestInteraction(const ItemInfo& interactor, const ItemInfo& interactable, const InteractionBasis& basis, std::optional<BoundingOrientedBox> expansionBox)
