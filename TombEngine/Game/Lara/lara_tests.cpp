@@ -1898,13 +1898,60 @@ bool TestLaraPoleDown(ItemInfo* item, CollisionInfo* coll)
 
 	return (coll->Middle.Floor > 0);
 }
+
+bool TestPlayerLadderCollision(ItemInfo* item, CollisionInfo* coll, bool goingUp, float offset)
+{
+	static constexpr auto poleProbeCollRadius = 16.0f;
+
+	bool atLeastOneLadderCollided = false;
+
+	auto collObjects = GetCollidedObjects(*item, true, false, BLOCK(2), ObjectCollectionMode::Items);
+	if (!collObjects.IsEmpty())
+	{
+		auto laraBox = GameBoundingBox(item).ToBoundingOrientedBox(item->Pose);
+
+		// HACK: Because Core implemented upward pole movement as a SetPosition command, we can't precisely
+		// check her position. So we add a fixed height offset.
+
+		// Offset a sphere when jumping toward pole.
+		auto sphereOffset2D = Vector3::Zero;
+		sphereOffset2D = Geometry::TranslatePoint(sphereOffset2D, item->Pose.Orientation.y, coll->Setup.Radius + item->Animation.Velocity.z);
+
+		auto spherePos = laraBox.Center + Vector3(0.0f, (laraBox.Extents.y + poleProbeCollRadius + offset) * (goingUp ? -1 : 1), 0.0f);
+
+		auto sphere = BoundingSphere(spherePos, poleProbeCollRadius);
+		auto offsetSphere = BoundingSphere(spherePos + sphereOffset2D, poleProbeCollRadius);
+
+		//DrawDebugSphere(sphere.Center, 16.0f, Vector4(1, 0, 0, 1), RendererDebugPage::CollisionStats);
+
+		for (const auto* itemPtr : collObjects.Items)
+		{
+			if (itemPtr->ObjectNumber != ID_LADDER_ONE_SIDED)
+				continue;
+
+			auto poleBox = GameBoundingBox(itemPtr).ToBoundingOrientedBox(itemPtr->Pose);
+			poleBox.Extents = poleBox.Extents + Vector3(coll->Setup.Radius, 0.0f, coll->Setup.Radius);
+
+			//DrawDebugBox(poleBox, Vector4(0, 0, 1, 1), RendererDebugPage::CollisionStats);
+
+			if (poleBox.Intersects(sphere) || poleBox.Intersects(offsetSphere))
+			{
+				atLeastOneLadderCollided = true;
+				break;
+			}
+		}
+	}
+
+	return atLeastOneLadderCollided;
+}
+
 bool CanClimbLadderUp(ItemInfo* item, CollisionInfo* coll)
 {
 	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
 	constexpr auto UPPER_CEIL_BOUND = -BLOCK(1 / 8.0f);
 
 	// Must still be ladder material above the player.
-	if (!TEN::Entities::Generic::TestLadderClimb(*item, true))
+	if (!TestPlayerLadderCollision(item, coll, true, CLICK(0.5f)))
 		return false;
 
 	// Get point collision.
@@ -1924,7 +1971,7 @@ bool CanClimbLadderDown(ItemInfo* item, CollisionInfo* coll)
 	constexpr auto LOWER_FLOOR_BOUND = BLOCK(1 / 8.0f);
 
 	// Must still be ladder material below the player.
-	if (!TEN::Entities::Generic::TestLadderClimb(*item, false))
+	if (!TestPlayerLadderCollision(item, coll, false, CLICK(0.5f)))
 		return false;
 
 	// Respect the ground: stop climbing down once the floor is reached.

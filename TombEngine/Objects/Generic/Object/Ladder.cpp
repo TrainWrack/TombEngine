@@ -162,49 +162,6 @@ namespace TEN::Entities::Generic
 		g_Renderer.AddDebugBox(interactBox, Vector4(0, 1, 1, 1), RendererDebugPage::None);
 	}
 
-	struct LadderStackExtents
-	{
-		int TopY	= 0;
-		int BottomY = 0;
-	};
-
-	// Get the vertical extents of the whole ladder stack (relative to the given ladder), by probing
-	// nearby horizontally-aligned ladder objects. Mirrors the vertical pole's segment detection.
-	static LadderStackExtents GetLadderStackExtents(ItemInfo& ladderItem)
-	{
-		constexpr auto ALIGN_XZ_TOLERANCE  = BLOCK(0.25f);
-		constexpr auto ALIGN_YAW_TOLERANCE = ANGLE(5.0f);
-
-		auto bounds = GameBoundingBox(&ladderItem);
-		auto extents = LadderStackExtents{ bounds.Y1, bounds.Y2 };
-
-		auto collObjects = GetCollidedObjects(ladderItem, true, true, COLLISION_CHECK_DISTANCE, ObjectCollectionMode::Items);
-		for (const auto* itemPtr : collObjects.Items)
-		{
-			if (itemPtr->ObjectNumber != ID_LADDER_ONE_SIDED &&
-				itemPtr->ObjectNumber != ID_LADDER_DOUBLE_SIDED)
-			{
-				continue;
-			}
-
-			// Only merge ladders that are horizontally aligned and share the same yaw.
-			if (abs(itemPtr->Pose.Position.x - ladderItem.Pose.Position.x) > ALIGN_XZ_TOLERANCE ||
-				abs(itemPtr->Pose.Position.z - ladderItem.Pose.Position.z) > ALIGN_XZ_TOLERANCE ||
-				abs(Geometry::GetShortestAngle(itemPtr->Pose.Orientation.y, ladderItem.Pose.Orientation.y)) > ALIGN_YAW_TOLERANCE)
-			{
-				continue;
-			}
-
-			// Merge the neighbour's vertical extents into this ladder's local space.
-			int relY = itemPtr->Pose.Position.y - ladderItem.Pose.Position.y;
-			auto itemBounds = GameBoundingBox(itemPtr);
-			extents.TopY = std::min(extents.TopY, relY + itemBounds.Y1);
-			extents.BottomY = std::max(extents.BottomY, relY + itemBounds.Y2);
-		}
-
-		return extents;
-	}
-
 	static bool TestLadderMount(const ItemInfo& ladderItem, const ItemInfo& playerItem)
 	{
 		const auto& player = GetLaraInfo(playerItem);
@@ -241,23 +198,23 @@ namespace TEN::Entities::Generic
 		// Test ladder mountability.
 		if (!TestLadderMount(ladderItem, playerItem))
 			return LadderMountType::None;
-
+		auto bounds = GameBoundingBox(&ladderItem);
 		// Get the vertical extents of the whole ladder stack, then extend the interaction box to cover it
 		// (plus one step below) so detection works across stacked ladder objects.
-		auto stackExtents = GetLadderStackExtents(ladderItem);
-		auto boundsExtension = GameBoundingBox(0, 0, stackExtents.TopY, stackExtents.BottomY + LADDER_STEP_HEIGHT, 0, 0).ToBoundingOrientedBox(Pose::Zero);
+		//auto stackExtents = GetLadderStackExtents(ladderItem);
+		auto boundsExtension = GameBoundingBox(0, 0, bounds.Y1, bounds.Y2 + LADDER_STEP_HEIGHT, 0, 0).ToBoundingOrientedBox(Pose::Zero);
 
-		// Top mounts: only when Lara is standing at the top of the stack.
-		int stackTopWorldY = ladderItem.Pose.Position.y + stackExtents.TopY;
+		// Top mounts broken at the moment: only when Lara is standing at the top of the stack.
+		int stackTopWorldY = ladderItem.Pose.Position.y + bounds.Y1;
 		if (abs(playerItem.Pose.Position.y - stackTopWorldY) <= LADDER_STEP_HEIGHT)
 		{
-			if (TestInteraction(playerItem, ladderItem, LadderMountTopFrontBasis, boundsExtension))
-				return LadderMountType::TopFront;
+		if (TestInteraction(playerItem, ladderItem, LadderMountTopFrontBasis, boundsExtension))
+			return LadderMountType::TopFront;
 
-			if (TestInteraction(playerItem, ladderItem, LadderMountTopBackBasis, boundsExtension))
-				return LadderMountType::TopBack;
+		if (TestInteraction(playerItem, ladderItem, LadderMountTopBackBasis, boundsExtension))
+			return LadderMountType::TopBack;
 		}
-
+		
 		// Front mount.
 		if (TestInteraction(playerItem, ladderItem, LadderMountFrontBasis, boundsExtension))
 		{
@@ -279,6 +236,8 @@ namespace TEN::Entities::Generic
 				return LadderMountType::Front;
 			}
 		}
+
+
 
 		if (TestInteraction(playerItem, ladderItem, LadderMountBackBasis, boundsExtension))
 			return LadderMountType::Back;
@@ -343,9 +302,6 @@ namespace TEN::Entities::Generic
 
 		auto bounds = GameBoundingBox(&ladderItem);
 
-		// Vertical extents of the whole ladder stack.
-		auto stackExtents = GetLadderStackExtents(ladderItem);
-
 		switch (mountType)
 		{
 		default:
@@ -354,14 +310,14 @@ namespace TEN::Entities::Generic
 
 		case LadderMountType::TopFront:
 		{
-			auto extraPosOffset = Vector3i(0, stackExtents.TopY, bounds.Z1);
+			auto extraPosOffset = Vector3i(0, bounds.Y1, bounds.Z1);
 			SetInteraction(playerItem, ladderItem, LadderMountTopFrontBasis, SetPlayerLadderMountTopFrontInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
 		}
 
 		case LadderMountType::TopBack:
 		{
-			auto extraPosOffset = Vector3i(0, stackExtents.TopY, bounds.Z2);
+			auto extraPosOffset = Vector3i(0, bounds.Y1, bounds.Z2);
 			SetInteraction(playerItem, ladderItem, LadderMountTopBackBasis, SetPlayerLadderMountTopBackInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
 		}
@@ -382,27 +338,28 @@ namespace TEN::Entities::Generic
 
 		case LadderMountType::Left:
 		{
-			auto extraPosOffset = Vector3i(0, 0, bounds.Z1);
-			SetInteraction(playerItem, ladderItem, LadderMountLeftBasis, SetPlayerLadderMountLeftInteraction, InteractionBasisType::Walk, extraPosOffset);
+			auto extraPosOffset = Vector3i(0, playerItem.Pose.Position.y, bounds.Z1);
+			SetInteraction(playerItem, ladderItem, LadderMountLeftBasis, SetPlayerLadderMountLeftInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
 		}
 
 		case LadderMountType::Right:
 		{
-			auto extraPosOffset = Vector3i(0, 0, bounds.Z1);
-			SetInteraction(playerItem, ladderItem, LadderMountRightBasis, SetPlayerLadderMountRightInteraction, InteractionBasisType::Walk, extraPosOffset);
+			auto extraPosOffset = Vector3i(0, playerItem.Pose.Position.y, bounds.Z1);
+			SetInteraction(playerItem, ladderItem, LadderMountRightBasis, SetPlayerLadderMountRightInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
 		}
 
 		case LadderMountType::JumpUp:
 		{
+			//redo math here where she should not grab until the height is correct
 			// Snap Lara's feet to the closest ladder step at her current height instead of the ladder base.
 			int step = (int)LADDER_STEP_HEIGHT;
 			int relY = playerItem.Pose.Position.y - ladderItem.Pose.Position.y;
 			int snappedY = (int)round((float)relY / step) * step;
 			//Trainwreck the snapped height needs to be a few rungs below the top.
 			// Never grab above the height where the top dismount can fire; otherwise she'd climb past it and get stuck.
-			int topGrabY = stackExtents.TopY + (int)LARA_HEIGHT;
+			int topGrabY = bounds.Y1 + (int)LARA_HEIGHT;
 			snappedY = std::max(snappedY, topGrabY);
 
 			auto extraPosOffset = Vector3i(0, snappedY, bounds.Z1);
@@ -418,7 +375,7 @@ namespace TEN::Entities::Generic
 			int snappedY = (int)round((float)relY / step) * step;
 			//Trainwreck the snapped height needs to be a few rungs below the top.
 			// Never grab above the height where the top dismount can fire; otherwise she'd climb past it and get stuck.
-			int topGrabY = stackExtents.TopY + (int)LARA_HEIGHT;
+			int topGrabY = bounds.Y1 + (int)LARA_HEIGHT;
 			snappedY = std::max(snappedY, topGrabY);
 
 			auto extraPosOffset = Vector3i(0, snappedY, bounds.Z1);
@@ -431,29 +388,6 @@ namespace TEN::Entities::Generic
 		playerItem.Parenting.Attach(ladderItem);
 		player.Control.IsMoving = false;
 		player.Control.HandStatus = HandStatus::Busy;
-	}
-
-	bool TestLadderClimb(const ItemInfo& playerItem, bool goingUp)
-	{
-		const auto& player = GetLaraInfo(playerItem);
-
-		if (player.Context.InteractedItem == NO_VALUE)
-			return false;
-
-		auto& ladderItem = g_Level.Items[player.Context.InteractedItem];
-		if (ladderItem.ObjectNumber != ID_LADDER_ONE_SIDED &&
-			ladderItem.ObjectNumber != ID_LADDER_DOUBLE_SIDED)
-		{
-			return false;
-		}
-
-		auto stackExtents = GetLadderStackExtents(ladderItem);
-
-		// Lara can keep climbing while her feet remain within the ladder stack.
-		if (goingUp)
-			return (playerItem.Pose.Position.y >= (ladderItem.Pose.Position.y + stackExtents.TopY));
-
-		return (playerItem.Pose.Position.y <= (ladderItem.Pose.Position.y + stackExtents.BottomY));
 	}
 
 	void CollideLadder(short itemNumber, ItemInfo* playerItem, CollisionInfo* coll)
