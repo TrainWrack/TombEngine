@@ -1949,7 +1949,7 @@ bool CanClimbLadderDown(ItemInfo* item, CollisionInfo* coll)
 {
 	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
 	constexpr auto LOWER_FLOOR_BOUND = BLOCK(1 / 8.0f);
-	constexpr auto LADDER_END_MARGIN = CLICK(0.5f);
+	constexpr auto LADDER_END_MARGIN = CLICK(1.0f); // Two rungs: the next step consumes one, so she halts one rung above the stack bottom.
 
 	auto* ladder = GetInteractedLadder(*item);
 	if (ladder == nullptr)

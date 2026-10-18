@@ -184,7 +184,6 @@ static void HandlePlayerWalkInteraction(ItemInfo& playerItem)
 		player.Control.IsMoving = false;
 		player.Control.HandStatus = HandStatus::Busy;
 
-		player.Context.InteractedItem = NO_VALUE;
 		player.Context.WalkInteraction.IsComplete = false;
 		player.Context.WalkInteraction.Basis = std::nullopt;
 		player.Context.WalkInteraction.Routine = nullptr;
