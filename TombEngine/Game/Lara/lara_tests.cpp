@@ -1923,7 +1923,7 @@ bool CanClimbLadderUp(ItemInfo* item, CollisionInfo* coll)
 {
 	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
 	constexpr auto UPPER_CEIL_BOUND = -BLOCK(1 / 8.0f);
-	constexpr auto LADDER_END_MARGIN = CLICK(0.5f);
+	constexpr auto LADDER_END_MARGIN = CLICK(0.1f);
 
 	auto* ladder = GetInteractedLadder(*item);
 	if (ladder == nullptr)
