@@ -26,6 +26,7 @@
 #include "Game/Setup.h"
 #include "Game/StaticMesh.h"
 #include "Objects/Generic/Doors/generic_doors.h"
+#include "Objects/Generic/Object/Ladder.h"
 #include "Objects/Generic/Object/rope.h"
 #include "Objects/Generic/Switches/fullblock_switch.h"
 #include "Objects/Generic/puzzles_keys.h"
@@ -3036,7 +3037,7 @@ static void ParseLevel(const Save::SaveGame* s, bool hubMode)
 			item->Data = savedData->scalar();
 		}
 	}
-
+		
 	// Sync parent poses now that all items have been restored.
 	for (int i = 0; i < (int)g_Level.Items.size(); i++)
 	{
@@ -3047,6 +3048,13 @@ static void ParseLevel(const Save::SaveGame* s, bool hubMode)
 			item.Parenting.ParentObject < (int)g_Level.Items.size())
 		{
 			item.Parenting.PrevPose = g_Level.Items[item.Parenting.ParentObject].Pose;
+		}
+
+		// Ladder stack data is derived from item poses, so rebuild it now that all poses are restored.
+		if (item.ObjectNumber == ID_LADDER_ONE_SIDED ||
+			item.ObjectNumber == ID_LADDER_DOUBLE_SIDED)
+		{
+			item.Data = LadderObject((short)i);
 		}
 	}
 

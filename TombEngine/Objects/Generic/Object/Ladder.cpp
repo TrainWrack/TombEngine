@@ -72,8 +72,8 @@ namespace TEN::Entities::Generic
 	};
 
 	const auto LadderMountedOffset2D = Vector3i(0, 0, -LARA_RADIUS * 1.5f);
-	const auto LadderMountedOffsetTopFront2D = Vector3i(0, 76.0f, 51.0f);//54
-	const auto LadderMountedOffsetTopBack2D = Vector3i(0, 76.0f, 79.0f);//82
+	const auto LadderMountedOffsetTopFront2D = Vector3i(0, 0, 51.0f);//54
+	const auto LadderMountedOffsetTopBack2D = Vector3i(0, 0, 79.0f);//82
 	const auto LadderInteractBounds2D = GameBoundingBox(
 		-BLOCK(0.25f), BLOCK(0.25f),
 		0, 0,
@@ -141,11 +141,121 @@ namespace TEN::Entities::Generic
 			EulerAngles(-PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(-90.0f) - LARA_GRAB_THRESHOLD, -PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD),
 			EulerAngles(PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(-90.0f) + LARA_GRAB_THRESHOLD, PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD)));
 
+	LadderObject::LadderObject(int itemNumber)
+	{
+		constexpr auto ALIGN_XZ_TOLERANCE = BLOCK(0.25f);
+		constexpr auto ALIGN_YAW_TOLERANCE = ANGLE(5.0f);
+
+		auto& ladderItem = g_Level.Items[itemNumber];
+		auto bounds = GameBoundingBox(&ladderItem);
+
+		int topY = bounds.Y1;
+		int bottomY = bounds.Y2;
+		short lowestItemNumber = itemNumber;
+
+		// The stack is probed from the item list directly: room item lists are still being populated while
+		// items are initialized, so a collision query would only see part of the stack.
+		for (int i = 0; i < g_Level.NumItems; i++)
+		{
+			auto& item = g_Level.Items[i];
+
+			if (item.ObjectNumber != ID_LADDER_ONE_SIDED &&
+				item.ObjectNumber != ID_LADDER_DOUBLE_SIDED)
+			{
+				continue;
+			}
+
+			// Only merge ladders that are horizontally aligned and share the same yaw.
+			if (abs(item.Pose.Position.x - ladderItem.Pose.Position.x) > ALIGN_XZ_TOLERANCE ||
+				abs(item.Pose.Position.z - ladderItem.Pose.Position.z) > ALIGN_XZ_TOLERANCE ||
+				abs(Geometry::GetShortestAngle(item.Pose.Orientation.y, ladderItem.Pose.Orientation.y)) > ALIGN_YAW_TOLERANCE)
+			{
+				continue;
+			}
+
+			// Merge the neighbour's vertical extents into this ladder's local space.
+			int relY = item.Pose.Position.y - ladderItem.Pose.Position.y;
+			auto itemBounds = GameBoundingBox(&item);
+			topY = std::min(topY, relY + itemBounds.Y1);
+
+			if ((relY + itemBounds.Y2) > bottomY)
+			{
+				bottomY = relY + itemBounds.Y2;
+				lowestItemNumber = item.Index;
+			}
+		}
+
+		// Rebase the extents on the lowest ladder item of the stack.
+		int baseShift = g_Level.Items[lowestItemNumber].Pose.Position.y - ladderItem.Pose.Position.y;
+
+		_baseItemNumber = lowestItemNumber;
+		_topY = topY - baseShift;
+		_bottomY = bottomY - baseShift;
+		_isDoubleSided = ((ladderItem.TriggerFlags & (1 << 0)) == 1);
+	}
+
+	int LadderObject::GetBaseItemNumber() const
+	{
+		return _baseItemNumber;
+	}
+
+	bool LadderObject::IsDoubleSided() const
+	{
+		return _isDoubleSided;
+	}
+
+	int LadderObject::GetHeight() const
+	{
+		return _bottomY -_topY;
+	}
+
+	Vector3i LadderObject::GetBasePosition() const
+	{
+		auto pos = g_Level.Items[_baseItemNumber].Pose.Position;
+		pos.y += _bottomY;
+		return pos;
+	}
+
+	Vector3i LadderObject::GetTopPosition() const
+	{
+		auto pos = g_Level.Items[_baseItemNumber].Pose.Position;
+		pos.y += _topY;
+		return pos;
+	}
+
+	int LadderObject::GetAttachmentHeight(int positionY) const
+	{
+		int step = (int)LADDER_STEP_HEIGHT;
+		int baseY = GetBasePosition().y;
+
+		// Snap to the closest rung.
+		int relY = positionY - baseY;
+		int snappedY = (int)round((float)relY / step) * step;
+
+		// Never grab above the height where the top dismount can fire; otherwise she'd climb past it and get stuck.
+		int topGrabY = _topY + (int)LARA_HEIGHT;
+
+		return (baseY + std::max(snappedY, topGrabY));
+	}
+
+	bool LadderObject::IsHeightWithin(int positionY) const
+	{
+		int topY = GetTopPosition().y;
+		int baseY = GetBasePosition().y;
+
+		return (positionY >= topY && positionY <= baseY);
+	}
+
+	LadderObject& GetLadderObject(const ItemInfo& item)
+	{
+		return (LadderObject&)item.Data;
+	}
+
 	void InitializeLadder(short itemNumber)
 	{
 		auto& ladderItem = g_Level.Items[itemNumber];
 
-		bool isDoubleSided = ((ladderItem.TriggerFlags & (1 << 0)) == 1);
+		ladderItem.Data = LadderObject(itemNumber);
 
 		AddActiveItem(itemNumber);
 	}
@@ -155,12 +265,28 @@ namespace TEN::Entities::Generic
 		// Draw collision bounds.
 		auto bounds = GameBoundingBox(&ladderItem);
 		auto box = bounds.ToBoundingOrientedBox(ladderItem.Pose);
-		g_Renderer.AddDebugBox(box, Vector4(1, 0, 0, 1), RendererDebugPage::None);
+		//g_Renderer.AddDebugBox(box, Vector4(1, 0, 0, 1), RendererDebugPage::None);
 
 		// Draw interaction bounds.
 		auto interactBounds = LadderInteractBounds2D + GameBoundingBox(0, 0, bounds.Y1, bounds.Y2, 0, 0);
 		auto interactBox = interactBounds.ToBoundingOrientedBox(ladderItem.Pose);
-		g_Renderer.AddDebugBox(interactBox, Vector4(0, 1, 1, 1), RendererDebugPage::None);
+		//g_Renderer.AddDebugBox(interactBox, Vector4(0, 1, 1, 1), RendererDebugPage::None);
+
+		// Draw stack bounds. Only the base item of the stack draws them, so overlapping ladders don't
+		// produce duplicate boxes.
+		const auto& ladder = GetLadderObject(ladderItem);
+		if (ladderItem.Index != ladder.GetBaseItemNumber())
+			return;
+
+		const auto& baseItem = g_Level.Items[ladder.GetBaseItemNumber()];
+		auto baseBounds = GameBoundingBox(&baseItem);
+
+		int topRelY = ladder.GetTopPosition().y - baseItem.Pose.Position.y;
+		int bottomRelY = ladder.GetBasePosition().y - baseItem.Pose.Position.y;
+
+		auto stackBounds = GameBoundingBox(baseBounds.X1, baseBounds.X2, topRelY, bottomRelY, baseBounds.Z1, baseBounds.Z2);
+		auto stackBox = stackBounds.ToBoundingOrientedBox(baseItem.Pose);
+		g_Renderer.AddDebugBox(stackBox, Vector4(0, 1, 0, 1), RendererDebugPage::None);
 	}
 
 	static bool TestLadderMount(const ItemInfo& ladderItem, const ItemInfo& playerItem, bool groundMount)
@@ -366,33 +492,22 @@ namespace TEN::Entities::Generic
 
 		case LadderMountType::JumpUp:
 		{
-			//redo math here where she should not grab until the height is correct
-			// Snap Lara's feet to the closest ladder step at her current height instead of the ladder base.
-			int step = (int)LADDER_STEP_HEIGHT;
-			int relY = playerItem.Pose.Position.y - ladderItem.Pose.Position.y;
-			int snappedY = (int)round((float)relY / step) * step;
-			//Trainwreck the snapped height needs to be a few rungs below the top.
-			// Never grab above the height where the top dismount can fire; otherwise she'd climb past it and get stuck.
-			int topGrabY = bounds.Y1 + (int)LARA_HEIGHT;
-			snappedY = std::max(snappedY, topGrabY);
+			auto& ladder = GetLadderObject(ladderItem);
 
-			auto extraPosOffset = Vector3i(0, snappedY, bounds.Z1);
+			// Snap her feet to the rung closest to her current height.
+			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y);
+			auto extraPosOffset = Vector3i(0, attachmentY - ladderItem.Pose.Position.y, bounds.Z1);
 
 			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, SetPlayerLadderAirGrabInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
 		}
 		case LadderMountType::JumpReach:
 		{
-			// Snap Lara's feet to the closest ladder step at her current height instead of the ladder base.
-			int step = (int)LADDER_STEP_HEIGHT;
-			int relY = playerItem.Pose.Position.y - ladderItem.Pose.Position.y;
-			int snappedY = (int)round((float)relY / step) * step;
-			//Trainwreck the snapped height needs to be a few rungs below the top.
-			// Never grab above the height where the top dismount can fire; otherwise she'd climb past it and get stuck.
-			int topGrabY = bounds.Y1 + (int)LARA_HEIGHT;
-			snappedY = std::max(snappedY, topGrabY);
+			auto& ladder = GetLadderObject(ladderItem);
 
-			auto extraPosOffset = Vector3i(0, snappedY, bounds.Z1);
+			// Snap her feet to the rung closest to her current height.
+			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y);
+			auto extraPosOffset = Vector3i(0, attachmentY - ladderItem.Pose.Position.y, bounds.Z1);
 
 			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, SetPlayerLadderAirReachInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
