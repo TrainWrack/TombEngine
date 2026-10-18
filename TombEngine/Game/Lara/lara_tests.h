@@ -75,7 +75,6 @@ bool TestLaraPoleCollision(ItemInfo* item, CollisionInfo* coll, bool goingUp, fl
 bool TestLaraPoleUp(ItemInfo* item, CollisionInfo* coll);
 bool TestLaraPoleDown(ItemInfo* item, CollisionInfo* coll);
 
-bool TestPlayerLadderCollision(ItemInfo* item, CollisionInfo* coll, bool goingUp, float offset);
 bool CanClimbLadderUp(ItemInfo* item, CollisionInfo* coll);
 bool CanClimbLadderDown(ItemInfo* item, CollisionInfo* coll);
 bool CanDismountLadderTop(ItemInfo* item, CollisionInfo* coll);

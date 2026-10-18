@@ -26,6 +26,7 @@
 using namespace TEN::Animation;
 using namespace TEN::Collision::Floordata;
 using namespace TEN::Collision::Point;
+using namespace TEN::Entities::Generic;
 using namespace TEN::Entities::Player;
 using namespace TEN::Input;
 using namespace TEN::Math;
@@ -1899,64 +1900,43 @@ bool TestLaraPoleDown(ItemInfo* item, CollisionInfo* coll)
 	return (coll->Middle.Floor > 0);
 }
 
-bool TestPlayerLadderCollision(ItemInfo* item, CollisionInfo* coll, bool goingUp, float offset)
+// Returns the ladder stack the player is currently interacting with, if any.
+static LadderObject* GetInteractedLadder(const ItemInfo& playerItem)
 {
-	static constexpr auto poleProbeCollRadius = 16.0f;
+	const auto& player = GetLaraInfo(playerItem);
 
-	bool atLeastOneLadderCollided = false;
+	int itemNumber = player.Context.InteractedItem;
+	if (itemNumber < 0 || itemNumber >= (short)g_Level.Items.size())
+		return nullptr;
 
-	auto collObjects = GetCollidedObjects(*item, true, false, BLOCK(2), ObjectCollectionMode::Items);
-	if (!collObjects.IsEmpty())
+	auto& ladderItem = g_Level.Items[itemNumber];
+	if (ladderItem.ObjectNumber != ID_LADDER_ONE_SIDED &&
+		ladderItem.ObjectNumber != ID_LADDER_DOUBLE_SIDED)
 	{
-		auto laraBox = GameBoundingBox(item).ToBoundingOrientedBox(item->Pose);
-
-		// HACK: Because Core implemented upward pole movement as a SetPosition command, we can't precisely
-		// check her position. So we add a fixed height offset.
-
-		// Offset a sphere when jumping toward pole.
-		auto sphereOffset2D = Vector3::Zero;
-		sphereOffset2D = Geometry::TranslatePoint(sphereOffset2D, item->Pose.Orientation.y, coll->Setup.Radius + item->Animation.Velocity.z);
-
-		auto spherePos = laraBox.Center + Vector3(0.0f, (laraBox.Extents.y + poleProbeCollRadius + offset) * (goingUp ? -1 : 1), 0.0f);
-
-		auto sphere = BoundingSphere(spherePos, poleProbeCollRadius);
-		auto offsetSphere = BoundingSphere(spherePos + sphereOffset2D, poleProbeCollRadius);
-
-		//DrawDebugSphere(sphere.Center, 16.0f, Vector4(1, 0, 0, 1), RendererDebugPage::CollisionStats);
-
-		for (const auto* itemPtr : collObjects.Items)
-		{
-			if (itemPtr->ObjectNumber != ID_LADDER_ONE_SIDED)
-				continue;
-
-			auto poleBox = GameBoundingBox(itemPtr).ToBoundingOrientedBox(itemPtr->Pose);
-			poleBox.Extents = poleBox.Extents + Vector3(coll->Setup.Radius, 0.0f, coll->Setup.Radius);
-
-			//DrawDebugBox(poleBox, Vector4(0, 0, 1, 1), RendererDebugPage::CollisionStats);
-
-			if (poleBox.Intersects(sphere) || poleBox.Intersects(offsetSphere))
-			{
-				atLeastOneLadderCollided = true;
-				break;
-			}
-		}
+		return nullptr;
 	}
 
-	return atLeastOneLadderCollided;
+	return &GetLadderObject(ladderItem);
 }
 
 bool CanClimbLadderUp(ItemInfo* item, CollisionInfo* coll)
 {
 	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
 	constexpr auto UPPER_CEIL_BOUND = -BLOCK(1 / 8.0f);
+	constexpr auto LADDER_END_MARGIN = CLICK(0.5f);
 
-	// Must still be ladder material above the player.
-	if (!TestPlayerLadderCollision(item, coll, true, CLICK(0.5f)))
+	auto* ladder = GetInteractedLadder(*item);
+	if (ladder == nullptr)
+		return false;
+
+	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y1;
+
+	// Must still be ladder material above the player's head.
+	if ((vPos - ladder->GetTopPosition().y) < LADDER_END_MARGIN)
 		return false;
 
 	// Get point collision.
 	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, -PROBE_DIST);
-	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y1;
 
 	// Assess point collision.
 	if ((pointColl.GetCeilingHeight() - vPos) > UPPER_CEIL_BOUND) // Within lowest ceiling bound.
@@ -1969,14 +1949,20 @@ bool CanClimbLadderDown(ItemInfo* item, CollisionInfo* coll)
 {
 	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
 	constexpr auto LOWER_FLOOR_BOUND = BLOCK(1 / 8.0f);
+	constexpr auto LADDER_END_MARGIN = CLICK(0.5f);
 
-	// Must still be ladder material below the player.
-	if (!TestPlayerLadderCollision(item, coll, false, CLICK(0.5f)))
+	auto* ladder = GetInteractedLadder(*item);
+	if (ladder == nullptr)
+		return false;
+
+	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y2;
+
+	// Must still be ladder material below the player's feet.
+	if ((ladder->GetBasePosition().y - vPos) < LADDER_END_MARGIN)
 		return false;
 
 	// Respect the ground: stop climbing down once the floor is reached.
 	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, -PROBE_DIST);
-	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y2;
 
 	return ((pointColl.GetFloorHeight() - vPos) > LOWER_FLOOR_BOUND);
 }
