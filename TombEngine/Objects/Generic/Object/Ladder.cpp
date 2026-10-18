@@ -141,13 +141,21 @@ namespace TEN::Entities::Generic
 			EulerAngles(-PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(-90.0f) - LARA_GRAB_THRESHOLD, -PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD),
 			EulerAngles(PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(-90.0f) + LARA_GRAB_THRESHOLD, PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD)));
 
+	// Bounds must be queried from the object rather than the item: an item's AnimObjectID is only armed by
+	// its own Initialize() call, so probing a neighbour that hasn't been initialized yet would return empty
+	// bounds, silently dropping it from the stack.
+	static GameBoundingBox GetLadderBounds(const ItemInfo& ladderItem)
+	{
+		return GameBoundingBox(ladderItem.ObjectNumber);
+	}
+
 	LadderObject::LadderObject(int itemNumber)
 	{
 		constexpr auto ALIGN_XZ_TOLERANCE = BLOCK(0.25f);
 		constexpr auto ALIGN_YAW_TOLERANCE = ANGLE(5.0f);
 
 		auto& ladderItem = g_Level.Items[itemNumber];
-		auto bounds = GameBoundingBox(&ladderItem);
+		auto bounds = GetLadderBounds(ladderItem);
 
 		int topY = bounds.Y1;
 		int bottomY = bounds.Y2;
@@ -175,7 +183,7 @@ namespace TEN::Entities::Generic
 
 			// Merge the neighbour's vertical extents into this ladder's local space.
 			int relY = item.Pose.Position.y - ladderItem.Pose.Position.y;
-			auto itemBounds = GameBoundingBox(&item);
+			auto itemBounds = GetLadderBounds(item);
 			topY = std::min(topY, relY + itemBounds.Y1);
 
 			if ((relY + itemBounds.Y2) > bottomY)
