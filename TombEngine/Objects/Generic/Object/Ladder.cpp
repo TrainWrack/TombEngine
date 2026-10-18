@@ -72,7 +72,8 @@ namespace TEN::Entities::Generic
 	};
 
 	const auto LadderMountedOffset2D = Vector3i(0, 0, -LARA_RADIUS * 1.5f);
-	const auto LadderMountedOffsetTop2D = Vector3i(0, 0, 150);
+	const auto LadderMountedOffsetTopFront2D = Vector3i(0, 76.0f, 51.0f);//54
+	const auto LadderMountedOffsetTopBack2D = Vector3i(0, 76.0f, 79.0f);//82
 	const auto LadderInteractBounds2D = GameBoundingBox(
 		-BLOCK(0.25f), BLOCK(0.25f),
 		0, 0,
@@ -95,7 +96,7 @@ namespace TEN::Entities::Generic
 	const auto LadderInteractLeftBox2D = LadderInteractLeftBounds2D.ToBoundingOrientedBox(Pose::Zero);
 
 	const auto LadderMountTopFrontBasis = InteractionBasis(
-		LadderMountedOffsetTop2D,
+		LadderMountedOffsetTopFront2D,
 		EulerAngles(0, ANGLE(180.0f), 0),
 		LadderInteractBox2D,
 		std::pair(
@@ -103,7 +104,7 @@ namespace TEN::Entities::Generic
 			EulerAngles(PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(180.0f) + LARA_GRAB_THRESHOLD, PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD)));
 
 	const auto LadderMountTopBackBasis = InteractionBasis(
-		LadderMountedOffsetTop2D,
+		LadderMountedOffsetTopBack2D,
 		LadderInteractBox2D,
 		std::pair(
 			EulerAngles(-PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, -LARA_GRAB_THRESHOLD, -PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD),
@@ -323,14 +324,14 @@ namespace TEN::Entities::Generic
 
 		case LadderMountType::TopFront:
 		{
-			auto extraPosOffset = Vector3i(0, bounds.Y1, bounds.Z1);
+			auto extraPosOffset = Vector3i(0, bounds.Y1, 0);
 			SetInteraction(playerItem, ladderItem, LadderMountTopFrontBasis, SetPlayerLadderMountTopFrontInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
 		}
 
 		case LadderMountType::TopBack:
 		{
-			auto extraPosOffset = Vector3i(0, bounds.Y1, bounds.Z2);
+			auto extraPosOffset = Vector3i(0, bounds.Y1, 0);
 			SetInteraction(playerItem, ladderItem, LadderMountTopBackBasis, SetPlayerLadderMountTopBackInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
 		}
