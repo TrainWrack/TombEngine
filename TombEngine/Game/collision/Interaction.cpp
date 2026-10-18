@@ -43,6 +43,16 @@ namespace TEN::Collision::Interaction
 		OrientConstraint = orientConstraint;
 	};
 
+	// Test whether an angle falls within a constraint range
+	static bool TestOrientConstraint(short delta, short min, short max)
+	{
+		// Treat the range as going from min to max in the positive direction (wrap-safe).
+		// Unsigned 16-bit arithmetic handles wraparound naturally.
+		auto span = (unsigned short)(max - min);
+		auto offset = (unsigned short)(delta - min);
+		return offset <= span;
+	}
+
 	bool TestInteraction(const ItemInfo& interactor, const ItemInfo& interactable, const InteractionBasis& basis, std::optional<BoundingOrientedBox> expansionBox)
 	{
 		DrawDebug(interactable, basis);
@@ -53,9 +63,9 @@ namespace TEN::Collision::Interaction
 
 		// 2) Test if interactor's orientation is within interaction constraint.
 		auto deltaOrient = interactor.Pose.Orientation - interactable.Pose.Orientation;
-		if (deltaOrient.x < basis.OrientConstraint.first.x || deltaOrient.x > basis.OrientConstraint.second.x ||
-			deltaOrient.y < basis.OrientConstraint.first.y || deltaOrient.y > basis.OrientConstraint.second.y ||
-			deltaOrient.z < basis.OrientConstraint.first.z || deltaOrient.z > basis.OrientConstraint.second.z)
+		if (!TestOrientConstraint(deltaOrient.x, basis.OrientConstraint.first.x, basis.OrientConstraint.second.x) ||
+			!TestOrientConstraint(deltaOrient.y, basis.OrientConstraint.first.y, basis.OrientConstraint.second.y) ||
+			!TestOrientConstraint(deltaOrient.z, basis.OrientConstraint.first.z, basis.OrientConstraint.second.z))
 		{
 			return false;
 		}
