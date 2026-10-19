@@ -82,12 +82,6 @@ void ItemInfo::HandleOffsetBlend()
 {
 	constexpr auto TIME_ACTIVE_MAX = 3.0f;
 
-	if (IsLara())
-	{
-		g_Renderer.PrintDebugMessage("Interacted moveable ID: %d", GetLaraInfo(*this).Context.InteractedItem);
-		OffsetBlend.DrawDebug();
-	}
-
 	// Offset blend inactive; return early.
 	if (!OffsetBlend.IsActive)
 		return;
