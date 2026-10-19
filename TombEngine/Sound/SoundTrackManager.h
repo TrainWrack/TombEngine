@@ -6,6 +6,13 @@ constexpr auto SOUND_TRACK_CHANNEL_VOICE   = "Voice";
 
 constexpr auto SOUND_TRACK_CHANNEL_LIMIT   = 32;
 
+inline const std::string SOUND_TRACK_CHANNEL_NAMES[] =
+{
+    SOUND_TRACK_CHANNEL_ONESHOT,
+    SOUND_TRACK_CHANNEL_BGM,
+    SOUND_TRACK_CHANNEL_VOICE
+};
+
 enum class TrackFlags : int
 {
     None         = 0,

@@ -6640,7 +6640,7 @@ struct NamedSoundtrackT : public flatbuffers::NativeTable {
   int32_t fade_out_time = 0;
   int32_t crossfade_time = 0;
   float volume = 0.0f;
-  float damp_volume = 0.5f;
+  float damp_volume = 0.0f;
 };
 
 struct NamedSoundtrack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -6683,7 +6683,7 @@ struct NamedSoundtrack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return GetField<float>(VT_VOLUME, 0.0f);
   }
   float damp_volume() const {
-    return GetField<float>(VT_DAMP_VOLUME, 0.5f);
+    return GetField<float>(VT_DAMP_VOLUME, 0.0f);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -6734,7 +6734,7 @@ struct NamedSoundtrackBuilder {
     fbb_.AddElement<float>(NamedSoundtrack::VT_VOLUME, volume, 0.0f);
   }
   void add_damp_volume(float damp_volume) {
-    fbb_.AddElement<float>(NamedSoundtrack::VT_DAMP_VOLUME, damp_volume, 0.5f);
+    fbb_.AddElement<float>(NamedSoundtrack::VT_DAMP_VOLUME, damp_volume, 0.0f);
   }
   explicit NamedSoundtrackBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -6757,7 +6757,7 @@ inline flatbuffers::Offset<NamedSoundtrack> CreateNamedSoundtrack(
     int32_t fade_out_time = 0,
     int32_t crossfade_time = 0,
     float volume = 0.0f,
-    float damp_volume = 0.5f) {
+    float damp_volume = 0.0f) {
   NamedSoundtrackBuilder builder_(_fbb);
   builder_.add_position(position);
   builder_.add_damp_volume(damp_volume);
@@ -6786,7 +6786,7 @@ inline flatbuffers::Offset<NamedSoundtrack> CreateNamedSoundtrackDirect(
     int32_t fade_out_time = 0,
     int32_t crossfade_time = 0,
     float volume = 0.0f,
-    float damp_volume = 0.5f) {
+    float damp_volume = 0.0f) {
   auto channel_name__ = channel_name ? _fbb.CreateString(channel_name) : 0;
   auto track__ = track ? _fbb.CreateString(track) : 0;
   return TEN::Serialization::Save::CreateNamedSoundtrack(

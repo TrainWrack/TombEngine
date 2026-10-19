@@ -319,14 +319,20 @@ namespace TEN::Scripting::Sound
 
             /// Pause this channel.
             // @function AudioChannel:Pause
+            // @usage
+            // quiet:Pause()
             ScriptReserved_AudioChannelPause, &AudioChannel::Pause,
 
             /// Resume this channel.
             // @function AudioChannel:Resume
+            // @usage
+            // quiet:Resume()
             ScriptReserved_AudioChannelResume, &AudioChannel::Resume,
 
             /// Clear this channel (stop and remove track assignment).
             // @function AudioChannel:Clear
+            // @usage
+            // quiet:Clear()
             ScriptReserved_AudioChannelClear, &AudioChannel::Clear,
 
             /// Set the track for this channel. If the channel is already playing, it will crossfade to the new track immediately; otherwise the track is stored and played on the next Play call.
@@ -341,51 +347,73 @@ namespace TEN::Scripting::Sound
             /// Check if the channel is currently playing.
             // @function AudioChannel:IsPlaying
             // @treturn bool True if playing.
+            // @usage
+            // if quiet:IsPlaying() then
+            //     print("quiet is playing")
+            // end
             ScriptReserved_AudioChannelIsPlaying, &AudioChannel::IsPlaying,
 
             /// Get the name of this channel.
             // @function AudioChannel:GetName
             // @treturn string Channel name.
+            // @usage
+            // local name = quiet:GetName()
             ScriptReserved_GetName, &AudioChannel::GetName,
 
             /// Get the current track filename.
             // @function AudioChannel:GetTrack
             // @treturn string Track filename.
+            // @usage
+            // local track = quiet:GetTrack()
             ScriptReserved_AudioChannelGetTrack, &AudioChannel::GetTrack,
 
             /// Get the current loudness.
             // @function AudioChannel:GetLoudness
             // @treturn float Loudness value.
+            // @usage
+            // local loudness = quiet:GetLoudness()
             ScriptReserved_AudioChannelGetLoudness, &AudioChannel::GetLoudness,
 
             /// Set the channel volume.
             // @function AudioChannel:SetVolume
             // @tparam float volume Volume (0.0 to 1.0).
+            // @usage
+            // quiet:SetVolume(0.5)
             ScriptReserved_AudioChannelSetVolume, &AudioChannel::SetVolume,
 
             /// Get the channel volume.
             // @function AudioChannel:GetVolume
             // @treturn float Volume.
+            // @usage
+            // local volume = quiet:GetVolume()
             ScriptReserved_AudioChannelGetVolume, &AudioChannel::GetVolume,
 
             /// Get the playback type of this channel.
             // @function AudioChannel:GetType
             // @treturn Sound.SoundTrackType Current channel type.
+            // @usage
+            // local trackType = quiet:GetType()
             ScriptReserved_AudioChannelGetType, &AudioChannel::GetType,
 
             /// Set the playback type, re-applying its preset defaults (loop, fade, crossfade).
             // @function AudioChannel:SetType
             // @tparam Sound.SoundTrackType type New channel type.
+            // @usage
+            // quiet:SetType(TEN.Sound.SoundTrackType.LOOPED)
             ScriptReserved_AudioChannelSetType, &AudioChannel::SetType,
 
             /// Set the crossfade duration for looped (LOOPED) channels.
             // @function AudioChannel:SetCrossFadeLength
             // @tparam Time time Crossfade duration.
+            // @usage
+            // quiet:SetCrossFadeLength(Time({ 0, 0, 3 }))
             ScriptReserved_AudioChannelSetCrossFadeLength, &AudioChannel::SetCrossFadeLength,
 
             /// Enable or disable shuffle start.
             // @function AudioChannel:SetShuffleStart
             // @tparam bool enable True to start at a random position.
+            // @usage
+            // quiet:SetShuffleStart(true)
             ScriptReserved_AudioChannelShuffleStart, &AudioChannel::SetShuffleStart,
 
             /// Set the volume the background music is lowered to while this channel plays. Set to 1.0 to disable damping.
@@ -401,21 +429,29 @@ namespace TEN::Scripting::Sound
             /// Get the BGM damp volume for this channel.
             // @function AudioChannel:GetDampBGM
             // @treturn float Current BGM volume multiplier (1.0 if damping is disabled).
+            // @usage
+            // local dampVolume = quiet:GetDampBGM()
             ScriptReserved_AudioChannelGetDampBGM, &AudioChannel::GetDampBGM,
 
             /// Set the playback position.
             // @function AudioChannel:SetPosition
             // @tparam Time time Playback position as a Time value.
+            // @usage
+            // quiet:SetPosition(Time({ 0, 0, 30 }))
             ScriptReserved_AudioChannelSetPosition, &AudioChannel::SetPosition,
 
             /// Get the current playback position.
             // @function AudioChannel:GetPosition
             // @treturn Time Playback position.
+            // @usage
+            // local position = quiet:GetPosition()
             ScriptReserved_AudioChannelGetPosition, &AudioChannel::GetPosition,
 
             /// Get the normalized playback position (0.0 to 1.0).
             // @function AudioChannel:GetNormalizedPosition
             // @treturn float Normalized position.
+            // @usage
+            // local progress = quiet:GetNormalizedPosition()
             ScriptReserved_AudioChannelGetNormPos, &AudioChannel::GetNormalizedPosition
         );
     }
