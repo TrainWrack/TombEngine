@@ -4,6 +4,14 @@ constexpr auto SOUND_TRACK_CHANNEL_BGM     = "BGM";
 constexpr auto SOUND_TRACK_CHANNEL_ONESHOT = "OneShot";
 constexpr auto SOUND_TRACK_CHANNEL_VOICE   = "Voice";
 
+// Built-in channel names, indexed by SoundTrackType (OneShot, BGM, Voice).
+inline const std::string SOUND_TRACK_CHANNEL_NAMES[] =
+{
+    SOUND_TRACK_CHANNEL_ONESHOT,
+    SOUND_TRACK_CHANNEL_BGM,
+    SOUND_TRACK_CHANNEL_VOICE
+};
+
 constexpr auto SOUND_TRACK_CHANNEL_LIMIT   = 32;
 
 enum class TrackFlags : int

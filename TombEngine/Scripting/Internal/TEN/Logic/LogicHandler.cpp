@@ -1137,11 +1137,6 @@ void LogicHandler::OnAudioChannelStarted(const std::string& channelName)
 	PerformCallbacks(CallbackPoint::PreAudioChannel, channelName);
 }
 
-void LogicHandler::OnAudioChannelPlaying(const std::string& channelName)
-{
-	PerformLevelFuncCallback(LevelFuncCallbackPoint::AudioChannelPlay, channelName);
-}
-
 void LogicHandler::OnAudioChannelStopped(const std::string& channelName)
 {
 	PerformCallbacks(CallbackPoint::PostAudioChannel, channelName);

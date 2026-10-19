@@ -99,7 +99,6 @@ static constexpr char ScriptReserved_PreAudioChannel[]		= "PRE_AUDIO_CHANNEL";
 static constexpr char ScriptReserved_PostAudioChannel[]		= "POST_AUDIO_CHANNEL";
 
 // Built-in LevelFuncs
-static constexpr char ScriptReserved_OnAudioChannelPlaying[] = "OnAudioChannelPlaying";
 static constexpr char ScriptReserved_OnStart[]				= "OnStart";
 static constexpr char ScriptReserved_OnLoad[]			= "OnLoad";
 static constexpr char ScriptReserved_OnLoop[]			= "OnLoop";

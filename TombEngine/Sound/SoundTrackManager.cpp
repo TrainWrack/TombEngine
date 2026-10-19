@@ -703,7 +703,6 @@ void SoundTrackManager::ClearAll()
 void SoundTrackManager::Update()
 {
     // Collect names first: firing callbacks may run Lua that mutates the channel map.
-    auto playing = std::vector<std::string>{};
     auto stopped = std::vector<std::string>{};
 
     for (auto& [hash, channel] : _channels)
@@ -718,19 +717,10 @@ void SoundTrackManager::Update()
             channel.Stream = 0;
             stopped.push_back(channel.Name);
         }
-        else if (status == BASS_ACTIVE_PLAYING)
-        {
-            playing.push_back(channel.Name);
-        }
     }
 
     if (g_GameScript)
     {
-        // Fire per-frame while a channel is actively playing.
-        for (const auto& name : playing)
-            g_GameScript->OnAudioChannelPlaying(name);
-
-        // Fire once when a channel stops.
         for (const auto& name : stopped)
             g_GameScript->OnAudioChannelStopped(name);
     }

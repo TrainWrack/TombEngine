@@ -20,8 +20,8 @@ crossfaded, paused, and stopped individually. A channel's playback behaviour is
 governed by its @{Sound.SoundTrackType}.
 
 Channels also raise the PRE_AUDIO_CHANNEL and POST_AUDIO_CHANNEL callbacks
-(see @{Logic.CallbackPoint}) when they start and stop, and call
-`LevelFuncs.OnAudioChannelPlaying` every frame while they are playing.
+(see @{Logic.CallbackPoint}) when they start and stop. To check whether a
+channel is currently playing, use `AudioChannel:IsPlaying`.
 
 @tenclass Sound.AudioChannel
 @pragma nostrip

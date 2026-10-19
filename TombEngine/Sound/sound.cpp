@@ -18,6 +18,9 @@ using namespace TEN::Gui;
 using namespace TEN::Math;
 using namespace TEN::Video;
 
+static_assert(std::extent_v<decltype(SOUND_TRACK_CHANNEL_NAMES)> == (size_t)SoundTrackType::Count,
+	"SOUND_TRACK_CHANNEL_NAMES must contain one entry per SoundTrackType.");
+
 enum SoundSourceFlags
 {
 	SS_FLAG_PLAY_FLIP_ROOM = 1 << 13,
@@ -440,17 +443,10 @@ void EnumerateLegacyTracks()
 
 float GetSoundTrackLoudness(SoundTrackType type)
 {
-	static const std::string CHANNEL_NAMES[(int)SoundTrackType::Count] =
-	{
-		SOUND_TRACK_CHANNEL_ONESHOT,
-		SOUND_TRACK_CHANNEL_BGM,
-		SOUND_TRACK_CHANNEL_VOICE
-	};
-
 	if (!g_SoundTrackManager)
 		return 0.0f;
 
-	return g_SoundTrackManager->GetLoudness(CHANNEL_NAMES[(int)type]);
+	return g_SoundTrackManager->GetLoudness(SOUND_TRACK_CHANNEL_NAMES[(int)type]);
 }
 
 std::optional<std::string> GetCurrentSubtitle()
@@ -481,15 +477,8 @@ std::optional<std::string> GetCurrentSubtitle()
 
 void PlaySoundTrack(const std::string& track, SoundTrackType type, std::optional<QWORD> pos, int forceFadeInTime)
 {
-	static const std::string CHANNEL_NAMES[(int)SoundTrackType::Count] =
-	{
-		SOUND_TRACK_CHANNEL_ONESHOT,
-		SOUND_TRACK_CHANNEL_BGM,
-		SOUND_TRACK_CHANNEL_VOICE
-	};
-
 	if (g_SoundTrackManager)
-		g_SoundTrackManager->Play(CHANNEL_NAMES[(int)type], track, std::nullopt, pos, forceFadeInTime);
+		g_SoundTrackManager->Play(SOUND_TRACK_CHANNEL_NAMES[(int)type], track, std::nullopt, pos, forceFadeInTime);
 }
 
 void LoadSubtitles(const std::string& name)
@@ -566,15 +555,8 @@ void StopSoundTracks(int fadeoutTime, bool excludeAmbience)
 
 void StopSoundTrack(SoundTrackType mode, int fadeoutTime)
 {
-	static const std::string CHANNEL_NAMES[(int)SoundTrackType::Count] =
-	{
-		SOUND_TRACK_CHANNEL_ONESHOT,
-		SOUND_TRACK_CHANNEL_BGM,
-		SOUND_TRACK_CHANNEL_VOICE
-	};
-
 	if (g_SoundTrackManager)
-		g_SoundTrackManager->Stop(CHANNEL_NAMES[(int)mode], fadeoutTime);
+		g_SoundTrackManager->Stop(SOUND_TRACK_CHANNEL_NAMES[(int)mode], fadeoutTime);
 }
 
 void ClearSoundTrackMasks()
@@ -585,17 +567,10 @@ void ClearSoundTrackMasks()
 // Returns specified soundtrack type's stem name and playhead byte position for savegame use.
 std::pair<std::string, QWORD> GetSoundTrackNameAndPosition(SoundTrackType type)
 {
-	static const std::string CHANNEL_NAMES[(int)SoundTrackType::Count] =
-	{
-		SOUND_TRACK_CHANNEL_ONESHOT,
-		SOUND_TRACK_CHANNEL_BGM,
-		SOUND_TRACK_CHANNEL_VOICE
-	};
-
 	if (!g_SoundTrackManager)
 		return {};
 
-	const auto& channelName = CHANNEL_NAMES[(int)type];
+	const auto& channelName = SOUND_TRACK_CHANNEL_NAMES[(int)type];
 	auto trackName = g_SoundTrackManager->GetTrackName(channelName);
 	if (trackName.empty() || !g_SoundTrackManager->IsActive(channelName))
 		return {};
@@ -667,18 +642,11 @@ int Sound_GetFreeSlot()
 
 int Sound_TrackIsPlaying(const std::string& fileName, std::optional<SoundTrackType> type)
 {
-	static const std::string CHANNEL_NAMES[(int)SoundTrackType::Count] =
-	{
-		SOUND_TRACK_CHANNEL_ONESHOT,
-		SOUND_TRACK_CHANNEL_BGM,
-		SOUND_TRACK_CHANNEL_VOICE
-	};
-
 	if (!g_SoundTrackManager)
 		return false;
 
 	if (type.has_value())
-		return g_SoundTrackManager->IsPlayingTrack(fileName, CHANNEL_NAMES[(int)type.value()]);
+		return g_SoundTrackManager->IsPlayingTrack(fileName, SOUND_TRACK_CHANNEL_NAMES[(int)type.value()]);
 
 	return g_SoundTrackManager->IsPlayingTrack(fileName);
 }
