@@ -54,6 +54,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Removed [FIRE_PENDULUM](https://tombengine.com/asset/traps/fire-pendulum/) fog effect if OCB value is 0.
 
 ### Bug fixes
+
 * Fixed original bug with bridge objects blocking monkeyswing and ladder flags in the bottom room.
 * Fixed original bug with inactive SQUISHY_BLOCK_VERTICAL killing player.
 * Fixed incorrect application of LARA_DOUBLE damage after using medipacks.
@@ -63,6 +64,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed MINECART_SWITCH object not working.
 * Fixed JUMP_SWITCH not activating event sets.
 * Fixed SNOWMOBILE death being too sensitive to vertical velocity.
+* Fixed KAYAK sticking to steep slopes out of water instead of sliding down them.
 * Fixed BATS_EMITTER targeting issues.
 * Fixed CROCODILE not swimming in certain water room configurations.
 * Fixed MONKEY not picking up SMALLMEDI_ITEM and KEY_ITEM4 (latter is possible by using AI_MODIFY on the monkey).
@@ -70,22 +72,33 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed ROLLINGBALL falling through walls in some remaining cases.
 * Fixed TEETH_SPIKES behaviour for OCB 1 and move static TR1-3 mode to pre-activated trigger bit flags.
 * Fixed SHOOT_SWITCH2 shattering without OCB 444.
+* Fixed MULTIPLE_BOULDERS stopping a sector short of obstacles or immediately when placed above the floor.
+* Fixed PROPELLER_V player knockback direction and particle fading near water surface.
+* Fixed OVERHEAD_PULLEY_HOOK not damaging player unless a damage value was explicitly set.
+* Fixed doors and BREAKABLE_WALL created by script losing their collision after loading a savegame.
+* Fixed keyhole interaction not being blocked while drawing a flare.
 * Fixed empty linear inventory screen after exiting examine mode.
 * Fixed USE not being first in the inventory if multiple item actions have been allocated.
 * Fixed PC_LOAD_INV_ITEM and PC_SAVE_INV_ITEM presence in the inventory affecting quickload and quicksave hotkey functionality.
+* Fixed GOLDROSE_ITEM, FLARE_ITEM, and HAMMER_ITEM flickering in the pickup summary.
 * Fixed enemy gunfire not affecting other enemies in some cases.
 * Fixed regular spark sprite distance while moving with flare in hand.
+* Fixed gun smoke particles position when enemy is targeted.
 * Fixed fireflies emitting bright white light while in fly form (negative OCB).
 * Fixed incorrect dynamic range for vertex colors, ambient light, dynamic lights and particle effects.
 * Fixed flyby camera flag "Let Lara move in cinematic mode" being ignored.
 * Fixed flyby camera jitter by converting the spline type to floating-point.
+* Fixed Lara not focusing on camera targets properly when at a different height.
+* Fixed look key not breaking out of a camera target once it was triggered.
 * Fixed occasional flame emitter sprite jitter.
 * Fixed incorrect static mesh interpolation after a large position change.
 * Fixed interaction highlighter appearing for underwater pushable objects.
 * Fixed clipping into underwater pushable objects while swimming upwards from the bottom.
 * Fixed running jumps being stopped when platforming near steep slopes.
+* Fixed incorrect slide directions and projectile physics around steep slopes.
 * Fixed pickup of underwater items in vertically narrow passages.
 * Fixed pickup of items placed on a pedestal (OCB 4) while Lara is underwater.
+* Fixed pickups taking priority over binocular mode.
 * Fixed flares being selected from inventory whilst riding the kayak.
 * Fixed kayak paddle and minecart wrench not being drawn when starting a level.
 * Fixed slow turning on parallel bars while holding the left or right key.
@@ -101,9 +114,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed vertex move effect speed in water rooms while turning camera on the x-axis.
 
 ### Lua API changes
-* Added a new Soundtrack Manager to manage music tracks. The manager supports multiple tracks and dynamic volume control.
-* Added `CustomDiary:UnlockPage` function to unlock individual diary pages in the order the function is called. The unlock mode is detected automatically on the first unlock call.
-* Added optional `area` parameter for text entries in the diary module to enable automatic word wrapping.
+* Added `Sound.AudioChannel` a new Soundtrack Manager to manage music tracks. The manager supports multiple tracks and dynamic volume control.
 * Added ring inventory module.
 * Added photo mode module.
 * Added `Effects.ParticleGroup` class for managing particles via lua.
@@ -148,6 +159,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Added `Objects.GetMaterialByName` and `Objects.GetMaterialsByObject` functions.
 * Added `Moveable:GetProperty`, `Moveable:SetProperty` and `Moveable:HasInstanceProperty` functions.
 * Added `Static:GetProperty`, `Static:SetProperty` and `Static:HasInstanceProperty` functions.
+* Added `CustomDiary:UnlockPage` function to unlock individual pages in the order the function is called. The unlock mode is detected automatically on the first unlock call.
+* Added optional `area` parameter for text entries in the `CustomDiary` module to enable automatic word wrapping.
 * Updated `EmitLight()`, `EmitSpotLight()` and `EmitFogBulb()` to accept fractional values, allowing smooth scaling of radius/falloff/distance.
 * Removed `View.SetPostProcessMode` and `View.SetPostProcessStrength` functions superseded by `View.SetPostProcess` method.
 * Renamed `ENTER`, `INSIDE` and `LEAVE` entries in `Logic.EventType` enum to `VOLUME_ENTER`, `VOLUME_INSIDE` and `VOLUME_LEAVE`.
@@ -158,6 +171,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed `View.DisplayString` not working in the title level.
 * Fixed incorrect behaviour of `DisplayItem.SetFOV` function.
 * Fixed notification display bug in `CustomDiary` class.
+* Fixed ring inventory opening despite `Input.ClearAllKeys` being called in the `OnLoop` callback.
 
 ## [Version 1.11.1]
 
