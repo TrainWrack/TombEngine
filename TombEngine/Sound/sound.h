@@ -29,7 +29,6 @@ constexpr auto SOUND_XFADETIME_ONESHOT       = 200;
 constexpr auto SOUND_XFADETIME_LEVELJUMP     = 400;
 constexpr auto SOUND_XFADETIME_CUTSOUND      = 100;
 constexpr auto SOUND_XFADETIME_HIJACKSOUND   = 50;
-constexpr auto SOUND_BGM_DAMP_COEFFICIENT    = 0.5f;
 constexpr auto SOUND_MIN_PARAM_MULTIPLIER    = 0.05f;
 constexpr auto SOUND_MAX_PARAM_MULTIPLIER    = 5.0f;
 

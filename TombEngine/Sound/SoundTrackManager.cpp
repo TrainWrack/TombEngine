@@ -274,7 +274,7 @@ bool SoundTrackManager::Play(const std::string& channelName, std::optional<std::
             if (ch.Preset != TrackPreset::BGM || !BASS_ChannelIsActive(ch.Stream))
                 continue;
 
-            float dampedVol = ((float)_globalVolume / 100.0f) * ch.Volume * SOUND_BGM_DAMP_COEFFICIENT;
+            float dampedVol = ((float)_globalVolume / 100.0f) * ch.Volume * channel->DampVolume;
             BASS_ChannelSlideAttribute(ch.Stream, BASS_ATTRIB_VOL, dampedVol, SOUND_XFADETIME_BGM_START);
         }
     }
@@ -475,25 +475,29 @@ void SoundTrackManager::SetShuffleStart(const std::string& channelName, bool ena
         channel->Flags = channel->Flags & ~TrackFlags::ShuffleStart;
 }
 
-void SoundTrackManager::SetDampBGM(const std::string& channelName, bool enable)
+void SoundTrackManager::SetDampBGM(const std::string& channelName, float volume)
 {
     auto* channel = FindChannel(channelName);
     if (!channel)
         return;
 
-    if (enable)
-        channel->Flags |= TrackFlags::DampBGM;
+    channel->DampVolume = std::clamp(volume, 0.0f, 1.0f);
+
+    // Damping (and the matching restore) is active whenever the target volume is below full.
+    auto dampFlags = TrackFlags::DampBGM | TrackFlags::RestoreBGM;
+    if (channel->DampVolume < 1.0f)
+        channel->Flags = channel->Flags | dampFlags;
     else
-        channel->Flags = channel->Flags & ~TrackFlags::DampBGM;
+        channel->Flags = channel->Flags & ~dampFlags;
 }
 
-bool SoundTrackManager::GetDampBGM(const std::string& channelName) const
+float SoundTrackManager::GetDampBGM(const std::string& channelName) const
 {
     auto* channel = FindChannel(channelName);
-    if (!channel)
-        return false;
+    if (!channel || !HasTrackFlag(channel->Flags, TrackFlags::DampBGM))
+        return 0.0f;
 
-    return HasTrackFlag(channel->Flags, TrackFlags::DampBGM);
+    return channel->DampVolume;
 }
 
 void SoundTrackManager::SetChannelFlags(const std::string& channelName, TrackFlags flags)

@@ -4,14 +4,6 @@ constexpr auto SOUND_TRACK_CHANNEL_BGM     = "BGM";
 constexpr auto SOUND_TRACK_CHANNEL_ONESHOT = "OneShot";
 constexpr auto SOUND_TRACK_CHANNEL_VOICE   = "Voice";
 
-// Built-in channel names, indexed by SoundTrackType (OneShot, BGM, Voice).
-inline const std::string SOUND_TRACK_CHANNEL_NAMES[] =
-{
-    SOUND_TRACK_CHANNEL_ONESHOT,
-    SOUND_TRACK_CHANNEL_BGM,
-    SOUND_TRACK_CHANNEL_VOICE
-};
-
 constexpr auto SOUND_TRACK_CHANNEL_LIMIT   = 32;
 
 enum class TrackFlags : int
@@ -54,6 +46,7 @@ struct TrackChannel
     int         FadeOutTime    = 200;
     int         CrossfadeTime  = 0;
     float       Volume         = 1.0f;
+    float       DampVolume     = 0.5f;
     bool        Active         = false;
 };
 
@@ -102,8 +95,8 @@ public:
     void  SetChannelVolume(const std::string& channelName, float volume);
     float GetChannelVolume(const std::string& channelName) const;
     void  SetShuffleStart(const std::string& channelName, bool enable);
-    void  SetDampBGM(const std::string& channelName, bool enable);
-    bool  GetDampBGM(const std::string& channelName) const;
+    void  SetDampBGM(const std::string& channelName, float volume);
+    float GetDampBGM(const std::string& channelName) const;
     void       SetChannelFlags(const std::string& channelName, TrackFlags flags);
     TrackFlags  GetChannelFlags(const std::string& channelName) const;
     void        SetChannelPreset(const std::string& channelName, TrackPreset preset);

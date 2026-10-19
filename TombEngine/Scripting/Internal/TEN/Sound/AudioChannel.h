@@ -32,8 +32,8 @@ namespace TEN::Scripting::Sound
 		void  SetVolume(float volume);
 		float GetVolume() const;
 		void  SetShuffleStart(bool enable);
-		void  SetDampBGM(bool enable);
-		bool  GetDampBGM() const;
+		void  SetDampBGM(float volume);
+		float GetDampBGM() const;
 		void  SetPosition(const TEN::Scripting::Time& time);
 		TEN::Scripting::Time GetPosition() const;
 		float GetNormalizedPosition() const;

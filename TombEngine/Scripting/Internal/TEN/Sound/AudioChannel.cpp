@@ -195,18 +195,18 @@ namespace TEN::Scripting::Sound
         g_SoundTrackManager->SetShuffleStart(_channelName, enable);
     }
 
-    void AudioChannel::SetDampBGM(bool enable)
+    void AudioChannel::SetDampBGM(float volume)
     {
         if (!g_SoundTrackManager)
             return;
 
-        g_SoundTrackManager->SetDampBGM(_channelName, enable);
+        g_SoundTrackManager->SetDampBGM(_channelName, volume);
     }
 
-    bool AudioChannel::GetDampBGM() const
+    float AudioChannel::GetDampBGM() const
     {
         if (!g_SoundTrackManager)
-            return false;
+            return 0.0f;
 
         return g_SoundTrackManager->GetDampBGM(_channelName);
     }
@@ -388,14 +388,19 @@ namespace TEN::Scripting::Sound
             // @tparam bool enable True to start at a random position.
             ScriptReserved_AudioChannelShuffleStart, &AudioChannel::SetShuffleStart,
 
-            /// Enable or disable dampening the BGM channel while this channel plays.
+            /// Set the volume the background music is lowered to while this channel plays. Set to 1.0 to disable damping.
             // @function AudioChannel:SetDampBGM
-            // @tparam bool enable True to lower BGM volume while this channel is active.
+            // @tparam float volume Target BGM volume multiplier while this channel is active (0.0 to 1.0).
+            // @usage
+            // -- Halve the BGM volume while this channel plays.
+            // quiet:SetDampBGM(0.5)
+            // -- Fade the BGM out completely while this channel plays.
+            // quiet:SetDampBGM(0.0)
             ScriptReserved_AudioChannelSetDampBGM, &AudioChannel::SetDampBGM,
 
-            /// Check if BGM dampening is enabled for this channel.
+            /// Get the BGM damp volume for this channel.
             // @function AudioChannel:GetDampBGM
-            // @treturn bool True if BGM dampening is enabled.
+            // @treturn float Current BGM volume multiplier (1.0 if damping is disabled).
             ScriptReserved_AudioChannelGetDampBGM, &AudioChannel::GetDampBGM,
 
             /// Set the playback position.
