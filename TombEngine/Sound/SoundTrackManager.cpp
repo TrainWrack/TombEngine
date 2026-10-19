@@ -781,6 +781,7 @@ void SoundTrackManager::RestoreFromSave(const std::vector<TrackChannel>& states)
         channel->FadeOutTime   = state.FadeOutTime;
         channel->CrossfadeTime = state.CrossfadeTime;
         channel->Volume        = state.Volume;
+        channel->DampVolume    = state.DampVolume;
 
         if (!state.Track.empty())
         {

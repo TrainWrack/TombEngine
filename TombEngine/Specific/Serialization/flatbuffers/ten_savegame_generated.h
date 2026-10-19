@@ -6640,6 +6640,7 @@ struct NamedSoundtrackT : public flatbuffers::NativeTable {
   int32_t fade_out_time = 0;
   int32_t crossfade_time = 0;
   float volume = 0.0f;
+  float damp_volume = 0.5f;
 };
 
 struct NamedSoundtrack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -6654,7 +6655,8 @@ struct NamedSoundtrack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_FLAGS = 12,
     VT_FADE_OUT_TIME = 14,
     VT_CROSSFADE_TIME = 16,
-    VT_VOLUME = 18
+    VT_VOLUME = 18,
+    VT_DAMP_VOLUME = 20
   };
   const flatbuffers::String *channel_name() const {
     return GetPointer<const flatbuffers::String *>(VT_CHANNEL_NAME);
@@ -6680,6 +6682,9 @@ struct NamedSoundtrack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   float volume() const {
     return GetField<float>(VT_VOLUME, 0.0f);
   }
+  float damp_volume() const {
+    return GetField<float>(VT_DAMP_VOLUME, 0.5f);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_CHANNEL_NAME) &&
@@ -6692,6 +6697,7 @@ struct NamedSoundtrack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<int32_t>(verifier, VT_FADE_OUT_TIME) &&
            VerifyField<int32_t>(verifier, VT_CROSSFADE_TIME) &&
            VerifyField<float>(verifier, VT_VOLUME) &&
+           VerifyField<float>(verifier, VT_DAMP_VOLUME) &&
            verifier.EndTable();
   }
   NamedSoundtrackT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
@@ -6727,6 +6733,9 @@ struct NamedSoundtrackBuilder {
   void add_volume(float volume) {
     fbb_.AddElement<float>(NamedSoundtrack::VT_VOLUME, volume, 0.0f);
   }
+  void add_damp_volume(float damp_volume) {
+    fbb_.AddElement<float>(NamedSoundtrack::VT_DAMP_VOLUME, damp_volume, 0.5f);
+  }
   explicit NamedSoundtrackBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -6747,9 +6756,11 @@ inline flatbuffers::Offset<NamedSoundtrack> CreateNamedSoundtrack(
     int32_t flags = 0,
     int32_t fade_out_time = 0,
     int32_t crossfade_time = 0,
-    float volume = 0.0f) {
+    float volume = 0.0f,
+    float damp_volume = 0.5f) {
   NamedSoundtrackBuilder builder_(_fbb);
   builder_.add_position(position);
+  builder_.add_damp_volume(damp_volume);
   builder_.add_volume(volume);
   builder_.add_crossfade_time(crossfade_time);
   builder_.add_fade_out_time(fade_out_time);
@@ -6774,7 +6785,8 @@ inline flatbuffers::Offset<NamedSoundtrack> CreateNamedSoundtrackDirect(
     int32_t flags = 0,
     int32_t fade_out_time = 0,
     int32_t crossfade_time = 0,
-    float volume = 0.0f) {
+    float volume = 0.0f,
+    float damp_volume = 0.5f) {
   auto channel_name__ = channel_name ? _fbb.CreateString(channel_name) : 0;
   auto track__ = track ? _fbb.CreateString(track) : 0;
   return TEN::Serialization::Save::CreateNamedSoundtrack(
@@ -6786,7 +6798,8 @@ inline flatbuffers::Offset<NamedSoundtrack> CreateNamedSoundtrackDirect(
       flags,
       fade_out_time,
       crossfade_time,
-      volume);
+      volume,
+      damp_volume);
 }
 
 flatbuffers::Offset<NamedSoundtrack> CreateNamedSoundtrack(flatbuffers::FlatBufferBuilder &_fbb, const NamedSoundtrackT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
@@ -12988,6 +13001,7 @@ inline void NamedSoundtrack::UnPackTo(NamedSoundtrackT *_o, const flatbuffers::r
   { auto _e = fade_out_time(); _o->fade_out_time = _e; }
   { auto _e = crossfade_time(); _o->crossfade_time = _e; }
   { auto _e = volume(); _o->volume = _e; }
+  { auto _e = damp_volume(); _o->damp_volume = _e; }
 }
 
 inline flatbuffers::Offset<NamedSoundtrack> NamedSoundtrack::Pack(flatbuffers::FlatBufferBuilder &_fbb, const NamedSoundtrackT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
@@ -13006,6 +13020,7 @@ inline flatbuffers::Offset<NamedSoundtrack> CreateNamedSoundtrack(flatbuffers::F
   auto _fade_out_time = _o->fade_out_time;
   auto _crossfade_time = _o->crossfade_time;
   auto _volume = _o->volume;
+  auto _damp_volume = _o->damp_volume;
   return TEN::Serialization::Save::CreateNamedSoundtrack(
       _fbb,
       _channel_name,
@@ -13015,7 +13030,8 @@ inline flatbuffers::Offset<NamedSoundtrack> CreateNamedSoundtrack(flatbuffers::F
       _flags,
       _fade_out_time,
       _crossfade_time,
-      _volume);
+      _volume,
+      _damp_volume);
 }
 
 inline VideoInfoT *VideoInfo::UnPack(const flatbuffers::resolver_function_t *_resolver) const {

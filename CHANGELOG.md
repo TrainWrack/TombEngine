@@ -101,7 +101,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed vertex move effect speed in water rooms while turning camera on the x-axis.
 
 ### Lua API changes
-
+* Added a new Soundtrack Manager to manage music tracks. The manager supports multiple tracks and dynamic volume control.
 * Added `CustomDiary:UnlockPage` function to unlock individual diary pages in the order the function is called. The unlock mode is detected automatically on the first unlock call.
 * Added optional `area` parameter for text entries in the diary module to enable automatic word wrapping.
 * Added ring inventory module.
