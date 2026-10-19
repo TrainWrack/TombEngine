@@ -72,8 +72,8 @@ namespace TEN::Entities::Generic
 	};
 
 	const auto LadderMountedOffset2D = Vector3i(0, 0, -LARA_RADIUS * 1.5f);
-	const auto LadderMountedOffsetTopFront2D = Vector3i(0, 0, 51.0f);//54
-	const auto LadderMountedOffsetTopBack2D = Vector3i(0, 0, 79.0f);//82
+	const auto LadderMountedOffsetTopFront2D = Vector3i(0, 0, 51.0f);//To redo based on Z1 and Z2
+	const auto LadderMountedOffsetTopBack2D = Vector3i(0, 0, 79.0f);// To redo based on Z1 and Z2
 	const auto LadderInteractBounds2D = GameBoundingBox(
 		-BLOCK(0.25f), BLOCK(0.25f),
 		0, 0,
@@ -84,15 +84,15 @@ namespace TEN::Entities::Generic
 	// against the ladder's edge is picked up instead of one standing in front of it.
 	const auto LadderInteractRightBounds2D = GameBoundingBox(
 		BLOCK(0.25f), BLOCK(0.75f),
-		0, 0,
-		-BLOCK(3 / 8.0f), BLOCK(3 / 8.0f));
+		-CLICK(1), -CLICK(2),
+		-BLOCK(3 / 8.0f), 0);
 	const auto LadderInteractRightBox2D = LadderInteractRightBounds2D.ToBoundingOrientedBox(Pose::Zero);
 
 	// Side mount interaction box. Sits beside the ladder (local -X).
 	const auto LadderInteractLeftBounds2D = GameBoundingBox(
 		-BLOCK(0.75f), -BLOCK(0.25f),
-		0, 0,
-		-BLOCK(3 / 8.0f), BLOCK(3 / 8.0f));
+		-CLICK(1), -CLICK(2),
+		-BLOCK(3 / 8.0f), 0);
 	const auto LadderInteractLeftBox2D = LadderInteractLeftBounds2D.ToBoundingOrientedBox(Pose::Zero);
 
 	const auto LadderMountTopFrontBasis = InteractionBasis(
