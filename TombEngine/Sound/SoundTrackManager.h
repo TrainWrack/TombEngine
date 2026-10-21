@@ -70,6 +70,7 @@ private:
     TrackChannel*       FindChannel(const std::string& name);
     const TrackChannel* FindChannel(const std::string& name) const;
     std::string         ResolveTrackPath(const std::string& track) const;
+    void                AddBuiltin(const std::string& name, TrackPreset preset);
     void                ConfigureFromPreset(TrackChannel& channel, TrackPreset preset);
     void                RestoreBGMVolume();
 

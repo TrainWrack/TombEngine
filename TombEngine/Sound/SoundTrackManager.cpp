@@ -13,36 +13,6 @@ SoundTrackManager* g_SoundTrackManager = nullptr;
 
 static const std::string TRACKS_EXTENSIONS[] = { ".wav", ".ogg", ".mp3" };
 
-// -- Internal helpers -------------------------------------------------------
-
-static TrackChannel MakeBGMChannel()
-{
-    auto channel = TrackChannel{};
-    channel.Flags         = TrackFlags::Loop | TrackFlags::Crossfade | TrackFlags::ShuffleStart;
-    channel.FadeOutTime   = SOUND_XFADETIME_BGM;
-    channel.CrossfadeTime = SOUND_XFADETIME_BGM;
-    channel.Preset        = TrackPreset::BGM;
-    return channel;
-}
-
-static TrackChannel MakeOneShotChannel()
-{
-    auto channel = TrackChannel{};
-    channel.Flags       = TrackFlags::AutoFree | TrackFlags::DampBGM | TrackFlags::RestoreBGM;
-    channel.FadeOutTime = SOUND_XFADETIME_ONESHOT;
-    channel.Preset      = TrackPreset::OneShot;
-    return channel;
-}
-
-static TrackChannel MakeVoiceChannel()
-{
-    auto channel = TrackChannel{};
-    channel.Flags       = TrackFlags::AutoFree;
-    channel.FadeOutTime = SOUND_XFADETIME_ONESHOT;
-    channel.Preset      = TrackPreset::Voice;
-    return channel;
-}
-
 // -- SoundTrackManager private methods --------------------------------------
 
 bool SoundTrackManager::IsBuiltinName(const std::string& name)
@@ -127,6 +97,18 @@ void SoundTrackManager::ConfigureFromPreset(TrackChannel& channel, TrackPreset p
     channel.Preset = preset;
 }
 
+void SoundTrackManager::AddBuiltin(const std::string& name, TrackPreset preset)
+{
+    auto channel    = TrackChannel{};
+    channel.Name    = name;
+    auto hash       = HashName(name);
+
+    ConfigureFromPreset(channel, preset);
+
+    _channels[hash]           = std::move(channel);
+    _nameIndex[ToLower(name)] = hash;
+}
+
 void SoundTrackManager::RestoreBGMVolume()
 {
     for (auto& [hash, ch] : _channels)
@@ -152,17 +134,9 @@ SoundTrackManager::SoundTrackManager(const std::string& audioDirectory)
 {
     _audioDirectory = audioDirectory;
 
-    auto addBuiltin = [&](const std::string& name, TrackChannel channel)
-    {
-        channel.Name                      = name;
-        auto hash                         = HashName(name);
-        _channels[hash]                   = std::move(channel);
-        _nameIndex[ToLower(name)]         = hash;
-    };
-
-    addBuiltin(SOUND_TRACK_CHANNEL_BGM,     MakeBGMChannel());
-    addBuiltin(SOUND_TRACK_CHANNEL_ONESHOT, MakeOneShotChannel());
-    addBuiltin(SOUND_TRACK_CHANNEL_VOICE,   MakeVoiceChannel());
+    AddBuiltin(SOUND_TRACK_CHANNEL_BGM,     TrackPreset::BGM);
+    AddBuiltin(SOUND_TRACK_CHANNEL_ONESHOT, TrackPreset::OneShot);
+    AddBuiltin(SOUND_TRACK_CHANNEL_VOICE,   TrackPreset::Voice);
 }
 
 bool SoundTrackManager::EnsureChannelExists(const std::string& name)
@@ -691,17 +665,9 @@ void SoundTrackManager::ClearAll()
     _nameIndex.clear();
 
     // Re-create built-in channels with default state.
-    auto addBuiltin = [&](const std::string& name, TrackChannel channel)
-    {
-        channel.Name                  = name;
-        auto hash                     = HashName(name);
-        _channels[hash]               = std::move(channel);
-        _nameIndex[ToLower(name)]     = hash;
-    };
-
-    addBuiltin(SOUND_TRACK_CHANNEL_BGM,     MakeBGMChannel());
-    addBuiltin(SOUND_TRACK_CHANNEL_ONESHOT, MakeOneShotChannel());
-    addBuiltin(SOUND_TRACK_CHANNEL_VOICE,   MakeVoiceChannel());
+    AddBuiltin(SOUND_TRACK_CHANNEL_BGM,     TrackPreset::BGM);
+    AddBuiltin(SOUND_TRACK_CHANNEL_ONESHOT, TrackPreset::OneShot);
+    AddBuiltin(SOUND_TRACK_CHANNEL_VOICE,   TrackPreset::Voice);
 }
 
 void SoundTrackManager::Update()

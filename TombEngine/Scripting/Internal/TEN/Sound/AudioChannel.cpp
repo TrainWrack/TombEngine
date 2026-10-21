@@ -131,7 +131,7 @@ namespace TEN::Scripting::Sound
             return;
 
         int ms = crossfadeTime.has_value()
-            ? (int)(crossfadeTime.value().GetFrameCount() * 1000.0f / FPS)
+            ? crossfadeTime.value().GetMilliseconds()
             : 0;
         g_SoundTrackManager->SetTrack(_channelName, track, ms);
     }
@@ -142,7 +142,7 @@ namespace TEN::Scripting::Sound
             return;
 
         auto ms = fadeOutTime.has_value()
-            ? std::optional<int>((int)(fadeOutTime.value().GetFrameCount() * 1000.0f / FPS))
+            ? std::optional<int>(fadeOutTime.value().GetMilliseconds())
             : std::nullopt;
         g_SoundTrackManager->Stop(_channelName, ms);
     }
@@ -291,7 +291,7 @@ namespace TEN::Scripting::Sound
         if (!g_SoundTrackManager)
             return;
 
-        g_SoundTrackManager->SetCrossfadeTime(_channelName, (int)(time.GetFrameCount() * 1000.0f / FPS));
+        g_SoundTrackManager->SetCrossfadeTime(_channelName, time.GetMilliseconds());
     }
 
     void AudioChannel::Register(sol::state& state, sol::table& parent)
