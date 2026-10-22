@@ -191,7 +191,6 @@ void EnumerateLegacyTracks();
 void LoadSubtitles(const std::string& path);
 float GetSoundTrackLoudness(SoundTrackType type);
 std::optional<std::string> GetCurrentSubtitle();
-std::pair<std::string, QWORD> GetSoundTrackNameAndPosition(SoundTrackType type);
 
 void Sound_VideoPlayCallback(void* opaque, const void* samples, unsigned count, int64_t pts);
 void Sound_VideoFlushCallback(void* data, int64_t pts);

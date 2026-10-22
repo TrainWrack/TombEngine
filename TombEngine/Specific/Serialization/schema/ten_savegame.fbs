@@ -457,11 +457,6 @@ table ParticleInfo {
 	constraint: TEN.Serialization.Common.Vector3;
 }
 
-table Soundtrack {
-    name: string;
-    position: uint64;
-}
-
 table NamedSoundtrack {
     channel_name:   string;
     track:          string;
@@ -755,7 +750,6 @@ table SaveGame {
 	current_fov: int16;
 	last_inv_item: int32;
 	action_queue: [int32];
-	soundtracks: [Soundtrack];
 	cd_flags: [int32];
 	video: VideoInfo;
 

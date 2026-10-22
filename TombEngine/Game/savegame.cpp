@@ -1198,20 +1198,6 @@ const std::vector<unsigned char> SaveGame::Build()
 	}
 	auto decalOffset = fbb.CreateVector(decals);
 
-	// Soundtrack playheads
-	std::vector<flatbuffers::Offset<Save::Soundtrack>> soundtracks;
-	for (int j = 0; j < (int)SoundTrackType::Count; j++)
-	{
-		auto trackData = GetSoundTrackNameAndPosition((SoundTrackType)j);
-		auto nameOffset = fbb.CreateString(trackData.first);
-
-		Save::SoundtrackBuilder track{ fbb };
-		track.add_name(nameOffset);
-		track.add_position(trackData.second);
-		soundtracks.push_back(track.Finish());
-	}
-	auto soundtrackOffset = fbb.CreateVector(soundtracks);
-
 	// Named soundtrack channels.
 	std::vector<flatbuffers::Offset<Save::NamedSoundtrack>> namedSoundtracks;
 	if (g_SoundTrackManager)
@@ -1731,7 +1717,6 @@ const std::vector<unsigned char> SaveGame::Build()
 	sgb.add_postprocess_mode((int)g_Renderer.GetPostProcessMode());
 	sgb.add_postprocess_strength(g_Renderer.GetPostProcessStrength());
 	sgb.add_postprocess_tint(&FromVector3(g_Renderer.GetPostProcessTint()));
-	sgb.add_soundtracks(soundtrackOffset);
 	sgb.add_cd_flags(soundtrackMapOffset);
 	sgb.add_video(videoInfoOffset);
 	sgb.add_action_queue(actionQueueOffset);
@@ -2362,8 +2347,8 @@ static void ParseEffects(const Save::SaveGame* s)
 	g_Renderer.SetPostProcessStrength(s->postprocess_strength());
 	g_Renderer.SetPostProcessTint(ToVector3(s->postprocess_tint()));
 
-	// Restore named soundtrack channels (new saves).
-	if (g_SoundTrackManager && s->named_soundtracks() && s->named_soundtracks()->size() > 0)
+	// Restore named soundtrack channels.
+	if (g_SoundTrackManager && s->named_soundtracks())
 	{
 		auto states = std::vector<TrackChannel>{};
 		for (unsigned int i = 0; i < s->named_soundtracks()->size(); i++)
@@ -2384,17 +2369,6 @@ static void ParseEffects(const Save::SaveGame* s)
 		}
 
 		g_SoundTrackManager->RestoreFromSave(states);
-	}
-	else
-	{
-		// Legacy save format: restore by SoundTrackType index.
-		for (int i = 0; i < s->soundtracks()->size(); i++)
-		{
-			TENAssert(i < (int)SoundTrackType::Count, "Soundtrack type count was changed");
-
-			auto track = s->soundtracks()->Get(i);
-			PlaySoundTrack(track->name()->str(), (SoundTrackType)i, track->position(), SOUND_XFADETIME_LEVELJUMP);
-		}
 	}
 
 	// Restore material properties.

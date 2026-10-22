@@ -564,20 +564,6 @@ void ClearSoundTrackMasks()
 	for (auto& track : SoundTracks) { track.second.Mask = 0; }
 }
 
-// Returns specified soundtrack type's stem name and playhead byte position for savegame use.
-std::pair<std::string, QWORD> GetSoundTrackNameAndPosition(SoundTrackType type)
-{
-	if (!g_SoundTrackManager)
-		return {};
-
-	const auto& channelName = SOUND_TRACK_CHANNEL_NAMES[(int)type];
-	auto trackName = g_SoundTrackManager->GetTrackName(channelName);
-	if (trackName.empty() || !g_SoundTrackManager->IsActive(channelName))
-		return {};
-
-	return { trackName, g_SoundTrackManager->GetPositionBytes(channelName) };
-}
-
 void Sound_VideoPlayCallback(void* data, const void* samples, unsigned count, int64_t pts)
 {
 	if (!g_Configuration.EnableSound)
