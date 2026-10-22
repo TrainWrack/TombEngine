@@ -69,6 +69,12 @@ void SoundTrackManager::ConfigureFromPreset(TrackChannel& channel, TrackPreset p
         channel.CrossfadeTime = SOUND_XFADETIME_BGM;
         break;
 
+    case TrackPreset::Loop:
+        channel.Flags         = TrackFlags::Loop | TrackFlags::Crossfade;
+        channel.FadeOutTime   = SOUND_XFADETIME_BGM;
+        channel.CrossfadeTime = SOUND_XFADETIME_BGM;
+        break;
+
     case TrackPreset::OneShot:
         channel.Flags       = TrackFlags::AutoFree | TrackFlags::DampBGM | TrackFlags::RestoreBGM;
         channel.FadeOutTime = SOUND_XFADETIME_ONESHOT;
@@ -498,6 +504,12 @@ void SoundTrackManager::SetCrossfadeTime(const std::string& channelName, int ms)
         return;
 
     channel->CrossfadeTime = ms;
+
+    // A non-zero crossfade time implies the Crossfade flag; zero disables crossfading.
+    if (ms > 0)
+        channel->Flags |= TrackFlags::Crossfade;
+    else
+        channel->Flags = channel->Flags & ~TrackFlags::Crossfade;
 }
 
 bool SoundTrackManager::SetPositionSeconds(const std::string& channelName, double seconds)

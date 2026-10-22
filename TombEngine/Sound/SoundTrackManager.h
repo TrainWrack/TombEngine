@@ -38,7 +38,8 @@ enum class TrackPreset
 {
     OneShot,
     Voice,
-    BGM
+    BGM,
+    Loop
 };
 
 enum class TrackStatus

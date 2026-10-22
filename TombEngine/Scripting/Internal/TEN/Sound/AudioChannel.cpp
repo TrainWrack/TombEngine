@@ -41,7 +41,7 @@ static TrackPreset ToTrackPreset(SoundTrackType type)
 {
     switch (type)
     {
-    case SoundTrackType::BGM:   return TrackPreset::BGM;
+    case SoundTrackType::BGM:   return TrackPreset::Loop;
     case SoundTrackType::Voice: return TrackPreset::Voice;
     default:                    return TrackPreset::OneShot;
     }
@@ -51,7 +51,8 @@ static SoundTrackType ToSoundTrackType(TrackPreset preset)
 {
     switch (preset)
     {
-    case TrackPreset::BGM:   return SoundTrackType::BGM;
+    case TrackPreset::BGM:
+    case TrackPreset::Loop:  return SoundTrackType::BGM;
     case TrackPreset::Voice: return SoundTrackType::Voice;
     default:                 return SoundTrackType::OneShot;
     }
@@ -96,13 +97,7 @@ namespace TEN::Scripting::Sound
             return nullptr;
 
         if (type.has_value())
-        {
-            auto preset = ToTrackPreset(type.value());
-            g_SoundTrackManager->SetChannelPreset(name, preset);
-
-            // User channels only loop — no shuffle start, auto-crossfade, or other built-in behaviors.
-            g_SoundTrackManager->SetChannelFlags(name, preset == TrackPreset::BGM ? TrackFlags::Loop : TrackFlags::None);
-        }
+            g_SoundTrackManager->SetChannelPreset(name, ToTrackPreset(type.value()));
 
         if (track.has_value())
             g_SoundTrackManager->SetTrack(name, track.value(), 0);
@@ -279,11 +274,7 @@ namespace TEN::Scripting::Sound
         if (!g_SoundTrackManager)
             return;
 
-        auto preset = ToTrackPreset(type);
-        g_SoundTrackManager->SetChannelPreset(_channelName, preset);
-
-        // User channels only loop — no shuffle start, auto-crossfade, or other built-in behaviors.
-        g_SoundTrackManager->SetChannelFlags(_channelName, preset == TrackPreset::BGM ? TrackFlags::Loop : TrackFlags::None);
+        g_SoundTrackManager->SetChannelPreset(_channelName, ToTrackPreset(type));
     }
 
     void AudioChannel::SetCrossFadeLength(const Time& time)
@@ -428,7 +419,7 @@ namespace TEN::Scripting::Sound
 
             /// Get the BGM damp volume for this channel.
             // @function AudioChannel:GetDampBGM
-            // @treturn float Current BGM volume multiplier (1.0 if damping is disabled).
+            // @treturn float Current BGM volume multiplier (0.0 if damping is disabled).
             // @usage
             // local dampVolume = quiet:GetDampBGM()
             ScriptReserved_AudioChannelGetDampBGM, &AudioChannel::GetDampBGM,
