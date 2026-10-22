@@ -67,13 +67,12 @@ struct TrackChannel
 class SoundTrackManager
 {
 private:
-    std::unordered_map<unsigned int, TrackChannel> _channels  = {};
-    std::unordered_map<std::string, unsigned int>  _nameIndex = {};
+    // Keyed by channel name (case-sensitive).
+    std::unordered_map<std::string, TrackChannel> _channels = {};
     int         _globalVolume   = 100;
     std::string _audioDirectory = {};
 
     static bool         IsBuiltinName(const std::string& name);
-    unsigned int        HashName(const std::string& name) const;
     TrackChannel*       FindChannel(const std::string& name);
     const TrackChannel* FindChannel(const std::string& name) const;
     std::string         ResolveTrackPath(const std::string& track) const;

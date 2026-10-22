@@ -17,41 +17,27 @@ static const std::string TRACKS_EXTENSIONS[] = { ".wav", ".ogg", ".mp3" };
 
 bool SoundTrackManager::IsBuiltinName(const std::string& name)
 {
-    auto lower = ToLower(name);
-    return lower == ToLower(std::string(SOUND_TRACK_CHANNEL_BGM))     ||
-           lower == ToLower(std::string(SOUND_TRACK_CHANNEL_ONESHOT)) ||
-           lower == ToLower(std::string(SOUND_TRACK_CHANNEL_VOICE));
-}
-
-unsigned int SoundTrackManager::HashName(const std::string& name) const
-{
-    return (unsigned int)GetHash(ToLower(name));
+    return name == SOUND_TRACK_CHANNEL_BGM     ||
+           name == SOUND_TRACK_CHANNEL_ONESHOT ||
+           name == SOUND_TRACK_CHANNEL_VOICE;
 }
 
 TrackChannel* SoundTrackManager::FindChannel(const std::string& name)
 {
-    auto nameIt = _nameIndex.find(ToLower(name));
-    if (nameIt == _nameIndex.end())
+    auto channelIt = _channels.find(name);
+    if (channelIt == _channels.end())
         return nullptr;
 
-    auto chanIt = _channels.find(nameIt->second);
-    if (chanIt == _channels.end())
-        return nullptr;
-
-    return &chanIt->second;
+    return &channelIt->second;
 }
 
 const TrackChannel* SoundTrackManager::FindChannel(const std::string& name) const
 {
-    auto nameIt = _nameIndex.find(ToLower(name));
-    if (nameIt == _nameIndex.end())
+    auto channelIt = _channels.find(name);
+    if (channelIt == _channels.end())
         return nullptr;
 
-    auto chanIt = _channels.find(nameIt->second);
-    if (chanIt == _channels.end())
-        return nullptr;
-
-    return &chanIt->second;
+    return &channelIt->second;
 }
 
 std::string SoundTrackManager::ResolveTrackPath(const std::string& track) const
@@ -99,19 +85,17 @@ void SoundTrackManager::ConfigureFromPreset(TrackChannel& channel, TrackPreset p
 
 void SoundTrackManager::AddBuiltin(const std::string& name, TrackPreset preset)
 {
-    auto channel    = TrackChannel{};
-    channel.Name    = name;
-    auto hash       = HashName(name);
+    auto channel = TrackChannel{};
+    channel.Name = name;
 
     ConfigureFromPreset(channel, preset);
 
-    _channels[hash]           = std::move(channel);
-    _nameIndex[ToLower(name)] = hash;
+    _channels[name] = std::move(channel);
 }
 
 void SoundTrackManager::RestoreBGMVolume()
 {
-    for (auto& [hash, ch] : _channels)
+    for (auto& [name, ch] : _channels)
     {
         if (ch.Preset != TrackPreset::BGM || !BASS_ChannelIsActive(ch.Stream))
             continue;
@@ -147,8 +131,7 @@ bool SoundTrackManager::EnsureChannelExists(const std::string& name)
         return false;
     }
 
-    auto hash = HashName(name);
-    if (_channels.count(hash) > 0)
+    if (_channels.count(name) > 0)
         return true;
 
     if ((int)_channels.size() >= SOUND_TRACK_CHANNEL_LIMIT)
@@ -157,10 +140,9 @@ bool SoundTrackManager::EnsureChannelExists(const std::string& name)
         return false;
     }
 
-    auto channel              = TrackChannel{};
-    channel.Name              = name;
-    _channels[hash]           = channel;
-    _nameIndex[ToLower(name)] = hash;
+    auto channel = TrackChannel{};
+    channel.Name = name;
+    _channels[name] = std::move(channel);
     return true;
 }
 
@@ -243,7 +225,7 @@ bool SoundTrackManager::Play(const std::string& channelName, std::optional<std::
     // DampBGM: lower all BGM-type channel volumes while this channel is playing.
     if (HasTrackFlag(channel->Flags, TrackFlags::DampBGM))
     {
-        for (auto& [hash, ch] : _channels)
+        for (auto& [name, ch] : _channels)
         {
             if (ch.Preset != TrackPreset::BGM || !BASS_ChannelIsActive(ch.Stream))
                 continue;
@@ -290,7 +272,7 @@ bool SoundTrackManager::Play(const std::string& channelName, std::optional<std::
     channel->Status = TrackStatus::Playing;
 
     // Load subtitles for the voice channel.
-    if (ToLower(channel->Name) == ToLower(std::string(SOUND_TRACK_CHANNEL_VOICE)))
+    if (channel->Name == SOUND_TRACK_CHANNEL_VOICE)
         LoadSubtitles(trackName);
 
     // Notify scripts that the channel started playing (fires PRE_AUDIO_CHANNEL once).
@@ -349,7 +331,7 @@ void SoundTrackManager::StopAll(std::optional<int> fadeOutTime)
 {
     // Collect names first: firing stop callbacks may run Lua that mutates the channel map.
     auto names = std::vector<std::string>{};
-    for (const auto& [hash, channel] : _channels)
+    for (const auto& [name, channel] : _channels)
         names.push_back(channel.Name);
 
     for (const auto& name : names)
@@ -371,10 +353,9 @@ void SoundTrackManager::Pause(const std::string& channelName)
 
 void SoundTrackManager::PauseAll(bool excludeVoice)
 {
-    auto voiceLower = ToLower(std::string(SOUND_TRACK_CHANNEL_VOICE));
-    for (auto& [hash, channel] : _channels)
+    for (auto& [name, channel] : _channels)
     {
-        if (excludeVoice && ToLower(channel.Name) == voiceLower)
+        if (excludeVoice && channel.Name == SOUND_TRACK_CHANNEL_VOICE)
             continue;
 
         Pause(channel.Name);
@@ -396,7 +377,7 @@ void SoundTrackManager::Resume(const std::string& channelName)
 
 void SoundTrackManager::ResumeAll()
 {
-    for (auto& [hash, channel] : _channels)
+    for (auto& [name, channel] : _channels)
         Resume(channel.Name);
 }
 
@@ -404,7 +385,7 @@ void SoundTrackManager::SetGlobalVolume(int volume)
 {
     _globalVolume = volume;
 
-    for (auto& [hash, channel] : _channels)
+    for (auto& [name, channel] : _channels)
     {
         if (!BASS_ChannelIsActive(channel.Stream))
             continue;
@@ -590,7 +571,7 @@ bool SoundTrackManager::IsActive(const std::string& channelName) const
 bool SoundTrackManager::IsPlayingTrack(const std::string& trackName) const
 {
     auto lowerTrack = ToLower(trackName);
-    for (const auto& [hash, channel] : _channels)
+    for (const auto& [name, channel] : _channels)
     {
         if (!BASS_ChannelIsActive(channel.Stream))
             continue;
@@ -651,9 +632,7 @@ void SoundTrackManager::Clear(const std::string& channelName)
     if (wasActive)
         BASS_ChannelStop(channel->Stream);
 
-    auto hash = HashName(channelName);
-    _nameIndex.erase(ToLower(channelName));
-    _channels.erase(hash);
+    _channels.erase(channelName);
 
     if (wasActive && g_GameScript)
         g_GameScript->OnAudioChannelStopped(channelName);
@@ -661,14 +640,13 @@ void SoundTrackManager::Clear(const std::string& channelName)
 
 void SoundTrackManager::ClearAll()
 {
-    for (auto& [hash, channel] : _channels)
+    for (auto& [name, channel] : _channels)
     {
         if (channel.Stream != 0)
             BASS_ChannelStop(channel.Stream);
     }
 
     _channels.clear();
-    _nameIndex.clear();
 
     // Re-create built-in channels with default state.
     AddBuiltin(SOUND_TRACK_CHANNEL_BGM,     TrackPreset::BGM);
@@ -681,7 +659,7 @@ void SoundTrackManager::Update()
     // Collect names first: firing callbacks may run Lua that mutates the channel map.
     auto stopped = std::vector<std::string>{};
 
-    for (auto& [hash, channel] : _channels)
+    for (auto& [name, channel] : _channels)
     {
         if (channel.Status == TrackStatus::Inactive || channel.Stream == 0)
             continue;
@@ -705,7 +683,7 @@ void SoundTrackManager::Update()
 std::vector<HSTREAM> SoundTrackManager::GetActiveStreams() const
 {
     auto streams = std::vector<HSTREAM>{};
-    for (const auto& [hash, channel] : _channels)
+    for (const auto& [name, channel] : _channels)
     {
         if (channel.Stream != 0)
             streams.push_back(channel.Stream);
@@ -717,7 +695,7 @@ std::vector<HSTREAM> SoundTrackManager::GetActiveStreams() const
 std::vector<TrackChannel> SoundTrackManager::GetAllChannelStates() const
 {
     auto states = std::vector<TrackChannel>{};
-    for (const auto& [hash, channel] : _channels)
+    for (const auto& [name, channel] : _channels)
     {
         if (channel.Track.empty() || channel.Stream == 0)
             continue;
