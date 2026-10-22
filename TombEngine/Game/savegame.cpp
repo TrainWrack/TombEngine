@@ -1231,6 +1231,7 @@ const std::vector<unsigned char> SaveGame::Build()
 			ns.add_crossfade_time(state.CrossfadeTime);
 			ns.add_volume(state.Volume);
 			ns.add_damp_volume(state.DampVolume);
+			ns.add_status((int)state.Status);
 			namedSoundtracks.push_back(ns.Finish());
 		}
 	}
@@ -2378,6 +2379,7 @@ static void ParseEffects(const Save::SaveGame* s)
 			state.CrossfadeTime = ns->crossfade_time();
 			state.Volume        = ns->volume();
 			state.DampVolume    = ns->damp_volume();
+			state.Status        = (TrackStatus)ns->status();
 			states.push_back(state);
 		}
 

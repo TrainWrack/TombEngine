@@ -472,6 +472,7 @@ table NamedSoundtrack {
     crossfade_time: int32;
     volume:         float;
     damp_volume:    float;
+    status:         int32;
 }
 
 table VideoInfo {

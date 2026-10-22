@@ -41,6 +41,13 @@ enum class TrackPreset
     BGM
 };
 
+enum class TrackStatus
+{
+    Inactive,
+    Playing,
+    Paused
+};
+
 struct TrackChannel
 {
     HSTREAM     Stream         = 0;
@@ -54,7 +61,7 @@ struct TrackChannel
     int         CrossfadeTime  = 0;
     float       Volume         = 1.0f;
     float       DampVolume     = 0.5f;
-    bool        Active         = false;
+    TrackStatus Status         = TrackStatus::Inactive;
 };
 
 class SoundTrackManager

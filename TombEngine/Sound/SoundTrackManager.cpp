@@ -287,7 +287,7 @@ bool SoundTrackManager::Play(const std::string& channelName, std::optional<std::
 
     channel->Stream = stream;
     channel->Track  = trackName;
-    channel->Active = true;
+    channel->Status = TrackStatus::Playing;
 
     // Load subtitles for the voice channel.
     if (ToLower(channel->Name) == ToLower(std::string(SOUND_TRACK_CHANNEL_VOICE)))
@@ -339,7 +339,7 @@ void SoundTrackManager::Stop(const std::string& channelName, std::optional<int> 
 
     channel->Track  = {};
     channel->Stream = 0;
-    channel->Active = false;
+    channel->Status = TrackStatus::Inactive;
 
     if (g_GameScript)
         g_GameScript->OnAudioChannelStopped(channelName);
@@ -363,7 +363,10 @@ void SoundTrackManager::Pause(const std::string& channelName)
         return;
 
     if (BASS_ChannelIsActive(channel->Stream) == BASS_ACTIVE_PLAYING)
+    {
         BASS_ChannelPause(channel->Stream);
+        channel->Status = TrackStatus::Paused;
+    }
 }
 
 void SoundTrackManager::PauseAll(bool excludeVoice)
@@ -385,7 +388,10 @@ void SoundTrackManager::Resume(const std::string& channelName)
         return;
 
     if (BASS_ChannelIsActive(channel->Stream) == BASS_ACTIVE_PAUSED)
+    {
         BASS_ChannelStart(channel->Stream);
+        channel->Status = TrackStatus::Playing;
+    }
 }
 
 void SoundTrackManager::ResumeAll()
@@ -677,13 +683,13 @@ void SoundTrackManager::Update()
 
     for (auto& [hash, channel] : _channels)
     {
-        if (!channel.Active || channel.Stream == 0)
+        if (channel.Status == TrackStatus::Inactive || channel.Stream == 0)
             continue;
 
-        auto status = BASS_ChannelIsActive(channel.Stream);
-        if (status == BASS_ACTIVE_STOPPED || status == BASS_ACTIVE_STALLED)
+        auto bassStatus = BASS_ChannelIsActive(channel.Stream);
+        if (bassStatus == BASS_ACTIVE_STOPPED || bassStatus == BASS_ACTIVE_STALLED)
         {
-            channel.Active = false;
+            channel.Status = TrackStatus::Inactive;
             channel.Stream = 0;
             stopped.push_back(channel.Name);
         }
@@ -717,12 +723,14 @@ std::vector<TrackChannel> SoundTrackManager::GetAllChannelStates() const
             continue;
 
         // Skip channels that have stopped; only serialize channels still playing (including paused).
-        if (BASS_ChannelIsActive(channel.Stream) == BASS_ACTIVE_STOPPED)
+        auto bassStatus = BASS_ChannelIsActive(channel.Stream);
+        if (bassStatus == BASS_ACTIVE_STOPPED)
             continue;
 
         auto state = channel;
         state.SavedPosition = BASS_ChannelGetPosition(channel.Stream, BASS_POS_BYTE);
-        state.Stream = 0;
+        state.Stream        = 0;
+        state.Status        = (bassStatus == BASS_ACTIVE_PAUSED) ? TrackStatus::Paused : TrackStatus::Playing;
         states.push_back(state);
     }
 
@@ -755,6 +763,9 @@ void SoundTrackManager::RestoreFromSave(const std::vector<TrackChannel>& states)
                 ? std::optional<QWORD>(state.SavedPosition)
                 : std::nullopt;
             Play(state.Name, state.Track, std::nullopt, startPos, SOUND_XFADETIME_LEVELJUMP, false);
+
+            if (state.Status == TrackStatus::Paused)
+                Pause(state.Name);
         }
     }
 }
