@@ -13,6 +13,7 @@
 #include "Objects/Generic/Object/generic_trapdoor.h"
 #include "Objects/Generic/Object/generic_bridge.h"
 #include "Objects/Generic/Object/burning_torch.h"
+#include "Objects/Generic/Object/Ladder.h"
 #include "Objects/Generic/Object/polerope.h"
 #include "Objects/Generic/Object/Pushable/PushableObject.h"
 #include "Objects/Generic/Object/rope.h"
@@ -453,6 +454,22 @@ void StartTraps(ObjectInfo* object)
 	object = &Objects[ID_PARALLEL_BARS];
 	if (object->loaded)
 		object->collision = HorizontalBarCollision;
+
+	object = &Objects[ID_LADDER_ONE_SIDED];
+	if (object->loaded)
+	{
+		object->Initialize = InitializeLadder;
+		//object->control = ControlLadder;
+		object->collision = CollideLadder;
+	}
+
+	object = &Objects[ID_LADDER_DOUBLE_SIDED];
+	if (object->loaded)
+	{
+		object->Initialize = InitializeLadder;
+		//object->control = ControlLadder;
+		object->collision = CollideLadder;
+	}
 }
 
 void StartServiceObjects(ObjectInfo* object)

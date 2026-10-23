@@ -70,8 +70,8 @@ std::function<EffectFunction> effect_routines[NUM_FLIPEFFECTS] =
 	ClearSwarmEnemies,			//31
 	AddLeftFootprint,			//32
 	AddRightFootprint,			//33
-	VoidEffect,					//34
-	VoidEffect,					//35
+	Turn90,						//34
+	Turn270,					//35
 	VoidEffect,					//36
 	VoidEffect,					//37
 	VoidEffect,					//38
@@ -316,10 +316,22 @@ void FloorShake(ItemInfo* item)
 
 void Turn180(ItemInfo* item)
 {
-	item->Pose.Orientation.x = -item->Pose.Orientation.x;
+	item->Pose.Orientation.x *= -1;
 	item->Pose.Orientation.y += ANGLE(180.0f);
-	item->Pose.Orientation.z = -item->Pose.Orientation.z;
+	item->Pose.Orientation.z *= -1;
 
+	item->DisableInterpolation = true;
+}
+
+void Turn90(ItemInfo* item)
+{
+	item->Pose.Orientation.y += ANGLE(90.0f);
+	item->DisableInterpolation = true;
+}
+
+void Turn270(ItemInfo* item)
+{
+	item->Pose.Orientation.y -= ANGLE(90.0f);
 	item->DisableInterpolation = true;
 }
 

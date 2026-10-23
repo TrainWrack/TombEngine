@@ -17,6 +17,7 @@
 #include "Game/Lara/lara_helpers.h"
 #include "Game/Lara/lara_monkey.h"
 #include "Math/Math.h"
+#include "Objects/Generic/Object/Ladder.h"
 #include "Specific/configuration.h"
 #include "Specific/Input/Input.h"
 #include "Specific/level.h"
@@ -25,6 +26,7 @@
 using namespace TEN::Animation;
 using namespace TEN::Collision::Floordata;
 using namespace TEN::Collision::Point;
+using namespace TEN::Entities::Generic;
 using namespace TEN::Entities::Player;
 using namespace TEN::Input;
 using namespace TEN::Math;
@@ -1896,4 +1898,154 @@ bool TestLaraPoleDown(ItemInfo* item, CollisionInfo* coll)
 		return false;
 
 	return (coll->Middle.Floor > 0);
+}
+
+// Returns the ladder stack the player is currently interacting with, if any.
+static LadderObject* GetInteractedLadder(const ItemInfo& playerItem)
+{
+	const auto& player = GetLaraInfo(playerItem);
+
+	int itemNumber = player.Context.InteractedItem;
+	if (itemNumber < 0 || itemNumber >= (short)g_Level.Items.size())
+		return nullptr;
+
+	auto& ladderItem = g_Level.Items[itemNumber];
+	if (ladderItem.ObjectNumber != ID_LADDER_ONE_SIDED &&
+		ladderItem.ObjectNumber != ID_LADDER_DOUBLE_SIDED)
+	{
+		return nullptr;
+	}
+
+	return &GetLadderObject(ladderItem);
+}
+
+bool CanClimbLadderUp(ItemInfo* item, CollisionInfo* coll)
+{
+	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
+	constexpr auto UPPER_CEIL_BOUND = -BLOCK(1 / 8.0f);
+	constexpr auto LADDER_END_MARGIN = CLICK(0.1f);
+
+	auto* ladder = GetInteractedLadder(*item);
+	if (ladder == nullptr)
+		return false;
+
+	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y1;
+
+	// Must still be ladder material above the player's head.
+	if ((vPos - ladder->GetTopPosition().y) < LADDER_END_MARGIN)
+		return false;
+
+	// Get point collision.
+	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, -PROBE_DIST);
+
+	// Assess point collision.
+	if ((pointColl.GetCeilingHeight() - vPos) > UPPER_CEIL_BOUND) // Within lowest ceiling bound.
+		return false;
+
+	return true;
+}
+
+bool CanClimbLadderDown(ItemInfo* item, CollisionInfo* coll)
+{
+	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
+	constexpr auto LOWER_FLOOR_BOUND = BLOCK(1 / 8.0f);
+	constexpr auto LADDER_END_MARGIN = CLICK(0.75f); // Two rungs: the next step consumes one, so she halts one rung above the stack bottom.
+
+	auto* ladder = GetInteractedLadder(*item);
+	if (ladder == nullptr)
+		return false;
+
+	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y2;
+
+	// Must still be ladder material below the player's feet.
+	if ((ladder->GetBasePosition().y - vPos) < LADDER_END_MARGIN)
+		return false;
+
+	// Respect the ground: stop climbing down once the floor is reached.
+	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, -PROBE_DIST);
+
+	return ((pointColl.GetFloorHeight() - vPos) > LOWER_FLOOR_BOUND);
+}
+
+bool CanDismountLadderTop(ItemInfo* item, CollisionInfo* coll)
+{
+	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
+	constexpr auto LOWER_FLOOR_BOUND = BLOCK(1 / 16.0f);
+	constexpr auto UPPER_FLOOR_BOUND = 0;
+	constexpr auto UPPER_CEIL_BOUND = -BLOCK(1 / 2.0f);
+
+	// Get point collision.
+	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, PROBE_DIST);
+	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y1;
+
+	// 1) Test for wall.
+	if (pointColl.GetFloorHeight() == NO_HEIGHT)
+		return false;
+
+	// 2) Assess point collision.
+	if ((pointColl.GetFloorHeight() - vPos) <= LOWER_FLOOR_BOUND &&				  // Floor height is within lower floor bound.
+		(pointColl.GetFloorHeight() - vPos) >= UPPER_FLOOR_BOUND &&				  // Floor height is within upper floor bound.
+		(pointColl.GetCeilingHeight() - vPos) < UPPER_CEIL_BOUND &&				  // Ceiling height is within upper ceiling bound.
+		abs(pointColl.GetCeilingHeight() - pointColl.GetFloorHeight()) > LARA_HEIGHT) // Space isn't too narrow.
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool CanDismountLadderBack(ItemInfo* item, CollisionInfo* coll)
+{
+	constexpr auto PROBE_DIST = BLOCK(3 / 16.0f);
+	constexpr auto LOWER_FLOOR_BOUND = BLOCK(2 / 9.0f);
+
+	// Get point collision.
+	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, -PROBE_DIST);
+	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y2;
+
+	// 1) Test for wall.
+	if (pointColl.GetFloorHeight() == NO_HEIGHT)
+		return false;
+
+	// 2) Assess point collision.
+	if ((pointColl.GetFloorHeight() - vPos) <= LOWER_FLOOR_BOUND &&				  // Floor height is within lower floor bound.
+		abs(pointColl.GetCeilingHeight() - pointColl.GetFloorHeight()) > LARA_HEIGHT) // Space isn't too narrow.
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool TestLaraLadderSideDismount(ItemInfo* item, CollisionInfo* coll, bool isGoingLeft)
+{
+	constexpr int PROBE_DIST = BLOCK(1 / 4.0f);
+	constexpr int FLOOR_BOUND = BLOCK(1 / 16.0f);
+
+	// Get point collision.
+	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y + (isGoingLeft ? -ANGLE(90.0f) : ANGLE(90.0f)), PROBE_DIST);
+	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y2;
+
+	// 1) Check for wall.
+	if (pointColl.IsWall())
+		return false;
+
+	// 2) Assess point collision.
+	if (abs(pointColl.GetFloorHeight() - vPos) <= FLOOR_BOUND &&					  // Floor height is within upper/lower floor bound.
+		abs(pointColl.GetCeilingHeight() - pointColl.GetFloorHeight()) > LARA_HEIGHT) // Space isn't too narrow.
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool CanDismountLadderLeft(ItemInfo* item, CollisionInfo* coll)
+{
+	return TestLaraLadderSideDismount(item, coll, true);
+}
+
+bool CanDismountLadderRight(ItemInfo* item, CollisionInfo* coll)
+{
+	return TestLaraLadderSideDismount(item, coll, false);
 }
