@@ -46,7 +46,15 @@ namespace TEN::Entities::Generic
 		Left,
 		Right,
 		JumpUp,
-		JumpReach
+		JumpReach,
+		Water
+	};
+
+	enum class LadderMountContext
+	{
+		Air,
+		Ground,
+		Water
 	};
 
 	const auto LadderMountedPlayerStates = std::vector<int>
@@ -69,6 +77,14 @@ namespace TEN::Entities::Generic
 	{
 		LS_REACH,
 		LS_JUMP_UP
+	};
+	const auto LadderWaterMountPlayerStates = std::vector<int>
+	{
+		LS_ONWATER_IDLE,
+		LS_ONWATER_FORWARD,
+		LS_ONWATER_BACK,
+		LS_ONWATER_LEFT,
+		LS_ONWATER_RIGHT
 	};
 
 	const auto LadderMountedOffset2D = Vector3i(0, 0, -LARA_RADIUS * 1.5f);
@@ -231,7 +247,7 @@ namespace TEN::Entities::Generic
 		return pos;
 	}
 
-	int LadderObject::GetAttachmentHeight(int positionY) const
+	int LadderObject::GetAttachmentHeight(int positionY, int offset) const
 	{
 		int step = (int)LADDER_STEP_HEIGHT;
 		int baseY = GetBasePosition().y;
@@ -241,9 +257,21 @@ namespace TEN::Entities::Generic
 		int snappedY = (int)round((float)relY / step) * step;
 
 		// Never grab above the height where the top dismount can fire; otherwise she'd climb past it and get stuck.
-		int topGrabY = _topY + (int)LARA_HEIGHT;
+		int topGrabY = _topY + offset;
 
-		return (baseY + std::max(snappedY, topGrabY));
+		// Return a WORLD height. Callers convert it to the collided item's space via (result - itemY),
+		// and the water mount assigns it directly to Pose.Position.y.
+		int output = baseY + std::max(snappedY, topGrabY);
+
+		TENLog(
+			fmt::format(
+				"Ladder attachment height: base-relative = {}, global = {} (input = {}, base = {}, snapped = {}, top grab = {}, offset = {})",
+				output - baseY, output, positionY, baseY, snappedY, topGrabY, offset),
+			LogLevel::Info,
+			LogConfig::All,
+			true);
+
+		return output;
 	}
 
 	bool LadderObject::IsHeightWithin(int positionY) const
@@ -297,7 +325,7 @@ namespace TEN::Entities::Generic
 		g_Renderer.AddDebugBox(stackBox, Vector4(0, 1, 0, 1), RendererDebugPage::None);
 	}
 
-	static bool TestLadderMount(const ItemInfo& ladderItem, const ItemInfo& playerItem, bool groundMount)
+	static bool TestLadderMount(const ItemInfo& ladderItem, const ItemInfo& playerItem, LadderMountContext context)
 	{
 		const auto& player = GetLaraInfo(playerItem);
 
@@ -309,27 +337,45 @@ namespace TEN::Entities::Generic
 		if (player.Control.HandStatus != HandStatus::Free)
 			return false;
 
-		// 3) Test active player state for the requested mount type.
-		if (groundMount)
+		// 3) Test active player state for the requested mount context.
+		switch (context)
 		{
+		default:
+		case LadderMountContext::Ground:
 			if (!TestState(playerItem.Animation.ActiveState, LadderGroundedMountPlayerStates))
 				return false;
-		}
-		else
-		{
+			break;
+
+		case LadderMountContext::Air:
 			if (!playerItem.Animation.IsAirborne ||
 				!TestState(playerItem.Animation.ActiveState, LadderAirborneMountPlayerStates))
 			{
 				return false;
 			}
+			break;
+
+		case LadderMountContext::Water:
+			if (player.Control.WaterStatus != WaterStatus::TreadWater ||
+				!TestState(playerItem.Animation.ActiveState, LadderWaterMountPlayerStates) ||
+				!GetLadderObject(ladderItem).IsHeightWithin(playerItem.Pose.Position.y))
+			{
+				return false;
+			}
+			break;
 		}
 
-		// 4) Test for input action. A grounded mount needs a FRESH Action press, so simply holding
-		// Action (e.g. straight after a top dismount) doesn't immediately re-mount. An airborne grab
-		// may hold Action from the jump, and an in-progress walk-to-ladder interaction keeps its mount.
-		bool isInteracting = (groundMount && player.Control.IsMoving && player.Context.InteractedItem == ladderItem.Index);
-		if (!isInteracting && !(groundMount ? IsClicked(In::Action) : IsHeld(In::Action)))
-			return false;
+		// 4) Test for input action. Grounded and water mounts need a FRESH Action press, so simply
+		// holding Action (e.g. straight after a top dismount or after surfacing) doesn't immediately
+		// re-mount. An airborne grab may hold Action from the jump, and an in-progress walk-to-ladder
+		// interaction keeps its mount.
+		bool isInteracting = (context == LadderMountContext::Ground &&
+			player.Control.IsMoving && player.Context.InteractedItem == ladderItem.Index);
+		if (!isInteracting)
+		{
+			bool hasInput = (context == LadderMountContext::Air) ? IsHeld(In::Action) : IsClicked(In::Action);
+			if (!hasInput)
+				return false;
+		}
 
 		// TODO: Assess whether ladder is in front.
 
@@ -345,7 +391,7 @@ namespace TEN::Entities::Generic
 		auto boundsExtension = GameBoundingBox(0, 0, bounds.Y1, bounds.Y2 + LADDER_STEP_HEIGHT, 0, 0).ToBoundingOrientedBox(Pose::Zero);
 
 		// Air mounts. Front face only.
-		if (TestLadderMount(ladderItem, playerItem, false))
+		if (TestLadderMount(ladderItem, playerItem, LadderMountContext::Air))
 		{
 			// Front mount.
 			if (TestInteraction(playerItem, ladderItem, LadderMountFrontBasis, boundsExtension))
@@ -367,11 +413,20 @@ namespace TEN::Entities::Generic
 			return LadderMountType::None;
 		}
 
+		// Water mount. Front face only.
+		if (TestLadderMount(ladderItem, playerItem, LadderMountContext::Water))
+		{
+			if (TestInteraction(playerItem, ladderItem, LadderMountFrontBasis, boundsExtension))
+				return LadderMountType::Water;
+
+			return LadderMountType::None;
+		}
+
 		// Ground mounts.
-		if (!TestLadderMount(ladderItem, playerItem, true))
+		if (!TestLadderMount(ladderItem, playerItem, LadderMountContext::Ground))
 			return LadderMountType::None;
 
-		// Top mounts broken at the moment: only when Lara is standing at the top of the stack.
+		// Top mounts
 		int stackTopWorldY = ladderItem.Pose.Position.y + bounds.Y1;
 		if (abs(playerItem.Pose.Position.y - stackTopWorldY) <= LADDER_STEP_HEIGHT)
 		{
@@ -440,6 +495,17 @@ namespace TEN::Entities::Generic
 		interactor.Animation.IsAirborne = false;
 	}
 
+	static void SetPlayerLadderMountWaterInteraction(ItemInfo& interactor, ItemInfo&)
+	{
+		auto& player = GetLaraInfo(interactor);
+
+		SetAnimation(&interactor, LA_LADDERX_MOUNT_WATER);
+
+		// She is leaving the water to grab the ladder.
+		player.Control.WaterStatus = WaterStatus::Dry;
+		interactor.Animation.IsAirborne = false;
+	}
+
 	static void HandleLadderMount(ItemInfo& ladderItem, ItemInfo& playerItem, LadderMountType mountType)
 	{
 		auto& player = *GetLaraInfo(&playerItem);
@@ -505,7 +571,7 @@ namespace TEN::Entities::Generic
 			auto& ladder = GetLadderObject(ladderItem);
 
 			// Snap her feet to the rung closest to her current height.
-			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y);
+			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y, LARA_HEIGHT);
 			auto extraPosOffset = Vector3i(0, attachmentY - ladderItem.Pose.Position.y, bounds.Z1);
 
 			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, SetPlayerLadderAirGrabInteraction, InteractionBasisType::Latch, extraPosOffset);
@@ -516,10 +582,24 @@ namespace TEN::Entities::Generic
 			auto& ladder = GetLadderObject(ladderItem);
 
 			// Snap her feet to the rung closest to her current height.
-			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y);
+			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y, LARA_HEIGHT);
 			auto extraPosOffset = Vector3i(0, attachmentY - ladderItem.Pose.Position.y, bounds.Z1);
 
 			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, SetPlayerLadderAirReachInteraction, InteractionBasisType::Latch, extraPosOffset);
+			break;
+		}
+		case LadderMountType::Water:
+		{
+			auto& ladder = GetLadderObject(ladderItem);
+
+			// Grab the rung at the player's current height (the water surface).
+			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y);
+
+			// Keep her current height out of the smooth latch, then place her on the rung in one step.
+			auto extraPosOffset = Vector3i(0, playerItem.Pose.Position.y - ladderItem.Pose.Position.y, bounds.Z1);
+			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, SetPlayerLadderMountWaterInteraction, InteractionBasisType::Latch, extraPosOffset);
+
+			playerItem.Pose.Position.y = attachmentY;
 			break;
 		}
 		}
