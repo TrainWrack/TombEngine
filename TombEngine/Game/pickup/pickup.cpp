@@ -134,8 +134,7 @@ const ObjectCollisionBounds MSBounds =
 		EulerAngles(ANGLE(10.0f), ANGLE(30.0f), ANGLE(10.0f)))
 };
 
-int NumRPickups;
-short RPickups[16];
+std::vector<short> RPickups;
 
 static void DispatchPrePickupCallback(short itemNumber)
 {
@@ -817,9 +816,9 @@ void RegeneratePickups()
 {
 	auto* lara = GetLaraInfo(LaraItem);
 
-	for (int i = 0; i < NumRPickups; i++)
+	for (auto itemNumber : RPickups)
 	{
-		auto& item = g_Level.Items[RPickups[i]];
+		auto& item = g_Level.Items[itemNumber];
 
 		if (item.Status == ITEM_INVISIBLE)
 		{
@@ -1148,10 +1147,7 @@ void InitializePickup(short itemNumber)
 		}
 		
 		if ((item->TriggerFlags & 0x80) != 0)
-		{
-			RPickups[NumRPickups] = itemNumber;
-			NumRPickups++;
-		}
+			RPickups.push_back(itemNumber);
 		
 		if (item->TriggerFlags & 0x100)
 			item->MeshBits = 0;
