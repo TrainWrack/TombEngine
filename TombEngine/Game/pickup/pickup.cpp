@@ -41,6 +41,7 @@ using namespace TEN::Entities::Generic;
 using namespace TEN::Hud;
 using namespace TEN::Input;
 
+constexpr auto MIRROR_ROOM_PICKUP_OCB = 0x100;
 constexpr auto REGENERATED_PICKUP_OCB = 0x80;
 constexpr auto REGENERATED_PICKUP_FADE_SPEED = 3.0f / FPS;
 
@@ -283,7 +284,7 @@ void CollectMultiplePickups(int itemNumber)
 		PickedUpObject(*itemPtr);
 		g_Hud.PickupSummary.AddDisplayPickup(*itemPtr);
 
-		if (itemPtr->TriggerFlags & (1 << 8))
+		if (itemPtr->TriggerFlags & MIRROR_ROOM_PICKUP_OCB)
 		{
 			for (int i = 0; i < g_Level.NumItems; i++)
 			{
@@ -1155,10 +1156,10 @@ void InitializePickup(short itemNumber)
 			}
 		}
 		
-		if ((item->TriggerFlags & REGENERATED_PICKUP_OCB) != 0)
+		if (item->TriggerFlags & REGENERATED_PICKUP_OCB)
 			RPickups.push_back(itemNumber);
 		
-		if (item->TriggerFlags & 0x100)
+		if (item->TriggerFlags & MIRROR_ROOM_PICKUP_OCB)
 			item->MeshBits = 0;
 		
 		if (item->Status == ITEM_INVISIBLE)
