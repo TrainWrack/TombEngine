@@ -100,6 +100,7 @@ void ItemInfo::HandleOffsetBlend()
 	OffsetBlend.TimeActive++;
 
 	// Handle offset blend.
+	bool isPosStepStalled = false;
 	switch (OffsetBlend.Mode)
 	{
 	default:
@@ -111,7 +112,7 @@ void ItemInfo::HandleOffsetBlend()
 	case OffsetBlendMode::Smooth:
 	{
 		// Calculate offset steps.
-		auto posOffsetStep = Vector3::Lerp(Vector3::Zero, OffsetBlend.PosOffset, OffsetBlend.Alpha);
+		auto posOffsetStep = Vector3i(Vector3::Lerp(Vector3::Zero, OffsetBlend.PosOffset, OffsetBlend.Alpha));
 		auto orientOffsetStep = EulerAngles::Lerp(EulerAngles::Identity, OffsetBlend.OrientOffset, OffsetBlend.Alpha);
 
 		// TODO: Raycast to test for obstructions.
@@ -119,18 +120,22 @@ void ItemInfo::HandleOffsetBlend()
 		//	OffsetBlend.TimeActive = TIME_ACTIVE_MAX;
 
 		// Apply offsets.
-		Pose.Position += Vector3i(posOffsetStep);
+		Pose.Position += posOffsetStep;
 		Pose.Orientation += orientOffsetStep;
 
 		// Update offsets.
-		OffsetBlend.PosOffset -= posOffsetStep;
+		OffsetBlend.PosOffset -= posOffsetStep.ToVector3();
 		OffsetBlend.OrientOffset -= orientOffsetStep;
+
+		// A sub-unit remainder can never be applied step by step, so finish once the step stalls.
+		isPosStepStalled = (posOffsetStep == Vector3i::Zero);
 	}
 	break;
 	}
 
 	// Offset blending complete; apply remaining offset and clear.
-	if ((OffsetBlend.PosOffset.Length() <= EPSILON && EulerAngles::Compare(OffsetBlend.OrientOffset, EulerAngles::Identity)) ||
+	if (((isPosStepStalled || OffsetBlend.PosOffset.Length() <= EPSILON) &&
+		EulerAngles::Compare(OffsetBlend.OrientOffset, EulerAngles::Identity)) ||
 		OffsetBlend.TimeActive >= (int)round(TIME_ACTIVE_MAX * (float)FPS))
 	{
 		Pose.Position += OffsetBlend.PosOffset;
