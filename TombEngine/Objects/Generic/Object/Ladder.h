@@ -33,7 +33,7 @@ namespace TEN::Entities::Generic
 
 		// Resolves a world Y position to the rung the player should snap to. Never returns a height above
 		// the point where the top dismount can fire.
-		int GetAttachmentHeight(int positionY) const;
+		int GetAttachmentHeight(int positionY, int offset = 0) const;
 
 		// Test whether a world Y position lies between the top and the bottom of the ladder stack.
 		bool IsHeightWithin(int positionY) const;
