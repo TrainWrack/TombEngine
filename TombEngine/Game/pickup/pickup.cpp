@@ -41,6 +41,9 @@ using namespace TEN::Entities::Generic;
 using namespace TEN::Hud;
 using namespace TEN::Input;
 
+constexpr auto REGENERATED_PICKUP_OCB = 0x80;
+constexpr auto REGENERATED_PICKUP_FADE_SPEED = 3.0f / FPS;
+
 static auto PickUpPosition = Vector3i(0, 0, -100);
 const ObjectCollisionBounds PickUpBounds =
 {
@@ -882,8 +885,14 @@ void RegeneratePickups()
 			}
 
 			if (ammo == 0)
+			{
 				item.Status = ITEM_NOT_ACTIVE;
+				item.Model.Color.w = 0.0f;
+			}
 		}
+
+		if (item.Status != ITEM_INVISIBLE && item.Model.Color.w < 1.0f)
+			item.Model.Color.w = std::min(item.Model.Color.w + REGENERATED_PICKUP_FADE_SPEED, 1.0f);
 	}
 }
 
@@ -1146,7 +1155,7 @@ void InitializePickup(short itemNumber)
 			}
 		}
 		
-		if ((item->TriggerFlags & 0x80) != 0)
+		if ((item->TriggerFlags & REGENERATED_PICKUP_OCB) != 0)
 			RPickups.push_back(itemNumber);
 		
 		if (item->TriggerFlags & 0x100)
