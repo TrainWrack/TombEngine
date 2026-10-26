@@ -256,7 +256,7 @@ bool TestLaraHang(ItemInfo* item, CollisionInfo* coll)
 				if (item->Animation.ActiveState == LS_SHIMMY_LEFT ||
 					item->Animation.ActiveState == LS_SHIMMY_RIGHT)
 				{
-					SetAnimation(item, LA_REACH_TO_HANG, 21);
+					SetAnimation(item, LA_REACH_TO_HANG, 21, GetInternalBlendDuration());
 				}
 
 				result = true;
