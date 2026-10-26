@@ -2163,9 +2163,6 @@ static const std::unordered_map<std::string, GAME_OBJECT_ID> GAME_OBJECT_IDS {
 	/// Object ID.
 	// @mem BREAKABLE_WALL
 	{ "BREAKABLE_WALL", ID_BREAKABLE_WALL },
-	/// Object ID.
-	// @mem ZIPLINE_OLD
-	{ "ZIPLINE_OLD", ID_ZIPLINE_OLD },
 	/// Pickup Object ID.
 	// @mem PISTOLS_ITEM
 	{ "PISTOLS_ITEM", ID_PISTOLS_ITEM },
