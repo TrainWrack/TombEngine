@@ -2,6 +2,7 @@
 
 #include "Game/Animation/Animation.h"
 #include "Game/itemdata/itemdata.h"
+#include "Game/Parenting/ParentingInfo.h"
 #include "Math/Math.h"
 #include "Objects/game_object_ids.h"
 #include "Renderer/RendererEnums.h"
@@ -196,6 +197,8 @@ struct ItemInfo
 	short         CarriedItem = 0;
 
 	void HandleOffsetBlend();
+	ParentingInfo Parenting   = {};
+
 	PropertyMap Properties = {};
 
 	// Getters
