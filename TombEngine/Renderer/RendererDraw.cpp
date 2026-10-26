@@ -3365,7 +3365,6 @@ namespace TEN::Renderer
 						star.Blinking * star.Extinction);
 					_stInstancedSpriteBuffer.Sprites[i].IsBillboard = 1;
 					_stInstancedSpriteBuffer.Sprites[i].IsSoftParticle = 0;
-					_stInstancedSpriteBuffer.Sprites[i].PerVertexData = 0;
 
 					// NOTE: Strange packing due to particular HLSL 16-byte alignment requirements.
 					_stInstancedSpriteBuffer.Sprites[i].UV[0].x = rDrawSprite.Sprite->UV[0].x;
@@ -3429,7 +3428,6 @@ namespace TEN::Renderer
 							Lerp(meteor.PrevFade, meteor.Fade, GetInterpolationFactor()));
 						_stInstancedSpriteBuffer.Sprites[i].IsBillboard = 1;
 						_stInstancedSpriteBuffer.Sprites[i].IsSoftParticle = 0;
-						_stInstancedSpriteBuffer.Sprites[i].PerVertexData = 0;
 
 						// NOTE: Strange packing due to particular HLSL 16-byte alignment requirements.
 						_stInstancedSpriteBuffer.Sprites[i].UV[0].x = rDrawSprite.Sprite->UV[0].x;
@@ -3542,7 +3540,6 @@ namespace TEN::Renderer
 			_stInstancedSpriteBuffer.Sprites[0].Color = renderView.LensFlaresToDraw[0].Color;
 			_stInstancedSpriteBuffer.Sprites[0].IsBillboard = 1;
 			_stInstancedSpriteBuffer.Sprites[0].IsSoftParticle = 0;
-			_stInstancedSpriteBuffer.Sprites[0].PerVertexData = 0;
 
 			// NOTE: Strange packing due to particular HLSL 16-byte alignment requirements.
 			_stInstancedSpriteBuffer.Sprites[0].UV[0].x = rDrawSprite.Sprite->UV[0].x;
