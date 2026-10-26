@@ -196,7 +196,7 @@ namespace TEN::Collision::Interaction
 		constexpr auto COLL_BOX_COLOR = Color(1.0f, 0.0f, 0.0f, 1.0f);
 		constexpr auto INTERACT_BOX_COLOR = Color(0.0f, 1.0f, 1.0f, 1.0f);
 
-		if (!DebugMode)
+		if (g_Renderer.GetDebugPage() != RendererDebugPage::CollisionStats)
 			return;
 
 		// Draw collision box.

@@ -299,18 +299,7 @@ namespace TEN::Entities::Generic
 
 	static void DrawLadderDebug(ItemInfo& ladderItem)
 	{
-		// Draw collision bounds.
-		auto bounds = GameBoundingBox(&ladderItem);
-		auto box = bounds.ToBoundingOrientedBox(ladderItem.Pose);
-		//g_Renderer.AddDebugBox(box, Vector4(1, 0, 0, 1), RendererDebugPage::None);
-
-		// Draw interaction bounds.
-		auto interactBounds = LadderInteractBounds2D + GameBoundingBox(0, 0, bounds.Y1, bounds.Y2, 0, 0);
-		auto interactBox = interactBounds.ToBoundingOrientedBox(ladderItem.Pose);
-		//g_Renderer.AddDebugBox(interactBox, Vector4(0, 1, 1, 1), RendererDebugPage::None);
-
-		// Draw stack bounds. Only the base item of the stack draws them, so overlapping ladders don't
-		// produce duplicate boxes.
+		// Draw stack bounds. Only the base item of the stack draws them, so overlapping ladders don't produce duplicate boxes.
 		const auto& ladder = GetLadderObject(ladderItem);
 		if (ladderItem.Index != ladder.GetBaseItemNumber())
 			return;
@@ -616,7 +605,8 @@ namespace TEN::Entities::Generic
 	{
 		auto& ladderItem = g_Level.Items[itemNumber];
 
-		DrawLadderDebug(ladderItem);
+		if (g_Renderer.GetDebugPage() == RendererDebugPage::CollisionStats)
+			DrawLadderDebug(ladderItem);
 
 		// Try to mount the ladder.
 		auto mountType = GetLadderMountType(ladderItem, *playerItem);
