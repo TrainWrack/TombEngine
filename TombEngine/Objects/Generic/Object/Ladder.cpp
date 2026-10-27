@@ -542,16 +542,18 @@ namespace TEN::Entities::Generic
 
 		case LadderMountType::Left:
 		{
-			// Keep her current height. The offset is relative to the ladder item, not to the world.
-			auto extraPosOffset = Vector3i(0, playerItem.Pose.Position.y - ladderItem.Pose.Position.y, bounds.Z1);
+			auto& ladder = GetLadderObject(ladderItem);
+			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y);
+			auto extraPosOffset = Vector3i(0, attachmentY - ladderItem.Pose.Position.y, bounds.Z1);
 			SetInteraction(playerItem, ladderItem, LadderMountLeftBasis, SetPlayerLadderMountLeftInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
 		}
 
 		case LadderMountType::Right:
 		{
-			// Keep her current height. The offset is relative to the ladder item, not to the world.
-			auto extraPosOffset = Vector3i(0, playerItem.Pose.Position.y - ladderItem.Pose.Position.y, bounds.Z1);
+			auto& ladder = GetLadderObject(ladderItem);
+			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y);
+			auto extraPosOffset = Vector3i(0, attachmentY - ladderItem.Pose.Position.y, bounds.Z1);
 			SetInteraction(playerItem, ladderItem, LadderMountRightBasis, SetPlayerLadderMountRightInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
 		}
