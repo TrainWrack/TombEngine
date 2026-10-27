@@ -12,6 +12,7 @@
 #include "Math/Math.h"
 #include "Renderer/RendererEnums.h"
 #include "Sound/sound.h"
+#include "Scripting/Include/Flow/ScriptInterfaceFlowHandler.h"
 #include "Specific/Input/Input.h"
 #include "Specific/level.h"
 
@@ -67,7 +68,11 @@ namespace TEN::Entities::Generic
 			// Set player interaction.
 			if (isFront || isBack)
 			{
-				SetAnimation(playerItem, (playerItem->Animation.ActiveState == LS_REACH) ? LA_REACH_TO_HORIZONTAL_BAR : LA_JUMP_UP_TO_HORIZONTAL_BAR);
+				if (IsHorizontalBarExtendedEnabled())
+					SetAnimation(playerItem, (playerItem->Animation.ActiveState == LS_REACH) ? LA_HORIZONTAL_BAR_REACH : LA_HORIZONTAL_BAR_JUMP_GRAB);
+				else
+					SetAnimation(playerItem, LA_SWINGBAR_GRAB);
+
 				ResetPlayerFlex(playerItem);
 				playerItem->Animation.Velocity.y = 0.0f;
 				playerItem->Animation.IsAirborne = false;
@@ -92,5 +97,9 @@ namespace TEN::Entities::Generic
 		{
 			ObjectCollision(itemNumber, playerItem, coll);
 		}
+	}
+	bool IsHorizontalBarExtendedEnabled()
+	{
+		return g_GameFlow->GetSettings()->Animations.HorizontalBarExtended;
 	}
 }
