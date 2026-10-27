@@ -88,8 +88,8 @@ namespace TEN::Entities::Generic
 	};
 
 	const auto LadderMountedOffset2D = Vector3i(0, 0, -LARA_RADIUS * 1.5f);
-	const auto LadderMountedOffsetTopFront2D = Vector3i(0, 0, 51.0f);//To redo based on Z1 and Z2
-	const auto LadderMountedOffsetTopBack2D = Vector3i(0, 0, 79.0f);// To redo based on Z1 and Z2
+	const auto LadderMountedOffsetTopFront2D = Vector3i(0, 0, 137.0f);
+	const auto LadderMountedOffsetTopBack2D = Vector3i(0, 0, 165.0f);
 	const auto LadderInteractBounds2D = GameBoundingBox(
 		-BLOCK(0.25f), BLOCK(0.25f),
 		0, 0,
@@ -177,8 +177,7 @@ namespace TEN::Entities::Generic
 		int bottomY = bounds.Y2;
 		short lowestItemNumber = itemNumber;
 
-		// The stack is probed from the item list directly: room item lists are still being populated while
-		// items are initialized, so a collision query would only see part of the stack.
+		// The stack is probed from the item list directly
 		for (int i = 0; i < g_Level.NumItems; i++)
 		{
 			auto& item = g_Level.Items[i];
@@ -254,24 +253,15 @@ namespace TEN::Entities::Generic
 
 		// Snap to the closest rung.
 		int relY = positionY - baseY;
-		// Never grab above the height where the top dismount can fire; otherwise she'd climb past it and get stuck.
+
+		// Never grab above the height where the top dismount can fire.
 		int topGrabY = _topY + offset;
 		int targetY = baseY + std::max(relY, topGrabY);
 
-		// Object bounds can sit a couple of units inside the block boundary, so the stack base is rarely
-		// on the rung grid and every snapped rung inherits that error. Re-anchor the result to the grid.
+		// Re-anchor the result to the grid.
 		int output = (int)RoundToStep((float)targetY, (float)step);
 
-		TENLog(
-			fmt::format(
-				"Ladder attachment height: base-relative = {}, global = {} (input = {}, base = {}, snapped = {}, top grab = {}, offset = {}, target = {})",
-				output - baseY, output, positionY, baseY, relY, topGrabY, offset, targetY),
-			LogLevel::Info,
-			LogConfig::All,
-			true);
-
-		// WORLD height. Callers convert it to the collided item's space via (result - itemY),
-		// and the water mount assigns it directly to Pose.Position.y.
+		// Global height. Callers convert it to the collided item's space via (result - itemY).
 		return output;
 	}
 
@@ -514,14 +504,14 @@ namespace TEN::Entities::Generic
 
 		case LadderMountType::TopFront:
 		{
-			auto extraPosOffset = Vector3i(0, bounds.Y1, 0);
+			auto extraPosOffset = Vector3i(0, bounds.Y1, bounds.Z1);
 			SetInteraction(playerItem, ladderItem, LadderMountTopFrontBasis, SetPlayerLadderMountTopFrontInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
 		}
 
 		case LadderMountType::TopBack:
 		{
-			auto extraPosOffset = Vector3i(0, bounds.Y1, 0);
+			auto extraPosOffset = Vector3i(0, bounds.Y1, bounds.Z1);
 			SetInteraction(playerItem, ladderItem, LadderMountTopBackBasis, SetPlayerLadderMountTopBackInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
 		}
