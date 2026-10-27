@@ -6,10 +6,14 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 ## [Version 2.1]
 
 ### New features
+* Added a parenting system for moveables that allows to parent a moveable to another.
+* Added parenting for HORIZONTAL_BAR & POLEROPE.
+* Added `Detach` anim command to dispatch detach from parent moveable.
 
 ### Bug fixes
 
 ### Lua API Changes
+* Added `Moveable:Attach`, `Moveable:Detach`, `Moveable:IsAttached` and `Moveable:GetParent` to manage parenting via scripting.
 
 ## [Version 2.0]
 
