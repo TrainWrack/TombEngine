@@ -238,6 +238,9 @@ namespace TEN::Entities::Player
 		PlayerBehaviorStateRoutines[LS_TREAD_WATER_VAULT_1_STEP_UP_TO_CROUCH] = std::pair(lara_as_surface_climb_out, lara_void_func);
 
 		PlayerBehaviorStateRoutines[LS_PULLEY_UNGRAB] = std::pair(lara_as_controlled_no_look, lara_void_func);
+		PlayerBehaviorStateRoutines[LS_HORIZONTAL_BAR_IDLE] = std::pair(lara_as_horizontal_bar_idle, lara_default_col);
+		PlayerBehaviorStateRoutines[LS_HORIZONTAL_BAR_IDLE_TURN_180] = std::pair(lara_as_horizontal_bar_idle_turn_180, lara_default_col);
+		PlayerBehaviorStateRoutines[LS_HORIZONTAL_BAR_SWING_TURN_180] = std::pair(lara_as_horizontal_bar_swing_turn_180, lara_default_col);
 	}
 
 	void HandlePlayerBehaviorState(ItemInfo& item, CollisionInfo& coll, PlayerBehaviorStateRoutineType routineType)
