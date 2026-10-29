@@ -10,6 +10,7 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 ### Bug fixes
 
 * Fixed static meshes in flipped rooms being lit with ambient light of the original room.
+* Fixed flyby camera roll persisting after the sequence ends.
 
 ### Lua API Changes
 
@@ -103,7 +104,6 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 * Fixed incorrect dynamic range for vertex colors, ambient light, dynamic lights and particle effects.
 * Fixed flyby camera flag "Let Lara move in cinematic mode" being ignored.
 * Fixed flyby camera jitter by converting the spline type to floating-point.
-* Fixed flyby camera roll persisting after the sequence ends.
 * Fixed Lara not focusing on camera targets properly when at a different height.
 * Fixed look key not breaking out of a camera target once it was triggered.
 * Fixed occasional flame emitter sprite jitter.
