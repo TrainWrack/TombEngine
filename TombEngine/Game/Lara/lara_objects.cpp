@@ -959,12 +959,12 @@ void lara_as_ladder_idle(ItemInfo* item, CollisionInfo* coll)
 		{
 			if (CanDismountLadderTop(item, coll))
 			{
-				item->Animation.TargetState = LS_LADDERX_DISMOUNT_TOP;
+				item->Animation.TargetState = LS_LADDER_DISMOUNT_TOP;
 				return;
 			}
 			else if (CanClimbLadderUp(item, coll))
 			{
-				item->Animation.TargetState = LS_LADDERX_UP;
+				item->Animation.TargetState = LS_LADDER_UP;
 				return;
 			}
 		}
@@ -972,34 +972,34 @@ void lara_as_ladder_idle(ItemInfo* item, CollisionInfo* coll)
 		{
 			if (CanDismountLadderBack(item, coll))
 			{
-				item->Animation.TargetState = LS_LADDERX_DISMOUNT_BACK;
+				item->Animation.TargetState = LS_LADDER_DISMOUNT_BACK;
 				return;
 			}
 			else if (CanClimbLadderDown(item, coll))
 			{
-				item->Animation.TargetState = LS_LADDERX_DOWN;
+				item->Animation.TargetState = LS_LADDER_DOWN;
 				return;
 			}
 		}
 
 		if (IsHeld(In::Left) && CanDismountLadderLeft(item, coll))
 		{
-			item->Animation.TargetState = LS_LADDERX_DISMOUNT_LEFT;
+			item->Animation.TargetState = LS_LADDER_DISMOUNT_LEFT;
 			return;
 		}
 		else if (IsHeld(In::Right) && CanDismountLadderRight(item, coll))
 		{
-			item->Animation.TargetState = LS_LADDERX_DISMOUNT_RIGHT;
+			item->Animation.TargetState = LS_LADDER_DISMOUNT_RIGHT;
 			return;
 		}
 
-		item->Animation.TargetState = LS_LADDERX_IDLE;
+		item->Animation.TargetState = LS_LADDER_IDLE;
 		return;
 	}
 
 	if (CanDismountLadderBack(item, coll))
 	{
-		item->Animation.TargetState = LS_LADDERX_DISMOUNT_BACK;
+		item->Animation.TargetState = LS_LADDER_DISMOUNT_BACK;
 		return;
 	}
 
@@ -1035,13 +1035,13 @@ void lara_as_ladder_up(ItemInfo* item, CollisionInfo* coll)
 
 	if (item->HitPoints <= 0)
 	{
-		item->Animation.TargetState = LS_LADDERX_IDLE;
+		item->Animation.TargetState = LS_LADDER_IDLE;
 		return;
 	}
 
 	if (CanDismountLadderTop(item, coll))
 	{
-		item->Animation.TargetState = LS_LADDERX_DISMOUNT_TOP;
+		item->Animation.TargetState = LS_LADDER_DISMOUNT_TOP;
 		return;
 	}
 
@@ -1049,21 +1049,21 @@ void lara_as_ladder_up(ItemInfo* item, CollisionInfo* coll)
 	{
 		if (IsHeld(In::Jump))
 		{
-			item->Animation.TargetState = LS_LADDERX_IDLE;
+			item->Animation.TargetState = LS_LADDER_IDLE;
 			return;
 		}
 
 		if (IsHeld(In::Forward) && CanClimbLadderUp(item, coll))
 		{
-			item->Animation.TargetState = LS_LADDERX_UP;
+			item->Animation.TargetState = LS_LADDER_UP;
 			return;
 		}
 
-		item->Animation.TargetState = LS_LADDERX_IDLE;
+		item->Animation.TargetState = LS_LADDER_IDLE;
 		return;
 	}
 
-	item->Animation.TargetState = LS_LADDERX_IDLE;
+	item->Animation.TargetState = LS_LADDER_IDLE;
 }
 
 // State:	LS_LADDER_UP (175)
@@ -1093,7 +1093,7 @@ void lara_as_ladder_down(ItemInfo* item, CollisionInfo* coll)
 
 	if (item->HitPoints <= 0)
 	{
-		item->Animation.TargetState = LS_LADDERX_IDLE;
+		item->Animation.TargetState = LS_LADDER_IDLE;
 		return;
 	}
 
@@ -1101,7 +1101,7 @@ void lara_as_ladder_down(ItemInfo* item, CollisionInfo* coll)
 	{
 		if (IsHeld(In::Jump))
 		{
-			item->Animation.TargetState = LS_LADDERX_IDLE;
+			item->Animation.TargetState = LS_LADDER_IDLE;
 			return;
 		}
 
@@ -1109,21 +1109,21 @@ void lara_as_ladder_down(ItemInfo* item, CollisionInfo* coll)
 		{
 			if (CanDismountLadderBack(item, coll))
 			{
-				item->Animation.TargetState = LS_LADDERX_DISMOUNT_BACK;
+				item->Animation.TargetState = LS_LADDER_DISMOUNT_BACK;
 				return;
 			}
 			else if (CanClimbLadderDown(item, coll))
 			{
-				item->Animation.TargetState = LS_LADDERX_DOWN;
+				item->Animation.TargetState = LS_LADDER_DOWN;
 				return;
 			}
 		}
 
-		item->Animation.TargetState = LS_LADDERX_IDLE;
+		item->Animation.TargetState = LS_LADDER_IDLE;
 		return;
 	}
 
-	item->Animation.TargetState = LS_LADDERX_IDLE;
+	item->Animation.TargetState = LS_LADDER_IDLE;
 }
 
 // State:	LS_LADDER_DOWN (176)

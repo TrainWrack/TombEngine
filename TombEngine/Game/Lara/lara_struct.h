@@ -84,12 +84,12 @@ enum LaraState
 	LS_ONWATER_EXIT = 55,
 
 	// TR2
-	LS_LADDER_IDLE = 56,
-	LS_LADDER_UP = 57,
-	LS_LADDER_LEFT = 58,
-	LS_LADDER_STOP = 59,
-	LS_LADDER_RIGHT = 60,
-	LS_LADDER_DOWN = 61,
+	LS_WALL_CLIMB_IDLE = 56,
+	LS_WALL_CLIMB_UP = 57,
+	LS_WALL_CLIMB_LEFT = 58,
+	LS_WALL_CLIMB_STOP = 59,
+	LS_WALL_CLIMB_RIGHT = 60,
+	LS_WALL_CLIMB_DOWN = 61,
 	LS_AUTO_JUMP = 62,
 	LS_TEST_2 = 63,
 	LS_TEST_3 = 64,
@@ -172,7 +172,7 @@ enum LaraState
 	LS_VALVE_TURN = 135,
 	LS_UNKNOWN_5 = 136,
 	LS_PICKUP_FROM_CHEST = 137,
-	LS_LADDER_TO_CROUCH = 138,
+	LS_WALL_CLIMB_TO_CROUCH = 138,
 
 	// TombEngine
 	LS_SHIMMY_45_OUTER_LEFT = 139,
@@ -186,8 +186,8 @@ enum LaraState
 	LS_STEP_UP = 147,
 	LS_STEP_DOWN = 148,
 	LS_SLOPE_CLIMB_FALL = 149,
-	LS_LADDER_DISMOUNT_LEFT = 150,
-	LS_LADDER_DISMOUNT_RIGHT = 151,
+	LS_WALL_CLIMB_DISMOUNT_LEFT = 150,
+	LS_WALL_CLIMB_DISMOUNT_RIGHT = 151,
 	LS_TURN_LEFT_FAST = 152,
 	LS_CRAWL_EXIT_STEP_DOWN = 153,
 	LS_CRAWL_EXIT_JUMP = 154,
@@ -210,20 +210,20 @@ enum LaraState
 	LS_CROUCH_TURN_180 = 171,
 	LS_CRAWL_TURN_180 = 172,
 	LS_TURN_180 = 173,
-	LS_LADDERX_IDLE = 174,
-	LS_LADDERX_UP = 175,
-	LS_LADDERX_DOWN = 176,
-	LS_LADDERX_MOUNT_TOP_FRONT = 177,  //NOT USED
-	LS_LADDERX_MOUNT_TOP_BACK = 178,//NOT USED
-	LS_LADDERX_MOUNT_FRONT = 179,//NOT USED
-	LS_LADDERX_MOUNT_LEFT = 180,//NOT USED
-	LS_LADDERX_MOUNT_RIGHT = 181,//NOT USED
-	LS_LADDERX_MOUNT_JUMP_UP = 182,//NOT USED
-	LS_LADDERX_MOUNT_JUMP_REACH = 183,//NOT USED
-	LS_LADDERX_DISMOUNT_TOP = 184,
-	LS_LADDERX_DISMOUNT_BACK = 185,
-	LS_LADDERX_DISMOUNT_LEFT = 186,
-	LS_LADDERX_DISMOUNT_RIGHT = 187,
+	LS_LADDER_IDLE = 174,
+	LS_LADDER_UP = 175,
+	LS_LADDER_DOWN = 176,
+	LS_LADDER_MOUNT_TOP_FRONT = 177,  //NOT USED
+	LS_LADDER_MOUNT_TOP_BACK = 178,//NOT USED
+	LS_LADDER_MOUNT_FRONT = 179,//NOT USED
+	LS_LADDER_MOUNT_LEFT = 180,//NOT USED
+	LS_LADDER_MOUNT_RIGHT = 181,//NOT USED
+	LS_LADDER_MOUNT_JUMP_UP = 182,//NOT USED
+	LS_LADDER_MOUNT_JUMP_REACH = 183,//NOT USED
+	LS_LADDER_DISMOUNT_TOP = 184,
+	LS_LADDER_DISMOUNT_BACK = 185,
+	LS_LADDER_DISMOUNT_LEFT = 186,
+	LS_LADDER_DISMOUNT_RIGHT = 187,
 
 	LS_REMOVE_PUZZLE = 189,
 	LS_PUSHABLE_EDGE_SLIP = 190,
@@ -410,22 +410,22 @@ enum LaraAnim
 	LA_HANG_HANDSTAND = 159,								// Hang > stand via handstand
 	
 	// TR2
-	LA_STAND_TO_LADDER = 160,								// Stand > ladder idle
-	LA_LADDER_UP = 161,										// Ascend ladder (looped)
-	LA_LADDER_UP_LEFT_END = 162,							// Ascend ladder > ladder idle, left foot first
-	LA_LADDER_UP_RIGHT_END = 163,							// Ascend ladder > ladder idle, right foot first
-	LA_LADDER_IDLE = 164,									// Ladder idle (looped)
-	LA_LADDER_UP_START = 165,								// Ladder idle > ascend ladder
-	LA_LADDER_DOWN_LEFT_END = 166,							// Descend ladder > ladder idle, left foot first
-	LA_LADDER_DOWN_RIGHT_END = 167,							// Descend ladder > ladder idle, right foot first
-	LA_LADDER_DOWN = 168,									// Descend ladder (looped)
-	LA_LADDER_DOWN_START = 169,								// Ladder idle > descend ladder
-	LA_LADDER_RIGHT = 170,									// Climb ladder right (looped)
-	LA_LADDER_LEFT = 171,									// Climb ladder left (looped)
-	LA_LADDER_HANG = 172,									// Ladder hang (looped)
-																// TODO: possible to make this a generic hang animation for ledges and ladders, thereby splitting 96?
-	LA_LADDER_HANG_TO_IDLE = 173,							// Ladder hang > ladder idle
-	LA_LADDER_TO_STAND = 174,								// Ladder idle > stand, pulling up
+	LA_STAND_TO_WALL_CLIMB = 160,								// Stand > wall climb idle
+	LA_WALL_CLIMB_UP = 161,										// Ascend wall climb (looped)
+	LA_WALL_CLIMB_UP_LEFT_END = 162,							// Ascend wall climb > wall climb idle, left foot first
+	LA_WALL_CLIMB_UP_RIGHT_END = 163,							// Ascend wall climb > wall climb idle, right foot first
+	LA_WALL_CLIMB_IDLE = 164,									// Wall Climb idle (looped)
+	LA_WALL_CLIMB_UP_START = 165,								// Wall climb idle > ascend wall climb
+	LA_WALL_CLIMB_DOWN_LEFT_END = 166,							// Descend wall climb > wall climb idle, left foot first
+	LA_WALL_CLIMB_DOWN_RIGHT_END = 167,							// Descend wall climb > wall climb idle, right foot first
+	LA_WALL_CLIMB_DOWN = 168,									// Descend wall climb (looped)
+	LA_WALL_CLIMB_DOWN_START = 169,								// Wall climb idle > descend wall climb
+	LA_WALL_CLIMB_RIGHT = 170,									// Climb wall climb right (looped)
+	LA_WALL_CLIMB_LEFT = 171,									// Climb wall climb left (looped)
+	LA_WALL_CLIMB_HANG = 172,									// Wall climb hang (looped)
+																// TODO: possible to make this a generic hang animation for ledges and wall climbs, thereby splitting 96?
+	LA_WALL_CLIMB_HANG_TO_IDLE = 173,							// Wall climb hang > wall climb idle
+	LA_WALL_CLIMB_TO_STAND = 174,								// Wall climb idle > stand, pulling up
 	LA_UNKNOWN = 175,										// Pushed back?
 	LA_ONWATER_TO_WADE_0_STEP = 176,						// Tread water > wade
 																// TODO: implement this properly?
@@ -434,20 +434,20 @@ enum LaraAnim
 	LA_RUN_TO_WADE_LEFT = 179,								// Run > wade, left foot first
 	LA_WADE_TO_RUN_RIGHT = 180,								// Wade > run, right foot first
 	LA_WADE_TO_RUN_LEFT = 181,								// Wade > run, left foot first
-	LA_LADDER_TO_JUMP_BACK_START = 182,						// Ladder idle > jump back (1/2)
-	LA_LADDER_TO_JUMP_BACK_END = 183,						// Ladder idle > jump back (2/2)
+	LA_WALL_CLIMB_TO_JUMP_BACK_START = 182,						// Wall climb idle > jump back (1/2)
+	LA_WALL_CLIMB_TO_JUMP_BACK_END = 183,						// Wall climb idle > jump back (2/2)
 																// TODO: combine 182 and 183?
 	LA_WADE_TO_STAND_RIGHT = 184,							// Wade > stand, right foot first
 	LA_WADE_TO_STAND_LEFT = 185,							// Wade > stand, left foot first
 	LA_STAND_TO_WADE = 186,									// Stand > wade
-	LA_LADDER_SHIMMY_UP = 187,								// Ascend ladder hanging
-	LA_LADDER_SHIMMY_DOWN = 188,							// Descend ladder hanging
+	LA_WALL_CLIMB_SHIMMY_UP = 187,								// Ascend wall climb hanging
+	LA_WALL_CLIMB_SHIMMY_DOWN = 188,							// Descend wall climb hanging
 	LA_DISCARD_FLARE = 189,									// Throw flare standing
 	LA_ONWATER_TO_WADE_1_STEP = 190,						// Tread water up a step > wade
 	LA_ONWATER_TO_STAND_0_STEP = 191,						// Pull up from tread > stand
 	LA_UNDERWATER_TO_STAND = 192,							// Underwater > stand
 	LA_ONWATER_TO_STAND_M1_STEP = 193,						// Pull up on lower step from tread > stand
-	LA_LADDER_TO_HANG_DOWN = 194,							// Descend ladder > hang
+	LA_WALL_CLIMB_TO_HANG_DOWN = 194,							// Descend wall climb > hang
 																// TODO: this links to regular hang at 96. Address this?
 	LA_SWITCH_SMALL_DOWN = 195,								// Activate small switch
 	LA_SWITCH_SMALL_UP = 196,								// Deactivate small switch
@@ -455,8 +455,8 @@ enum LaraAnim
 	LA_UNDERWATER_SWIM_TO_IDLE_2 = 198,						// Underwater swim > underwater idle, 2nd opportunity
 	LA_UNDERWATER_SWIM_TO_IDLE_3 = 199,						// Underwater swim > underwater idle, 3rd opportunity
 	LA_UNDERWATER_SWIM_TO_IDLE_1 = 200,						// Underwater swim > underwater idle, 1st opportunity
-	LA_LADDER_TO_HANG_RIGHT = 201,							// Climb ladder right > hang
-	LA_LADDER_TO_HANG_LEFT = 202,							// Climb ladder left > hang
+	LA_WALL_CLIMB_TO_HANG_RIGHT = 201,							// Climb wall climb right > hang
+	LA_WALL_CLIMB_TO_HANG_LEFT = 202,							// Climb wall climb left > hang
 	LA_UNDERWATER_ROLL_180_START = 203,						// Underwater roll 180 (1/2)
 	LA_PICKUP_FLARE = 204,									// Pickup flare standing
 	LA_UNDERWATER_ROLL_180_END = 205,						// Underwater roll 180 (2/2)
@@ -512,7 +512,7 @@ enum LaraAnim
 	LA_MONKEY_SHIMMY_LEFT_END = 254,								// Monkey swing shimmy left > monkey swing idle
 	LA_MONKEY_SHIMMY_RIGHT = 255,									// Monkey swing shimmy right (looped)
 	LA_MONKEY_SHIMMY_RIGHT_END = 256,								// Monkey swing shimmy right > monkey swing idle
-																		// TODO: generic shimmy anims between ledges and ladders?
+																		// TODO: generic shimmy anims between ledges and wall climbs?
 	LA_MONKEY_TURN_180_START = 257,									// Monkey swing turn 180 (1/2)
 	LA_CROUCH_TO_CRAWL_START = 258,									// Crouch > crawl (1/3)
 	LA_CRAWL_TO_CROUCH_START = 259,									// Crawl > crouch (1/3)
@@ -622,14 +622,14 @@ enum LaraAnim
 	LA_SHIMMY_LEFT_CORNER_INNER_45 = 360,					// Shimmy around inner left corner (45)
 	LA_SHIMMY_RIGHT_CORNER_INNER_90 = 361,				    // Shimmy around inner right corner (90)
 	LA_SHIMMY_RIGHT_CORNER_INNER_45 = 362,					// Shimmy around inner right corner (45)
-	LA_LADDER_LEFT_CORNER_OUTER_START = 363,				// Ladder around outer left corner
+	LA_WALL_CLIMB_LEFT_CORNER_OUTER_START = 363,				// Wall climb around outer left corner
 	LA_PUSHABLE_OBJECT_PUSH_EDGE_SLIP = 364,
-	LA_LADDER_RIGHT_CORNER_OUTER_START = 365,				// Ladder around outer right corner
+	LA_WALL_CLIMB_RIGHT_CORNER_OUTER_START = 365,				// Wall climb around outer right corner
 	LA_PUSHABLE_BLOCK_PUSH_EDGE_SLIP = 366,
-	LA_LADDER_LEFT_CORNER_INNER_START = 367,				// Ladder around inner left corner
-	LA_LADDER_LEFT_CORNER_INNER_END = 368,
-	LA_LADDER_RIGHT_CORNER_INNER_START = 369,				// Ladder around inner right corner
-	LA_LADDER_RIGHT_CORNER_INNER_END = 370,					// Unused.
+	LA_WALL_CLIMB_LEFT_CORNER_INNER_START = 367,				// Wall climb around inner left corner
+	LA_WALL_CLIMB_LEFT_CORNER_INNER_END = 368,
+	LA_WALL_CLIMB_RIGHT_CORNER_INNER_START = 369,				// Wall climb around inner right corner
+	LA_WALL_CLIMB_RIGHT_CORNER_INNER_END = 370,					// Unused.
 	LA_JUMP_UP_TO_ROPE_START = 371,							// Jump up > rope idle (1/2)
 	LA_TRAIN_OVERBOARD_DEATH = 372,							// Train overboard death
 	LA_JUMP_UP_TO_ROPE_END = 373,							// Jump up > rope idle (2/2)
@@ -655,7 +655,7 @@ enum LaraAnim
 	LA_ROPE_TURN_CLOCKWISE = 392,							// Turn clockwise on rope
 	LA_ROPE_TURN_COUNTER_CLOCKWISE = 393,					// Turn counter-clockwise on rope
 	LA_ROPE_SWING = 394,									// Swing on rope
-	LA_LADDER_TO_HANG_UNUSED = 395,							// Ladder idle > hang
+	LA_WALL_CLIMB_TO_HANG_UNUSED = 395,							// Wall climb idle > hang
 	LA_ROPE_HANG_TO_SWING_BACK_CONTINUE_UNUSED = 396,		// Rope hang > swing back (2/3)
 	LA_ROPE_HANG_TO_SWING_BACK_END_UNUSED = 397,			// Rope hang > swing back (3/3)
 	LA_ROPE_HANG_TO_SWING_BACK_START_UNUSED = 398,			// Rope hang > swing back (1/3)
@@ -738,7 +738,7 @@ enum LaraAnim
 	LA_VALVE_TURN = 470,									// Turn valve wheel
 	LA_CROWBAR_PRY_WALL_SLOW = 471,							// Pry item off wall slowly
 	LA_LOOT_CHEST = 472,									// Search chest on ground
-	LA_LADDER_TO_CROUCH = 473,								// Pull up from ladder > crouch
+	LA_WALL_CLIMB_TO_CROUCH = 473,								// Pull up from wall climb > crouch
 
 	// TombEngine
 	LA_VAULT_TO_CROUCH_1_STEP = 474, 						// Vault standing up 1 step > crouch
@@ -751,11 +751,11 @@ enum LaraAnim
 	LA_ONWATER_TO_CROUCH_1_STEP = 481,						// Pull up 1 step from tread > stand
 	LA_ONWATER_TO_CROUCH_0_STEP = 482,						// Pull up flat step from tread > stand
 	LA_ONWATER_TO_CROUCH_M1_STEP = 483,						// Pull up lower step from tread > stand
-	LA_LADDER_TO_MONKEY = 484,								// Ladder idle > monkey swing idle
+	LA_WALL_CLIMB_TO_MONKEY = 484,								// Wall climb idle > monkey swing idle
 	LA_ONWATER_TURN_180_START = 485,						// Tread water 180 turn (1/2)
 	LA_ONWATER_TURN_180_END = 486,							// Tread water 180 turn (2/2)
-	LA_MONKEY_TO_LADDER_OVERHEAD_START = 487,				// Monkey idle > ladder idle, overhead (1/2)
-	LA_MONKEY_TO_LADDER_OVERHEAD_END = 488,					// Monkey idle > ladder idle, overhead (2/2)
+	LA_MONKEY_TO_WALL_CLIMB_OVERHEAD_START = 487,				// Monkey idle > wall climb idle, overhead (1/2)
+	LA_MONKEY_TO_WALL_CLIMB_OVERHEAD_END = 488,					// Monkey idle > wall climb idle, overhead (2/2)
 	LA_JUMP_PREPARE_TO_STAND = 489,							// Jump prepare > stand
 	LA_MONKEY_IDLE_TO_BACK_LEFT = 490,						// Monkey swing idle > monkey swing back, left hand leading
 	LA_MONKEY_IDLE_TO_BACK_RIGHT = 491,						// Monkey swing idle > monkey swing back, right hand leading
@@ -764,11 +764,11 @@ enum LaraAnim
 	LA_MONKEY_BACK_TO_IDLE_RIGHT = 494,						// Monkey swing back > monkey swing idle, right hand leading
 	LA_REACH_TO_HANG_OSCILLATE = 495,						// Reach > hang, thin ledge
 	LA_SWANDIVE_ROLL_TO_RUN = 496,							// Swandive roll > run
-	LA_LADDER_DISMOUNT_LEFT_START = 497,					// Ladder dismount left (1/2)
-	LA_LADDER_DISMOUNT_LEFT_END = 498,						// Ladder dismount left (2/2)
-	LA_LADDER_DISMOUNT_RIGHT_START = 499,					// Ladder dismount right (1/2)
-	LA_LADDER_DISMOUNT_RIGHT_END = 500,						// Ladder dismount right (2/2)
-	LA_ONWATER_TO_LADDER = 501,								// Tread water > ladder idle
+	LA_WALL_CLIMB_DISMOUNT_LEFT_START = 497,					// Wall climb dismount left (1/2)
+	LA_WALL_CLIMB_DISMOUNT_LEFT_END = 498,						// Wall climb dismount left (2/2)
+	LA_WALL_CLIMB_DISMOUNT_RIGHT_START = 499,					// Wall climb dismount right (1/2)
+	LA_WALL_CLIMB_DISMOUNT_RIGHT_END = 500,						// Wall climb dismount right (2/2)
+	LA_ONWATER_TO_WALL_CLIMB = 501,								// Tread water > ladder idle
 	LA_POSE_START = 502,									// Stand > AFK pose
 	LA_POSE_CONTINUE = 503,									// AFK pose (looped)
 	LA_POSE_END = 504,										// AFK pose > stand
@@ -794,11 +794,11 @@ enum LaraAnim
 	LA_OVERHANG_SHIMMY_RIGHT_STOP = 523,
 	LA_OVERHANG_LEDGE_VAULT_START = 524,
 	LA_OVERHANG_LEDGE_VAULT = 525,
-	LA_OVERHANG_LADDER_SLOPE_CONCAVE = 526,
-	LA_OVERHANG_SLOPE_LADDER_CONCAVE = 527,
-	LA_OVERHANG_LADDER_SLOPE_CONVEX = 528,
-	LA_OVERHANG_SLOPE_LADDER_CONVEX_START = 529,
-	LA_OVERHANG_SLOPE_LADDER_CONVEX = 530,
+	LA_OVERHANG_WALL_CLIMB_SLOPE_CONCAVE = 526,
+	LA_OVERHANG_SLOPE_WALL_CLIMB_CONCAVE = 527,
+	LA_OVERHANG_WALL_CLIMB_SLOPE_CONVEX = 528,
+	LA_OVERHANG_SLOPE_WALL_CLIMB_CONVEX_START = 529,
+	LA_OVERHANG_SLOPE_WALL_CLIMB_CONVEX = 530,
 	LA_OVERHANG_MONKEY_SLOPE_CONCAVE = 531,
 	LA_OVERHANG_SLOPE_MONKEY_CONCAVE = 532,
 	LA_OVERHANG_SLOPE_MONKEY_CONCAVE_END = 533,
@@ -807,7 +807,7 @@ enum LaraAnim
 	LA_OVERHANG_SLOPE_MONKEY_CONVEX = 536,
 	LA_OVERHANG_EXIT_MONKEY_FORWARD = 537,
 	LA_OVERHANG_EXIT_MONKEY_IDLE = 538,
-	LA_OVERHANG_EXIT_LADDER = 539,
+	LA_OVERHANG_EXIT_WALL_CLIMB = 539,
 	LA_OVERHANG_EXIT_VAULT = 540,
 	LA_OVERHANG_EXIT_DROP = 541,
 	LA_OVERHANG_EXIT_HANG = 542,
@@ -846,37 +846,37 @@ enum LaraAnim
 	LA_UNDERWATER_PULLEY_UNGRAB = 574,		// Release underwater pulley
 	LA_CEILING_LEVER_SWITCH = 575,			// Use ceiling switch above ground
 
-	LA_LADDERX_IDLE = 576,
-	LA_LADDERX_IDLE_TO_UP_LEFT = 577,
-	LA_LADDERX_IDLE_TO_DOWN_RIGHT = 578,
-	LA_LADDERX_UP = 579,
-	LA_LADDERX_UP_TO_IDLE_LEFT = 580,
-	LA_LADDERX_UP_TO_IDLE_RIGHT = 581,
-	LA_LADDERX_DOWN = 582,
-	LA_LADDERX_DOWN_TO_IDLE_LEFT = 583,
-	LA_LADDERX_DOWN_TO_IDLE_RIGHT = 584,
-	LA_LADDERX_MOUNT_TOP_FRONT = 585,
-	LA_LADDERX_MOUNT_TOP_BACK = 586,
-	LA_LADDERX_MOUNT_FRONT = 587,
-	LA_LADDERX_MOUNT_LEFT = 588,
-	LA_LADDERX_MOUNT_RIGHT = 589,
-	LA_LADDERX_MOUNT_JUMP_UP = 590,
-	LA_LADDERX_MOUNT_JUMP_REACH = 591,
-	LA_LADDERX_DISMOUNT_TOP_LEFT = 592,
-	LA_LADDERX_DISMOUNT_TOP_RIGHT = 593,
-	LA_LADDERX_DISMOUNT_TOP_IDLE = 594,
-	LA_LADDERX_DISMOUNT_LEFT = 595,
-	LA_LADDERX_DISMOUNT_RIGHT = 596,
-	LA_LADDERX_DISMOUNT_BACK_LEFT = 597,
-	LA_LADDERX_DISMOUNT_BACK_RIGHT = 598,
-	LA_LADDERX_DISMOUNT_BACK_IDLE = 599,
-	LA_LADDERX_DISMOUNT_JUMP_BACKWARD = 600,
-	LA_LADDERX_DISMOUNT_RELEASE = 601,
-	LA_LADDERX_DISMOUNT_FALL = 602,
-	LA_LADDERX_MOUNT_FRONT_TO_UP = 603,
-	LA_LADDERX_MOUNT_TOP_BACK_FINISH = 604,
-	LA_LADDERX_MOUNT_WATER = 605,
-	LA_LADDERX_SWITCH_SIDE = 606,
+	LA_LADDER_IDLE = 576,
+	LA_LADDER_IDLE_TO_UP_LEFT = 577,
+	LA_LADDER_IDLE_TO_DOWN_RIGHT = 578,
+	LA_LADDER_UP = 579,
+	LA_LADDER_UP_TO_IDLE_LEFT = 580,
+	LA_LADDER_UP_TO_IDLE_RIGHT = 581,
+	LA_LADDER_DOWN = 582,
+	LA_LADDER_DOWN_TO_IDLE_LEFT = 583,
+	LA_LADDER_DOWN_TO_IDLE_RIGHT = 584,
+	LA_LADDER_MOUNT_TOP_FRONT = 585,
+	LA_LADDER_MOUNT_TOP_BACK = 586,
+	LA_LADDER_MOUNT_FRONT = 587,
+	LA_LADDER_MOUNT_LEFT = 588,
+	LA_LADDER_MOUNT_RIGHT = 589,
+	LA_LADDER_MOUNT_JUMP_UP = 590,
+	LA_LADDER_MOUNT_JUMP_REACH = 591,
+	LA_LADDER_DISMOUNT_TOP_LEFT = 592,
+	LA_LADDER_DISMOUNT_TOP_RIGHT = 593,
+	LA_LADDER_DISMOUNT_TOP_IDLE = 594,
+	LA_LADDER_DISMOUNT_LEFT = 595,
+	LA_LADDER_DISMOUNT_RIGHT = 596,
+	LA_LADDER_DISMOUNT_BACK_LEFT = 597,
+	LA_LADDER_DISMOUNT_BACK_RIGHT = 598,
+	LA_LADDER_DISMOUNT_BACK_IDLE = 599,
+	LA_LADDER_DISMOUNT_JUMP_BACKWARD = 600,
+	LA_LADDER_DISMOUNT_RELEASE = 601,
+	LA_LADDER_DISMOUNT_FALL = 602,
+	LA_LADDER_MOUNT_FRONT_TO_UP = 603,
+	LA_LADDER_MOUNT_TOP_BACK_FINISH = 604,
+	LA_LADDER_MOUNT_WATER = 605,
+	LA_LADDER_SWITCH_SIDE = 606,
 	//ADD NEW ANIMATIONS HERE
 
 	NUM_LARA_ANIMS

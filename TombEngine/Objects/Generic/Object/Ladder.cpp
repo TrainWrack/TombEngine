@@ -59,9 +59,9 @@ namespace TEN::Entities::Generic
 
 	const auto LadderMountedPlayerStates = std::vector<int>
 	{
-		LS_LADDERX_IDLE,
-		LS_LADDERX_UP,
-		LS_LADDERX_DOWN
+		LS_LADDER_IDLE,
+		LS_LADDER_UP,
+		LS_LADDER_DOWN
 	};
 	const auto LadderGroundedMountPlayerStates = std::vector<int>
 	{
@@ -435,43 +435,43 @@ namespace TEN::Entities::Generic
 
 	static void SetPlayerLadderMountInteraction(ItemInfo& interactor, ItemInfo&)
 	{
-		SetAnimation(&interactor, LA_LADDERX_MOUNT_FRONT);
+		SetAnimation(&interactor, LA_LADDER_MOUNT_FRONT);
 		interactor.Animation.IsAirborne = false;
 	}
 
 	static void SetPlayerLadderMountRightInteraction(ItemInfo& interactor, ItemInfo&)
 	{
-		SetAnimation(&interactor, LA_LADDERX_MOUNT_RIGHT);
+		SetAnimation(&interactor, LA_LADDER_MOUNT_RIGHT);
 		interactor.Animation.IsAirborne = false;
 	}
 
 	static void SetPlayerLadderMountLeftInteraction(ItemInfo& interactor, ItemInfo&)
 	{
-		SetAnimation(&interactor, LA_LADDERX_MOUNT_LEFT);
+		SetAnimation(&interactor, LA_LADDER_MOUNT_LEFT);
 		interactor.Animation.IsAirborne = false;
 	}
 
 	static void SetPlayerLadderMountTopFrontInteraction(ItemInfo& interactor, ItemInfo&)
 	{
-		SetAnimation(&interactor, LA_LADDERX_MOUNT_TOP_FRONT);
+		SetAnimation(&interactor, LA_LADDER_MOUNT_TOP_FRONT);
 		interactor.Animation.IsAirborne = false;
 	}
 
 	static void SetPlayerLadderMountTopBackInteraction(ItemInfo& interactor, ItemInfo&)
 	{
-		SetAnimation(&interactor, LA_LADDERX_MOUNT_TOP_BACK);
+		SetAnimation(&interactor, LA_LADDER_MOUNT_TOP_BACK);
 		interactor.Animation.IsAirborne = false;
 	}
 
 	static void SetPlayerLadderAirGrabInteraction(ItemInfo& interactor, ItemInfo&)
 	{
-		SetAnimation(&interactor, LA_LADDERX_MOUNT_JUMP_UP);
+		SetAnimation(&interactor, LA_LADDER_MOUNT_JUMP_UP);
 		interactor.Animation.IsAirborne = false;
 	}
 
 	static void SetPlayerLadderAirReachInteraction(ItemInfo& interactor, ItemInfo&)
 	{
-		SetAnimation(&interactor, LA_LADDERX_MOUNT_JUMP_REACH);
+		SetAnimation(&interactor, LA_LADDER_MOUNT_JUMP_REACH);
 		interactor.Animation.IsAirborne = false;
 	}
 
@@ -479,7 +479,7 @@ namespace TEN::Entities::Generic
 	{
 		auto& player = GetLaraInfo(interactor);
 
-		SetAnimation(&interactor, LA_LADDERX_MOUNT_WATER);
+		SetAnimation(&interactor, LA_LADDER_MOUNT_WATER);
 
 		// She is leaving the water to grab the ladder.
 		player.Control.WaterStatus = WaterStatus::Dry;

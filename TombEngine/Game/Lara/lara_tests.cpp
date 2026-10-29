@@ -173,8 +173,8 @@ bool TestLaraHang(ItemInfo* item, CollisionInfo* coll)
 
 			if (!TestLaraHangOnClimbableWall(item, coll))
 			{
-				if (item->Animation.AnimNumber != LA_LADDER_TO_HANG_RIGHT &&
-					item->Animation.AnimNumber != LA_LADDER_TO_HANG_LEFT)
+				if (item->Animation.AnimNumber != LA_WALL_CLIMB_TO_HANG_RIGHT &&
+					item->Animation.AnimNumber != LA_WALL_CLIMB_TO_HANG_LEFT)
 				{
 					LaraSnapToEdgeOfBlock(item, coll, GetQuadrant(item->Pose.Orientation.y));
 					item->Pose.Position.y = coll->Setup.PrevPosition.y;
@@ -188,7 +188,7 @@ bool TestLaraHang(ItemInfo* item, CollisionInfo* coll)
 				if (((item->Animation.AnimNumber == LA_REACH_TO_HANG && item->Animation.FrameNumber == 21) || item->Animation.AnimNumber == LA_HANG_IDLE)  &&
 					TestLaraClimbIdle(item, coll))
 				{
-					item->Animation.TargetState = LS_LADDER_IDLE;
+					item->Animation.TargetState = LS_WALL_CLIMB_IDLE;
 				}
 			}
 		}
@@ -1084,7 +1084,7 @@ bool TestLaraLadderClimbOut(ItemInfo* item, CollisionInfo* coll) // NEW function
 	}
 
 	SetAnimation(item, LA_ONWATER_IDLE);
-	item->Animation.TargetState = LS_LADDER_IDLE;
+	item->Animation.TargetState = LS_WALL_CLIMB_IDLE;
 	AnimateItem(item);
 
 	item->Pose.Position.y -= 10; // Otherwise she falls back into the water.
@@ -1648,7 +1648,7 @@ bool TestAndDoLaraLadderClimb(ItemInfo* item, CollisionInfo* coll)
 	{
 		item->Animation.AnimNumber = LA_STAND_SOLID;
 		item->Animation.FrameNumber = 0;
-		item->Animation.TargetState = LS_LADDER_IDLE;
+		item->Animation.TargetState = LS_WALL_CLIMB_IDLE;
 		item->Animation.ActiveState = LS_IDLE;
 		lara->Control.HandStatus = HandStatus::Busy;
 		lara->Control.TurnRate = 0;
