@@ -9,6 +9,8 @@ TombEngine releases are located in this repository (alongside with Tomb Editor):
 
 ### Bug fixes
 
+* Fixed static meshes in flipped rooms being lit with ambient light of the original room.
+
 ### Lua API Changes
 
 * Added `ParticleGroup:IsActive` method to check if the group's emitter is currently running.
