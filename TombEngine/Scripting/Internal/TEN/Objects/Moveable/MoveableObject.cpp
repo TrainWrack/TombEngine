@@ -228,6 +228,8 @@ void Moveable::Register(sol::state& state, sol::table& parent)
 		ScriptReserved_AttachObjCamera, &Moveable::AttachObjCamera,
 		ScriptReserved_Attach, &Moveable::Attach,
 		ScriptReserved_Detach, &Moveable::Detach,
+		ScriptReserved_IsAttached, &Moveable::IsAttached,
+		ScriptReserved_GetParent, &Moveable::GetParent,
 		ScriptReserved_AnimFromObject, &Moveable::AnimFromObject,
 		ScriptReserved_ShowInteractionHighlight, &Moveable::ShowInteractionHighlight,
 		ScriptReserved_HideInteractionHighlight, &Moveable::HideInteractionHighlight,
@@ -1486,8 +1488,7 @@ void Moveable::AttachObjCamera(short camMeshId, Moveable& mov, short targetMeshI
 	ObjCamera(_moveable, camMeshId, mov._moveable, targetMeshId, true);
 }
 
-/// Parent this moveable to another moveable. The moveable will follow the parent's movement
-// and rotation every frame.
+/// Parent this moveable to another moveable. The moveable will follow the parent's movement and rotation every frame.
 // @function Moveable:Attach
 // @tparam Objects.Moveable parent Moveable to follow.
 void Moveable::Attach(Moveable& parent)
@@ -1506,6 +1507,32 @@ void Moveable::Detach()
 		return;
 
 	_moveable->Parenting.Detach();
+}
+
+/// Check if this moveable is attached to a parent moveable.
+// @function Moveable:IsAttached
+// @treturn bool true if the moveable is attached to a parent.
+bool Moveable::IsAttached() const
+{
+	if (_moveableID == NO_VALUE)
+		return false;
+
+	return _moveable->Parenting.IsAttached();
+}
+
+/// Get the moveable this moveable is attached to.
+// @function Moveable:GetParent
+// @treturn[opt] Objects.Moveable Parent moveable, or nil if not attached.
+std::unique_ptr<Moveable> Moveable::GetParent() const
+{
+	if (_moveableID == NO_VALUE)
+		return nullptr;
+
+	int parentID = _moveable->Parenting.ParentObject;
+	if (parentID < 0 || parentID >= (int)g_Level.Items.size())
+		return nullptr;
+
+	return std::make_unique<Moveable>(parentID);
 }
 
 /// Borrow animation from an object.

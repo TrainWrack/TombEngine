@@ -138,6 +138,8 @@ public:
 	void AttachObjCamera(short camMeshId, Moveable& mov, short targetMeshId);
 	void Attach(Moveable& parent);
 	void Detach();
+	bool IsAttached() const;
+	std::unique_ptr<Moveable> GetParent() const;
 	void AnimFromObject(GAME_OBJECT_ID objectID, int animNumber, int stateID);
 	void EnableItem(sol::optional<float> timer);
 	void DisableItem();
