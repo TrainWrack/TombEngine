@@ -100,14 +100,14 @@ namespace TEN::Entities::Generic
 	// against the ladder's edge is picked up instead of one standing in front of it.
 	const auto LadderInteractRightBounds2D = GameBoundingBox(
 		BLOCK(0.25f), BLOCK(0.75f),
-		-CLICK(1), -CLICK(2),
+		-CLICK(2), -CLICK(1),
 		-BLOCK(3 / 8.0f), 0);
 	const auto LadderInteractRightBox2D = LadderInteractRightBounds2D.ToBoundingOrientedBox(Pose::Zero);
 
 	// Side mount interaction box. Sits beside the ladder (local -X).
 	const auto LadderInteractLeftBounds2D = GameBoundingBox(
 		-BLOCK(0.75f), -BLOCK(0.25f),
-		-CLICK(1), -CLICK(2),
+		-CLICK(2), -CLICK(1),
 		-BLOCK(3 / 8.0f), 0);
 	const auto LadderInteractLeftBox2D = LadderInteractLeftBounds2D.ToBoundingOrientedBox(Pose::Zero);
 
