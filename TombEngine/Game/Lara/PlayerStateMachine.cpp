@@ -164,7 +164,7 @@ namespace TEN::Entities::Player
 		PlayerBehaviorStateRoutines[LS_DOVE_SWITCH] = std::pair(lara_as_switch_on, lara_default_col);
 		PlayerBehaviorStateRoutines[LS_TIGHTROPE_RECOVER_BALANCE] = std::pair(lara_as_null, lara_default_col);
 		PlayerBehaviorStateRoutines[LS_HORIZONTAL_BAR_SWING] = std::pair(lara_as_horizontal_bar_swing, lara_default_col);
-		PlayerBehaviorStateRoutines[LS_HORIZONTAL_BAR_LEAP] = std::pair(lara_as_horizontal_bar_leap, lara_default_col);
+		PlayerBehaviorStateRoutines[LS_HORIZONTAL_BAR_JUMP] = std::pair(lara_as_horizontal_bar_jump, lara_default_col);
 		PlayerBehaviorStateRoutines[LS_RADIO_START] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[LS_RADIO_LISTENING] = std::pair(lara_as_controlled_no_look, lara_void_func);
 		PlayerBehaviorStateRoutines[LS_RADIO_OFF] = std::pair(lara_as_controlled_no_look, lara_void_func);
@@ -238,6 +238,9 @@ namespace TEN::Entities::Player
 		PlayerBehaviorStateRoutines[LS_TREAD_WATER_VAULT_1_STEP_UP_TO_CROUCH] = std::pair(lara_as_surface_climb_out, lara_void_func);
 
 		PlayerBehaviorStateRoutines[LS_PULLEY_UNGRAB] = std::pair(lara_as_controlled_no_look, lara_void_func);
+		PlayerBehaviorStateRoutines[LS_HORIZONTAL_BAR_IDLE] = std::pair(lara_as_horizontal_bar_idle, lara_default_col);
+		PlayerBehaviorStateRoutines[LS_HORIZONTAL_BAR_IDLE_TURN_180] = std::pair(lara_as_horizontal_bar_idle_turn_180, lara_default_col);
+		PlayerBehaviorStateRoutines[LS_HORIZONTAL_BAR_SWING_TURN_180] = std::pair(lara_as_horizontal_bar_swing_turn_180, lara_default_col);
 	}
 
 	void HandlePlayerBehaviorState(ItemInfo& item, CollisionInfo& coll, PlayerBehaviorStateRoutineType routineType)

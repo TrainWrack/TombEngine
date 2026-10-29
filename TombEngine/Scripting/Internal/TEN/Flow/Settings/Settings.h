@@ -18,14 +18,15 @@ namespace TEN::Scripting
 		int PoseTimeout				= 20; // AFK pose timeout.
 		int InternalBlendDuration	= 4;  // Default blend duration for internal player animation transitions.
 
-		bool SlideExtended	= false; // Extended slope sliding functionality (not ready yet).
-		bool SprintJump		= false; // Sprint jump.
-		bool CrawlspaceDive = true;	 // Dive into crawlspaces.
-		bool CrawlExtended	= true;	 // Extended crawl moveset.
-		bool CrouchRoll		= true;	 // Crouch roll.
-		bool OverhangClimb	= false; // Overhang functionality.
-		bool BackJumpTurn	= false; // Allow turning while jumping back.
-		bool LedgeJumps		= false; // Jump up or back from a ledge.
+		bool SlideExtended			= false; // Extended slope sliding functionality (not ready yet).
+		bool SprintJump				= false; // Sprint jump.
+		bool CrawlspaceDive			= true;	 // Dive into crawlspaces.
+		bool CrawlExtended			= true;	 // Extended crawl moveset.
+		bool CrouchRoll				= true;	 // Crouch roll.
+		bool OverhangClimb			= false; // Overhang functionality.
+		bool BackJumpTurn			= false; // Allow turning while jumping back.
+		bool LedgeJumps				= false; // Jump up or back from a ledge.
+		bool HorizontalBarExtended	= true;  // Etended horizontal bar moveset.
 
 		static void Register(sol::table& parent);
 	};

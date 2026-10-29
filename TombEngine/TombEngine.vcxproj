@@ -479,6 +479,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Game\itemdata\door_data.h" />
     <ClInclude Include="Game\itemdata\itemdata.h" />
     <ClInclude Include="Game\items.h" />
+    <ClInclude Include="Game\Parenting\ParentingInfo.h" />
     <ClInclude Include="Game\Lara\Optics.h" />
     <ClInclude Include="Game\Lara\PlayerContext.h" />
     <ClInclude Include="Game\Lara\PlayerContextData.h" />
@@ -498,6 +499,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Game\savegame.h" />
     <ClInclude Include="Game\Setup.h" />
     <ClInclude Include="Game\Sink.h" />
+    <ClInclude Include="Game\collision\Interaction.h" />
     <ClInclude Include="Game\spotcam.h" />
     <ClInclude Include="Game\StaticMesh.h" />
     <ClInclude Include="Math\Constants.h" />
@@ -522,6 +524,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClInclude Include="Objects\Effects\Fireflies.h" />
     <ClInclude Include="Objects\Effects\flame_emitters.h" />
     <ClInclude Include="Objects\Effects\LensFlare.h" />
+    <ClInclude Include="Objects\Generic\Object\HorizontalBar.h" />
     <ClInclude Include="Objects\TR3\Entity\Whale.h" />
     <ClInclude Include="Objects\TR3\Entity\Willard.h" />
     <ClInclude Include="Objects\TR2\Trap\DiskShooter.h" />
@@ -1115,6 +1118,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClCompile Include="Game\itemdata\creature_info.cpp" />
     <ClCompile Include="Game\itemdata\itemdata.cpp" />
     <ClCompile Include="Game\items.cpp" />
+    <ClCompile Include="Game\Parenting\ParentingInfo.cpp" />
     <ClCompile Include="Game\Lara\lara.cpp" />
     <ClCompile Include="Game\Lara\lara_basic.cpp" />
     <ClCompile Include="Game\Lara\lara_cheat.cpp" />
@@ -1152,6 +1156,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClCompile Include="Game\room.cpp" />
     <ClCompile Include="Game\savegame.cpp" />
     <ClCompile Include="Game\Setup.cpp" />
+    <ClCompile Include="Game\collision\Interaction.cpp" />
     <ClCompile Include="Game\spotcam.cpp" />
     <ClCompile Include="Game\StaticMesh.cpp" />
     <ClCompile Include="Math\Geometry.cpp" />
@@ -1174,6 +1179,7 @@ if not exist "%ScriptsDir%\Strings.lua" xcopy /Y "$(SolutionDir)Scripts\Strings.
     <ClCompile Include="Objects\Effects\Fireflies.cpp" />
     <ClCompile Include="Objects\Effects\flame_emitters.cpp" />
     <ClCompile Include="Objects\Effects\LensFlare.cpp" />
+    <ClCompile Include="Objects\Generic\Object\HorizontalBar.cpp" />
     <ClCompile Include="Objects\TR3\Entity\Whale.cpp" />
     <ClCompile Include="Objects\TR3\Entity\Willard.cpp" />
     <ClCompile Include="Objects\TR2\Trap\DiskShooter.cpp" />

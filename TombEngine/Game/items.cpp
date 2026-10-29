@@ -43,6 +43,108 @@ using TEN::Renderer::g_Renderer;
 
 constexpr auto ITEM_DEATH_TIMEOUT = 4 * FPS;
 
+void OffsetBlendData::SetLinear(const Vector3& posOffset, const EulerAngles& orientOffset, float vel, short turnRate, float delayInSec)
+{
+	Mode = OffsetBlendMode::Linear;
+	IsActive = true;
+	TimeDelay = (int)std::round(delayInSec / (float)FPS);
+	PosOffset = posOffset / vel;
+	OrientOffset = orientOffset / turnRate;
+}
+
+void OffsetBlendData::SetSmooth(const Vector3& posOffset, const EulerAngles& orientOffset, float alpha, float delayInSec)
+{
+	alpha = std::clamp(alpha, 0.0f, 1.0f);
+
+	Mode = OffsetBlendMode::Smooth;
+	IsActive = true;
+	TimeDelay = (int)std::round(delayInSec / (float)FPS);
+	PosOffset = posOffset;
+	OrientOffset = orientOffset;
+	Alpha = alpha;
+}
+
+void OffsetBlendData::Clear()
+{
+	*this = {};
+}
+
+void OffsetBlendData::DrawDebug() const
+{
+	g_Renderer.PrintDebugMessage("IsActive: %d", IsActive);
+	g_Renderer.PrintDebugMessage("TimeAcive: %d", TimeActive);
+	g_Renderer.PrintDebugMessage("DelayTime: %d", TimeDelay);
+	g_Renderer.PrintDebugMessage("PosOffset: %.3f, %.3f, %.3f", PosOffset.x, PosOffset.y, PosOffset.z);
+	g_Renderer.PrintDebugMessage("OrientOffset: %.3f, %.3f, %.3f", TO_DEGREES(OrientOffset.x), TO_DEGREES(OrientOffset.y), TO_DEGREES(OrientOffset.z));
+	g_Renderer.PrintDebugMessage("Alpha: %.3f", Alpha);
+}
+
+void ItemInfo::HandleOffsetBlend()
+{
+	constexpr auto TIME_ACTIVE_MAX = 3.0f;
+
+	// Offset blend inactive; return early.
+	if (!OffsetBlend.IsActive)
+		return;
+
+	// Update time delay.
+	if (OffsetBlend.TimeDelay > 0)
+	{
+		OffsetBlend.TimeDelay--;
+		if (OffsetBlend.TimeDelay < 0)
+			OffsetBlend.TimeDelay = 0;
+
+		return;
+	}
+
+	// Update time active.
+	OffsetBlend.TimeActive++;
+
+	// Handle offset blend.
+	bool isPosStepStalled = false;
+	switch (OffsetBlend.Mode)
+	{
+	default:
+	case OffsetBlendMode::Linear:
+		// TODO
+
+		break;
+
+	case OffsetBlendMode::Smooth:
+	{
+		// Calculate offset steps.
+		auto posOffsetStep = Vector3i(Vector3::Lerp(Vector3::Zero, OffsetBlend.PosOffset, OffsetBlend.Alpha));
+		auto orientOffsetStep = EulerAngles::Lerp(EulerAngles::Identity, OffsetBlend.OrientOffset, OffsetBlend.Alpha);
+
+		// TODO: Raycast to test for obstructions.
+		//if (raycastFail)
+		//	OffsetBlend.TimeActive = TIME_ACTIVE_MAX;
+
+		// Apply offsets.
+		Pose.Position += posOffsetStep;
+		Pose.Orientation += orientOffsetStep;
+
+		// Update offsets.
+		OffsetBlend.PosOffset -= posOffsetStep.ToVector3();
+		OffsetBlend.OrientOffset -= orientOffsetStep;
+
+		// A sub-unit remainder can never be applied step by step, so finish once the step stalls.
+		isPosStepStalled = (posOffsetStep == Vector3i::Zero);
+	}
+	break;
+	}
+
+	// Offset blending complete; apply remaining offset and clear.
+	if (((isPosStepStalled || OffsetBlend.PosOffset.Length() <= EPSILON) &&
+		EulerAngles::Compare(OffsetBlend.OrientOffset, EulerAngles::Identity)) ||
+		OffsetBlend.TimeActive >= (int)round(TIME_ACTIVE_MAX * (float)FPS))
+	{
+		Pose.Position += OffsetBlend.PosOffset;
+		Pose.Orientation += OffsetBlend.OrientOffset;
+		OffsetBlend.Clear();
+	}
+}
+
 float MoveableAnimBlendData::GetAlpha() const
 {
 	float curveX = (FrameCount != 0) ? ((float)FrameNumber / (float)FrameCount) : 0.0f;
@@ -393,6 +495,15 @@ void KillItem(short const itemNumber)
 
 	RemoveFromVector(ActiveItems, itemNumber);
 
+	// Detach any children parented to the killed item.
+	for (int activeItemNumber : ActiveItems)
+	{
+		auto& activeItem = g_Level.Items[activeItemNumber];
+
+		if (activeItem.Parenting.ParentObject == itemNumber)
+			activeItem.Parenting.Detach();
+	}
+
 	if (item->RoomNumber != NO_VALUE)
 		RemoveFromVector(g_Level.Rooms[item->RoomNumber].itemNumbers, itemNumber);
 
@@ -540,6 +651,7 @@ void InitializeItem(short itemNumber)
 	item.HitPoints = object.HitPoints;
 
 	item.Effect = {};
+	item.Parenting = {};
 
 	if (item.ObjectNumber == ID_HK_ITEM ||
 		item.ObjectNumber == ID_HK_AMMO_ITEM ||
@@ -770,6 +882,15 @@ void UpdateAllItems()
 		{
 			KillItem(item.Index);
 		}
+	}
+
+	// Update parented items after all control functions have run.
+	for (int itemNumber : itemsToUpdate)
+	{
+		auto& item = g_Level.Items[itemNumber];
+
+		if (item.Parenting.IsAttached())
+			item.Parenting.Update(item);
 	}
 
 	InItemControlLoop = false;

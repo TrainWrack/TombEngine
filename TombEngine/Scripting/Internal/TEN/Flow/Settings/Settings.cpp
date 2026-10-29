@@ -128,6 +128,10 @@ namespace TEN::Scripting
 		// @tfield[opt=false] bool ledgeJumps If this setting is enabled, player will be able to jump upwards while hanging on the ledge.
 		"ledgeJumps", &AnimSettings::LedgeJumps,
 
+		/// Horizontal Bar Extended.
+		// @tfield[opt=true] bool horizontalBarExtended If this setting is enabled, player will be able to hang idle, shimmy and turnaround on the horizontal bars.
+		"horizontalBarExtended", & AnimSettings::HorizontalBarExtended,
+
 		/// Animation blending duration for internal hardcoded animation changes.
 		// @tfield[opt=4] int internalBlendDuration Default blend duration in frames for internal hardcoded player animation transitions, such as death, slide or fall animations.
 		"internalBlendDuration", &AnimSettings::InternalBlendDuration,

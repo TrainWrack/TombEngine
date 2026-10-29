@@ -2,6 +2,7 @@
 
 #include "Game/Animation/Animation.h"
 #include "Game/itemdata/itemdata.h"
+#include "Game/Parenting/ParentingInfo.h"
 #include "Math/Math.h"
 #include "Objects/game_object_ids.h"
 #include "Renderer/RendererEnums.h"
@@ -67,6 +68,30 @@ enum AIObjectType
 	FOLLOW	  = 1 << 4,
 	PATROL2	  = 1 << 5,
 	ALL_AIOBJ = GUARD | AMBUSH | PATROL1 | MODIFY | FOLLOW | PATROL2
+};
+
+enum class OffsetBlendMode
+{
+	Linear,
+	Smooth
+};
+
+struct OffsetBlendData
+{
+	OffsetBlendMode Mode = OffsetBlendMode::Linear;
+	bool			IsActive = false;
+	int				TimeActive = 0; // Time in game frames.
+	int				TimeDelay = 0; // Time in game frames.
+
+	Vector3		PosOffset = Vector3::Zero;
+	EulerAngles OrientOffset = EulerAngles::Identity;
+	float		Alpha = 0.0f;
+
+	void SetLinear(const Vector3& posOffset, const EulerAngles& orientOffset, float vel, short turnRate, float delayInSec = 0.0f);
+	void SetSmooth(const Vector3& posOffset, const EulerAngles& orientOffset, float alpha, float delayInSec = 0.0f);
+	void Clear();
+
+	void DrawDebug() const;
 };
 
 struct MoveableAnimBlendData
@@ -141,6 +166,8 @@ struct ItemInfo
 	MoveableEffectData   Effect    = {};
 	MoveableCallbackData Callbacks = {};
 
+	OffsetBlendData OffsetBlend = {};
+
 	Pose       StartPose  = Pose::Zero;
 	Pose       Pose       = Pose::Zero;
 	RoomVector Location   = {}; // NOTE: Describes vertical position in room.
@@ -168,6 +195,9 @@ struct ItemInfo
 	unsigned char AIBits      = 0; // AIObjectFlags enum.
 	short         AfterDeath  = 0;
 	short         CarriedItem = 0;
+
+	void HandleOffsetBlend();
+	ParentingInfo Parenting   = {};
 
 	PropertyMap Properties = {};
 

@@ -51,7 +51,10 @@ void lara_as_pulley(ItemInfo* item, CollisionInfo* coll);
 // --------------
 
 void lara_as_horizontal_bar_swing(ItemInfo* item, CollisionInfo* coll);
-void lara_as_horizontal_bar_leap(ItemInfo* item, CollisionInfo* coll);
+void lara_as_horizontal_bar_jump(ItemInfo* item, CollisionInfo* coll);
+void lara_as_horizontal_bar_idle(ItemInfo* item, CollisionInfo* coll);
+void lara_as_horizontal_bar_idle_turn_180(ItemInfo* item, CollisionInfo* coll);
+void lara_as_horizontal_bar_swing_turn_180(ItemInfo* item, CollisionInfo* coll);
 
 // ---------
 // TIGHTROPE
