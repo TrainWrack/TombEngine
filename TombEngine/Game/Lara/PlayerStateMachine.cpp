@@ -91,12 +91,12 @@ namespace TEN::Entities::Player
 		PlayerBehaviorStateRoutines[LS_FREEFALL_DIVE] = std::pair(lara_as_freefall_dive, lara_col_freefall_dive);
 		PlayerBehaviorStateRoutines[LS_HANDSTAND] = std::pair(lara_as_handstand, lara_default_col);
 		PlayerBehaviorStateRoutines[LS_ONWATER_EXIT] = std::pair(lara_as_surface_climb_out, lara_default_col);
-		PlayerBehaviorStateRoutines[LS_LADDER_IDLE] = std::pair(lara_as_climb_idle, lara_col_climb_idle);
-		PlayerBehaviorStateRoutines[LS_LADDER_UP] = std::pair(lara_as_climb_up, lara_col_climb_up);
-		PlayerBehaviorStateRoutines[LS_LADDER_LEFT] = std::pair(lara_as_climb_left, lara_col_climb_left);
-		PlayerBehaviorStateRoutines[LS_LADDER_STOP] = std::pair(lara_as_climb_end, lara_col_climb_end);
-		PlayerBehaviorStateRoutines[LS_LADDER_RIGHT] = std::pair(lara_as_climb_right, lara_col_climb_right);
-		PlayerBehaviorStateRoutines[LS_LADDER_DOWN] = std::pair(lara_as_climb_down, lara_col_climb_down);
+		PlayerBehaviorStateRoutines[LS_WALL_CLIMB_IDLE] = std::pair(lara_as_climb_idle, lara_col_climb_idle);
+		PlayerBehaviorStateRoutines[LS_WALL_CLIMB_UP] = std::pair(lara_as_climb_up, lara_col_climb_up);
+		PlayerBehaviorStateRoutines[LS_WALL_CLIMB_LEFT] = std::pair(lara_as_climb_left, lara_col_climb_left);
+		PlayerBehaviorStateRoutines[LS_WALL_CLIMB_STOP] = std::pair(lara_as_climb_end, lara_col_climb_end);
+		PlayerBehaviorStateRoutines[LS_WALL_CLIMB_RIGHT] = std::pair(lara_as_climb_right, lara_col_climb_right);
+		PlayerBehaviorStateRoutines[LS_WALL_CLIMB_DOWN] = std::pair(lara_as_climb_down, lara_col_climb_down);
 		PlayerBehaviorStateRoutines[LS_AUTO_JUMP] = std::pair(lara_as_auto_jump, lara_col_jump_prepare);
 		PlayerBehaviorStateRoutines[LS_TEST_2] = std::pair(lara_void_func, lara_void_func);
 		PlayerBehaviorStateRoutines[LS_TEST_3] = std::pair(lara_void_func, lara_void_func);
@@ -173,7 +173,7 @@ namespace TEN::Entities::Player
 		PlayerBehaviorStateRoutines[LS_VALVE_TURN] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[LS_UNKNOWN_5] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[LS_PICKUP_FROM_CHEST] = std::pair(lara_as_null, lara_void_func);
-		PlayerBehaviorStateRoutines[LS_LADDER_TO_CROUCH] = std::pair(lara_as_null, lara_void_func);
+		PlayerBehaviorStateRoutines[LS_WALL_CLIMB_TO_CROUCH] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[LS_SHIMMY_45_OUTER_LEFT] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[LS_SHIMMY_45_OUTER_RIGHT] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[LS_SHIMMY_45_INNER_LEFT] = std::pair(lara_as_null, lara_void_func);
@@ -185,8 +185,8 @@ namespace TEN::Entities::Player
 		PlayerBehaviorStateRoutines[LS_STEP_UP] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[LS_STEP_DOWN] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[LS_SLOPE_CLIMB_FALL] = std::pair(lara_as_slopefall, lara_default_col);
-		PlayerBehaviorStateRoutines[LS_LADDER_DISMOUNT_LEFT] = std::pair(lara_as_climb_stepoff_left, lara_default_col);
-		PlayerBehaviorStateRoutines[LS_LADDER_DISMOUNT_RIGHT] = std::pair(lara_as_climb_stepoff_right, lara_default_col);
+		PlayerBehaviorStateRoutines[LS_WALL_CLIMB_DISMOUNT_LEFT] = std::pair(lara_as_climb_stepoff_left, lara_default_col);
+		PlayerBehaviorStateRoutines[LS_WALL_CLIMB_DISMOUNT_RIGHT] = std::pair(lara_as_climb_stepoff_right, lara_default_col);
 		PlayerBehaviorStateRoutines[LS_TURN_LEFT_FAST] = std::pair(lara_as_turn_fast, lara_col_turn_fast);
 		PlayerBehaviorStateRoutines[LS_CRAWL_EXIT_STEP_DOWN] = std::pair(lara_as_controlled, lara_default_col);
 		PlayerBehaviorStateRoutines[LS_CRAWL_EXIT_JUMP] = std::pair(lara_as_controlled, lara_default_col);
@@ -210,21 +210,20 @@ namespace TEN::Entities::Player
 		PlayerBehaviorStateRoutines[LS_CRAWL_TURN_180] = std::pair(lara_as_crawl_turn_180, lara_col_crawl_turn_180);
 		PlayerBehaviorStateRoutines[LS_TURN_180] = std::pair(lara_as_turn_180, lara_col_turn_180);
 
-		// Reserved for ladder object.
-		PlayerBehaviorStateRoutines[174] = std::pair(lara_as_null, lara_void_func);
-		PlayerBehaviorStateRoutines[175] = std::pair(lara_as_null, lara_void_func);
-		PlayerBehaviorStateRoutines[176] = std::pair(lara_as_null, lara_void_func);
-		PlayerBehaviorStateRoutines[177] = std::pair(lara_as_null, lara_void_func);
+		PlayerBehaviorStateRoutines[LS_LADDER_IDLE] = std::pair(lara_as_ladder_idle, lara_col_ladder_idle);
+		PlayerBehaviorStateRoutines[LS_LADDER_UP] = std::pair(lara_as_ladder_up, lara_col_ladder_up);
+		PlayerBehaviorStateRoutines[LS_LADDER_DOWN] = std::pair(lara_as_ladder_down, lara_col_ladder_down);
+		PlayerBehaviorStateRoutines[LS_LADDER_SWITCH_SIDE] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[178] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[179] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[180] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[181] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[182] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[183] = std::pair(lara_as_null, lara_void_func);
-		PlayerBehaviorStateRoutines[184] = std::pair(lara_as_null, lara_void_func);
-		PlayerBehaviorStateRoutines[185] = std::pair(lara_as_null, lara_void_func);
-		PlayerBehaviorStateRoutines[186] = std::pair(lara_as_null, lara_void_func);
-		PlayerBehaviorStateRoutines[187] = std::pair(lara_as_null, lara_void_func);
+		PlayerBehaviorStateRoutines[LS_LADDER_DISMOUNT_TOP] = std::pair(lara_as_null, lara_void_func);
+		PlayerBehaviorStateRoutines[LS_LADDER_DISMOUNT_BACK] = std::pair(lara_as_null, lara_void_func);
+		PlayerBehaviorStateRoutines[LS_LADDER_DISMOUNT_LEFT] = std::pair(lara_as_null, lara_void_func);
+		PlayerBehaviorStateRoutines[LS_LADDER_DISMOUNT_RIGHT] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[188] = std::pair(lara_as_null, lara_void_func);
 
 		PlayerBehaviorStateRoutines[LS_REMOVE_PUZZLE] = std::pair(lara_as_use_puzzle, lara_default_col);

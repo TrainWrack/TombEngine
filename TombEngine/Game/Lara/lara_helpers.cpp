@@ -1627,7 +1627,7 @@ void SetLaraCornerAnimation(ItemInfo* item, CollisionInfo* coll, bool flip)
 	if (flip)
 	{
 		if (lara->Control.IsClimbingLadder)
-			SetAnimation(item, LA_LADDER_IDLE);
+			SetAnimation(item, LA_WALL_CLIMB_IDLE);
 		else
 			SetAnimation(item, LA_HANG_IDLE);
 

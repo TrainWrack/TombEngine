@@ -331,7 +331,7 @@ void lara_col_slopeclimb(ItemInfo* item, CollisionInfo* coll)
 	auto probeUp = GetPointCollision(up, item->RoomNumber);
 	auto probeDown = GetPointCollision(down, item->RoomNumber);
 
-	if (item->Animation.AnimNumber == LA_OVERHANG_LADDER_SLOPE_CONCAVE)
+	if (item->Animation.AnimNumber == LA_OVERHANG_WALL_CLIMB_SLOPE_CONCAVE)
 		return;
 
 	item->Pose.Position.y = probeNow.GetCeilingHeight() + HEIGHT_ADJUST;
@@ -374,7 +374,7 @@ void lara_col_slopeclimb(ItemInfo* item, CollisionInfo* coll)
 			//if (GetPointCollision(probeUp.Block, up.x, up.y, up.z).GetCeilingHeight() - item->Pose.Position.y <= (BLOCK(1.5f) - 80))  // Check if a wall is actually there.
 			//{
 			//	AlignToEdge(item, FORWARD_ALIGNMENT);
-			//	SetAnimation(item, LA_OVERHANG_SLOPE_LADDER_CONVEX_START);
+			//	SetAnimation(item, LA_OVERHANG_SLOPE_WALL_CLIMB_CONVEX_START);
 			//}
 		}
 
@@ -420,7 +420,7 @@ void lara_col_slopeclimb(ItemInfo* item, CollisionInfo* coll)
 		//	InStrip(item->Pose.Position.x, item->Pose.Position.z, item->Pose.Orientation.y, 0, CLICK(1)))
 		//{
 		//	AlignToEdge(item, BACKWARD_ALIGNMENT);
-		//	SetAnimation(item, LA_OVERHANG_SLOPE_LADDER_CONCAVE); // Slope to underlying ladder transition (concave).
+		//	SetAnimation(item, LA_OVERHANG_SLOPE_WALL_CLIMB_CONCAVE); // Slope to underlying ladder transition (concave).
 		//	return;
 		//}
 
@@ -803,8 +803,8 @@ void lara_as_sclimbend(ItemInfo* item, CollisionInfo* coll)
 		SetAnimation(item, LA_MONKEY_IDLE);
 		break;
 
-	case LA_OVERHANG_EXIT_LADDER:
-		SetAnimation(item, LA_LADDER_IDLE);
+	case LA_OVERHANG_EXIT_WALL_CLIMB:
+		SetAnimation(item, LA_WALL_CLIMB_IDLE);
 		break;
 
 	case LA_OVERHANG_EXIT_VAULT:
@@ -843,7 +843,7 @@ void SlopeHangExtra(ItemInfo* item, CollisionInfo* coll)
 
 	int ceilDist = item->Pose.Position.y - probeDown.GetCeilingHeight();
 
-	if (item->Animation.TargetState == LS_LADDER_IDLE) // Prevent going from hang to climb mode if slope is under ladder.
+	if (item->Animation.TargetState == LS_WALL_CLIMB_IDLE) // Prevent going from hang to climb mode if slope is under ladder.
 	{
 		if (ceilDist >= CLICK(1) && ceilDist < CLICK(2))
 		{
@@ -852,15 +852,15 @@ void SlopeHangExtra(ItemInfo* item, CollisionInfo* coll)
 			{
 				item->Animation.TargetState = LS_HANG;
 				if (IsHeld(In::Forward))
-					SetAnimation(item, LA_LADDER_SHIMMY_UP);
+					SetAnimation(item, LA_WALL_CLIMB_SHIMMY_UP);
 				/*else if (IsHeld(In::Back))
-					SetAnimation(item, LA_LADDER_SHIMMY_DOWN);*/
+					SetAnimation(item, LA_WALL_CLIMB_SHIMMY_DOWN);*/
 			}
 		}
 	}
 	/*else if (item->TargetState == AS_HANG)
 	{
-		if (item->animNumber == LA_LADDER_SHIMMY_DOWN)
+		if (item->animNumber == LA_WALL_CLIMB_SHIMMY_DOWN)
 		{
 			if (ceilDist < CLICK(1))
 			{
@@ -923,7 +923,7 @@ void SlopeClimbExtra(ItemInfo* item, CollisionInfo* coll)
 	auto probeDown = GetPointCollision(down, item->RoomNumber);
 
 	// Block for ladder to overhead slope transition.
-	if (item->Animation.AnimNumber == LA_LADDER_IDLE)
+	if (item->Animation.AnimNumber == LA_WALL_CLIMB_IDLE)
 	{
 		if (IsHeld(In::Forward))
 		{
@@ -940,7 +940,7 @@ void SlopeClimbExtra(ItemInfo* item, CollisionInfo* coll)
 				if (SlopeCheck(GetSurfaceTilt(probeNow.GetCeilingNormal(), false).ToVector2(), slopeData.Goal) || bridge >= 0)
 				{
 					item->Pose.Position.y = probeNow.GetCeilingHeight() + 900;
-					SetAnimation(item, LA_OVERHANG_LADDER_SLOPE_CONCAVE); // Ladder to overhead slope transition (concave).
+					SetAnimation(item, LA_OVERHANG_WALL_CLIMB_SLOPE_CONCAVE); // Ladder to overhead slope transition (concave).
 				}
 			}
 		}
@@ -960,14 +960,14 @@ void SlopeClimbExtra(ItemInfo* item, CollisionInfo* coll)
 				if (SlopeCheck(GetSurfaceTilt(probeDown.GetCeilingNormal(), false).ToVector2(), slopeData.Goal) || bridge >= 0)
 				{
 					item->Pose.Position.y = probeDown.GetCeilingHeight() - 156;
-					SetAnimation(item, LA_OVERHANG_LADDER_SLOPE_CONVEX); // Ladder to underlying slope transition (convex).
+					SetAnimation(item, LA_OVERHANG_WALL_CLIMB_SLOPE_CONVEX); // Ladder to underlying slope transition (convex).
 				}
 			}
 		}
 	}
 }
 
-// Extends LS_LADDER_IDLE (56)
+// Extends LS_WALL_CLIMB_IDLE (56)
 bool LadderMonkeyExtra(ItemInfo* item, CollisionInfo* coll)
 {
 	auto probe = GetPointCollision(*item);
@@ -984,7 +984,7 @@ bool LadderMonkeyExtra(ItemInfo* item, CollisionInfo* coll)
 	return false;
 }
 
-// Extends LS_LADDER_DOWN (61)
+// Extends LS_WALL_CLIMB_DOWN (61)
 void SlopeClimbDownExtra(ItemInfo* item, CollisionInfo* coll)
 {
 	if (!g_GameFlow->GetSettings()->Animations.OverhangClimb)
@@ -996,7 +996,7 @@ void SlopeClimbDownExtra(ItemInfo* item, CollisionInfo* coll)
 	
 	auto probeDown = GetPointCollision(down, item->RoomNumber);
 
-	if (item->Animation.AnimNumber == LA_LADDER_DOWN) // Make Lara stop before underlying slope ceiling at correct height.
+	if (item->Animation.AnimNumber == LA_WALL_CLIMB_DOWN) // Make Lara stop before underlying slope ceiling at correct height.
 	{
 		if (IsHeld(In::Back))
 		{
@@ -1013,7 +1013,7 @@ void SlopeClimbDownExtra(ItemInfo* item, CollisionInfo* coll)
 				if (SlopeCheck(GetSurfaceTilt(probeDown.GetCeilingNormal(), false).ToVector2(), slopeData.Goal) || bridge >= 0)
 				{
 					item->Pose.Position.y = probeDown.GetCeilingHeight() - 156;
-					item->Animation.TargetState = LS_LADDER_IDLE;
+					item->Animation.TargetState = LS_WALL_CLIMB_IDLE;
 				}
 			}
 
@@ -1028,7 +1028,7 @@ void SlopeClimbDownExtra(ItemInfo* item, CollisionInfo* coll)
 				{
 					short bridge = FindBridge(4, slopeData.GoalOrient, down, &height, -CLICK(3), CLICK(4));
 					if (ceilDist < CLICK(1) && (bridge >= 0 || SlopeCheck(probeDown.CeilingTilt, slopeData.Goal)))
-						item->Animation.TargetState = LS_LADDER_IDLE;
+						item->Animation.TargetState = LS_WALL_CLIMB_IDLE;
 				}
 				else if (GetFrameNumber(item, 0) == midpoint)
 				{
@@ -1036,7 +1036,7 @@ void SlopeClimbDownExtra(ItemInfo* item, CollisionInfo* coll)
 					if (ceilDist < CLICK(1) * 2 && (bridge >= 0 || SlopeCheck(probeDown.CeilingTilt, slopeData.Goal)))
 					{
 						item->Pose.Position.y += CLICK(1); // Do midpoint Y translation.
-						item->Animation.TargetState = LS_LADDER_IDLE;
+						item->Animation.TargetState = LS_WALL_CLIMB_IDLE;
 					}
 				}
 			}*/
@@ -1139,10 +1139,10 @@ void SlopeMonkeyExtra(ItemInfo* item, CollisionInfo* coll)
 				if (probe.GetFloorHeight() <= (y - CLICK(1)) ||
 					probe.GetCeilingHeight() >= (y - CLICK(1)))
 				{
-					if (item->Animation.TargetState != LS_LADDER_IDLE)
+					if (item->Animation.TargetState != LS_WALL_CLIMB_IDLE)
 					{
 						SnapItemToLedge(item, coll);
-						item->Animation.TargetState = LS_LADDER_IDLE;
+						item->Animation.TargetState = LS_WALL_CLIMB_IDLE;
 					}
 				}
 			}
