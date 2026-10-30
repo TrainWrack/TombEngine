@@ -92,6 +92,8 @@ namespace TEN::Entities::Generic
 	};
 
 	const auto LadderMountedOffset2D = Vector3i(0, 0, -LARA_RADIUS * 1.5f);
+	const auto LadderMountedOffsetBack2D = Vector3i(0, 0, LARA_RADIUS * 1.5f);
+
 	const auto LadderMountedOffsetTopFront2D = Vector3i(0, 0, 137.0f);
 	const auto LadderMountedOffsetTopBack2D = Vector3i(0, 0, 165.0f);
 	const auto LadderInteractBounds2D = GameBoundingBox(
@@ -138,7 +140,7 @@ namespace TEN::Entities::Generic
 			EulerAngles(PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, LARA_GRAB_THRESHOLD, PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD)));
 
 	const auto LadderMountBackBasis = InteractionBasis(
-		LadderMountedOffset2D,
+		LadderMountedOffsetBack2D,
 		EulerAngles(0, ANGLE(180.0f), 0),
 		LadderInteractBox2D,
 		std::pair(
