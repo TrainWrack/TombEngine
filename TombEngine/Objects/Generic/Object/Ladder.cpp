@@ -46,8 +46,11 @@ namespace TEN::Entities::Generic
 		Left,
 		Right,
 		JumpUp,
+		JumpUpBack,
 		JumpReach,
-		Water
+		JumpReachBack,
+		Water,
+		WaterBack
 	};
 
 	enum class LadderMountContext
@@ -61,7 +64,8 @@ namespace TEN::Entities::Generic
 	{
 		LS_LADDER_IDLE,
 		LS_LADDER_UP,
-		LS_LADDER_DOWN
+		LS_LADDER_DOWN,
+		LS_LADDER_SWITCH_SIDE
 	};
 	const auto LadderGroundedMountPlayerStates = std::vector<int>
 	{
@@ -188,16 +192,29 @@ namespace TEN::Entities::Generic
 				continue;
 			}
 
-			// Only merge ladders that are horizontally aligned and share the same yaw.
-			if (abs(item.Pose.Position.x - ladderItem.Pose.Position.x) > ALIGN_XZ_TOLERANCE ||
-				abs(item.Pose.Position.z - ladderItem.Pose.Position.z) > ALIGN_XZ_TOLERANCE ||
-				abs(Geometry::GetShortestAngle(item.Pose.Orientation.y, ladderItem.Pose.Orientation.y)) > ALIGN_YAW_TOLERANCE)
-			{
+			int relX = item.Pose.Position.x - ladderItem.Pose.Position.x;
+			int relY = item.Pose.Position.y - ladderItem.Pose.Position.y;
+			int relZ = item.Pose.Position.z - ladderItem.Pose.Position.z;
+			int relYaw = Geometry::GetShortestAngle(item.Pose.Orientation.y, ladderItem.Pose.Orientation.y);
+
+			// Only merge ladders that are horizontally aligned. A double-sided ladder is symmetric, so a
+			// stacked item flipped 180 degrees still occupies the same column; a one-sided ladder is not.
+			bool isDoubleSidedPair = (item.ObjectNumber == ID_LADDER_DOUBLE_SIDED &&
+				ladderItem.ObjectNumber == ID_LADDER_DOUBLE_SIDED);
+
+			short flippedYaw = (short)(item.Pose.Orientation.y + ANGLE(180.0f));
+			bool isYawAligned = (abs(relYaw) <= ALIGN_YAW_TOLERANCE ||
+				(isDoubleSidedPair &&
+					abs(Geometry::GetShortestAngle(flippedYaw, ladderItem.Pose.Orientation.y)) <= ALIGN_YAW_TOLERANCE));
+
+			bool isAligned = (abs(relX) <= ALIGN_XZ_TOLERANCE &&
+				abs(relZ) <= ALIGN_XZ_TOLERANCE &&
+				isYawAligned);
+
+			if (!isAligned)
 				continue;
-			}
 
 			// Merge the neighbour's vertical extents into this ladder's local space.
-			int relY = item.Pose.Position.y - ladderItem.Pose.Position.y;
 			auto itemBounds = GetLadderBounds(item);
 			topY = std::min(topY, relY + itemBounds.Y1);
 
@@ -214,7 +231,7 @@ namespace TEN::Entities::Generic
 		_baseItemNumber = lowestItemNumber;
 		_topY = topY - baseShift;
 		_bottomY = bottomY - baseShift;
-		_isDoubleSided = ((ladderItem.TriggerFlags & (1 << 0)) == 1);
+		_isDoubleSided = (ladderItem.ObjectNumber == ID_LADDER_DOUBLE_SIDED);
 	}
 
 	int LadderObject::GetBaseItemNumber() const
@@ -370,34 +387,37 @@ namespace TEN::Entities::Generic
 		//auto stackExtents = GetLadderStackExtents(ladderItem);
 		auto boundsExtension = GameBoundingBox(0, 0, bounds.Y1, bounds.Y2 + LADDER_STEP_HEIGHT, 0, 0).ToBoundingOrientedBox(Pose::Zero);
 
-		// Air mounts. Front face only.
+		// Air mounts. Front face, and back face when double-sided.
 		if (TestLadderMount(ladderItem, playerItem, LadderMountContext::Air))
 		{
-			// Front mount.
+			if (playerItem.Animation.Velocity.y <= 0.0f)
+				return LadderMountType::None;
+
+			bool isJumpUp = (playerItem.Animation.ActiveState == LS_JUMP_UP);
+
 			if (TestInteraction(playerItem, ladderItem, LadderMountFrontBasis, boundsExtension))
+				return (isJumpUp ? LadderMountType::JumpUp : LadderMountType::JumpReach);
+
+			if (GetLadderObject(ladderItem).IsDoubleSided() &&
+				TestInteraction(playerItem, ladderItem, LadderMountBackBasis, boundsExtension))
 			{
-				// Jump case.
-				if (playerItem.Animation.Velocity.y > 0.0f)
-				{
-					if (playerItem.Animation.ActiveState == LS_JUMP_UP)
-					{
-						return LadderMountType::JumpUp;
-					}
-					else if (playerItem.Animation.ActiveState == LS_REACH)
-					{
-						return LadderMountType::JumpReach;
-					}
-				}
+				return (isJumpUp ? LadderMountType::JumpUpBack : LadderMountType::JumpReachBack);
 			}
 
 			return LadderMountType::None;
 		}
 
-		// Water mount. Front face only.
+		// Water mount. Front face, and back face when double-sided.
 		if (TestLadderMount(ladderItem, playerItem, LadderMountContext::Water))
 		{
 			if (TestInteraction(playerItem, ladderItem, LadderMountFrontBasis, boundsExtension))
 				return LadderMountType::Water;
+
+			if (GetLadderObject(ladderItem).IsDoubleSided() &&
+				TestInteraction(playerItem, ladderItem, LadderMountBackBasis, boundsExtension))
+			{
+				return LadderMountType::WaterBack;
+			}
 
 			return LadderMountType::None;
 		}
@@ -421,8 +441,11 @@ namespace TEN::Entities::Generic
 		if (TestInteraction(playerItem, ladderItem, LadderMountFrontBasis, boundsExtension))
 			return LadderMountType::Front;
 
-		if (TestInteraction(playerItem, ladderItem, LadderMountBackBasis, boundsExtension))
+		if (GetLadderObject(ladderItem).IsDoubleSided() &&
+			TestInteraction(playerItem, ladderItem, LadderMountBackBasis, boundsExtension))
+		{
 			return LadderMountType::Back;
+		}
 
 		if (TestInteraction(playerItem, ladderItem, LadderMountLeftBasis, boundsExtension))
 			return LadderMountType::Left;
@@ -559,6 +582,18 @@ namespace TEN::Entities::Generic
 			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, SetPlayerLadderAirGrabInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
 		}
+
+		case LadderMountType::JumpUpBack:
+		{
+			auto& ladder = GetLadderObject(ladderItem);
+
+			// Snap her feet to the rung closest to her current height.
+			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y, LARA_HEIGHT_STRETCH + LADDER_STEP_HEIGHT);
+			auto extraPosOffset = Vector3i(0, attachmentY - ladderItem.Pose.Position.y, bounds.Z2);
+
+			SetInteraction(playerItem, ladderItem, LadderMountBackBasis, SetPlayerLadderAirGrabInteraction, InteractionBasisType::Latch, extraPosOffset);
+			break;
+		}
 		case LadderMountType::JumpReach:
 		{
 			auto& ladder = GetLadderObject(ladderItem);
@@ -568,6 +603,18 @@ namespace TEN::Entities::Generic
 			auto extraPosOffset = Vector3i(0, attachmentY - ladderItem.Pose.Position.y, bounds.Z1);
 
 			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, SetPlayerLadderAirReachInteraction, InteractionBasisType::Latch, extraPosOffset);
+			break;
+		}
+
+		case LadderMountType::JumpReachBack:
+		{
+			auto& ladder = GetLadderObject(ladderItem);
+
+			// Snap her feet to the rung closest to her current height.
+			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y, LARA_HEIGHT_STRETCH + LADDER_STEP_HEIGHT);
+			auto extraPosOffset = Vector3i(0, attachmentY - ladderItem.Pose.Position.y, bounds.Z2);
+
+			SetInteraction(playerItem, ladderItem, LadderMountBackBasis, SetPlayerLadderAirReachInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
 		}
 		case LadderMountType::Water:
@@ -584,6 +631,22 @@ namespace TEN::Entities::Generic
 			// Keep her current height out of the smooth latch, then place her on the rung in one step.
 			auto extraPosOffset = Vector3i(0, attachmentY - ladderItem.Pose.Position.y, bounds.Z1);
 			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, SetPlayerLadderMountWaterInteraction, InteractionBasisType::Latch, extraPosOffset);
+			break;
+		}
+
+		case LadderMountType::WaterBack:
+		{
+			auto& ladder = GetLadderObject(ladderItem);
+
+			// Grab the rung at the player's current height (the water surface).
+			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y, LADDER_STEP_HEIGHT * 4);
+
+			// Don't mount if the returned rung is below the player; it would push her down into the water.
+			if (attachmentY > playerItem.Pose.Position.y)
+				return;
+
+			auto extraPosOffset = Vector3i(0, attachmentY - ladderItem.Pose.Position.y, bounds.Z2);
+			SetInteraction(playerItem, ladderItem, LadderMountBackBasis, SetPlayerLadderMountWaterInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
 		}
 		}

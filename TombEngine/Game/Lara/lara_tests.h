@@ -81,3 +81,4 @@ bool CanDismountLadderTop(ItemInfo* item, CollisionInfo* coll);
 bool CanDismountLadderBack(ItemInfo* item, CollisionInfo* coll);
 bool CanDismountLadderLeft(ItemInfo* item, CollisionInfo* coll);
 bool CanDismountLadderRight(ItemInfo* item, CollisionInfo* coll);
+bool TestLaraLadderSwitchSide(ItemInfo* item, CollisionInfo* coll);

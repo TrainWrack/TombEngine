@@ -982,15 +982,26 @@ void lara_as_ladder_idle(ItemInfo* item, CollisionInfo* coll)
 			}
 		}
 
-		if (IsHeld(In::Left) && CanDismountLadderLeft(item, coll))
+		if (IsHeld(In::Left) || IsHeld(In::Right))
 		{
-			item->Animation.TargetState = LS_LADDER_DISMOUNT_LEFT;
-			return;
-		}
-		else if (IsHeld(In::Right) && CanDismountLadderRight(item, coll))
-		{
-			item->Animation.TargetState = LS_LADDER_DISMOUNT_RIGHT;
-			return;
+			if (IsHeld(In::Left) && CanDismountLadderLeft(item, coll))
+			{
+				item->Animation.TargetState = LS_LADDER_DISMOUNT_LEFT;
+				return;
+			}
+
+			if (IsHeld(In::Right) && CanDismountLadderRight(item, coll))
+			{
+				item->Animation.TargetState = LS_LADDER_DISMOUNT_RIGHT;
+				return;
+			}
+
+			// On a double-sided ladder, flip to the other face when a side dismount is not possible.
+			if (TestLaraLadderSwitchSide(item, coll))
+			{
+				item->Animation.TargetState = LS_LADDER_SWITCH_SIDE;
+				return;
+			}
 		}
 
 		item->Animation.TargetState = LS_LADDER_IDLE;

@@ -210,21 +210,20 @@ namespace TEN::Entities::Player
 		PlayerBehaviorStateRoutines[LS_CRAWL_TURN_180] = std::pair(lara_as_crawl_turn_180, lara_col_crawl_turn_180);
 		PlayerBehaviorStateRoutines[LS_TURN_180] = std::pair(lara_as_turn_180, lara_col_turn_180);
 
-		// Reserved for ladder object.
 		PlayerBehaviorStateRoutines[LS_LADDER_IDLE] = std::pair(lara_as_ladder_idle, lara_col_ladder_idle);
 		PlayerBehaviorStateRoutines[LS_LADDER_UP] = std::pair(lara_as_ladder_up, lara_col_ladder_up);
 		PlayerBehaviorStateRoutines[LS_LADDER_DOWN] = std::pair(lara_as_ladder_down, lara_col_ladder_down);
-		PlayerBehaviorStateRoutines[177] = std::pair(lara_as_null, lara_void_func);
+		PlayerBehaviorStateRoutines[LS_LADDER_SWITCH_SIDE] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[178] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[179] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[180] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[181] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[182] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[183] = std::pair(lara_as_null, lara_void_func);
-		PlayerBehaviorStateRoutines[184] = std::pair(lara_as_null, lara_void_func);
-		PlayerBehaviorStateRoutines[185] = std::pair(lara_as_null, lara_void_func);
-		PlayerBehaviorStateRoutines[186] = std::pair(lara_as_null, lara_void_func);
-		PlayerBehaviorStateRoutines[187] = std::pair(lara_as_null, lara_void_func);
+		PlayerBehaviorStateRoutines[LS_LADDER_DISMOUNT_TOP] = std::pair(lara_as_null, lara_void_func);
+		PlayerBehaviorStateRoutines[LS_LADDER_DISMOUNT_BACK] = std::pair(lara_as_null, lara_void_func);
+		PlayerBehaviorStateRoutines[LS_LADDER_DISMOUNT_LEFT] = std::pair(lara_as_null, lara_void_func);
+		PlayerBehaviorStateRoutines[LS_LADDER_DISMOUNT_RIGHT] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[188] = std::pair(lara_as_null, lara_void_func);
 
 		PlayerBehaviorStateRoutines[LS_REMOVE_PUZZLE] = std::pair(lara_as_use_puzzle, lara_default_col);

@@ -2049,3 +2049,23 @@ bool CanDismountLadderRight(ItemInfo* item, CollisionInfo* coll)
 {
 	return TestLaraLadderSideDismount(item, coll, false);
 }
+
+bool TestLaraLadderSwitchSide(ItemInfo* item, CollisionInfo* coll)
+{
+	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
+
+	// Only double-sided ladders can be flipped to the other face.
+	auto* ladder = GetInteractedLadder(*item);
+	if (ladder == nullptr || !ladder->IsDoubleSided())
+		return false;
+
+	// Probe through the ladder to the other face; a wall or void there blocks the switch.
+	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, PROBE_DIST, -LARA_HEIGHT);
+
+	if (pointColl.IsWall() ||
+		pointColl.GetPosition().y > pointColl.GetFloorHeight() ||
+		pointColl.GetPosition().y < pointColl.GetCeilingHeight())
+		return false;
+
+	return true;
+}
