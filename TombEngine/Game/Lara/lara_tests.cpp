@@ -1975,7 +1975,7 @@ bool CanDismountLadderTop(ItemInfo* item, CollisionInfo* coll)
 	constexpr auto UPPER_CEIL_BOUND = -BLOCK(1 / 2.0f);
 
 	// Get point collision.
-	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, PROBE_DIST);
+	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, PROBE_DIST, -LARA_HEIGHT);
 	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y1;
 
 	// 1) Test for wall.

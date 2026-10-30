@@ -41,6 +41,8 @@ namespace TEN::Entities::Generic
 		None,
 		TopFront,
 		TopBack,
+		TopFrontBack,
+		TopBackBack,
 		Front,
 		Back,
 		Left,
@@ -96,6 +98,8 @@ namespace TEN::Entities::Generic
 
 	const auto LadderMountedOffsetTopFront2D = Vector3i(0, 0, 137.0f);
 	const auto LadderMountedOffsetTopBack2D = Vector3i(0, 0, 165.0f);
+	const auto LadderMountedOffsetTopFrontBack2D = Vector3i(0, 0, -137.0f);
+	const auto LadderMountedOffsetTopBackBack2D = Vector3i(0, 0, -165.0f);
 	const auto LadderInteractBounds2D = GameBoundingBox(
 		-BLOCK(0.25f), BLOCK(0.25f),
 		0, 0,
@@ -131,6 +135,23 @@ namespace TEN::Entities::Generic
 		std::pair(
 			EulerAngles(-PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, -LARA_GRAB_THRESHOLD, -PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD),
 			EulerAngles(PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, LARA_GRAB_THRESHOLD, PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD)));
+
+	// Back-side top mounts. A double-sided ladder can be mounted over the top from either face; these are
+	// the mirrored counterparts of the front-side top mounts and reuse the same animations.
+	const auto LadderMountTopFrontBackBasis = InteractionBasis(
+		LadderMountedOffsetTopFrontBack2D,
+		LadderInteractBox2D,
+		std::pair(
+			EulerAngles(-PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, -LARA_GRAB_THRESHOLD, -PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD),
+			EulerAngles(PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, LARA_GRAB_THRESHOLD, PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD)));
+
+	const auto LadderMountTopBackBackBasis = InteractionBasis(
+		LadderMountedOffsetTopBackBack2D,
+		EulerAngles(0, ANGLE(180.0f), 0),
+		LadderInteractBox2D,
+		std::pair(
+			EulerAngles(-PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(180.0f) - LARA_GRAB_THRESHOLD, -PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD),
+			EulerAngles(PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD, ANGLE(180.0f) + LARA_GRAB_THRESHOLD, PLAYER_MOUNT_LEAN_ANGLE_THRESHOLD)));
 
 	const auto LadderMountFrontBasis = InteractionBasis(
 		LadderMountedOffset2D,
@@ -234,6 +255,12 @@ namespace TEN::Entities::Generic
 		_topY = topY - baseShift;
 		_bottomY = bottomY - baseShift;
 		_isDoubleSided = (ladderItem.ObjectNumber == ID_LADDER_DOUBLE_SIDED);
+
+		// A double-sided ladder is symmetric under 180 degrees, so a stacked item may be flipped and its
+		// own yaw is ambiguous. Normalize it to the base item's yaw so front/back mounts resolve against a
+		// single consistent reference.
+		if (_isDoubleSided)
+			ladderItem.Pose.Orientation.y = g_Level.Items[_baseItemNumber].Pose.Orientation.y;
 	}
 
 	int LadderObject::GetBaseItemNumber() const
@@ -428,15 +455,35 @@ namespace TEN::Entities::Generic
 		if (!TestLadderMount(ladderItem, playerItem, LadderMountContext::Ground))
 			return LadderMountType::None;
 
-		// Top mounts
+		// Top mounts. On a double-sided ladder the player can be on either face; front is local -Z.
 		int stackTopWorldY = ladderItem.Pose.Position.y + bounds.Y1;
 		if (abs(playerItem.Pose.Position.y - stackTopWorldY) <= LADDER_STEP_HEIGHT)
 		{
-			if (TestInteraction(playerItem, ladderItem, LadderMountTopFrontBasis, boundsExtension))
-				return LadderMountType::TopFront;
+			bool isFrontSide = true;
+			if (GetLadderObject(ladderItem).IsDoubleSided())
+			{
+				auto deltaPos = (playerItem.Pose.Position - ladderItem.Pose.Position).ToVector3();
+				auto invRotMatrix = ladderItem.Pose.Orientation.ToRotationMatrix().Invert();
+				auto relPos = Vector3::Transform(deltaPos, invRotMatrix);
+				isFrontSide = (relPos.z > 0);
+			}
 
-			if (TestInteraction(playerItem, ladderItem, LadderMountTopBackBasis, boundsExtension))
-				return LadderMountType::TopBack;
+			if (isFrontSide)
+			{
+				if (TestInteraction(playerItem, ladderItem, LadderMountTopFrontBasis, boundsExtension))
+					return LadderMountType::TopFront;
+
+				if (TestInteraction(playerItem, ladderItem, LadderMountTopBackBasis, boundsExtension))
+					return LadderMountType::TopBack;
+			}
+			else
+			{
+				if (TestInteraction(playerItem, ladderItem, LadderMountTopFrontBackBasis, boundsExtension))
+					return LadderMountType::TopFrontBack;
+
+				if (TestInteraction(playerItem, ladderItem, LadderMountTopBackBackBasis, boundsExtension))
+					return LadderMountType::TopBackBack;
+			}
 		}
 
 		// Front mount.
@@ -538,6 +585,20 @@ namespace TEN::Entities::Generic
 		{
 			auto extraPosOffset = Vector3i(0, bounds.Y1, bounds.Z1);
 			SetInteraction(playerItem, ladderItem, LadderMountTopBackBasis, SetPlayerLadderMountTopBackInteraction, InteractionBasisType::Latch, extraPosOffset);
+			break;
+		}
+
+		case LadderMountType::TopFrontBack:
+		{
+			auto extraPosOffset = Vector3i(0, bounds.Y1, bounds.Z2);
+			SetInteraction(playerItem, ladderItem, LadderMountTopFrontBackBasis, SetPlayerLadderMountTopFrontInteraction, InteractionBasisType::Latch, extraPosOffset);
+			break;
+		}
+
+		case LadderMountType::TopBackBack:
+		{
+			auto extraPosOffset = Vector3i(0, bounds.Y1, bounds.Z2);
+			SetInteraction(playerItem, ladderItem, LadderMountTopBackBackBasis, SetPlayerLadderMountTopBackInteraction, InteractionBasisType::Latch, extraPosOffset);
 			break;
 		}
 
