@@ -997,9 +997,15 @@ void lara_as_ladder_idle(ItemInfo* item, CollisionInfo* coll)
 			}
 
 			// On a double-sided ladder, flip to the other face when a side dismount is not possible.
-			if (TestLaraLadderSwitchSide(item, coll))
+			if (IsHeld(In::Left) && TestLaraLadderSwitchSide(item, coll))
 			{
-				item->Animation.TargetState = LS_LADDER_SWITCH_SIDE;
+				item->Animation.TargetState = LS_LADDER_SWITCH_SIDE_LEFT;
+				return;
+			}
+
+			if (IsHeld(In::Right) && TestLaraLadderSwitchSide(item, coll))
+			{
+				item->Animation.TargetState = LS_LADDER_SWITCH_SIDE_RIGHT;
 				return;
 			}
 		}
@@ -1128,6 +1134,11 @@ void lara_as_ladder_down(ItemInfo* item, CollisionInfo* coll)
 				item->Animation.TargetState = LS_LADDER_DOWN;
 				return;
 			}
+			else if (CanHangLadder(item, coll))
+			{
+				item->Animation.TargetState = LS_LADDER_IDLE_TO_HANG;
+				return;
+			}
 		}
 
 		item->Animation.TargetState = LS_LADDER_IDLE;
@@ -1140,6 +1151,71 @@ void lara_as_ladder_down(ItemInfo* item, CollisionInfo* coll)
 // State:	LS_LADDER_DOWN (176)
 // Control: lara_as_ladder_down()
 void lara_col_ladder_down(ItemInfo* item, CollisionInfo* coll)
+{
+	auto& player = GetLaraInfo(*item);
+
+	player.Control.MoveAngle = item->Pose.Orientation.y;
+	coll->Setup.LowerFloorBound = NO_LOWER_BOUND;
+	coll->Setup.UpperFloorBound = -STEPUP_HEIGHT;
+	coll->Setup.LowerCeilingBound = BAD_JUMP_CEILING;
+	coll->Setup.ForwardAngle = player.Control.MoveAngle;
+	coll->Setup.Radius = LARA_RADIUS;
+	GetCollisionInfo(coll, item);
+}
+
+// State:	  LS_LADDER_HANG (179)
+// Collision: lara_col_ladder_idle()
+void lara_as_ladder_hang(ItemInfo* item, CollisionInfo* coll)
+{
+	auto& player = GetLaraInfo(*item);
+
+	player.Control.Look.Mode = LookMode::Free;
+	coll->Setup.EnableSpasm = false;
+	coll->Setup.EnableObjectPush = false;
+
+	if (item->HitPoints <= 0)
+	{
+		item->Animation.TargetState = LS_FREEFALL;
+		return;
+	}
+
+	if (IsHeld(In::Action))
+	{
+		if (TestLaraLadderIdle(item, coll))
+		{
+			item->Animation.TargetState = LS_LADDER_IDLE;
+			return;
+		}
+
+		if (IsHeld(In::Forward))
+		{
+			if (CanClimbLadderUp(item, coll))
+			{
+				item->Animation.TargetState = LS_LADDER_HANG_UP;
+				return;
+			}
+		}
+		else if (IsHeld(In::Back))
+		{
+			if (CanClimbLadderDown(item, coll))
+			{
+				item->Animation.TargetState = LS_LADDER_HANG_DOWN;
+				return;
+			}
+		}
+
+		item->Animation.TargetState = LS_LADDER_HANG;
+		return;
+	}
+
+	item->Animation.TargetState = LS_JUMP_UP;
+	if (TestStateDispatch(*item, LS_JUMP_UP)) // TODO: Update jump state handling to not require this. -- Sezz 2022.10.26
+		item->Animation.IsAirborne = true;
+}
+
+// State:	LS_LADDER_HANG (179)
+// Control: lara_as_ladder_hang()
+void lara_col_ladder_hang(ItemInfo* item, CollisionInfo* coll)
 {
 	auto& player = GetLaraInfo(*item);
 

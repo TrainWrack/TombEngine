@@ -1967,16 +1967,48 @@ bool CanClimbLadderDown(ItemInfo* item, CollisionInfo* coll)
 	return ((pointColl.GetFloorHeight() - vPos) > LOWER_FLOOR_BOUND);
 }
 
+bool CanHangLadder(ItemInfo* item, CollisionInfo* coll)
+{
+	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
+	constexpr auto LOWER_FLOOR_BOUND = BLOCK(1 / 8.0f);
+	constexpr auto LADDER_END_MARGIN = CLICK(0.75f); // Two rungs: the next step consumes one, so she halts one rung above the stack bottom.
+
+	auto* ladder = GetInteractedLadder(*item);
+	if (ladder == nullptr)
+		return false;
+
+	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y2;
+
+	// Must still be ladder material below the player's feet.
+	if ((ladder->GetBasePosition().y - vPos) < LADDER_END_MARGIN)
+		return false;
+
+	// Respect the ground: stop climbing down once the floor is reached.
+	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, -PROBE_DIST);
+
+	return ((pointColl.GetFloorHeight() - vPos) > LOWER_FLOOR_BOUND);
+}
+
 bool CanDismountLadderTop(ItemInfo* item, CollisionInfo* coll)
 {
 	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
 	constexpr auto LOWER_FLOOR_BOUND = BLOCK(1 / 16.0f);
 	constexpr auto UPPER_FLOOR_BOUND = 0;
 	constexpr auto UPPER_CEIL_BOUND = -BLOCK(1 / 2.0f);
+	constexpr auto LADDER_END_MARGIN = CLICK(0.1f);
+
+	auto* ladder = GetInteractedLadder(*item);
+	if (ladder == nullptr)
+		return false;
+
+	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y1;
+
+	// Must still be ladder material above the player's head.
+	if ((vPos - ladder->GetTopPosition().y) < LADDER_END_MARGIN)
+		return false;
 
 	// Get point collision.
 	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, PROBE_DIST, -LARA_HEIGHT);
-	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y1;
 
 	// 1) Test for wall.
 	if (pointColl.GetFloorHeight() == NO_HEIGHT)
@@ -2068,4 +2100,19 @@ bool TestLaraLadderSwitchSide(ItemInfo* item, CollisionInfo* coll)
 		return false;
 
 	return true;
+}
+
+bool TestLaraLadderIdle(ItemInfo* item, CollisionInfo* coll)
+{
+	auto* ladder = GetInteractedLadder(*item);
+	if (ladder == nullptr)
+		return false;
+
+	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y1;
+
+	// Must be on the fourth rung.
+	if ((vPos - ladder->GetBasePosition().y) >= CLICK(2))
+		return true;
+
+	return false;
 }

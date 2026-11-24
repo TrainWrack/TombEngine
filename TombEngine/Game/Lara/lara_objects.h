@@ -102,3 +102,5 @@ void lara_as_ladder_up(ItemInfo* item, CollisionInfo* coll);
 void lara_col_ladder_up(ItemInfo* item, CollisionInfo* coll);
 void lara_as_ladder_down(ItemInfo* item, CollisionInfo* coll);
 void lara_col_ladder_down(ItemInfo* item, CollisionInfo* coll);
+void lara_as_ladder_hang(ItemInfo* item, CollisionInfo* coll);
+void lara_col_ladder_hang(ItemInfo* item, CollisionInfo* coll);

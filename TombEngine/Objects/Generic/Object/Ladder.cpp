@@ -292,16 +292,16 @@ namespace TEN::Entities::Generic
 		return pos;
 	}
 
-	int LadderObject::GetAttachmentHeight(int positionY, int offset) const
+	int LadderObject::GetAttachmentHeight(int positionY, int topOffset, int baseOffset) const
 	{
 		int step = (int)LADDER_STEP_HEIGHT;
-		int baseY = GetBasePosition().y;
+		int baseY = GetBasePosition().y + baseOffset;
 
 		// Snap to the closest rung.
 		int relY = positionY - baseY;
 
 		// Never grab above the height where the top dismount can fire.
-		int topGrabY = _topY + offset;
+		int topGrabY = _topY + topOffset;
 		int targetY = baseY + std::max(relY, topGrabY);
 
 		// Re-anchor the result to the grid.
@@ -639,7 +639,7 @@ namespace TEN::Entities::Generic
 			auto& ladder = GetLadderObject(ladderItem);
 
 			// Snap her feet to the rung closest to her current height.
-			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y, LARA_HEIGHT_STRETCH + LADDER_STEP_HEIGHT);
+			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y, LARA_HEIGHT_STRETCH + LADDER_STEP_HEIGHT, -LARA_HEIGHT_STRETCH);
 			auto extraPosOffset = Vector3i(0, attachmentY - ladderItem.Pose.Position.y, bounds.Z1);
 
 			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, SetPlayerLadderAirGrabInteraction, InteractionBasisType::Latch, extraPosOffset);
@@ -651,7 +651,7 @@ namespace TEN::Entities::Generic
 			auto& ladder = GetLadderObject(ladderItem);
 
 			// Snap her feet to the rung closest to her current height.
-			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y, LARA_HEIGHT_STRETCH + LADDER_STEP_HEIGHT);
+			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y, LARA_HEIGHT_STRETCH + LADDER_STEP_HEIGHT, -LARA_HEIGHT_STRETCH);
 			auto extraPosOffset = Vector3i(0, attachmentY - ladderItem.Pose.Position.y, bounds.Z2);
 
 			SetInteraction(playerItem, ladderItem, LadderMountBackBasis, SetPlayerLadderAirGrabInteraction, InteractionBasisType::Latch, extraPosOffset);
@@ -662,7 +662,7 @@ namespace TEN::Entities::Generic
 			auto& ladder = GetLadderObject(ladderItem);
 
 			// Snap her feet to the rung closest to her current height.
-			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y, LARA_HEIGHT_STRETCH + LADDER_STEP_HEIGHT);
+			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y, LARA_HEIGHT_STRETCH + LADDER_STEP_HEIGHT, -LARA_HEIGHT_STRETCH);
 			auto extraPosOffset = Vector3i(0, attachmentY - ladderItem.Pose.Position.y, bounds.Z1);
 
 			SetInteraction(playerItem, ladderItem, LadderMountFrontBasis, SetPlayerLadderAirReachInteraction, InteractionBasisType::Latch, extraPosOffset);
@@ -674,7 +674,7 @@ namespace TEN::Entities::Generic
 			auto& ladder = GetLadderObject(ladderItem);
 
 			// Snap her feet to the rung closest to her current height.
-			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y, LARA_HEIGHT_STRETCH + LADDER_STEP_HEIGHT);
+			int attachmentY = ladder.GetAttachmentHeight(playerItem.Pose.Position.y, LARA_HEIGHT_STRETCH + LADDER_STEP_HEIGHT, -LARA_HEIGHT_STRETCH);
 			auto extraPosOffset = Vector3i(0, attachmentY - ladderItem.Pose.Position.y, bounds.Z2);
 
 			SetInteraction(playerItem, ladderItem, LadderMountBackBasis, SetPlayerLadderAirReachInteraction, InteractionBasisType::Latch, extraPosOffset);
