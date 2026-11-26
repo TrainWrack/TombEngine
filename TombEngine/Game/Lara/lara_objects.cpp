@@ -1136,7 +1136,7 @@ void lara_as_ladder_down(ItemInfo* item, CollisionInfo* coll)
 			}
 			else if (CanHangLadder(item, coll))
 			{
-				item->Animation.TargetState = LS_LADDER_IDLE_TO_HANG;
+				item->Animation.TargetState = LS_LADDER_HANG;
 				return;
 			}
 		}

@@ -218,7 +218,7 @@ namespace TEN::Entities::Player
 		PlayerBehaviorStateRoutines[LS_LADDER_HANG] = std::pair(lara_as_ladder_hang, lara_col_ladder_hang);
 		PlayerBehaviorStateRoutines[LS_LADDER_HANG_UP] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[LS_LADDER_HANG_DOWN] = std::pair(lara_as_null, lara_void_func);
-		PlayerBehaviorStateRoutines[LS_LADDER_IDLE_TO_HANG] = std::pair(lara_as_null, lara_void_func);
+		PlayerBehaviorStateRoutines[182] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[183] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[LS_LADDER_DISMOUNT_TOP] = std::pair(lara_as_null, lara_void_func);
 		PlayerBehaviorStateRoutines[LS_LADDER_DISMOUNT_BACK] = std::pair(lara_as_null, lara_void_func);

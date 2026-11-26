@@ -67,7 +67,11 @@ namespace TEN::Entities::Generic
 		LS_LADDER_IDLE,
 		LS_LADDER_UP,
 		LS_LADDER_DOWN,
-		LS_LADDER_SWITCH_SIDE
+		LS_LADDER_SWITCH_SIDE_LEFT,
+		LS_LADDER_SWITCH_SIDE_RIGHT,
+		LS_LADDER_HANG,
+		LS_LADDER_HANG_UP,
+		LS_LADDER_HANG_DOWN
 	};
 	const auto LadderGroundedMountPlayerStates = std::vector<int>
 	{
@@ -537,7 +541,7 @@ namespace TEN::Entities::Generic
 
 	static void SetPlayerLadderAirGrabInteraction(ItemInfo& interactor, ItemInfo&)
 	{
-		SetAnimation(&interactor, LA_LADDER_MOUNT_JUMP_UP);
+		SetAnimation(&interactor, LA_LADDER_HANG_IDLE);
 		interactor.Animation.IsAirborne = false;
 	}
 
