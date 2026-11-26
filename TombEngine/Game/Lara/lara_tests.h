@@ -77,6 +77,7 @@ bool TestLaraPoleDown(ItemInfo* item, CollisionInfo* coll);
 
 bool CanClimbLadderUp(ItemInfo* item, CollisionInfo* coll);
 bool CanClimbLadderDown(ItemInfo* item, CollisionInfo* coll);
+bool CanHandClimbLadderDown(ItemInfo* item, CollisionInfo* coll);
 bool CanHangLadder(ItemInfo* item, CollisionInfo* coll);
 bool CanDismountLadderTop(ItemInfo* item, CollisionInfo* coll);
 bool CanDismountLadderBack(ItemInfo* item, CollisionInfo* coll);

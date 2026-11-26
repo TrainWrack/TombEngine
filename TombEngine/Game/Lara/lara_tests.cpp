@@ -1967,6 +1967,32 @@ bool CanClimbLadderDown(ItemInfo* item, CollisionInfo* coll)
 	return ((pointColl.GetFloorHeight() - vPos) > LOWER_FLOOR_BOUND);
 }
 
+// While she hangs, her hands are at the top of her bounding box and her feet dangle far below them, so
+// the climb down bound must be measured against the hands instead of the feet.
+bool CanHandClimbLadderDown(ItemInfo* item, CollisionInfo* coll)
+{
+	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
+	constexpr auto LOWER_FLOOR_BOUND = BLOCK(1 / 8.0f);
+	constexpr auto LADDER_END_MARGIN = CLICK(0.75f);
+
+	auto* ladder = GetInteractedLadder(*item);
+	if (ladder == nullptr)
+		return false;
+
+	auto bounds = GameBoundingBox(item);
+
+	// Must still be ladder material below her hands.
+	int handY = item->Pose.Position.y + bounds.Y1;
+	if ((ladder->GetBasePosition().y - handY) < LADDER_END_MARGIN)
+		return false;
+
+	// Respect the ground: stop hand climbing down once the floor is reached.
+	int feetY = item->Pose.Position.y + bounds.Y2;
+	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, -PROBE_DIST);
+
+	return ((pointColl.GetFloorHeight() - feetY) > LOWER_FLOOR_BOUND);
+}
+
 bool CanHangLadder(ItemInfo* item, CollisionInfo* coll)
 {
 	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
@@ -2110,7 +2136,7 @@ bool TestLaraLadderIdle(ItemInfo* item, CollisionInfo* coll)
 
 	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y1;
 
-	if ((ladder->GetBasePosition().y - vPos) >= CLICK(2.5))
+	if ((ladder->GetBasePosition().y - vPos) >= CLICK(3))
 		return true;
 
 	return false;

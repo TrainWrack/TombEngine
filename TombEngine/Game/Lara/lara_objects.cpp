@@ -1181,15 +1181,15 @@ void lara_as_ladder_hang(ItemInfo* item, CollisionInfo* coll)
 
 	if (IsHeld(In::Action))
 	{
-		if (TestLaraLadderIdle(item, coll))
-		{
-			item->Animation.TargetState = LS_LADDER_IDLE;
-			return;
-		}
-
 		if (IsHeld(In::Forward))
 		{
-			if (CanClimbLadderUp(item, coll))
+			// She has hand climbed high enough to stand on the ladder normally.
+			if (TestLaraLadderIdle(item, coll))
+			{
+				item->Animation.TargetState = LS_LADDER_IDLE;
+				return;
+			}
+			else if (CanClimbLadderUp(item, coll))
 			{
 				item->Animation.TargetState = LS_LADDER_HANG_UP;
 				return;
@@ -1197,7 +1197,7 @@ void lara_as_ladder_hang(ItemInfo* item, CollisionInfo* coll)
 		}
 		else if (IsHeld(In::Back))
 		{
-			if (CanClimbLadderDown(item, coll))
+			if (CanHandClimbLadderDown(item, coll))
 			{
 				item->Animation.TargetState = LS_LADDER_HANG_DOWN;
 				return;
