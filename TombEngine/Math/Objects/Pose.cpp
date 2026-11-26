@@ -33,6 +33,27 @@ using namespace TEN::Math;
 		Position = Geometry::TranslatePoint(Position, dir, dist);
 	}
 
+	void Pose::Translate(const EulerAngles& orient, const Vector3i& offset)
+	{
+		Position = Geometry::TranslatePoint(Position, orient, offset);
+	}
+
+	void Pose::InterpolateConstant(const Pose& toPose, float velocity, short turnRate)
+	{
+		// Translate position.
+		float distance = Vector3i::Distance(Position, toPose.Position);
+		if (distance <= velocity)
+			Position = toPose.Position;
+		else
+		{
+			auto direction = toPose.Position.ToVector3() - Position.ToVector3();
+			Translate(direction, velocity);
+		}
+
+		// Interpolate orientation.
+		Orientation.InterpolateConstant(toPose.Orientation, turnRate);
+	}
+
 	Matrix Pose::ToMatrix() const
 	{
 		auto translationMatrix = Matrix::CreateTranslation(Position.ToVector3());

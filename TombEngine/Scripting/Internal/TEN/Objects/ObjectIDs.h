@@ -1,8 +1,7 @@
 #pragma once
 
 // This file is generated automatically, do not edit it.
-
-// Last generated on 12-06-2026.
+// Last generated on 11/10/2026.
 
 #include <unordered_map>
 #include <string>
@@ -322,6 +321,9 @@ static const std::unordered_map<std::string, GAME_OBJECT_ID> GAME_OBJECT_IDS {
 	/// Object ID.
 	// @mem LOCUSTS_EMITTER
 	{ "LOCUSTS_EMITTER", ID_LOCUSTS_EMITTER },
+	/// Object ID.
+	// @mem BATS_EMITTER_TR3
+	{ "BATS_EMITTER_TR3", ID_BATS_EMITTER_TR3 },
 	/// Object ID.
 	// @mem SCUBA_HARPOON
 	{ "SCUBA_HARPOON", ID_SCUBA_HARPOON },
@@ -1201,6 +1203,15 @@ static const std::unordered_map<std::string, GAME_OBJECT_ID> GAME_OBJECT_IDS {
 	/// Object ID.
 	// @mem FALLING_SANDBAG
 	{ "FALLING_SANDBAG", ID_FALLING_SANDBAG },
+	/// Object ID.
+	// @mem WRECKING_BALL_ANCHOR
+	{ "WRECKING_BALL_ANCHOR", ID_WRECKING_BALL_ANCHOR },
+	/// Object ID.
+	// @mem WRECKING_BALL_CHAIN
+	{ "WRECKING_BALL_CHAIN", ID_WRECKING_BALL_CHAIN },
+	/// Object ID.
+	// @mem OBELISK_CAGE
+	{ "OBELISK_CAGE", ID_OBELISK_CAGE },
 	/// Pickup Object ID.
 	// @mem PUZZLE_ITEM1
 	{ "PUZZLE_ITEM1", ID_PUZZLE_ITEM1 },
@@ -1997,6 +2008,9 @@ static const std::unordered_map<std::string, GAME_OBJECT_ID> GAME_OBJECT_IDS {
 	// @mem MINECART_SWITCH
 	{ "MINECART_SWITCH", ID_MINECART_SWITCH },
 	/// Object ID.
+	// @mem FUSEBOX_SWITCH
+	{ "FUSEBOX_SWITCH", ID_FUSEBOX_SWITCH },
+	/// Object ID.
 	// @mem DOOR_TYPE1
 	{ "DOOR_TYPE1", ID_DOOR_TYPE1 },
 	/// Object ID.
@@ -2161,6 +2175,12 @@ static const std::unordered_map<std::string, GAME_OBJECT_ID> GAME_OBJECT_IDS {
 	/// Object ID.
 	// @mem BREAKABLE_WALL
 	{ "BREAKABLE_WALL", ID_BREAKABLE_WALL },
+	/// Object ID.
+	// @mem LADDER_ONE_SIDED
+	{ "LADDER_ONE_SIDED", ID_LADDER_ONE_SIDED },
+	/// Object ID.
+	// @mem LADDER_DOUBLE_SIDED
+	{ "LADDER_DOUBLE_SIDED", ID_LADDER_DOUBLE_SIDED },
 	/// Pickup Object ID.
 	// @mem PISTOLS_ITEM
 	{ "PISTOLS_ITEM", ID_PISTOLS_ITEM },

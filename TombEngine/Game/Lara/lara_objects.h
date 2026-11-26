@@ -94,3 +94,13 @@ void lara_col_pole_turn_counter_clockwise(ItemInfo* item, CollisionInfo* coll);
 // --------
 
 void lara_as_zip_line(ItemInfo* item, CollisionInfo* coll);
+
+// Ladder
+void lara_as_ladder_idle(ItemInfo* item, CollisionInfo* coll);
+void lara_col_ladder_idle(ItemInfo* item, CollisionInfo* coll);
+void lara_as_ladder_up(ItemInfo* item, CollisionInfo* coll);
+void lara_col_ladder_up(ItemInfo* item, CollisionInfo* coll);
+void lara_as_ladder_down(ItemInfo* item, CollisionInfo* coll);
+void lara_col_ladder_down(ItemInfo* item, CollisionInfo* coll);
+void lara_as_ladder_hang(ItemInfo* item, CollisionInfo* coll);
+void lara_col_ladder_hang(ItemInfo* item, CollisionInfo* coll);

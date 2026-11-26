@@ -16,6 +16,8 @@ void AddRightFootprint(ItemInfo* item); // TODO: To anim command.
 void VoidEffect(ItemInfo* item);
 void FinishLevel(ItemInfo* item);
 void Turn180(ItemInfo* item); // TODO: To anim command.
+void Turn90(ItemInfo* item);
+void Turn270(ItemInfo* item);
 void FloorShake(ItemInfo* item);
 void PlaySoundEffect(ItemInfo* item);
 void RubbleFX(ItemInfo* item);

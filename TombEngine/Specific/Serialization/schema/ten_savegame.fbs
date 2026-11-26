@@ -96,6 +96,7 @@ table Item {
 	flags: int32;
 	trigger_flags: int32;
 	carried_item: int32;
+	parent_object: int32;
 	after_death: int32;
 	item_flags: [int32];
 	pose: TEN.Serialization.Common.Pose;
@@ -767,6 +768,7 @@ table SaveGame {
 	free_item_slots: [int32];
 	moveable_type_properties: [TypePropertyMap];
 	static_type_properties: [TypePropertyMap];
+	tr3_bats: [SwarmObjectInfo];
 }
 
 root_type TEN.Serialization.Save.SaveGame;
