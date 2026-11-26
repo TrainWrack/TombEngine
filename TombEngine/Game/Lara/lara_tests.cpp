@@ -2136,7 +2136,7 @@ bool TestLaraLadderIdle(ItemInfo* item, CollisionInfo* coll)
 
 	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y1;
 
-	if ((ladder->GetBasePosition().y - vPos) >= CLICK(3))
+	if ((ladder->GetBasePosition().y - vPos) > CLICK(3))
 		return true;
 
 	return false;
