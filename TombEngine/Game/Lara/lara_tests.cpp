@@ -1970,8 +1970,7 @@ bool CanClimbLadderDown(ItemInfo* item, CollisionInfo* coll)
 bool CanHangLadder(ItemInfo* item, CollisionInfo* coll)
 {
 	constexpr auto PROBE_DIST = BLOCK(1 / 4.0f);
-	constexpr auto LOWER_FLOOR_BOUND = BLOCK(1 / 8.0f);
-	constexpr auto LADDER_END_MARGIN = CLICK(0.75f); // Two rungs: the next step consumes one, so she halts one rung above the stack bottom.
+	constexpr auto LADDER_END_MARGIN = CLICK(0.75f); // Matches the halting margin of the climb down test.
 
 	auto* ladder = GetInteractedLadder(*item);
 	if (ladder == nullptr)
@@ -1979,14 +1978,15 @@ bool CanHangLadder(ItemInfo* item, CollisionInfo* coll)
 
 	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y2;
 
-	// Must still be ladder material below the player's feet.
-	if ((ladder->GetBasePosition().y - vPos) < LADDER_END_MARGIN)
+	// Must have run out of ladder material below the player's feet.
+	if ((ladder->GetBasePosition().y - vPos) >= LADDER_END_MARGIN)
 		return false;
 
-	// Respect the ground: stop climbing down once the floor is reached.
+	// Get point collision.
 	auto pointColl = GetPointCollision(*item, item->Pose.Orientation.y, -PROBE_DIST);
 
-	return ((pointColl.GetFloorHeight() - vPos) > LOWER_FLOOR_BOUND);
+	// The floor must be a full body height below, otherwise she simply stops at the bottom of the ladder.
+	return ((pointColl.GetFloorHeight() - vPos) > LARA_HEIGHT);
 }
 
 bool CanDismountLadderTop(ItemInfo* item, CollisionInfo* coll)
@@ -2110,8 +2110,7 @@ bool TestLaraLadderIdle(ItemInfo* item, CollisionInfo* coll)
 
 	int vPos = item->Pose.Position.y + GameBoundingBox(item).Y1;
 
-	// Must be on the fourth rung.
-	if ((vPos - ladder->GetBasePosition().y) >= CLICK(2))
+	if ((ladder->GetBasePosition().y - vPos) >= CLICK(2.5))
 		return true;
 
 	return false;

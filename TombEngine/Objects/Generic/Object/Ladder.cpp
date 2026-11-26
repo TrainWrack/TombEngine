@@ -415,10 +415,8 @@ namespace TEN::Entities::Generic
 	static LadderMountType GetLadderMountType(ItemInfo& ladderItem, const ItemInfo& playerItem)
 	{
 		auto bounds = GameBoundingBox(&ladderItem);
-		// Get the vertical extents of the whole ladder stack, then extend the interaction box to cover it
-		// (plus one step below) so detection works across stacked ladder objects.
-		//auto stackExtents = GetLadderStackExtents(ladderItem);
 		auto boundsExtension = GameBoundingBox(0, 0, bounds.Y1, bounds.Y2 + LADDER_STEP_HEIGHT, 0, 0).ToBoundingOrientedBox(Pose::Zero);
+		auto airBoundsExtension = GameBoundingBox(0, 0, bounds.Y1, bounds.Y2 + LARA_HEIGHT_STRETCH - LADDER_STEP_HEIGHT, 0, 0).ToBoundingOrientedBox(Pose::Zero);
 
 		// Air mounts. Front face, and back face when double-sided.
 		if (TestLadderMount(ladderItem, playerItem, LadderMountContext::Air))
@@ -428,11 +426,11 @@ namespace TEN::Entities::Generic
 
 			bool isJumpUp = (playerItem.Animation.ActiveState == LS_JUMP_UP);
 
-			if (TestInteraction(playerItem, ladderItem, LadderMountFrontBasis, boundsExtension))
+			if (TestInteraction(playerItem, ladderItem, LadderMountFrontBasis, airBoundsExtension))
 				return (isJumpUp ? LadderMountType::JumpUp : LadderMountType::JumpReach);
 
 			if (GetLadderObject(ladderItem).IsDoubleSided() &&
-				TestInteraction(playerItem, ladderItem, LadderMountBackBasis, boundsExtension))
+				TestInteraction(playerItem, ladderItem, LadderMountBackBasis, airBoundsExtension))
 			{
 				return (isJumpUp ? LadderMountType::JumpUpBack : LadderMountType::JumpReachBack);
 			}

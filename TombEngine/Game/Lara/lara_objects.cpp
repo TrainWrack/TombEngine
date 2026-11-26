@@ -975,6 +975,11 @@ void lara_as_ladder_idle(ItemInfo* item, CollisionInfo* coll)
 				item->Animation.TargetState = LS_LADDER_DISMOUNT_BACK;
 				return;
 			}
+			else if (CanHangLadder(item, coll))
+			{
+				item->Animation.TargetState = LS_LADDER_HANG;
+				return;
+			}
 			else if (CanClimbLadderDown(item, coll))
 			{
 				item->Animation.TargetState = LS_LADDER_DOWN;
@@ -1134,11 +1139,6 @@ void lara_as_ladder_down(ItemInfo* item, CollisionInfo* coll)
 				item->Animation.TargetState = LS_LADDER_DOWN;
 				return;
 			}
-			else if (CanHangLadder(item, coll))
-			{
-				item->Animation.TargetState = LS_LADDER_HANG;
-				return;
-			}
 		}
 
 		item->Animation.TargetState = LS_LADDER_IDLE;
@@ -1164,7 +1164,7 @@ void lara_col_ladder_down(ItemInfo* item, CollisionInfo* coll)
 }
 
 // State:	  LS_LADDER_HANG (179)
-// Collision: lara_col_ladder_idle()
+// Collision: lara_col_ladder_hang()
 void lara_as_ladder_hang(ItemInfo* item, CollisionInfo* coll)
 {
 	auto& player = GetLaraInfo(*item);
