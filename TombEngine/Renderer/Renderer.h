@@ -205,6 +205,7 @@ namespace TEN::Renderer
 		// Lights
 
 		int _dynamicLightList = 0;
+		int _frozenLightCount = NO_VALUE;
 		std::vector<RendererLight> _dynamicLights[2];
 		RendererLight* _shadowLight;
 
@@ -444,6 +445,7 @@ namespace TEN::Renderer
 		void DrawBats(RenderView& view, RendererPass rendererPass);
 		void DrawRats(RenderView& view, RendererPass rendererPass);
 		void DrawScarabs(RenderView& view, RendererPass rendererPass);
+		void DrawTr3Bats(RenderView& view, RendererPass rendererPass);
 		void DrawSpiders(RenderView& view, RendererPass rendererPass);
 		bool DrawGunFlashes(RenderView& view);
 		void DrawGunShells(RenderView& view, RendererPass rendererPass);
